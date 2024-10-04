@@ -3,6 +3,7 @@
 use App\Http\Controllers\LoginController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ConfigurationController;
+use App\Http\Controllers\GestiontransporteController;
 use App\Http\Controllers\IntranetController;
 
 route::get('/phpinfo', function(){
@@ -33,3 +34,8 @@ Route::prefix('configuracion')->middleware('auth')->group(function () {
 });
 
 /* ----------------------------- RUTAS FINALES DE CONFIGURACIÓN ---------------------------------*/
+
+Route::prefix('Gestiontransporte')->middleware('auth')->group(function () {
+    /* TRANSPORTISTAS */
+    route::get('/transportistas',[GestiontransporteController::class ,'transportistas'])->name('Gestiontransporte.transportistas')->middleware('verifyUserStatus')->middleware('can:transportistas');
+});
