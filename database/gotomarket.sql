@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Sep 25, 2024 at 03:44 AM
+-- Generation Time: Oct 04, 2024 at 03:30 PM
 -- Server version: 8.0.30
 -- PHP Version: 8.2.22
 
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `venturis`
+-- Database: `gotomarket`
 --
 
 -- --------------------------------------------------------
@@ -28,8 +28,8 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `cache` (
-  `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `value` mediumtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `key` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `expiration` int NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -40,8 +40,8 @@ CREATE TABLE `cache` (
 INSERT INTO `cache` (`key`, `value`, `expiration`) VALUES
 ('356a192b7913b04c54574d18c28d46e6395428ab', 'i:1;', 1727148368),
 ('356a192b7913b04c54574d18c28d46e6395428ab:timer', 'i:1727148368;', 1727148368),
-('admin|127.0.0.1', 'i:1;', 1726366670),
-('admin|127.0.0.1:timer', 'i:1726366670;', 1726366670),
+('admin|127.0.0.1', 'i:2;', 1728050438),
+('admin|127.0.0.1:timer', 'i:1728050438;', 1728050438),
 ('sueradmin|127.0.0.1', 'i:1;', 1726577381),
 ('sueradmin|127.0.0.1:timer', 'i:1726577381;', 1726577381),
 ('superadmin|127.0.0.1:timer', 'i:1726453471;', 1726453471);
@@ -53,8 +53,8 @@ INSERT INTO `cache` (`key`, `value`, `expiration`) VALUES
 --
 
 CREATE TABLE `cache_locks` (
-  `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `owner` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `key` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `owner` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `expiration` int NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -66,21 +66,21 @@ CREATE TABLE `cache_locks` (
 
 CREATE TABLE `empresas` (
   `id_empresa` bigint UNSIGNED NOT NULL,
-  `empresa_ruc` varchar(11) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `empresa_ruc` varchar(11) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `id_ubigeo` bigint UNSIGNED NOT NULL,
-  `empresa_razon_social` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `empresa_domicilio_fiscal` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `empresa_nombre_comercial` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `empresa_telefono_uno` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `empresa_telefono_dos` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `empresa_email_uno` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `empresa_email_dos` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `empresa_descricion` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `empresa_usuario` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `empresa_clave` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `empresa_archivo` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `empresa_clave_certificado` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `empresa_logo` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `empresa_razon_social` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `empresa_domicilio_fiscal` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `empresa_nombre_comercial` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `empresa_telefono_uno` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `empresa_telefono_dos` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `empresa_email_uno` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `empresa_email_dos` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `empresa_descricion` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `empresa_usuario` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `empresa_clave` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `empresa_archivo` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `empresa_clave_certificado` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `empresa_logo` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `empresa_estado_produccion` tinyint NOT NULL COMMENT '0 test, 1 produccion',
   `empresa_estado_boleta` tinyint NOT NULL COMMENT '1 Resumen Diario, 2 Envío Directo',
   `empresa_estado` tinyint NOT NULL,
@@ -103,11 +103,11 @@ INSERT INTO `empresas` (`id_empresa`, `empresa_ruc`, `id_ubigeo`, `empresa_razon
 
 CREATE TABLE `failed_jobs` (
   `id` bigint UNSIGNED NOT NULL,
-  `uuid` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `connection` text COLLATE utf8mb4_unicode_ci NOT NULL,
-  `queue` text COLLATE utf8mb4_unicode_ci NOT NULL,
-  `payload` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
-  `exception` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `uuid` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `connection` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `queue` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `payload` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `exception` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `failed_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -119,8 +119,8 @@ CREATE TABLE `failed_jobs` (
 
 CREATE TABLE `jobs` (
   `id` bigint UNSIGNED NOT NULL,
-  `queue` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `payload` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `queue` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `payload` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `attempts` tinyint UNSIGNED NOT NULL,
   `reserved_at` int UNSIGNED DEFAULT NULL,
   `available_at` int UNSIGNED NOT NULL,
@@ -134,13 +134,13 @@ CREATE TABLE `jobs` (
 --
 
 CREATE TABLE `job_batches` (
-  `id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `total_jobs` int NOT NULL,
   `pending_jobs` int NOT NULL,
   `failed_jobs` int NOT NULL,
-  `failed_job_ids` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
-  `options` mediumtext COLLATE utf8mb4_unicode_ci,
+  `failed_job_ids` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `options` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `cancelled_at` int DEFAULT NULL,
   `created_at` int NOT NULL,
   `finished_at` int DEFAULT NULL
@@ -154,13 +154,13 @@ CREATE TABLE `job_batches` (
 
 CREATE TABLE `menus` (
   `id_menu` bigint UNSIGNED NOT NULL,
-  `menu_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Nombre del menú',
-  `menu_controller` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Nombre del controlador asociado al menú',
-  `menu_icons` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Clase CSS del icono del menú',
+  `menu_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Nombre del menú',
+  `menu_controller` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Nombre del controlador asociado al menú',
+  `menu_icons` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Clase CSS del icono del menú',
   `menu_order` int NOT NULL COMMENT 'Posición de orden del menú en la interfaz',
   `menu_show` tinyint NOT NULL COMMENT 'Indica si el menú se muestra (1) o no se muestra (0)',
   `menu_status` tinyint NOT NULL COMMENT 'Estado del menú: 1 para activo, 0 para inactivo',
-  `menu_microtime` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Marca de tiempo única para el menú',
+  `menu_microtime` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Marca de tiempo única para el menú',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -180,7 +180,7 @@ INSERT INTO `menus` (`id_menu`, `menu_name`, `menu_controller`, `menu_icons`, `m
 
 CREATE TABLE `migrations` (
   `id` int UNSIGNED NOT NULL,
-  `migration` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `migration` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `batch` int NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -213,7 +213,7 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 
 CREATE TABLE `model_has_permissions` (
   `permission_id` bigint UNSIGNED NOT NULL,
-  `model_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `model_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `model_id` bigint UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -225,7 +225,7 @@ CREATE TABLE `model_has_permissions` (
 
 CREATE TABLE `model_has_roles` (
   `role_id` bigint UNSIGNED NOT NULL,
-  `model_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `model_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `model_id` bigint UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -244,11 +244,11 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 --
 
 CREATE TABLE `notifications` (
-  `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `notifiable_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `notifiable_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `notifiable_id` bigint UNSIGNED NOT NULL,
-  `data` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `data` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `read_at` timestamp NULL DEFAULT NULL,
   `notification_status` tinyint NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
@@ -262,8 +262,8 @@ CREATE TABLE `notifications` (
 --
 
 CREATE TABLE `password_reset_tokens` (
-  `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `token` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `token` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -284,8 +284,8 @@ CREATE TABLE `permissions` (
   `id` bigint UNSIGNED NOT NULL,
   `id_menu` bigint UNSIGNED DEFAULT NULL,
   `id_submenu` bigint UNSIGNED DEFAULT NULL,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `guard_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `guard_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `permissions_group` tinyint NOT NULL COMMENT '1 Menu -  2 Submenu - 3 Functions',
   `permissions_group_id` bigint NOT NULL COMMENT 'ID DE MENU - SUBMENU - FUNCTION',
   `permission_status` tinyint NOT NULL,
@@ -332,8 +332,8 @@ INSERT INTO `permissions` (`id`, `id_menu`, `id_submenu`, `name`, `guard_name`, 
 
 CREATE TABLE `roles` (
   `id` bigint UNSIGNED NOT NULL,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `guard_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `guard_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `roles_status` tinyint NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
@@ -344,9 +344,10 @@ CREATE TABLE `roles` (
 --
 
 INSERT INTO `roles` (`id`, `name`, `guard_name`, `roles_status`, `created_at`, `updated_at`) VALUES
-(1, 'Superadmin', 'web', 1, '2024-09-02 03:08:24', '2024-09-12 04:44:53'),
-(2, 'Administrador', 'web', 1, NULL, '2024-09-08 15:59:37'),
-(3, 'Colaborador', 'web', 1, '2024-09-09 02:58:05', '2024-09-09 02:58:05');
+(1, 'Nivel 0', 'web', 1, '2024-09-02 03:08:24', '2024-10-04 18:06:56'),
+(2, 'Nivel 1', 'web', 1, NULL, '2024-10-04 18:07:02'),
+(3, 'Nivel 2', 'web', 1, '2024-09-09 02:58:05', '2024-10-04 18:07:10'),
+(4, 'Nivel 3', 'web', 1, '2024-10-04 18:07:18', '2024-10-04 18:07:18');
 
 -- --------------------------------------------------------
 
@@ -388,7 +389,12 @@ INSERT INTO `role_has_permissions` (`permission_id`, `role_id`) VALUES
 (57, 1),
 (58, 1),
 (59, 1),
-(60, 1);
+(60, 1),
+(24, 2),
+(29, 2),
+(49, 2),
+(50, 2),
+(51, 2);
 
 -- --------------------------------------------------------
 
@@ -397,11 +403,11 @@ INSERT INTO `role_has_permissions` (`permission_id`, `role_id`) VALUES
 --
 
 CREATE TABLE `sessions` (
-  `id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `user_id` bigint UNSIGNED DEFAULT NULL,
-  `ip_address` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `user_agent` text COLLATE utf8mb4_unicode_ci,
-  `payload` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `ip_address` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_agent` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `payload` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `last_activity` int NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -412,7 +418,8 @@ CREATE TABLE `sessions` (
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
 ('0WsMnJExNIBYYhrqqHIqyuYtrTpJY1KiiUnz43vX', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoicXRCVHJPMk1UNFZMMDFxSm9NcTRQYkRkYzhoTWc5SW9VT1FXYmdXSSI7czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6MTtzOjk6Il9wcmV2aW91cyI7YToxOntzOjM6InVybCI7czoyNToiaHR0cDovL3ZlbnRhZ2VuZXJhbC5sb2NhbCI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1726350602),
 ('BdkykeKNI8yMyzz16plMV0GiuzvevfiMkIJ3peQt', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiVG1kVkl6QlIxVU9rTUt1Z20xSkNiWDRjeEp4TFFTNENETlI3TUhPTCI7czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6MTtzOjk6Il9wcmV2aW91cyI7YToxOntzOjM6InVybCI7czo0NToiaHR0cDovL3ZlbnRhZ2VuZXJhbC5sb2NhbC9jb25maWd1cmFjaW9uL3JvbGVzIjt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319fQ==', 1726972124),
-('K789ZURV4PDxPimxRzZ3CMu93csPf20aMpPq16pW', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiZkdMMUlWMTlsYmNHb2ZJa1FCcWIyeHRETnRhSmRkRzVmNkRkcnA2dCI7czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6MTtzOjk6Il9wcmV2aW91cyI7YToxOntzOjM6InVybCI7czo1OToiaHR0cDovL3ZlbnRhZ2VuZXJhbC5sb2NhbC9jb25maWd1cmFjaW9uL3N1Ym1lbnU/ZGF0YT1NalklM0QiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX19', 1725631449);
+('K789ZURV4PDxPimxRzZ3CMu93csPf20aMpPq16pW', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiZkdMMUlWMTlsYmNHb2ZJa1FCcWIyeHRETnRhSmRkRzVmNkRkcnA2dCI7czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6MTtzOjk6Il9wcmV2aW91cyI7YToxOntzOjM6InVybCI7czo1OToiaHR0cDovL3ZlbnRhZ2VuZXJhbC5sb2NhbC9jb25maWd1cmFjaW9uL3N1Ym1lbnU/ZGF0YT1NalklM0QiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX19', 1725631449),
+('ujqDXzOWoiqAsqGQYNhSUaMwW4q0Vm4serYlqLsj', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiRDNXNVNnVHMwVU5RRmpXRHBJWW9vcGl5YURuSWxzQ2FiUlhVQTVzMyI7czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6MTtzOjk6Il9wcmV2aW91cyI7YToxOntzOjM6InVybCI7czoyMzoiaHR0cDovL2dvdG9tYXJrZXQubG9jYWwiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX19', 1728047605);
 
 -- --------------------------------------------------------
 
@@ -423,12 +430,12 @@ INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, 
 CREATE TABLE `submenus` (
   `id_submenu` bigint UNSIGNED NOT NULL,
   `id_menu` bigint UNSIGNED NOT NULL COMMENT 'Clave foránea que refiere al ID del menú padre',
-  `submenu_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Nombre del submenú',
-  `submenu_function` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Función o ruta asociada al submenú',
+  `submenu_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Nombre del submenú',
+  `submenu_function` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Función o ruta asociada al submenú',
   `submenu_order` int NOT NULL COMMENT 'Posición de orden del submenú en la interfaz',
   `submenu_show` tinyint NOT NULL COMMENT 'Indica si el submenú se muestra (1) o no se muestra (0)',
   `submenu_status` tinyint NOT NULL COMMENT 'Estado del submenú: 1 para activo, 0 para inactivo',
-  `submenu_microtime` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `submenu_microtime` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -453,11 +460,11 @@ INSERT INTO `submenus` (`id_submenu`, `id_menu`, `submenu_name`, `submenu_functi
 
 CREATE TABLE `ubigeos` (
   `id_ubigeo` bigint UNSIGNED NOT NULL,
-  `ubigeo_cod` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `ubigeo_departamento` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `ubigeo_provincia` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `ubigeo_distrito` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `ubigeo_capital` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `ubigeo_cod` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `ubigeo_departamento` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `ubigeo_provincia` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `ubigeo_distrito` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `ubigeo_capital` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2351,18 +2358,18 @@ INSERT INTO `ubigeos` (`id_ubigeo`, `ubigeo_cod`, `ubigeo_departamento`, `ubigeo
 
 CREATE TABLE `users` (
   `id_users` bigint UNSIGNED NOT NULL,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `last_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `username` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `profile_picture` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `last_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `username` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `profile_picture` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `email_verified_at` timestamp NULL DEFAULT NULL,
-  `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `two_factor_secret` text COLLATE utf8mb4_unicode_ci,
-  `two_factor_recovery_codes` text COLLATE utf8mb4_unicode_ci,
+  `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `two_factor_secret` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `two_factor_recovery_codes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `two_factor_confirmed_at` timestamp NULL DEFAULT NULL,
-  `remember_token` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `users_token` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `remember_token` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `users_token` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `users_token_time` datetime DEFAULT NULL,
   `users_status` tinyint DEFAULT '1' COMMENT '1 Activo - 0 Desactivado',
   `users_dni` int DEFAULT NULL COMMENT 'DNI del usuario opcional',
@@ -2377,7 +2384,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id_users`, `name`, `last_name`, `email`, `username`, `profile_picture`, `email_verified_at`, `password`, `two_factor_secret`, `two_factor_recovery_codes`, `two_factor_confirmed_at`, `remember_token`, `users_token`, `users_token_time`, `users_status`, `users_dni`, `users_phone`, `users_birthdate`, `created_at`, `updated_at`) VALUES
-(1, 'Eder Alfredo', 'Apagueño Reyna', 'reynaalfredo421@gmail.com', 'superadmin', NULL, NULL, '$2y$12$SzVs4f6gyPoOTubGPTKniOI6.2YAocQp2HdyNkP5ytf2eieU8lYeu', NULL, NULL, NULL, 'sUyE3fRvvgAiEH0kbOJze1o0zBLUNM5rcveHGV4XuYeuGYwZZ5FYvkoBrdtU', NULL, NULL, 1, NULL, 956449198, NULL, NULL, '2024-09-17 14:09:24'),
+(1, 'Eder Alfredo', 'Apagueño Reyna', 'reynaalfredo421@gmail.com', 'superadmin', NULL, NULL, '$2y$12$SzVs4f6gyPoOTubGPTKniOI6.2YAocQp2HdyNkP5ytf2eieU8lYeu', NULL, NULL, NULL, 'mkuaosnLJkiGqvSo5erIQn0PmAPBUVty73BmvbS8icbUe1QQaR1JYKO0BbPm', NULL, NULL, 1, NULL, 956449198, NULL, NULL, '2024-09-17 14:09:24'),
 (4, 'Carlos Melendez', 'Bernuy', 'puntostyle05@gmail.com', 'admin', 'uploads/configuration/users/20240907_231301_4.jpg', NULL, '$2y$12$wa3/J4wkejuv3TYYXsoU3uY62tRI4mt16GFlbcdmCxiqzTwi6I2Dy', NULL, NULL, NULL, 'aStyRsnZ35rOgZ8NgU2HUcYeTx79S33eiDdLTNfv1Csu4pghNvoryyDSRQJy', NULL, NULL, 1, NULL, NULL, NULL, '2024-09-08 03:33:39', '2024-09-16 02:06:13');
 
 --
@@ -2557,7 +2564,7 @@ ALTER TABLE `permissions`
 -- AUTO_INCREMENT for table `roles`
 --
 ALTER TABLE `roles`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `submenus`
