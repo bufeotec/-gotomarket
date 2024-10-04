@@ -8,7 +8,7 @@
     <div class="page-heading">
         <x-navegation-view text="Lista de transportistas registrados en el sistema." />
 
-{{--        @livewire('configuracion.menus')--}}
+        @livewire('gestiontransporte.transportistas')
 
     </div>
 
