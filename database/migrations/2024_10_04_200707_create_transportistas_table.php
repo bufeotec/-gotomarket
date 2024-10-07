@@ -18,14 +18,14 @@ return new class extends Migration
             $table->foreignId('id_ubigeo')->references('id_ubigeo')->on('ubigeos');
             $table->string('transportista_ruc');
             $table->string('transportista_razon_social');
-            $table->string('transportista_nom_comerial');
+            $table->string('transportista_nom_comercial');
             $table->string('transportista_direccion')->nullable();
             $table->string('transportista_correo')->nullable();
             $table->string('transportista_telefono')->nullable();
             $table->string('transportista_contacto')->nullable();
             $table->string('transportista_cargo')->nullable();
             $table->tinyInteger('transportista_estado');
-            $table->tinyInteger('transportista_microtime');
+            $table->string('transportista_microtime');
             $table->timestamps();
         });
     }
