@@ -2,7 +2,7 @@
     <x-modal-general  wire:ignore.self >
         <x-slot name="tama">modal-md</x-slot>
         <x-slot name="id_modal">modalServicios</x-slot>
-        <x-slot name="titleModal">Gestionar servicios</x-slot>
+        <x-slot name="titleModal">Gestionar los servicios</x-slot>
         <x-slot name="modalContent">
             <form wire:submit.prevent="saveServicios">
                 <div class="row d-flex justify-content-center align-items-center">

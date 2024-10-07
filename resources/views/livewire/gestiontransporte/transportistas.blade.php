@@ -179,13 +179,13 @@
                         <x-slot name="thead">
                             <tr>
                                 <th>N°</th>
-                                <th>Tipo servicio</th>
+                                <th>Tipo de servicio</th>
                                 <th>Ubigeo</th>
                                 <th>RUC</th>
-                                <th>Razon social</th>
+                                <th>Razón social</th>
                                 <th>Nombre comercial</th>
                                 <th>Correo</th>
-                                <th>Telefono</th>
+                                <th>Teléfono</th>
                                 <th>Cargo</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
