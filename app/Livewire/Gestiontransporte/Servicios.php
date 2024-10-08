@@ -67,6 +67,7 @@ class Servicios extends Component
                     // Emitir el evento al componente sidebar
                     $this->dispatch('refresh_select_servicios')->to(Transportistas::class);
 //                    $this->dispatch('hideModal');
+                    $this->tipo_servicio_concepto = "";
                     session()->flash('success', 'Registro guardado correctamente.');
 
                 } else {

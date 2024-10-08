@@ -38,4 +38,5 @@ Route::prefix('configuracion')->middleware('auth')->group(function () {
 Route::prefix('Gestiontransporte')->middleware('auth')->group(function () {
     /* TRANSPORTISTAS */
     route::get('/transportistas',[GestiontransporteController::class ,'transportistas'])->name('Gestiontransporte.transportistas')->middleware('verifyUserStatus')->middleware('can:transportistas');
+    route::get('/vehiculos',[GestiontransporteController::class ,'vehiculos'])->name('Gestiontransporte.vehiculos')->middleware('verifyUserStatus')->middleware('can:vehiculos');
 });

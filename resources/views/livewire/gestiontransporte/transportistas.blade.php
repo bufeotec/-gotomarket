@@ -187,6 +187,7 @@
                                 <th>Correo</th>
                                 <th>Teléfono</th>
                                 <th>Cargo</th>
+                                <th>Vehiculo</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
@@ -206,6 +207,15 @@
                                         <td>{{$tr->transportista_correo}}</td>
                                         <td>{{$tr->transportista_telefono}}</td>
                                         <td>{{$tr->transportista_cargo}}</td>
+                                        <td>
+                                            @php
+                                                $vehiculos = \Illuminate\Support\Facades\DB::table('vehiculos')
+                                                ->where([['vehiculo_estado','=',1],['id_transportistas','=',$tr->id_transportistas]])->count();
+                                            @endphp
+                                            <a href="{{route('Gestiontransporte.vehiculos',['data'=>base64_encode($tr->id_transportistas)])}}" class="btn btn-warning btn-sm text-white">
+                                                {{$vehiculos}}
+                                            </a>
+                                        </td>
                                         <td>
                                             <span class="font-bold badge {{$tr->transportista_estado == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
                                                 {{$tr->transportista_estado == 1 ? 'Habilitado ' : 'Desabilitado'}}

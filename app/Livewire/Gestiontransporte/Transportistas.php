@@ -11,6 +11,7 @@ use App\Models\Ubigeo;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Request;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithoutUrlPagination;
@@ -45,13 +46,14 @@ class Transportistas extends Component
     public $messageDeleteTranspor = "";
 
     public $listar_servicios = array();
+    public $urlActual;
     /* FIN  ATRIBUTOS PARA GUARDAR TRANSPORTISTAS */
     public function mount() {
         $this->listarServiciosSelect();
+        $this->urlActual = explode('.', Request::route()->getName());
     }
 
-    public function __construct()
-    {
+    public function __construct(){
         $this->logs = new Logs();
         $this->transportistas = new Transportista();
         $this->ubigeo = new Ubigeo();
