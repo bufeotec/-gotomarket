@@ -41,7 +41,7 @@ class General extends Model
                         $respuesta['condicion'] = 'HABIDO';
                     } else {
                         $url = "https://api.migo.pe/api/v1/ruc";
-                        $token = "A5UB9oaNM7VPs4NgZsPfZXu9SAzxmPI5Yyvzo5B5b5i2NQn5KruzvMXus4Ma";
+                        $token = "uTZu2aTvMPpqWFuzKATPRWNujUUe7Re1scFlRsTy9Q15k1sjdJVAc9WGy57m";
 
                         $data = [
                             'token' => $token,

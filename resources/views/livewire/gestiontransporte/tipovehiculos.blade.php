@@ -2,7 +2,7 @@
     <x-modal-general  wire:ignore.self >
         <x-slot name="tama">modal-md</x-slot>
         <x-slot name="id_modal">modalTipoVehiculo</x-slot>
-        <x-slot name="titleModal">Gestionar los tipos de vehiculos</x-slot>
+        <x-slot name="titleModal">Gestionar los tipos de vehículos</x-slot>
         <x-slot name="modalContent">
             <form wire:submit.prevent="saveTipoVehiculo">
                 <div class="row d-flex justify-content-center align-items-center">
@@ -14,7 +14,7 @@
                         @enderror
                     </div>
                     <div class="col-lg-4 col-md-4 col-sm-12 mb-3 d-flex text-center">
-                        <button type="submit" class="btn btn-success text-white">Guardar registro</button>
+                        <button type="submit" class="btn btn-success text-white mt-4">Guardar</button>
                     </div>
                     <div class="col-lg-12 col-md-12 col-sm-12">
                         @if (session()->has('error'))
@@ -26,7 +26,7 @@
                     </div>
                 </div>
             </form>
-            <div class="row">
+            <div class="row mt-3">
                 <div class="col-lg-12 col-md-12">
                     <x-table-general>
                         <x-slot name="thead">

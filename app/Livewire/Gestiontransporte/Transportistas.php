@@ -3,6 +3,7 @@
 namespace App\Livewire\Gestiontransporte;
 
 use App\Livewire\Intranet\sidebar;
+use App\Models\General;
 use App\Models\Logs;
 use App\Models\Menu;
 use App\Models\Transportista;
@@ -21,6 +22,7 @@ class Transportistas extends Component
 {
     use WithPagination, WithoutUrlPagination;
     private $logs;
+    private $general;
     private $transportistas;
     private $ubigeo;
 
@@ -44,19 +46,21 @@ class Transportistas extends Component
     public $transportista_cargo = "";
     public $transportista_estado = "";
     public $messageDeleteTranspor = "";
+    public $messageConsulta = "";
 
     public $listar_servicios = array();
-    public $urlActual;
+//    public $urlActual;
     /* FIN  ATRIBUTOS PARA GUARDAR TRANSPORTISTAS */
     public function mount() {
         $this->listarServiciosSelect();
-        $this->urlActual = explode('.', Request::route()->getName());
+//        $this->urlActual = explode('.', Request::route()->getName());
     }
 
     public function __construct(){
         $this->logs = new Logs();
         $this->transportistas = new Transportista();
         $this->ubigeo = new Ubigeo();
+        $this->general = new General();
     }
 
     #[On('refresh_select_servicios')]
@@ -82,6 +86,24 @@ class Transportistas extends Component
         $this->transportista_contacto = "";
         $this->transportista_cargo = "";
         $this->transportista_estado = "";
+        $this->dispatch('select_ubigeo',['text' => null]);
+    }
+    public function consultDocument(){
+        try {
+            $this->messageConsulta = "";
+            $this->transportista_razon_social = "";
+            $this->transportista_direccion = "";
+            $resultado = $this->general->consultar_documento(4,$this->transportista_ruc);
+            if ($resultado['result']['tipo'] == 'success'){
+                $this->transportista_razon_social = $resultado['result']['name'];
+                $this->transportista_direccion = $resultado['result']['direccion'];
+            }
+            $this->messageConsulta = array('mensaje'=>$resultado['result']['mensaje'],'type'=>$resultado['result']['tipo']);
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error al guardar el registro. Por favor, inténtelo nuevamente.');
+            return;
+        }
     }
 
     public function edit_data($id){
@@ -98,6 +120,12 @@ class Transportistas extends Component
             $this->transportista_contacto = $transportistasEdit->transportista_contacto;
             $this->transportista_cargo = $transportistasEdit->transportista_cargo;
             $this->id_transportistas = $transportistasEdit->id_transportistas;
+            $opcionSelect = "";
+            if ($transportistasEdit->id_ubigeo){
+                $ubi = Ubigeo::find($transportistasEdit->id_ubigeo);
+                $opcionSelect = $ubi->ubigeo_departamento." - ".$ubi->ubigeo_provincia." - ".$ubi->ubigeo_distrito;
+            }
+            $this->dispatch('select_ubigeo',['text' => $opcionSelect]);
         }
     }
 

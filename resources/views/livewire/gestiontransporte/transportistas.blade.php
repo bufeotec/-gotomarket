@@ -9,9 +9,13 @@
         <x-slot name="modalContent">
             <form wire:submit.prevent="saveTransportista">
                 <div class="row">
-                    <label for="id_tipo_servicios" class="form-label">Tipo servicios</label>
-                    <div class="col-lg-6 col-md-12 col-sm-12 mb-3">
-                        <select class="form-control" name="id_tipo_servicios" id="id_tipo_servicios" wire:model="id_tipo_servicios">
+                    <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                        <small class="text-primary">Información del Transportista</small>
+                        <hr class="mb-0">
+                    </div>
+                    <div class="col-lg-4 col-md-12 col-sm-12 mb-3">
+                        <label for="id_tipo_servicios" class="form-label">Tipo servicios (*)</label>
+                        <select class="form-select" name="id_tipo_servicios" id="id_tipo_servicios" wire:model="id_tipo_servicios">
                             <option value="" disabled>Seleccionar...</option>
                             @foreach($listar_servicios as $li)
                                 <option value="{{$li->id_tipo_servicios}}">{{$li->tipo_servicio_concepto}}</option>
@@ -21,29 +25,38 @@
                             <span class="message-error">{{ $message }}</span>
                         @enderror
                     </div>
-
-                    <div class="col-lg-6 col-md-12 col-sm-12 mb-3">
-                        <select class="form-control" name="id_ubigeo" id="id_ubigeo" wire:model="id_ubigeo">
-                            <option value="" disabled>Seleccionar...</option>
-                            @foreach($listar_ubigeos as $lu)
-                                <option value="{{$lu->id_ubigeo}}">{{$lu->ubigeo_departamento . ' - ' . $lu->ubigeo_provincia . ' - ' . $lu->ubigeo_distrito}}</option>
-                            @endforeach
-                        </select>
+                    <div class="col-lg-8 col-md-12 col-sm-12 mb-3">
+                        <div class="" wire:ignore>
+                            <label for="id_ubigeo" class="form-label">Ubigeo (*)</label>
+                            <select class="form-control" name="id_ubigeo" id="id_ubigeo" wire:model="id_ubigeo">
+                                <option value="" >Seleccionar...</option>
+                                @foreach($listar_ubigeos as $lu)
+                                    <option value="{{$lu->id_ubigeo}}">{{$lu->ubigeo_departamento . ' - ' . $lu->ubigeo_provincia . ' - ' . $lu->ubigeo_distrito}}</option>
+                                @endforeach
+                            </select>
+                        </div>
                         @error('id_ubigeo')
                         <span class="message-error">{{ $message }}</span>
                         @enderror
                     </div>
 
                     <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                        <label for="transportista_ruc" class="form-label">RUC</label>
-                        <x-input-general  type="text" id="transportista_ruc" wire:model="transportista_ruc"/>
+                        <label for="transportista_ruc" class="form-label">RUC (*)</label>
+                        <x-input-general  type="text" id="transportista_ruc" wire:model="transportista_ruc" wire:change="consultDocument"/>
+                        <div wire:loading wire:target="consultDocument">
+                            Consultando información
+                        </div>
+                        @if($messageConsulta)
+                            <span class="text-{{$messageConsulta['type']}}">{{$messageConsulta['mensaje']}}</span>
+                        @endif
+
                         @error('transportista_ruc')
                             <span class="message-error">{{ $message }}</span>
                         @enderror
                     </div>
 
-                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                        <label for="transportista_razon_social" class="form-label">Razon social</label>
+                    <div class="col-lg-8 col-md-8 col-sm-12 mb-3">
+                        <label for="transportista_razon_social" class="form-label">Razón social (*)</label>
                         <x-input-general  type="text" id="transportista_razon_social" wire:model="transportista_razon_social"/>
                         @error('transportista_razon_social')
                             <span class="message-error">{{ $message }}</span>
@@ -51,18 +64,37 @@
                     </div>
 
                     <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                        <label for="transportista_nom_comercial" class="form-label">Nombre comercial</label>
+                        <label for="transportista_cargo" class="form-label">Cargo (*)</label>
+                        <x-input-general  type="text" id="transportista_cargo" wire:model="transportista_cargo"/>
+                        @error('transportista_cargo')
+                        <span class="message-error">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="col-lg-8 col-md-12 col-sm-12 mb-3">
+                        <label for="transportista_nom_comercial" class="form-label">Nombre comercial (*)</label>
                         <x-input-general  type="text" id="transportista_nom_comercial" wire:model="transportista_nom_comercial"/>
                         @error('transportista_nom_comercial')
                             <span class="message-error">{{ $message }}</span>
                         @enderror
                     </div>
 
-                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                        <label for="transportista_direccion" class="form-label">Dirección</label>
+                    <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                        <label for="transportista_direccion" class="form-label">Dirección (*)</label>
                         <x-input-general  type="text" id="transportista_direccion" wire:model="transportista_direccion"/>
                         @error('transportista_direccion')
                             <span class="message-error">{{ $message }}</span>
+                        @enderror
+                    </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                        <small class="text-primary">Información de Contacto</small>
+                        <hr class="mb-0">
+                    </div>
+                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                        <label for="transportista_contacto" class="form-label">Contacto</label>
+                        <x-input-general  type="text" id="transportista_contacto" wire:model="transportista_contacto"/>
+                        @error('transportista_contacto')
+                        <span class="message-error">{{ $message }}</span>
                         @enderror
                     </div>
 
@@ -75,28 +107,16 @@
                     </div>
 
                     <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                        <label for="transportista_telefono" class="form-label">Telefono</label>
-                        <x-input-general  type="text" id="transportista_telefono" wire:model="transportista_telefono"/>
+                        <label for="transportista_telefono" class="form-label">Teléfono</label>
+                        <x-input-general  type="text" onkeyup="validar_numeros(this.id)" id="transportista_telefono" wire:model="transportista_telefono"/>
                         @error('transportista_telefono')
                             <span class="message-error">{{ $message }}</span>
                         @enderror
                     </div>
 
-                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                        <label for="transportista_contacto" class="form-label">Contacto</label>
-                        <x-input-general  type="text" id="transportista_contacto" wire:model="transportista_contacto"/>
-                        @error('transportista_contacto')
-                            <span class="message-error">{{ $message }}</span>
-                        @enderror
-                    </div>
 
-                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                        <label for="transportista_cargo" class="form-label">Cargo</label>
-                        <x-input-general  type="text" id="transportista_cargo" wire:model="transportista_cargo"/>
-                        @error('transportista_cargo')
-                            <span class="message-error">{{ $message }}</span>
-                        @enderror
-                    </div>
+
+
 
                     <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-end">
                         <button type="button" data-bs-dismiss="modal" class="btn btn-secondary">Cerrar</button>
@@ -260,6 +280,24 @@
         </x-slot>
     </x-card-general-view>
 {{--    {{ $menus->links(data: ['scrollTo' => false]) }}--}}
+    <style>
+        .select2-container--default .select2-selection--single {
+            display: block;
+            width: 100%;
+            height: calc(1.5em + .75rem + 2px);
+            padding: .375rem .75rem;
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.5;
+            color: #6e707e;
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid #d1d3e2;
+            border-radius: .35rem;
+            transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+        }
+
+    </style>
 </div>
 
 @script
@@ -270,5 +308,30 @@
     $wire.on('hideModalDelete', () => {
         $('#modalDeleteTransportistas').modal('hide');
     });
+
+    // Inicializar Select2 cuando se cargue el modal
+    $wire.on('select_ubigeo', (data) => {
+        const text = data[0].text || null; // Asegúrate de que 'text' sea null si no se envía
+        $('#id_ubigeo').select2({
+            dropdownParent: $('#modalTransportistas .modal-body')
+        });
+        if(text){
+            $('#select2-ubigeo-container').html(text)
+        }else{
+            $('#select2-ubigeo-container').html('Seleccionar')
+        }
+        // Sincronizar cambios de Select2 con Livewire
+        $('#id_ubigeo').on('change', function () {
+            let selectedValue = $(this).val();
+            $wire.set('id_ubigeo', selectedValue); // Actualizar modelo de Livewire
+        });
+    });
+    // // Reinicializar Select2 cuando se abra el modal
+    window.addEventListener('show-modal', function () {
+        $('#id_ubigeo').select2({
+            dropdownParent: $('#modalTransportistas .modal-body')
+        });
+    });
+
 </script>
 @endscript

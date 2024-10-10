@@ -1,21 +1,24 @@
 <div>
     <x-modal-general  wire:ignore.self >
-        <x-slot name="tama">modal-md</x-slot>
+{{--        <x-slot name="tama">modal-md</x-slot>--}}
         <x-slot name="id_modal">modalServicios</x-slot>
         <x-slot name="titleModal">Gestionar los servicios</x-slot>
         <x-slot name="modalContent">
             <form wire:submit.prevent="saveServicios">
                 <div class="row d-flex justify-content-center align-items-center">
-                    <div class="col-lg-8 col-md-8 col-sm-12 mb-3">
+                    <div class="col-lg-8 col-md-8 col-sm-12 mb-2">
                         <label for="tipo_servicio_concepto" class="form-label">Nombre del servicio</label>
                         <x-input-general  type="text" id="tipo_servicio_concepto" wire:model="tipo_servicio_concepto"/>
-                        @error('tipo_servicio_concepto')
-                        <span class="message-error">{{ $message }}</span>
-                        @enderror
                     </div>
-                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3 d-flex text-center">
-                        <button type="submit" class="btn btn-success text-white">Guardar servicio</button>
+                    <div class="col-lg-4 col-md-4 col-sm-12 mb-2 d-flex text-center">
+                        <button type="submit" class="btn btn-sm mt-4 w-100 btn-success text-white">Guardar</button>
                     </div>
+                    @error('tipo_servicio_concepto')
+                        <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                            <span class="message-error">{{ $message }}</span>
+                        </div>
+                    @enderror
+
                     <div class="col-lg-12 col-md-12 col-sm-12">
                         @if (session()->has('error'))
                             <div class="alert alert-danger alert-dismissible show fade">
@@ -26,7 +29,7 @@
                     </div>
                 </div>
             </form>
-            <div class="row">
+            <div class="row mt-3">
                 <div class="col-lg-12 col-md-12">
                     <x-table-general>
                         <x-slot name="thead">
