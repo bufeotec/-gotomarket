@@ -47,7 +47,7 @@
                             Consultando información
                         </div>
                         @if($messageConsulta)
-                            <span class="text-{{$messageConsulta['type']}}">{{$messageConsulta['mensaje']}}</span>
+                            <span class="text-{{$messageConsulta['type']}} d-block">{{$messageConsulta['mensaje']}}</span>
                         @endif
 
                         @error('transportista_ruc')
@@ -224,8 +224,8 @@
                                         <td>{{$tr->transportista_ruc}}</td>
                                         <td>{{$tr->transportista_razon_social}}</td>
                                         <td>{{$tr->transportista_nom_comercial}}</td>
-                                        <td>{{$tr->transportista_correo}}</td>
-                                        <td>{{$tr->transportista_telefono}}</td>
+                                        <td>{{ $tr->transportista_correo ?? '-' }}</td>
+                                        <td>{{ $tr->transportista_telefono ?? '-' }}</td>
                                         <td>{{$tr->transportista_cargo}}</td>
                                         <td>
                                             @php

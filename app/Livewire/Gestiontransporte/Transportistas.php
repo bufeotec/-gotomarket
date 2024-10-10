@@ -138,9 +138,9 @@ class Transportistas extends Component
                 'transportista_razon_social' => 'required|string',
                 'transportista_nom_comercial' => 'required|string',
                 'transportista_direccion' => 'required|string',
-                'transportista_correo' => 'required|email|max:200',
-                'transportista_telefono' => 'required|size:9',
-                'transportista_contacto' => 'required|string',
+                'transportista_correo' => 'nullable|email|max:200',
+                'transportista_telefono' => 'nullable|size:9',
+                'transportista_contacto' => 'nullable|string',
                 'transportista_cargo' => 'required|string',
                 'transportista_estado' => 'nullable|integer',
                 'id_transportistas' => 'nullable|integer',
@@ -164,13 +164,10 @@ class Transportistas extends Component
                 'transportista_nom_comercial.required' => 'La dirección es obligatorio.',
                 'transportista_nom_comercial.string' => 'La dirección debe ser una cadena de texto.',
 
-                'transportista_correo.required' => 'El correo electrónico es obligatorio.',
                 'transportista_correo.email' => 'El correo electrónico debe ser un email válido.',
 
-                'transportista_telefono.required' => 'El número de teléfono debe ser una cadena de texto.',
                 'transportista_telefono.size' => 'El número de teléfono debe tener exactamente 9 caracteres.',
 
-                'transportista_contacto.required' => 'El cotacto es obligatorio.',
                 'transportista_contacto.string' => 'El contacto debe ser una cadena de texto.',
 
                 'transportista_cargo.required' => 'El cargo es obligatorio.',
@@ -196,9 +193,9 @@ class Transportistas extends Component
                 $transportistas_save->transportista_razon_social = $this->transportista_razon_social;
                 $transportistas_save->transportista_nom_comercial = $this->transportista_nom_comercial;
                 $transportistas_save->transportista_direccion = $this->transportista_direccion;
-                $transportistas_save->transportista_correo = $this->transportista_correo;
-                $transportistas_save->transportista_telefono = $this->transportista_telefono;
-                $transportistas_save->transportista_contacto = $this->transportista_contacto;
+                $transportistas_save->transportista_correo = !empty($this->transportista_correo) ? $this->transportista_correo : null;
+                $transportistas_save->transportista_telefono = !empty($this->transportista_telefono) ? $this->transportista_telefono : null;
+                $transportistas_save->transportista_contacto = !empty($this->transportista_contacto) ? $this->transportista_contacto : null;
                 $transportistas_save->transportista_cargo = $this->transportista_cargo;
                 $transportistas_save->transportista_estado = 1;
                 $transportistas_save->transportista_microtime = $microtime;
@@ -229,9 +226,9 @@ class Transportistas extends Component
                 $transportistas_update->transportista_razon_social = $this->transportista_razon_social;
                 $transportistas_update->transportista_nom_comercial = $this->transportista_nom_comercial;
                 $transportistas_update->transportista_direccion = $this->transportista_direccion;
-                $transportistas_update->transportista_correo = $this->transportista_correo;
-                $transportistas_update->transportista_telefono = $this->transportista_telefono;
-                $transportistas_update->transportista_contacto = $this->transportista_contacto;
+                $transportistas_update->transportista_correo = !empty($this->transportista_correo) ? $this->transportista_correo : null;
+                $transportistas_update->transportista_telefono = !empty($this->transportista_telefono) ? $this->transportista_telefono : null;
+                $transportistas_update->transportista_contacto = !empty($this->transportista_contacto) ? $this->transportista_contacto : null;
                 $transportistas_update->transportista_cargo = $this->transportista_cargo;
 
                 if (!$transportistas_update->save()) {

@@ -36,6 +36,9 @@ class Vehiculos extends Component
     public $id_tipo_vehiculo = "";
     public $vehiculo_placa = "";
     public $vehiculo_capacidad_peso = "";
+    public $vehiculo_ancho = "";
+    public $vehiculo_largo = "";
+    public $vehiculo_alto = "";
     public $vehiculo_capacidad_volumen = "";
     public $vehiculo_estado = "";
 
@@ -43,8 +46,7 @@ class Vehiculos extends Component
 
     public $messageDeleteVehiculo = "";
 //
-    public function mount($id)
-    {
+    public function mount($id){
         $this->listarTipoVehiculoSelect();
         $this->id_transportistas = $id;
         $this->urlActual = explode('.', Request::route()->getName());
@@ -55,10 +57,19 @@ class Vehiculos extends Component
         $this->listar_tipo_vehiculo = TipoVehiculo::where('tipo_vehiculo_estado', 1)->get();
     }
 
+    public function calcularVolumen(){
+        $ancho = floatval($this->vehiculo_ancho);
+        $largo = floatval($this->vehiculo_largo);
+        $alto = floatval($this->vehiculo_alto);
+
+        $this->vehiculo_capacidad_volumen = $ancho * $largo * $alto;
+    }
+
     public function render(){
         $listar_vehiculos = $this->vehiculo->listar_vehiculos_por_transportistas($this->id_transportistas, $this->search_vehiculos, $this->pagination_vehiculos);
         return view('livewire.gestiontransporte.vehiculos', compact('listar_vehiculos'));
     }
+
 
     public function limpiar_campo_tipo_vehiculo(){
         $this->dispatch('limpiar_campo_tipo_vehiculo');
@@ -69,6 +80,9 @@ class Vehiculos extends Component
         $this->id_tipo_vehiculo = "";
         $this->vehiculo_placa = "";
         $this->vehiculo_capacidad_peso = "";
+        $this->vehiculo_ancho = "";
+        $this->vehiculo_largo = "";
+        $this->vehiculo_alto = "";
         $this->vehiculo_capacidad_volumen = "";
     }
 
@@ -78,6 +92,9 @@ class Vehiculos extends Component
             $this->id_tipo_vehiculo = $vehiculoEdit->id_tipo_vehiculo;
             $this->vehiculo_placa = $vehiculoEdit->vehiculo_placa;
             $this->vehiculo_capacidad_peso = $vehiculoEdit->vehiculo_capacidad_peso;
+            $this->vehiculo_ancho = $vehiculoEdit->vehiculo_ancho;
+            $this->vehiculo_largo = $vehiculoEdit->vehiculo_largo;
+            $this->vehiculo_alto = $vehiculoEdit->vehiculo_alto;
             $this->vehiculo_capacidad_volumen = $vehiculoEdit->vehiculo_capacidad_volumen;
             $this->id_vehiculo = $vehiculoEdit->id_vehiculo;
         }
@@ -90,6 +107,9 @@ class Vehiculos extends Component
                 'id_tipo_vehiculo' => 'required|integer',
                 'vehiculo_placa' => 'required|string',
                 'vehiculo_capacidad_peso' => 'required|numeric',
+                'vehiculo_ancho' => 'required|numeric',
+                'vehiculo_largo' => 'required|numeric',
+                'vehiculo_alto' => 'required|numeric',
                 'vehiculo_capacidad_volumen' => 'required|numeric',
                 'vehiculo_estado' => 'nullable|integer',
                 'id_vehiculo' => 'nullable|integer',
@@ -103,8 +123,17 @@ class Vehiculos extends Component
                 'vehiculo_placa.required' => 'La placa es obligatorio',
                 'vehiculo_placa.string' => 'La placa debe ser una cadena de texto.',
 
-                'vehiculo_capacidad_peso.required' => 'La capacidad de peso del vehículo es obligatoria.',
-                'vehiculo_capacidad_peso.numeric' => 'La capacidad de peso del vehículo debe ser un valor numérico.',
+                'vehiculo_capacidad_peso.required' => 'La capacidad del peso del vehículo es obligatoria.',
+                'vehiculo_capacidad_peso.numeric' => 'La capacidad del peso del vehículo debe ser un valor numérico.',
+
+                'vehiculo_ancho.required' => 'El ancho del vehículo es obligatoria.',
+                'vehiculo_ancho.numeric' => 'El ancho del vehículo debe ser un valor numérico.',
+
+                'vehiculo_largo.required' => 'El largo del vehículo es obligatoria.',
+                'vehiculo_largo.numeric' => 'El largo del vehículo debe ser un valor numérico.',
+
+                'vehiculo_alto.required' => 'El alto del vehículo es obligatoria.',
+                'vehiculo_alto.numeric' => 'El alto del vehículo debe ser un valor numérico.',
 
                 'vehiculo_capacidad_volumen.required' => 'La capacidad de volumen del vehículo es obligatoria.',
                 'vehiculo_capacidad_volumen.numeric' => 'La capacidad de volumen del vehículo debe ser un valor numérico.',
@@ -127,6 +156,9 @@ class Vehiculos extends Component
                 $vehiculo_save->id_tipo_vehiculo = $this->id_tipo_vehiculo;
                 $vehiculo_save->vehiculo_placa = $this->vehiculo_placa;
                 $vehiculo_save->vehiculo_capacidad_peso = $this->vehiculo_capacidad_peso;
+                $vehiculo_save->vehiculo_ancho = $this->vehiculo_ancho;
+                $vehiculo_save->vehiculo_largo = $this->vehiculo_largo;
+                $vehiculo_save->vehiculo_alto = $this->vehiculo_alto;
                 $vehiculo_save->vehiculo_capacidad_volumen = $this->vehiculo_capacidad_volumen;
                 $vehiculo_save->vehiculo_estado = 1;
                 $vehiculo_save->vehiculo_microtime = $microtime;
@@ -154,6 +186,9 @@ class Vehiculos extends Component
                 $vehiculo_update->id_tipo_vehiculo = $this->id_tipo_vehiculo;
                 $vehiculo_update->vehiculo_placa = $this->vehiculo_placa;
                 $vehiculo_update->vehiculo_capacidad_peso = $this->vehiculo_capacidad_peso;
+                $vehiculo_update->vehiculo_ancho = $this->vehiculo_ancho;
+                $vehiculo_update->vehiculo_largo = $this->vehiculo_largo;
+                $vehiculo_update->vehiculo_alto = $this->vehiculo_alto;
                 $vehiculo_update->vehiculo_capacidad_volumen = $this->vehiculo_capacidad_volumen;
 
                 if (!$vehiculo_update->save()) {

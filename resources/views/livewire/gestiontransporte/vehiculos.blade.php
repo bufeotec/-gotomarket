@@ -4,12 +4,17 @@
     {{--    MODAL REGISTRO TRANSPORTISTAS--}}
     <x-modal-general  wire:ignore.self >
         <x-slot name="id_modal">modalVehiculos</x-slot>
+        <x-slot name="tama">modal-lg</x-slot>
         <x-slot name="titleModal">Gestionar Vehiculos</x-slot>
         <x-slot name="modalContent">
             <form wire:submit.prevent="saveTransportista">
                 <div class="row">
-                    <label for="id_tipo_vehiculo" class="form-label">Tipo servicios</label>
                     <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                        <small class="text-primary">Información del Vehículo</small>
+                        <hr class="mb-0">
+                    </div>
+                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                        <label for="id_tipo_vehiculo" class="form-label">Tipo servicios (*)</label>
                         <select class="form-control" name="id_tipo_vehiculo" id="id_tipo_vehiculo" wire:model="id_tipo_vehiculo">
                             <option value="">Seleccionar...</option>
                             @foreach($listar_tipo_vehiculo as $lpv)
@@ -21,25 +26,49 @@
                         @enderror
                     </div>
 
-                    <div class="col-lg-12 col-md-4 col-sm-12 mb-3">
-                        <label for="vehiculo_placa" class="form-label">Placa</label>
+                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                        <label for="vehiculo_placa" class="form-label">Placa (*)</label>
                         <x-input-general  type="text" id="vehiculo_placa" wire:model="vehiculo_placa"/>
                         @error('vehiculo_placa')
                         <span class="message-error">{{ $message }}</span>
                         @enderror
                     </div>
 
-                    <div class="col-lg-12 col-md-4 col-sm-12 mb-3">
-                        <label for="vehiculo_capacidad_peso" class="form-label">Capacidad Peso</label>
+                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                        <label for="vehiculo_capacidad_peso" class="form-label">Capacidad Peso (*)</label>
                         <x-input-general  type="text" id="vehiculo_capacidad_peso" wire:model="vehiculo_capacidad_peso"/>
                         @error('vehiculo_capacidad_peso')
                         <span class="message-error">{{ $message }}</span>
                         @enderror
                     </div>
 
+                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                        <label for="vehiculo_ancho" class="form-label">Ancho (*) (Medida en metros)</label>
+                        <x-input-general type="text" id="vehiculo_ancho" wire:model="vehiculo_ancho" wire:input="calcularVolumen"/>
+                        @error('vehiculo_ancho')
+                        <span class="message-error">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                        <label for="vehiculo_largo" class="form-label">Largo (*) (Medida en metros)</label>
+                        <x-input-general type="text" id="vehiculo_largo" wire:model="vehiculo_largo" wire:input="calcularVolumen"/>
+                        @error('vehiculo_largo')
+                        <span class="message-error">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                        <label for="vehiculo_alto" class="form-label">Alto (*) (Medida en metros)</label>
+                        <x-input-general type="text" id="vehiculo_alto" wire:model="vehiculo_alto" wire:input="calcularVolumen"/>
+                        @error('vehiculo_alto')
+                        <span class="message-error">{{ $message }}</span>
+                        @enderror
+                    </div>
+
                     <div class="col-lg-12 col-md-4 col-sm-12 mb-3">
-                        <label for="vehiculo_capacidad_volumen" class="form-label">Capacidad Volumen</label>
-                        <x-input-general  type="text" id="vehiculo_capacidad_volumen" wire:model="vehiculo_capacidad_volumen"/>
+                        <label for="vehiculo_capacidad_volumen" class="form-label">Capacidad Volumen (*)</label>
+                        <x-input-general type="text" id="vehiculo_capacidad_volumen" wire:model="vehiculo_capacidad_volumen" readonly/>
                         @error('vehiculo_capacidad_volumen')
                         <span class="message-error">{{ $message }}</span>
                         @enderror
@@ -126,6 +155,9 @@
                                 <th>Tipo de vehículo</th>
                                 <th>Placa</th>
                                 <th>Peso</th>
+                                <th>Ancho</th>
+                                <th>Largo</th>
+                                <th>Alto</th>
                                 <th>Volumen</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
@@ -142,7 +174,10 @@
                                         <td>{{$lv->tipo_vehiculo_concepto}}</td>
                                         <td>{{$lv->vehiculo_placa}}</td>
                                         <td>{{$lv->vehiculo_capacidad_peso}}</td>
-                                        <td>{{$lv->vehiculo_capacidad_volumen}}</td>
+                                        <td>{{$lv->vehiculo_ancho}} <b>(m)</b></td>
+                                        <td>{{$lv->vehiculo_largo}} <b>(m)</b></td>
+                                        <td>{{$lv->vehiculo_alto}} <b>(m)</b></td>
+                                        <td>{{$lv->vehiculo_capacidad_volumen}} <b>(v)</b></td>
                                         <td>
                                             <span class="font-bold badge {{$lv->vehiculo_estado == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
                                                 {{$lv->vehiculo_estado == 1 ? 'Habilitado ' : 'Desabilitado'}}
