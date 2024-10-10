@@ -57,12 +57,18 @@ class Vehiculos extends Component
         $this->listar_tipo_vehiculo = TipoVehiculo::where('tipo_vehiculo_estado', 1)->get();
     }
 
+//    asdasdasd
+
+
+
+//    asdasdasd
+
     public function calcularVolumen(){
         $ancho = floatval($this->vehiculo_ancho);
         $largo = floatval($this->vehiculo_largo);
         $alto = floatval($this->vehiculo_alto);
 
-        $this->vehiculo_capacidad_volumen = $ancho * $largo * $alto;
+        $this->vehiculo_capacidad_volumen = ($ancho * $largo * $alto) / 3;
     }
 
     public function render(){

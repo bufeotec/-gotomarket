@@ -177,7 +177,7 @@
                                         <td>{{$lv->vehiculo_ancho}} <b>(m)</b></td>
                                         <td>{{$lv->vehiculo_largo}} <b>(m)</b></td>
                                         <td>{{$lv->vehiculo_alto}} <b>(m)</b></td>
-                                        <td>{{$lv->vehiculo_capacidad_volumen}} <b>(v)</b></td>
+                                        <td>{{$lv->vehiculo_capacidad_volumen}} <b>(m³)</b></td>
                                         <td>
                                             <span class="font-bold badge {{$lv->vehiculo_estado == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
                                                 {{$lv->vehiculo_estado == 1 ? 'Habilitado ' : 'Desabilitado'}}
