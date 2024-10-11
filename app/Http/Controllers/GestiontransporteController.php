@@ -31,12 +31,13 @@ class GestiontransporteController extends Controller
 
     public function vehiculos(){
         try {
-            $id_transportistas = base64_decode($_GET['data']);
-            if ($id_transportistas){
-                $informacion_vehiculo = $this->transportista->listar_transportista_por_id($id_transportistas);
-
-                return view('gestiontransporte.vehiculos',compact('informacion_vehiculo'));
-            }
+//            $id_transportistas = base64_decode($_GET['data']);
+//            if ($id_transportistas){
+//                $informacion_vehiculo = $this->transportista->listar_transportista_por_id($id_transportistas);
+//
+//                return view('gestiontransporte.vehiculos',compact('informacion_vehiculo'));
+//            }
+            return view('gestiontransporte.vehiculos');
         }catch (\Exception $e){
             $this->logs->insertarLog($e);
             return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');

@@ -54,4 +54,17 @@ class Transportista extends Model
         }
         return $result;
     }
+
+    public function listar_transportista_sin_id(){
+        try {
+            $result = DB::table('transportistas')
+                ->where('transportista_estado','=',1)
+                ->get();
+
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
 }

@@ -9,6 +9,7 @@ use App\Models\Menu;
 use App\Models\Transportista;
 use App\Models\TipoServicio;
 use App\Models\Ubigeo;
+use App\Models\Vehiculo;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -25,7 +26,7 @@ class Transportistas extends Component
     private $general;
     private $transportistas;
     private $ubigeo;
-
+    private $vehiculo;
     /* ATRIBUTOS PARA DATATABLES */
     public $search_transportistas;
     public $pagination_transportistas = 10;
@@ -61,6 +62,7 @@ class Transportistas extends Component
         $this->transportistas = new Transportista();
         $this->ubigeo = new Ubigeo();
         $this->general = new General();
+        $this->vehiculo = new Vehiculo();
     }
 
     #[On('refresh_select_servicios')]
@@ -203,7 +205,6 @@ class Transportistas extends Component
                 if ($transportistas_save->save()) {
                     DB::commit();
                     // Emitir el evento al componente sidebar
-//                    $this->dispatch('refresh_select_servicios')->to(Transportistas::class);
                     $this->dispatch('hideModal');
                     session()->flash('success', 'Registro guardado correctamente.');
 

@@ -1,14 +1,14 @@
 
 @extends('layouts.dashboard_template')
-@section('title','Vehiculos')
+@section('title','Vehículos')
 @section('content')
 
 
 
     <div class="page-heading">
-        <x-navegation-view text="Lista de vehiculos activos registrados con {{$informacion_vehiculo->transportista_nom_comercial}}." />
+        <x-navegation-view text="Lista de vehículos activos registrados" />
 
-        @livewire('gestiontransporte.vehiculos',['id'=>$informacion_vehiculo->id_transportistas])
+        @livewire('gestiontransporte.vehiculos')
 
     </div>
 

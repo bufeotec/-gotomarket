@@ -20,10 +20,12 @@ class Vehiculos extends Component
 {
     private $logs;
     private $tipovehiculo;
+    private $transportistas;
     private $vehiculo;
     public function __construct(){
         $this->logs = new Logs();
         $this->tipovehiculo = new Tipovehiculo();
+        $this->transportistas = new Transportista();
         $this->vehiculo = new Vehiculo();
     }
 
@@ -41,15 +43,11 @@ class Vehiculos extends Component
     public $vehiculo_alto = "";
     public $vehiculo_capacidad_volumen = "";
     public $vehiculo_estado = "";
-
     public $listar_tipo_vehiculo = array();
-
     public $messageDeleteVehiculo = "";
 //
-    public function mount($id){
+    public function mount(){
         $this->listarTipoVehiculoSelect();
-        $this->id_transportistas = $id;
-        $this->urlActual = explode('.', Request::route()->getName());
     }
 
     #[On('refresh_select_tipo_vehiculo')]
@@ -57,25 +55,19 @@ class Vehiculos extends Component
         $this->listar_tipo_vehiculo = TipoVehiculo::where('tipo_vehiculo_estado', 1)->get();
     }
 
-//    asdasdasd
-
-
-
-//    asdasdasd
-
     public function calcularVolumen(){
         $ancho = floatval($this->vehiculo_ancho);
         $largo = floatval($this->vehiculo_largo);
         $alto = floatval($this->vehiculo_alto);
 
-        $this->vehiculo_capacidad_volumen = ($ancho * $largo * $alto) / 3;
+        $this->vehiculo_capacidad_volumen = $ancho * $largo * $alto;
     }
 
     public function render(){
-        $listar_vehiculos = $this->vehiculo->listar_vehiculos_por_transportistas($this->id_transportistas, $this->search_vehiculos, $this->pagination_vehiculos);
-        return view('livewire.gestiontransporte.vehiculos', compact('listar_vehiculos'));
+        $listar_transportistas = $this->transportistas->listar_transportista_sin_id();
+        $listar_vehiculos = $this->vehiculo->listar_vehiculos_por_transportistas($this->search_vehiculos, $this->pagination_vehiculos);
+        return view('livewire.gestiontransporte.vehiculos', compact('listar_vehiculos', 'listar_transportistas'));
     }
-
 
     public function limpiar_campo_tipo_vehiculo(){
         $this->dispatch('limpiar_campo_tipo_vehiculo');
@@ -83,6 +75,7 @@ class Vehiculos extends Component
 
     public function clear_form_vehiculos(){
         $this->id_vehiculo = "";
+        $this->id_transportistas = "";
         $this->id_tipo_vehiculo = "";
         $this->vehiculo_placa = "";
         $this->vehiculo_capacidad_peso = "";
@@ -95,6 +88,7 @@ class Vehiculos extends Component
     public function edit_data($id){
         $vehiculoEdit = Vehiculo::find(base64_decode($id));
         if ($vehiculoEdit){
+            $this->id_transportistas = $vehiculoEdit->id_transportistas;
             $this->id_tipo_vehiculo = $vehiculoEdit->id_tipo_vehiculo;
             $this->vehiculo_placa = $vehiculoEdit->vehiculo_placa;
             $this->vehiculo_capacidad_peso = $vehiculoEdit->vehiculo_capacidad_peso;
@@ -123,23 +117,23 @@ class Vehiculos extends Component
                 'id_transportistas.required' => 'Debes seleccionar un transportista.',
                 'id_transportistas.integer' => 'El transportista debe ser un número entero.',
 
-                'id_tipo_vehiculo.required' => 'Debes seleccionar un tipo de vehiculo.',
-                'id_tipo_vehiculo.integer' => 'El tipo de vehiculo debe ser un número entero.',
+                'id_tipo_vehiculo.required' => 'Debes seleccionar un tipo de vehículo.',
+                'id_tipo_vehiculo.integer' => 'El tipo de vehículo debe ser un número entero.',
 
-                'vehiculo_placa.required' => 'La placa es obligatorio',
+                'vehiculo_placa.required' => 'La placa es obligatoria.',
                 'vehiculo_placa.string' => 'La placa debe ser una cadena de texto.',
 
-                'vehiculo_capacidad_peso.required' => 'La capacidad del peso del vehículo es obligatoria.',
-                'vehiculo_capacidad_peso.numeric' => 'La capacidad del peso del vehículo debe ser un valor numérico.',
+                'vehiculo_capacidad_peso.required' => 'La capacidad de peso del vehículo es obligatoria.',
+                'vehiculo_capacidad_peso.numeric' => 'La capacidad de peso del vehículo debe ser un valor numérico.',
 
-                'vehiculo_ancho.required' => 'El ancho del vehículo es obligatoria.',
+                'vehiculo_ancho.required' => 'El ancho del vehículo es obligatorio.',
                 'vehiculo_ancho.numeric' => 'El ancho del vehículo debe ser un valor numérico.',
 
-                'vehiculo_largo.required' => 'El largo del vehículo es obligatoria.',
+                'vehiculo_largo.required' => 'El largo del vehículo es obligatorio.',
                 'vehiculo_largo.numeric' => 'El largo del vehículo debe ser un valor numérico.',
 
-                'vehiculo_alto.required' => 'El alto del vehículo es obligatoria.',
-                'vehiculo_alto.numeric' => 'El alto del vehículo debe ser un valor numérico.',
+                'vehiculo_alto.required' => 'La altura del vehículo es obligatoria.',
+                'vehiculo_alto.numeric' => 'La altura del vehículo debe ser un valor numérico.',
 
                 'vehiculo_capacidad_volumen.required' => 'La capacidad de volumen del vehículo es obligatoria.',
                 'vehiculo_capacidad_volumen.numeric' => 'La capacidad de volumen del vehículo debe ser un valor numérico.',
@@ -189,6 +183,7 @@ class Vehiculos extends Component
                 DB::beginTransaction();
                 // Actualizar los datos del menú
                 $vehiculo_update = Vehiculo::findOrFail($this->id_vehiculo);
+                $vehiculo_update->id_transportistas = $this->id_transportistas;
                 $vehiculo_update->id_tipo_vehiculo = $this->id_tipo_vehiculo;
                 $vehiculo_update->vehiculo_placa = $this->vehiculo_placa;
                 $vehiculo_update->vehiculo_capacidad_peso = $this->vehiculo_capacidad_peso;
@@ -235,7 +230,6 @@ class Vehiculos extends Component
                 session()->flash('error_delete', 'No tiene permisos para cambiar los estados de este registro.');
                 return;
             }
-
 
             $this->validate([
                 'id_vehiculo' => 'required|integer',

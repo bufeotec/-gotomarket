@@ -13,9 +13,23 @@
                         <small class="text-primary">Información del Vehículo</small>
                         <hr class="mb-0">
                     </div>
-                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                        <label for="id_tipo_vehiculo" class="form-label">Tipo servicios (*)</label>
-                        <select class="form-control" name="id_tipo_vehiculo" id="id_tipo_vehiculo" wire:model="id_tipo_vehiculo">
+
+                    <div class="col-lg-6 col-md-4 col-sm-12 mb-3">
+                        <label for="id_transportistas" class="form-label">Lista de transportistas (*)</label>
+                        <select class="form-select" name="id_tipo_vehiculo" id="id_transportistas" wire:model="id_transportistas">
+                            <option value="">Seleccionar...</option>
+                            @foreach($listar_transportistas as $lt)
+                                <option value="{{$lt->id_transportistas}}">{{$lt->transportista_nom_comercial}}</option>
+                            @endforeach
+                        </select>
+                        @error('id_transportistas')
+                        <span class="message-error">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="col-lg-6 col-md-4 col-sm-12 mb-3">
+                        <label for="id_tipo_vehiculo" class="form-label">Tipo de servicios (*)</label>
+                        <select class="form-select" name="id_tipo_vehiculo" id="id_tipo_vehiculo" wire:model="id_tipo_vehiculo">
                             <option value="">Seleccionar...</option>
                             @foreach($listar_tipo_vehiculo as $lpv)
                                 <option value="{{$lpv->id_tipo_vehiculo}}">{{$lpv->tipo_vehiculo_concepto}}</option>
@@ -26,7 +40,7 @@
                         @enderror
                     </div>
 
-                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                    <div class="col-lg-6 col-md-4 col-sm-12 mb-3">
                         <label for="vehiculo_placa" class="form-label">Placa (*)</label>
                         <x-input-general  type="text" id="vehiculo_placa" wire:model="vehiculo_placa"/>
                         @error('vehiculo_placa')
@@ -34,8 +48,8 @@
                         @enderror
                     </div>
 
-                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                        <label for="vehiculo_capacidad_peso" class="form-label">Capacidad Peso (*)</label>
+                    <div class="col-lg-6 col-md-4 col-sm-12 mb-3">
+                        <label for="vehiculo_capacidad_peso" class="form-label">Capacidad de peso (*)</label>
                         <x-input-general  type="text" id="vehiculo_capacidad_peso" wire:model="vehiculo_capacidad_peso"/>
                         @error('vehiculo_capacidad_peso')
                         <span class="message-error">{{ $message }}</span>
@@ -66,17 +80,23 @@
                         @enderror
                     </div>
 
-                    <div class="col-lg-12 col-md-4 col-sm-12 mb-3">
-                        <label for="vehiculo_capacidad_volumen" class="form-label">Capacidad Volumen (*)</label>
-                        <x-input-general type="text" id="vehiculo_capacidad_volumen" wire:model="vehiculo_capacidad_volumen" readonly/>
-                        @error('vehiculo_capacidad_volumen')
-                        <span class="message-error">{{ $message }}</span>
-                        @enderror
-                    </div>
+                    @if($vehiculo_capacidad_volumen > 0)
+                        <div class="col-lg-12 col-md-4 col-sm-12 mb-3">
+                            <small class="d-flex justify-content-end mt-4">Capacidad de Volumen</small>
+                            <div class="d-flex justify-content-end align-items-center">
+                                <h3 class="numero_vehiculo">
+                                    {{$vehiculo_capacidad_volumen}} <span class="span_vehiculo">(m³)</span>
+                                </h3>
+                            </div>
+                            @error('vehiculo_capacidad_volumen')
+                            <span class="message-error">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    @endif
 
                     <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-end">
                         <button type="button" data-bs-dismiss="modal" class="btn btn-secondary">Cerrar</button>
-                        <button type="submit" class="btn btn-success text-white">Guardar Registros</button>
+                        <button type="submit" class="btn btn-success text-white">Guardar Registro</button>
                     </div>
                 </div>
             </form>
@@ -125,13 +145,13 @@
                 <x-slot name="icons">
                     fa-solid fa-plus
                 </x-slot>
-                Agregar Tipo Vehiculos
+                Agregar tipo de vehículos
             </x-btn-export>
             <x-btn-export wire:click="clear_form_vehiculos" class="bg-success text-white" data-bs-toggle="modal" data-bs-target="#modalVehiculos" >
                 <x-slot name="icons">
                     fa-solid fa-plus
                 </x-slot>
-                Agregar Vehiculo
+                Agregar vehículo
             </x-btn-export>
         </div>
     </div>
@@ -154,7 +174,7 @@
                                 <th>Transportista</th>
                                 <th>Tipo de vehículo</th>
                                 <th>Placa</th>
-                                <th>Peso</th>
+                                <th>Capacidad de peso</th>
                                 <th>Ancho</th>
                                 <th>Largo</th>
                                 <th>Alto</th>

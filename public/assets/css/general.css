@@ -327,3 +327,15 @@
 @media (min-width: 1201px) {
 
 }
+
+.numero_vehiculo{
+    color: var(--primary-color-goto);
+    font-family: Arial, sans-serif;
+    font-size: 2rem;
+    font-weight: bold;
+    padding: 10px 20px;
+    border-radius: 15px 0px;
+}
+.span_vehiculo {
+    font-size: 1rem;
+}

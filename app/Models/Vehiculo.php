@@ -19,12 +19,11 @@ class Vehiculo extends Model
         $this->logs = new Logs();
     }
 
-    public function listar_vehiculos_por_transportistas($id,$search,$pagination,$order = 'asc'){
+    public function listar_vehiculos_por_transportistas($search,$pagination,$order = 'asc'){
         try {
             $query = DB::table('vehiculos as v')
                 ->join('transportistas as t','v.id_transportistas','=','t.id_transportistas')
                 ->join('tipo_vehiculos as tv','v.id_tipo_vehiculo','=','tv.id_tipo_vehiculo')
-                ->where('v.id_transportistas', '=', $id)
                 ->where(function($q) use ($search) {
                     $q->where('v.vehiculo_placa', 'like', '%' . $search . '%')
                         ->orWhere('v.vehiculo_capacidad_peso', 'like', '%' . $search . '%')

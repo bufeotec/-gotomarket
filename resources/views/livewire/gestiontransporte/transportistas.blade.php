@@ -14,7 +14,7 @@
                         <hr class="mb-0">
                     </div>
                     <div class="col-lg-4 col-md-12 col-sm-12 mb-3">
-                        <label for="id_tipo_servicios" class="form-label">Tipo servicios (*)</label>
+                        <label for="id_tipo_servicios" class="form-label">Tipo de servicios (*)</label>
                         <select class="form-select" name="id_tipo_servicios" id="id_tipo_servicios" wire:model="id_tipo_servicios">
                             <option value="" disabled>Seleccionar...</option>
                             @foreach($listar_servicios as $li)
@@ -28,7 +28,7 @@
                     <div class="col-lg-8 col-md-12 col-sm-12 mb-3">
                         <div class="" wire:ignore>
                             <label for="id_ubigeo" class="form-label">Ubigeo (*)</label>
-                            <select class="form-control" name="id_ubigeo" id="id_ubigeo" wire:model="id_ubigeo">
+                            <select class="form-select" name="id_ubigeo" id="id_ubigeo" wire:model="id_ubigeo">
                                 <option value="" >Seleccionar...</option>
                                 @foreach($listar_ubigeos as $lu)
                                     <option value="{{$lu->id_ubigeo}}">{{$lu->ubigeo_departamento . ' - ' . $lu->ubigeo_provincia . ' - ' . $lu->ubigeo_distrito}}</option>
@@ -113,10 +113,6 @@
                             <span class="message-error">{{ $message }}</span>
                         @enderror
                     </div>
-
-
-
-
 
                     <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-end">
                         <button type="button" data-bs-dismiss="modal" class="btn btn-secondary">Cerrar</button>
@@ -207,7 +203,7 @@
                                 <th>Correo</th>
                                 <th>Teléfono</th>
                                 <th>Cargo</th>
-                                <th>Vehiculo</th>
+{{--                                <th>Vehiculo</th>--}}
                                 <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
@@ -227,15 +223,15 @@
                                         <td>{{ $tr->transportista_correo ?? '-' }}</td>
                                         <td>{{ $tr->transportista_telefono ?? '-' }}</td>
                                         <td>{{$tr->transportista_cargo}}</td>
-                                        <td>
-                                            @php
-                                                $vehiculos = \Illuminate\Support\Facades\DB::table('vehiculos')
-                                                ->where([['vehiculo_estado','=',1],['id_transportistas','=',$tr->id_transportistas]])->count();
-                                            @endphp
-                                            <a href="{{route('Gestiontransporte.vehiculos',['data'=>base64_encode($tr->id_transportistas)])}}" class="btn btn-warning btn-sm text-white">
-                                                {{$vehiculos}}
-                                            </a>
-                                        </td>
+{{--                                        <td>--}}
+{{--                                            @php--}}
+{{--                                                $vehiculos = \Illuminate\Support\Facades\DB::table('vehiculos')--}}
+{{--                                                ->where([['vehiculo_estado','=',1],['id_transportistas','=',$tr->id_transportistas]])->count();--}}
+{{--                                            @endphp--}}
+{{--                                            <a href="{{route('Gestiontransporte.vehiculos',['data'=>base64_encode($tr->id_transportistas)])}}" class="btn btn-warning btn-sm text-white">--}}
+{{--                                                {{$vehiculos}}--}}
+{{--                                            </a>--}}
+{{--                                        </td>--}}
                                         <td>
                                             <span class="font-bold badge {{$tr->transportista_estado == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
                                                 {{$tr->transportista_estado == 1 ? 'Habilitado ' : 'Desabilitado'}}
