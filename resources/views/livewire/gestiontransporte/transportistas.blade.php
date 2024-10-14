@@ -114,9 +114,18 @@
                         @enderror
                     </div>
 
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        @if (session()->has('error'))
+                            <div class="alert alert-danger alert-dismissible show fade">
+                                {{ session('error') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        @endif
+                    </div>
+
                     <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-end">
                         <button type="button" data-bs-dismiss="modal" class="btn btn-secondary">Cerrar</button>
-                        <button type="submit" class="btn btn-success text-white">Guardar Registros</button>
+                        <button type="submit" class="btn btn-success text-white">Guardar Registro</button>
                     </div>
                 </div>
             </form>
@@ -200,6 +209,7 @@
                                 <th>RUC</th>
                                 <th>Razón social</th>
                                 <th>Nombre comercial</th>
+                                <th>Contacto</th>
                                 <th>Correo</th>
                                 <th>Teléfono</th>
                                 <th>Cargo</th>
@@ -220,6 +230,7 @@
                                         <td>{{$tr->transportista_ruc}}</td>
                                         <td>{{$tr->transportista_razon_social}}</td>
                                         <td>{{$tr->transportista_nom_comercial}}</td>
+                                        <td>{{$tr->transportista_contacto}}</td>
                                         <td>{{ $tr->transportista_correo ?? '-' }}</td>
                                         <td>{{ $tr->transportista_telefono ?? '-' }}</td>
                                         <td>{{$tr->transportista_cargo}}</td>

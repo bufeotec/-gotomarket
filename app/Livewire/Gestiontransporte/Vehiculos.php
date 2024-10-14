@@ -177,7 +177,7 @@ class Vehiculos extends Component
                 }
             } else {
                 if (!Gate::allows('update_vehiculos')) {
-                    session()->flash('error', 'No tiene permisos para actualizar los menús.');
+                    session()->flash('error', 'No tiene permisos para actualizar este registro.');
                     return;
                 }
                 DB::beginTransaction();
@@ -198,7 +198,7 @@ class Vehiculos extends Component
                 }
                 DB::commit();
                 $this->dispatch('hideModal');
-                session()->flash('success', 'Menú actualizado correctamente.');
+                session()->flash('success', 'Registro actualizado correctamente.');
             }
         } catch (\Illuminate\Validation\ValidationException $e) {
             $this->setErrorBag($e->validator->errors());
@@ -255,7 +255,7 @@ class Vehiculos extends Component
                 }
             } else {
                 DB::rollBack();
-                session()->flash('error_delete', 'No se pudo cambiar el estado del menú.');
+                session()->flash('error_delete', 'No se pudo cambiar el estado del registro.');
                 return;
             }
 

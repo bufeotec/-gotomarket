@@ -73,12 +73,12 @@ class Tipovehiculos extends Component
 
                 } else {
                     DB::rollBack();
-                    session()->flash('error', 'Ocurrió un error al guardar el menú.');
+                    session()->flash('error', 'Ocurrió un error al guardar el registro.');
                     return;
                 }
             } else {
                 if (!Gate::allows('update_menus')) {
-                    session()->flash('error', 'No tiene permisos para actualizar los menús.');
+                    session()->flash('error', 'No tiene permisos para actualizar el registro.');
                     return;
                 }
 

@@ -28,7 +28,7 @@
                     </div>
 
                     <div class="col-lg-6 col-md-4 col-sm-12 mb-3">
-                        <label for="id_tipo_vehiculo" class="form-label">Tipo de servicios (*)</label>
+                        <label for="id_tipo_vehiculo" class="form-label">Tipo de vehículo (*)</label>
                         <select class="form-select" name="id_tipo_vehiculo" id="id_tipo_vehiculo" wire:model="id_tipo_vehiculo">
                             <option value="">Seleccionar...</option>
                             @foreach($listar_tipo_vehiculo as $lpv)
@@ -94,6 +94,15 @@
                         </div>
                     @endif
 
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        @if (session()->has('error'))
+                            <div class="alert alert-danger alert-dismissible show fade">
+                                {{ session('error') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        @endif
+                    </div>
+
                     <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-end">
                         <button type="button" data-bs-dismiss="modal" class="btn btn-secondary">Cerrar</button>
                         <button type="submit" class="btn btn-success text-white">Guardar Registro</button>
@@ -151,7 +160,7 @@
                 <x-slot name="icons">
                     fa-solid fa-plus
                 </x-slot>
-                Agregar vehículo
+                Agregar un vehículo
             </x-btn-export>
         </div>
     </div>

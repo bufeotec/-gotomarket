@@ -186,60 +186,77 @@ class Transportistas extends Component
                     session()->flash('error', 'No tiene permisos para crear.');
                     return;
                 }
-                $microtime = microtime(true);
-                DB::beginTransaction();
-                $transportistas_save = new Transportista();
-                $transportistas_save->id_users = Auth::id();
-                $transportistas_save->id_tipo_servicios = $this->id_tipo_servicios;
-                $transportistas_save->id_ubigeo = $this->id_ubigeo;
-                $transportistas_save->transportista_ruc = $this->transportista_ruc;
-                $transportistas_save->transportista_razon_social = $this->transportista_razon_social;
-                $transportistas_save->transportista_nom_comercial = $this->transportista_nom_comercial;
-                $transportistas_save->transportista_direccion = $this->transportista_direccion;
-                $transportistas_save->transportista_correo = !empty($this->transportista_correo) ? $this->transportista_correo : null;
-                $transportistas_save->transportista_telefono = !empty($this->transportista_telefono) ? $this->transportista_telefono : null;
-                $transportistas_save->transportista_contacto = !empty($this->transportista_contacto) ? $this->transportista_contacto : null;
-                $transportistas_save->transportista_cargo = $this->transportista_cargo;
-                $transportistas_save->transportista_estado = 1;
-                $transportistas_save->transportista_microtime = $microtime;
 
-                if ($transportistas_save->save()) {
-                    DB::commit();
-                    // Emitir el evento al componente sidebar
-                    $this->dispatch('hideModal');
-                    session()->flash('success', 'Registro guardado correctamente.');
+                $validar = DB::table('transportistas')->where('transportista_ruc', '=',$this->transportista_ruc)->exists();
+                if (!$validar){
+                    $microtime = microtime(true);
+                    DB::beginTransaction();
+                    $transportistas_save = new Transportista();
+                    $transportistas_save->id_users = Auth::id();
+                    $transportistas_save->id_tipo_servicios = $this->id_tipo_servicios;
+                    $transportistas_save->id_ubigeo = $this->id_ubigeo;
+                    $transportistas_save->transportista_ruc = $this->transportista_ruc;
+                    $transportistas_save->transportista_razon_social = $this->transportista_razon_social;
+                    $transportistas_save->transportista_nom_comercial = $this->transportista_nom_comercial;
+                    $transportistas_save->transportista_direccion = $this->transportista_direccion;
+                    $transportistas_save->transportista_correo = !empty($this->transportista_correo) ? $this->transportista_correo : null;
+                    $transportistas_save->transportista_telefono = !empty($this->transportista_telefono) ? $this->transportista_telefono : null;
+                    $transportistas_save->transportista_contacto = !empty($this->transportista_contacto) ? $this->transportista_contacto : null;
+                    $transportistas_save->transportista_cargo = $this->transportista_cargo;
+                    $transportistas_save->transportista_estado = 1;
+                    $transportistas_save->transportista_microtime = $microtime;
 
-                } else {
-                    DB::rollBack();
-                    session()->flash('error', 'Ocurrió un error al guardar el menú.');
+                    if ($transportistas_save->save()) {
+                        DB::commit();
+                        // Emitir el evento al componente sidebar
+                        $this->dispatch('hideModal');
+                        session()->flash('success', 'Registro guardado correctamente.');
+
+                    } else {
+                        DB::rollBack();
+                        session()->flash('error', 'Ocurrió un error al guardar el registro.');
+                        return;
+                    }
+                } else{
+                    session()->flash('error', 'El RUC ingresado ya está registrado. Por favor, verifica los datos o ingresa un RUC diferente.');
                     return;
                 }
             } else {
                 if (!Gate::allows('update_transportistas')) {
-                    session()->flash('error', 'No tiene permisos para actualizar los menús.');
+                    session()->flash('error', 'No tiene permisos para actualizar este registro.');
                     return;
                 }
-                DB::beginTransaction();
-                // Actualizar los datos del menú
-                $transportistas_update = Transportista::findOrFail($this->id_transportistas);
-                $transportistas_update->id_tipo_servicios = $this->id_tipo_servicios;
-                $transportistas_update->id_ubigeo = $this->id_ubigeo;
-                $transportistas_update->transportista_ruc = $this->transportista_ruc;
-                $transportistas_update->transportista_razon_social = $this->transportista_razon_social;
-                $transportistas_update->transportista_nom_comercial = $this->transportista_nom_comercial;
-                $transportistas_update->transportista_direccion = $this->transportista_direccion;
-                $transportistas_update->transportista_correo = !empty($this->transportista_correo) ? $this->transportista_correo : null;
-                $transportistas_update->transportista_telefono = !empty($this->transportista_telefono) ? $this->transportista_telefono : null;
-                $transportistas_update->transportista_contacto = !empty($this->transportista_contacto) ? $this->transportista_contacto : null;
-                $transportistas_update->transportista_cargo = $this->transportista_cargo;
 
-                if (!$transportistas_update->save()) {
-                    session()->flash('error', 'No se pudo actualizar el menú.');
+                $validar_update = DB::table('transportistas')
+                    ->where('id_transportistas', '<>',$this->id_transportistas)
+                    ->where('transportista_ruc', '=',$this->transportista_ruc)
+                    ->exists();
+                if (!$validar_update){
+                    DB::beginTransaction();
+                    // Actualizar los datos del menú
+                    $transportistas_update = Transportista::findOrFail($this->id_transportistas);
+                    $transportistas_update->id_tipo_servicios = $this->id_tipo_servicios;
+                    $transportistas_update->id_ubigeo = $this->id_ubigeo;
+                    $transportistas_update->transportista_ruc = $this->transportista_ruc;
+                    $transportistas_update->transportista_razon_social = $this->transportista_razon_social;
+                    $transportistas_update->transportista_nom_comercial = $this->transportista_nom_comercial;
+                    $transportistas_update->transportista_direccion = $this->transportista_direccion;
+                    $transportistas_update->transportista_correo = !empty($this->transportista_correo) ? $this->transportista_correo : null;
+                    $transportistas_update->transportista_telefono = !empty($this->transportista_telefono) ? $this->transportista_telefono : null;
+                    $transportistas_update->transportista_contacto = !empty($this->transportista_contacto) ? $this->transportista_contacto : null;
+                    $transportistas_update->transportista_cargo = $this->transportista_cargo;
+
+                    if (!$transportistas_update->save()) {
+                        session()->flash('error', 'No se pudo actualizar el registro.');
+                        return;
+                    }
+                    DB::commit();
+                    $this->dispatch('hideModal');
+                    session()->flash('success', 'Registro actualizado correctamente.');
+                } else{
+                    session()->flash('error', 'El RUC ingresado ya está registrado. Por favor, verifica los datos o ingresa un RUC diferente.');
                     return;
                 }
-                DB::commit();
-                $this->dispatch('hideModal');
-                session()->flash('success', 'Menú actualizado correctamente.');
             }
         } catch (\Illuminate\Validation\ValidationException $e) {
             $this->setErrorBag($e->validator->errors());
@@ -297,7 +314,7 @@ class Transportistas extends Component
                 }
             } else {
                 DB::rollBack();
-                session()->flash('error_delete', 'No se pudo cambiar el estado del menú.');
+                session()->flash('error_delete', 'No se pudo cambiar el estado del registro.');
                 return;
             }
 
