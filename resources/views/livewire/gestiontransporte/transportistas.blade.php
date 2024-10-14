@@ -91,7 +91,7 @@
                         <hr class="mb-0">
                     </div>
                     <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                        <label for="transportista_contacto" class="form-label">Contacto</label>
+                        <label for="transportista_contacto" class="form-label">Contacto (*)</label>
                         <x-input-general  type="text" id="transportista_contacto" wire:model="transportista_contacto"/>
                         @error('transportista_contacto')
                         <span class="message-error">{{ $message }}</span>
@@ -275,7 +275,7 @@
             </div>
         </x-slot>
     </x-card-general-view>
-{{--    {{ $menus->links(data: ['scrollTo' => false]) }}--}}
+    {{ $transportistas->links(data: ['scrollTo' => false]) }}
     <style>
         .select2-container--default .select2-selection--single {
             display: block;

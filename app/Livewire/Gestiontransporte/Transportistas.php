@@ -142,7 +142,7 @@ class Transportistas extends Component
                 'transportista_direccion' => 'required|string',
                 'transportista_correo' => 'nullable|email|max:200',
                 'transportista_telefono' => 'nullable|size:9',
-                'transportista_contacto' => 'nullable|string',
+                'transportista_contacto' => 'required|string',
                 'transportista_cargo' => 'required|string',
                 'transportista_estado' => 'nullable|integer',
                 'id_transportistas' => 'nullable|integer',
@@ -170,6 +170,7 @@ class Transportistas extends Component
 
                 'transportista_telefono.size' => 'El número de teléfono debe tener exactamente 9 caracteres.',
 
+                'transportista_contacto.required' => 'El contacto es obligatorio.',
                 'transportista_contacto.string' => 'El contacto debe ser una cadena de texto.',
 
                 'transportista_cargo.required' => 'El cargo es obligatorio.',
