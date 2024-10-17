@@ -7,7 +7,6 @@ use App\Models\General;
 use App\Models\Logs;
 use App\Models\Menu;
 use App\Models\Transportista;
-use App\Models\TipoServicio;
 use App\Models\Ubigeo;
 use App\Models\Vehiculo;
 use Illuminate\Support\Facades\Auth;
@@ -35,7 +34,7 @@ class Transportistas extends Component
 
     /* ATRIBUTOS PARA GUARDAR TRANSPORTISTAS */
     public $id_transportistas = "";
-    public $id_tipo_servicios = "";
+//    public $id_tipo_servicios = "";
     public $id_ubigeo = "";
     public $transportista_ruc = "";
     public $transportista_razon_social = "";
@@ -49,13 +48,8 @@ class Transportistas extends Component
     public $messageDeleteTranspor = "";
     public $messageConsulta = "";
 
-    public $listar_servicios = array();
 //    public $urlActual;
     /* FIN  ATRIBUTOS PARA GUARDAR TRANSPORTISTAS */
-    public function mount() {
-        $this->listarServiciosSelect();
-//        $this->urlActual = explode('.', Request::route()->getName());
-    }
 
     public function __construct(){
         $this->logs = new Logs();
@@ -64,11 +58,7 @@ class Transportistas extends Component
         $this->general = new General();
         $this->vehiculo = new Vehiculo();
     }
-
-    #[On('refresh_select_servicios')]
-    public function listarServiciosSelect(){
-        $this->listar_servicios = TipoServicio::where('tipo_servicio_estado', 1)->get();
-    }
+//
     public function render(){
         $listar_ubigeos = $this->ubigeo->listar_ubigeos();
         $transportistas = $this->transportistas->listar_transportistas($this->search_transportistas,$this->pagination_transportistas);
@@ -77,7 +67,7 @@ class Transportistas extends Component
 
     public function clear_form_transportistas(){
         $this->id_transportistas = "";
-        $this->id_tipo_servicios = "";
+//        $this->id_tipo_servicios = "";
         $this->id_ubigeo = "";
         $this->transportista_ruc = "";
         $this->transportista_razon_social = "";
@@ -111,7 +101,7 @@ class Transportistas extends Component
     public function edit_data($id){
         $transportistasEdit = Transportista::find(base64_decode($id));
         if ($transportistasEdit){
-            $this->id_tipo_servicios = $transportistasEdit->id_tipo_servicios;
+//            $this->id_tipo_servicios = $transportistasEdit->id_tipo_servicios;
             $this->id_ubigeo = $transportistasEdit->id_ubigeo;
             $this->transportista_ruc = $transportistasEdit->transportista_ruc;
             $this->transportista_razon_social = $transportistasEdit->transportista_razon_social;
@@ -134,7 +124,6 @@ class Transportistas extends Component
     public function saveTransportista(){
         try {
             $this->validate([
-                'id_tipo_servicios' => 'required|integer',
                 'id_ubigeo' => 'required|integer',
                 'transportista_ruc' => 'required|size:11',
                 'transportista_razon_social' => 'required|string',
@@ -147,9 +136,6 @@ class Transportistas extends Component
                 'transportista_estado' => 'nullable|integer',
                 'id_transportistas' => 'nullable|integer',
             ], [
-                'id_tipo_servicios.required' => 'Debes seleccionar un servicio.',
-                'id_tipo_servicios.integer' => 'El servicio debe ser un número entero.',
-
                 'id_ubigeo.required' => 'Debes seleccionar un ubigeo.',
                 'id_ubigeo.integer' => 'El ubigeo debe ser un número entero.',
 
@@ -193,7 +179,6 @@ class Transportistas extends Component
                     DB::beginTransaction();
                     $transportistas_save = new Transportista();
                     $transportistas_save->id_users = Auth::id();
-                    $transportistas_save->id_tipo_servicios = $this->id_tipo_servicios;
                     $transportistas_save->id_ubigeo = $this->id_ubigeo;
                     $transportistas_save->transportista_ruc = $this->transportista_ruc;
                     $transportistas_save->transportista_razon_social = $this->transportista_razon_social;
@@ -235,7 +220,6 @@ class Transportistas extends Component
                     DB::beginTransaction();
                     // Actualizar los datos del menú
                     $transportistas_update = Transportista::findOrFail($this->id_transportistas);
-                    $transportistas_update->id_tipo_servicios = $this->id_tipo_servicios;
                     $transportistas_update->id_ubigeo = $this->id_ubigeo;
                     $transportistas_update->transportista_ruc = $this->transportista_ruc;
                     $transportistas_update->transportista_razon_social = $this->transportista_razon_social;

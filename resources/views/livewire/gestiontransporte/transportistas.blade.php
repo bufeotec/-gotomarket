@@ -1,6 +1,4 @@
 <div>
-    @livewire('gestiontransporte.servicios')
-
 {{--    MODAL REGISTRO TRANSPORTISTAS--}}
     <x-modal-general  wire:ignore.self >
         <x-slot name="id_modal">modalTransportistas</x-slot>
@@ -12,18 +10,6 @@
                     <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
                         <small class="text-primary">Información del Transportista</small>
                         <hr class="mb-0">
-                    </div>
-                    <div class="col-lg-4 col-md-12 col-sm-12 mb-3">
-                        <label for="id_tipo_servicios" class="form-label">Tipo de servicios (*)</label>
-                        <select class="form-select" name="id_tipo_servicios" id="id_tipo_servicios" wire:model="id_tipo_servicios">
-                            <option value="" disabled>Seleccionar...</option>
-                            @foreach($listar_servicios as $li)
-                                <option value="{{$li->id_tipo_servicios}}">{{$li->tipo_servicio_concepto}}</option>
-                            @endforeach
-                        </select>
-                        @error('id_tipo_servicios')
-                            <span class="message-error">{{ $message }}</span>
-                        @enderror
                     </div>
                     <div class="col-lg-8 col-md-12 col-sm-12 mb-3">
                         <div class="" wire:ignore>
@@ -40,7 +26,7 @@
                         @enderror
                     </div>
 
-                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                    <div class="col-lg-6 col-md-4 col-sm-12 mb-3">
                         <label for="transportista_ruc" class="form-label">RUC (*)</label>
                         <x-input-general  type="text" id="transportista_ruc" wire:model="transportista_ruc" wire:change="consultDocument"/>
                         <div wire:loading wire:target="consultDocument">
@@ -51,11 +37,11 @@
                         @endif
 
                         @error('transportista_ruc')
-                            <span class="message-error">{{ $message }}</span>
+                        <span class="message-error">{{ $message }}</span>
                         @enderror
                     </div>
 
-                    <div class="col-lg-8 col-md-8 col-sm-12 mb-3">
+                    <div class="col-lg-6 col-md-8 col-sm-12 mb-3">
                         <label for="transportista_razon_social" class="form-label">Razón social (*)</label>
                         <x-input-general  type="text" id="transportista_razon_social" wire:model="transportista_razon_social"/>
                         @error('transportista_razon_social')
@@ -63,15 +49,7 @@
                         @enderror
                     </div>
 
-                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                        <label for="transportista_cargo" class="form-label">Cargo (*)</label>
-                        <x-input-general  type="text" id="transportista_cargo" wire:model="transportista_cargo"/>
-                        @error('transportista_cargo')
-                        <span class="message-error">{{ $message }}</span>
-                        @enderror
-                    </div>
-
-                    <div class="col-lg-8 col-md-12 col-sm-12 mb-3">
+                    <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
                         <label for="transportista_nom_comercial" class="form-label">Nombre comercial (*)</label>
                         <x-input-general  type="text" id="transportista_nom_comercial" wire:model="transportista_nom_comercial"/>
                         @error('transportista_nom_comercial')
@@ -79,7 +57,7 @@
                         @enderror
                     </div>
 
-                    <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                    <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
                         <label for="transportista_direccion" class="form-label">Dirección (*)</label>
                         <x-input-general  type="text" id="transportista_direccion" wire:model="transportista_direccion"/>
                         @error('transportista_direccion')
@@ -90,7 +68,7 @@
                         <small class="text-primary">Información de Contacto</small>
                         <hr class="mb-0">
                     </div>
-                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                    <div class="col-lg-6 col-md-4 col-sm-12 mb-3">
                         <label for="transportista_contacto" class="form-label">Contacto (*)</label>
                         <x-input-general  type="text" id="transportista_contacto" wire:model="transportista_contacto"/>
                         @error('transportista_contacto')
@@ -98,7 +76,15 @@
                         @enderror
                     </div>
 
-                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                    <div class="col-lg-6 col-md-4 col-sm-12 mb-3">
+                        <label for="transportista_cargo" class="form-label">Cargo (*)</label>
+                        <x-input-general  type="text" id="transportista_cargo" wire:model="transportista_cargo"/>
+                        @error('transportista_cargo')
+                        <span class="message-error">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="col-lg-6 col-md-4 col-sm-12 mb-3">
                         <label for="transportista_correo" class="form-label">Correo</label>
                         <x-input-general  type="text" id="transportista_correo" wire:model="transportista_correo"/>
                         @error('transportista_correo')
@@ -106,7 +92,7 @@
                         @enderror
                     </div>
 
-                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                    <div class="col-lg-6 col-md-4 col-sm-12 mb-3">
                         <label for="transportista_telefono" class="form-label">Teléfono</label>
                         <x-input-general  type="text" onkeyup="validar_numeros(this.id)" id="transportista_telefono" wire:model="transportista_telefono"/>
                         @error('transportista_telefono')
@@ -174,12 +160,6 @@
             <x-select-filter wire:model.live="pagination_transportistas" />
         </div>
         <div class="col-lg-6 col-md-6 col-sm-12 text-end">
-            <x-btn-export class="bg-secondary text-white" wire:click="limpiar_nombre_convenio" data-bs-toggle="modal" data-bs-target="#modalServicios">
-                <x-slot name="icons">
-                    fa-solid fa-plus
-                </x-slot>
-                Agregar Servicios
-            </x-btn-export>
             <x-btn-export wire:click="clear_form_transportistas" class="bg-success text-white" data-bs-toggle="modal" data-bs-target="#modalTransportistas" >
                 <x-slot name="icons">
                     fa-solid fa-plus
@@ -204,7 +184,6 @@
                         <x-slot name="thead">
                             <tr>
                                 <th>N°</th>
-                                <th>Tipo de servicio</th>
                                 <th>Ubigeo</th>
                                 <th>RUC</th>
                                 <th>Razón social</th>
@@ -213,7 +192,6 @@
                                 <th>Correo</th>
                                 <th>Teléfono</th>
                                 <th>Cargo</th>
-{{--                                <th>Vehiculo</th>--}}
                                 <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
@@ -225,7 +203,6 @@
                                 @foreach($transportistas as $tr)
                                     <tr>
                                         <td>{{$conteo}}</td>
-                                        <td>{{$tr->tipo_servicio_concepto}}</td>
                                         <td>{{$tr->ubigeo_departamento}}</td>
                                         <td>{{$tr->transportista_ruc}}</td>
                                         <td>{{$tr->transportista_razon_social}}</td>
@@ -234,15 +211,6 @@
                                         <td>{{ $tr->transportista_correo ?? '-' }}</td>
                                         <td>{{ $tr->transportista_telefono ?? '-' }}</td>
                                         <td>{{$tr->transportista_cargo}}</td>
-{{--                                        <td>--}}
-{{--                                            @php--}}
-{{--                                                $vehiculos = \Illuminate\Support\Facades\DB::table('vehiculos')--}}
-{{--                                                ->where([['vehiculo_estado','=',1],['id_transportistas','=',$tr->id_transportistas]])->count();--}}
-{{--                                            @endphp--}}
-{{--                                            <a href="{{route('Gestiontransporte.vehiculos',['data'=>base64_encode($tr->id_transportistas)])}}" class="btn btn-warning btn-sm text-white">--}}
-{{--                                                {{$vehiculos}}--}}
-{{--                                            </a>--}}
-{{--                                        </td>--}}
                                         <td>
                                             <span class="font-bold badge {{$tr->transportista_estado == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
                                                 {{$tr->transportista_estado == 1 ? 'Habilitado ' : 'Desabilitado'}}

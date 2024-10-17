@@ -4,6 +4,7 @@ use App\Http\Controllers\LoginController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ConfigurationController;
 use App\Http\Controllers\GestiontransporteController;
+use App\Http\Controllers\RegistrofleteController;
 use App\Http\Controllers\IntranetController;
 
 route::get('/phpinfo', function(){
@@ -39,4 +40,10 @@ Route::prefix('Gestiontransporte')->middleware('auth')->group(function () {
     /* TRANSPORTISTAS */
     route::get('/transportistas',[GestiontransporteController::class ,'transportistas'])->name('Gestiontransporte.transportistas')->middleware('verifyUserStatus')->middleware('can:transportistas');
     route::get('/vehiculos',[GestiontransporteController::class ,'vehiculos'])->name('Gestiontransporte.vehiculos')->middleware('verifyUserStatus')->middleware('can:vehiculos');
+});
+
+Route::prefix('Registroflete')->middleware('auth')->group(function () {
+    /* FLETES */
+    route::get('/fletes',[RegistrofleteController::class ,'fletes'])->name('Registroflete.fletes')->middleware('verifyUserStatus')->middleware('can:fletes');
+    route::get('/tarifario',[RegistrofleteController::class ,'tarifario'])->name('Registroflete.tarifario')->middleware('verifyUserStatus')->middleware('can:tarifario');
 });

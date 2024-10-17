@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::create('transportistas', function (Blueprint $table) {
             $table->id('id_transportistas');
             $table->foreignId('id_users')->references('id_users')->on('users');
-            $table->foreignId('id_tipo_servicios')->references('id_tipo_servicios')->on('tipo_servicios');
             $table->foreignId('id_ubigeo')->references('id_ubigeo')->on('ubigeos');
             $table->string('transportista_ruc');
             $table->string('transportista_razon_social');

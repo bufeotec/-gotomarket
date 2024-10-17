@@ -24,15 +24,12 @@ class Transportista extends Model
         try {
 
             $query = DB::table('transportistas as t')
-                ->join('tipo_servicios as ts','t.id_tipo_servicios','=','ts.id_tipo_servicios')
                 ->join('ubigeos as u','t.id_ubigeo','=','u.id_ubigeo')
                 ->where(function($q) use ($search) {
                     $q->where('t.transportista_ruc', 'like', '%' . $search . '%')
                         ->orWhere('t.transportista_razon_social', 'like', '%' . $search . '%')
-                        ->orWhere('ts.tipo_servicio_concepto', 'like', '%' . $search . '%')
                         ->orWhereNull('t.transportista_ruc')
-                        ->orWhereNull('t.transportista_razon_social')
-                        ->orWhereNull('ts.tipo_servicio_concepto');
+                        ->orWhereNull('t.transportista_razon_social');
                 })->orderBy('t.id_transportistas', $order);
 
             $result = $query->paginate($pagination);
