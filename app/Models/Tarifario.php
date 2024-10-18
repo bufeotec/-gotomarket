@@ -24,7 +24,7 @@ class Tarifario extends Model
             $query = DB::table('tarifarios as t')
                 ->join('transportistas as tr','t.id_transportistas','=','tr.id_transportistas')
                 ->join('tipo_servicios as ts','t.id_tipo_servicio','=','ts.id_tipo_servicios')
-                ->join('ubigeos as u','t.id_ubigeo_salida','=','u.id_ubigeo')
+                ->leftJoin('ubigeos as u','t.id_ubigeo_salida','=','u.id_ubigeo')
                 ->where('t.id_transportistas', '=', $id)
                 ->where(function($q) use ($search) {
                     $q->where('t.tarifa_monto', 'like', '%' . $search . '%')

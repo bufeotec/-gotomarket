@@ -16,8 +16,8 @@ return new class extends Migration
             $table->foreignId('id_users')->references('id_users')->on('users');
             $table->foreignId('id_transportistas')->references('id_transportistas')->on('transportistas');
             $table->foreignId('id_tipo_servicio')->references('id_tipo_servicios')->on('tipo_servicios');
-            $table->foreignId('id_ubigeo_salida')->references('id_ubigeo')->on('ubigeos');
-            $table->foreignId('id_ubigeo_llegada')->references('id_ubigeo')->on('ubigeos');
+            $table->foreignId('id_ubigeo_salida')->nullable()->references('id_ubigeo')->on('ubigeos');
+            $table->foreignId('id_ubigeo_llegada')->nullable()->references('id_ubigeo')->on('ubigeos');
             $table->decimal('tarifa_cap_min', 10,2);
             $table->decimal('tarifa_cap_max', 10,2);
             $table->decimal('tarifa_monto', 10,2);

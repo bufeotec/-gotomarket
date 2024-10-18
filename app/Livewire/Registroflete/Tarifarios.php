@@ -102,8 +102,8 @@ class Tarifarios extends Component
             $this->validate([
                 'id_transportistas' => 'required|integer',
                 'id_tipo_servicio' => 'required|integer',
-                'id_ubigeo_salida' => 'required|integer',
-                'id_ubigeo_llegada' => 'required|integer',
+                'id_ubigeo_salida' => 'required_if:id_tipo_servicio,2|nullable|integer',
+                'id_ubigeo_llegada' => 'required_if:id_tipo_servicio,2|nullable|integer',
                 'tarifa_cap_min' => 'required|numeric',
                 'tarifa_cap_max' => 'required|numeric',
                 'tarifa_monto' => 'required|numeric',
@@ -117,10 +117,10 @@ class Tarifarios extends Component
                 'id_tipo_servicio.required' => 'Debes seleccionar un servicio.',
                 'id_tipo_servicio.integer' => 'El servicio debe ser un número entero.',
 
-                'id_ubigeo_salida.required' => 'Debes seleccionar una salida.',
+                'id_ubigeo_salida.required_if' => 'La salida es obligatoria para servicios provinciales.',
                 'id_ubigeo_salida.integer' => 'La salida debe ser un número entero.',
 
-                'id_ubigeo_llegada.required' => 'Debes seleccionar una llegada.',
+                'id_ubigeo_llegada.required_if' => 'La llegada es obligatoria para servicios provinciales.',
                 'id_ubigeo_llegada.integer' => 'La llegada debe ser un número entero.',
 
                 'tarifa_cap_min.required' => 'La capacidad minima es obligatorio.',
@@ -147,8 +147,8 @@ class Tarifarios extends Component
                 }
 
                 $validar = DB::table('tarifarios')
-                    ->where('id_tipo_servicio', '=', $this->id_tipo_servicio)
                     ->where('id_transportistas', '=', $this->id_transportistas)
+                    ->where('id_tipo_servicio', '=', $this->id_tipo_servicio)
                     ->where('tarifa_cap_max', '<=', $this->tarifa_cap_max)
                     ->where('tarifa_cap_min', '>=', $this->tarifa_cap_min)
                     ->first();
@@ -161,8 +161,8 @@ class Tarifarios extends Component
                     $tarifario_save->id_users = Auth::id();
                     $tarifario_save->id_transportistas = $this->id_transportistas;
                     $tarifario_save->id_tipo_servicio = $this->id_tipo_servicio;
-                    $tarifario_save->id_ubigeo_salida = $this->id_ubigeo_salida;
-                    $tarifario_save->id_ubigeo_llegada = $this->id_ubigeo_llegada;
+                    $tarifario_save->id_ubigeo_salida = !empty($this->id_ubigeo_salida) ? $this->id_ubigeo_salida : null;
+                    $tarifario_save->id_ubigeo_llegada = !empty($this->id_ubigeo_llegada) ? $this->id_ubigeo_llegada : null;
                     $tarifario_save->tarifa_cap_min = $this->tarifa_cap_min;
                     $tarifario_save->tarifa_cap_max = $this->tarifa_cap_max;
                     $tarifario_save->tarifa_monto = $this->tarifa_monto;
@@ -188,11 +188,51 @@ class Tarifarios extends Component
                     return;
                 }
 
+                $this->validate([
+                    'id_transportistas' => 'required|integer',
+                    'id_tipo_servicio' => 'required|integer',
+                    'id_ubigeo_salida' => 'required_if:id_tipo_servicio,2|nullable|integer',
+                    'id_ubigeo_llegada' => 'required_if:id_tipo_servicio,2|nullable|integer',
+                    'tarifa_cap_min' => 'required|numeric',
+                    'tarifa_cap_max' => 'required|numeric',
+                    'tarifa_monto' => 'required|numeric',
+                    'tarifa_tipo_bulto' => 'required|string',
+                    'tarifa_estado' => 'nullable|integer',
+                    'id_tarifario' => 'nullable|integer',
+                ], [
+                    'id_transportistas.required' => 'Debes seleccionar un transportista.',
+                    'id_transportistas.integer' => 'El transportista debe ser un número entero.',
+
+                    'id_tipo_servicio.required' => 'Debes seleccionar un servicio.',
+                    'id_tipo_servicio.integer' => 'El servicio debe ser un número entero.',
+
+                    'id_ubigeo_salida.required_if' => 'La salida es obligatoria para servicios provinciales.',
+                    'id_ubigeo_salida.integer' => 'La salida debe ser un número entero.',
+
+                    'id_ubigeo_llegada.required_if' => 'La llegada es obligatoria para servicios provinciales.',
+                    'id_ubigeo_llegada.integer' => 'La llegada debe ser un número entero.',
+
+                    'tarifa_cap_min.required' => 'La capacidad mínima es obligatoria.',
+                    'tarifa_cap_min.numeric' => 'La capacidad mínima debe ser un valor numérico.',
+
+                    'tarifa_cap_max.required' => 'La capacidad máxima es obligatoria.',
+                    'tarifa_cap_max.numeric' => 'La capacidad máxima debe ser un valor numérico.',
+
+                    'tarifa_monto.required' => 'El monto de la tarifa es obligatorio.',
+                    'tarifa_monto.numeric' => 'El monto de la tarifa debe ser un valor numérico.',
+
+                    'tarifa_tipo_bulto.required' => 'El bulto es obligatorio.',
+                    'tarifa_tipo_bulto.string' => 'El bulto debe ser una cadena de texto.',
+
+                    'tarifa_estado.integer' => 'El estado debe ser un número entero.',
+
+                    'id_tarifario.integer' => 'El identificador debe ser un número entero.',
+                ]);
 
                 $validar = DB::table('tarifarios')
                     ->where('id_tarifario', '<>', $this->id_tarifario)
-                    ->where('id_tipo_servicio', '=', $this->id_tipo_servicio)
                     ->where('id_transportistas', '=', $this->id_transportistas)
+                    ->where('id_tipo_servicio', '=', $this->id_tipo_servicio)
                     ->where('tarifa_cap_max', '<=', $this->tarifa_cap_max)
                     ->where('tarifa_cap_min', '>=', $this->tarifa_cap_min)
                     ->first();
@@ -201,8 +241,8 @@ class Tarifarios extends Component
                     // Actualizar los datos
                     $tarifario_update = Tarifario::findOrFail($this->id_tarifario);
                     $tarifario_update->id_tipo_servicio = $this->id_tipo_servicio;
-                    $tarifario_update->id_ubigeo_salida = $this->id_ubigeo_salida;
-                    $tarifario_update->id_ubigeo_llegada = $this->id_ubigeo_llegada;
+                    $tarifario_update->id_ubigeo_salida = !empty($this->id_ubigeo_salida) ? $this->id_ubigeo_salida : null;
+                    $tarifario_update->id_ubigeo_llegada = !empty($this->id_ubigeo_llegada) ? $this->id_ubigeo_llegada : null;
                     $tarifario_update->tarifa_cap_min = $this->tarifa_cap_min;
                     $tarifario_update->tarifa_cap_max = $this->tarifa_cap_max;
                     $tarifario_update->tarifa_monto = $this->tarifa_monto;

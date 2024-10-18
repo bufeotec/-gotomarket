@@ -4,7 +4,6 @@
     {{--    MODAL REGISTRO TARIFARIOS--}}
     <x-modal-general  wire:ignore.self >
         <x-slot name="id_modal">modalTarifario</x-slot>
-        <x-slot name="tama">modal-lg</x-slot>
         <x-slot name="titleModal">Gestionar Tarifarios</x-slot>
         <x-slot name="modalContent">
             <form wire:submit.prevent="saveTarifario">
@@ -15,7 +14,7 @@
                     </div>
                     <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
                         <label for="id_tipo_servicio" class="form-label">Tipo de servicios (*)</label>
-                        <select class="form-select" name="id_tipo_servicios" id="id_tipo_servicio" wire:model="id_tipo_servicio">
+                        <select class="form-select" name="id_tipo_servicios" id="id_tipo_servicio" wire:model.live="id_tipo_servicio">
                             <option value="" disabled>Seleccionar...</option>
                             @foreach($listar_servicios as $li)
                                 <option value="{{$li->id_tipo_servicios}}">{{$li->tipo_servicio_concepto}}</option>
@@ -26,35 +25,36 @@
                         @enderror
                     </div>
 
-                    <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
-                        <div class="" wire:ignore>
-                            <label for="id_ubigeo_salida" class="form-label">Ubigeo salida (*)</label>
-                            <select class="form-select" name="id_ubigeo" id="id_ubigeo_salida" wire:model="id_ubigeo_salida">
-                                <option value="" >Seleccionar...</option>
-                                @foreach($listar_ubigeos as $lu)
-                                    <option value="{{$lu->id_ubigeo}}">{{$lu->ubigeo_departamento . ' - ' . $lu->ubigeo_provincia . ' - ' . $lu->ubigeo_distrito}}</option>
-                                @endforeach
-                            </select>
+                    @if($id_tipo_servicio == 2)
+                        <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                            <div class="" wire:ignore>
+                                <label for="id_ubigeo_salida" class="form-label">Ubigeo salida (*)</label>
+                                <select class="form-select" name="id_ubigeo" id="id_ubigeo_salida" wire:model="id_ubigeo_salida">
+                                    <option value="" >Seleccionar...</option>
+                                    @foreach($listar_ubigeos as $lu)
+                                        <option value="{{$lu->id_ubigeo}}">{{$lu->ubigeo_departamento . ' - ' . $lu->ubigeo_provincia . ' - ' . $lu->ubigeo_distrito}}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @error('id_ubigeo_salida')
+                            <span class="message-error">{{ $message }}</span>
+                            @enderror
                         </div>
-                        @error('id_ubigeo_salida')
-                        <span class="message-error">{{ $message }}</span>
-                        @enderror
-                    </div>
-
-                    <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
-                        <div class="" wire:ignore>
-                            <label for="id_ubigeo_llegada" class="form-label">Ubigeo llegada (*)</label>
-                            <select class="form-select" name="id_ubigeo_llegada" id="id_ubigeo" wire:model="id_ubigeo_llegada">
-                                <option value="" >Seleccionar...</option>
-                                @foreach($listar_ubigeos as $lu)
-                                    <option value="{{$lu->id_ubigeo}}">{{$lu->ubigeo_departamento . ' - ' . $lu->ubigeo_provincia . ' - ' . $lu->ubigeo_distrito}}</option>
-                                @endforeach
-                            </select>
+                        <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                            <div class="" wire:ignore>
+                                <label for="id_ubigeo_llegada" class="form-label">Ubigeo llegada (*)</label>
+                                <select class="form-select" name="id_ubigeo_llegada" id="id_ubigeo" wire:model="id_ubigeo_llegada">
+                                    <option value="" >Seleccionar...</option>
+                                    @foreach($listar_ubigeos as $lu)
+                                        <option value="{{$lu->id_ubigeo}}">{{$lu->ubigeo_departamento . ' - ' . $lu->ubigeo_provincia . ' - ' . $lu->ubigeo_distrito}}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @error('id_ubigeo_llegada')
+                            <span class="message-error">{{ $message }}</span>
+                            @enderror
                         </div>
-                        @error('id_ubigeo_llegada')
-                        <span class="message-error">{{ $message }}</span>
-                        @enderror
-                    </div>
+                    @endif
 
                     <div class="col-lg-6 col-md-8 col-sm-12 mb-3">
                         <label for="tarifa_cap_min" class="form-label">Capacidad mínima (*)</label>
@@ -144,12 +144,12 @@
             <x-select-filter wire:model.live="pagination_tarifario" />
         </div>
         <div class="col-lg-6 col-md-6 col-sm-12 text-end">
-            <x-btn-export class="bg-secondary text-white" wire:click="limpiar_nombre_convenio" data-bs-toggle="modal" data-bs-target="#modalServicios">
-                <x-slot name="icons">
-                    fa-solid fa-plus
-                </x-slot>
-                Agregar Servicios
-            </x-btn-export>
+{{--            <x-btn-export class="bg-secondary text-white" wire:click="limpiar_nombre_convenio" data-bs-toggle="modal" data-bs-target="#modalServicios">--}}
+{{--                <x-slot name="icons">--}}
+{{--                    fa-solid fa-plus--}}
+{{--                </x-slot>--}}
+{{--                Agregar Servicios--}}
+{{--            </x-btn-export>--}}
             <x-btn-export wire:click="clear_form_tarifario" class="bg-success text-white" data-bs-toggle="modal" data-bs-target="#modalTarifario" >
                 <x-slot name="icons">
                     fa-solid fa-plus
@@ -193,8 +193,12 @@
                                     <tr>
                                         <td>{{$conteo}}</td>
                                         <td>{{$ta->tipo_servicio_concepto}}</td>
-                                        <td>{{$ta->ubigeo_departamento}}</td>
-                                        <td>{{$ta->ubigeo_departamento}}</td>
+                                        <td>
+                                            {{ ($ta->ubigeo_departamento ?? '') . ' - ' . ($ta->ubigeo_provincia ?? '') . ' - ' . ($ta->ubigeo_distrito ?? '') }}
+                                        </td>
+                                        <td>
+                                            {{ ($ta->ubigeo_departamento ?? '') . ' - ' . ($ta->ubigeo_provincia ?? '') . ' - ' . ($ta->ubigeo_distrito ?? '') }}
+                                        </td>
                                         <td>{{$ta->tarifa_cap_min}}</td>
                                         <td>{{$ta->tarifa_cap_max}}</td>
                                         <td>{{$ta->tarifa_monto}} <b>(t)</b></td>

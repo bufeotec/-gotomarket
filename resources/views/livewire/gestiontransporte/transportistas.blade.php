@@ -203,7 +203,7 @@
                                 @foreach($transportistas as $tr)
                                     <tr>
                                         <td>{{$conteo}}</td>
-                                        <td>{{$tr->ubigeo_departamento}}</td>
+                                        <td>{{$tr->ubigeo_departamento . ' - ' . $tr->ubigeo_provincia . ' - ' . $tr->ubigeo_distrito}}</td>
                                         <td>{{$tr->transportista_ruc}}</td>
                                         <td>{{$tr->transportista_razon_social}}</td>
                                         <td>{{$tr->transportista_nom_comercial}}</td>

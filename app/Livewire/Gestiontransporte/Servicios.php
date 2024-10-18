@@ -3,7 +3,7 @@
 namespace App\Livewire\Gestiontransporte;
 
 use App\Livewire\Intranet\sidebar;
-use App\Livewire\Registroflete\Tarifario;
+use App\Livewire\Registroflete\Tarifarios;
 use App\Models\Logs;
 use App\Models\Menu;
 use App\Models\TipoServicio;
@@ -67,7 +67,7 @@ class Servicios extends Component
                 if ($tiposervicio_save->save()) {
                     DB::commit();
                     // Emitir el evento al componente sidebar
-                    $this->dispatch('refresh_select_servicios')->to(Tarifario::class);
+                    $this->dispatch('refresh_select_servicios')->to(Tarifarios::class);
 //                    $this->dispatch('hideModal');
                     $this->tipo_servicio_concepto = "";
                     session()->flash('success', 'Registro guardado correctamente.');
@@ -116,7 +116,7 @@ class Servicios extends Component
                 $tiposervicio_delete->tipo_servicio_estado = $this->tipo_servicio_estado;
                 if ($tiposervicio_delete->save()) {
                     DB::commit();
-                    $this->dispatch('refresh_select_servicios')->to(Tarifario::class);
+                    $this->dispatch('refresh_select_servicios')->to(Tarifarios::class);
                     if ($this->tipo_servicio_estado == 0){
                         session()->flash('success', 'Registro deshabilitado correctamente.');
                     }else{
