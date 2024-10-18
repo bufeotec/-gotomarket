@@ -11,7 +11,7 @@
                         <small class="text-primary">Información del Transportista</small>
                         <hr class="mb-0">
                     </div>
-                    <div class="col-lg-8 col-md-12 col-sm-12 mb-3">
+                    <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
                         <div class="" wire:ignore>
                             <label for="id_ubigeo" class="form-label">Ubigeo (*)</label>
                             <select class="form-select" name="id_ubigeo" id="id_ubigeo" wire:model="id_ubigeo">
