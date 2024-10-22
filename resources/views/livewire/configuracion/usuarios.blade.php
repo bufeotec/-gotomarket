@@ -25,14 +25,14 @@
                                 <div class="row">
                                     <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
                                         <label for="name" class="form-label">Nombre (*)</label>
-                                        <x-input-general   type="text" id="name" wire:model="name" />
+                                        <x-input-general   type="text" id="name" wire:model="name" wire:input="generateUsername" />
                                         @error('name')
                                         <span class="message-error">{{ $message }}</span>
                                         @enderror
                                     </div>
                                     <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
                                         <label for="last_name" class="form-label">Apellido (*)</label>
-                                        <x-input-general  type="text" id="last_name" wire:model="last_name"/>
+                                        <x-input-general  type="text" id="last_name" wire:model="last_name" wire:input="generateUsername"/>
                                         @error('last_name')
                                         <span class="message-error">{{ $message }}</span>
                                         @enderror
@@ -74,6 +74,15 @@
                             <span class="message-error">{{ $message }}</span>
                         @enderror
                     </div>
+
+                    <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                        <label for="users_cargo" class="form-label">Cargo</label>
+                        <x-input-general   type="text" id="users_cargo" wire:model="users_cargo"/>
+                        @error('users_cargo')
+                        <span class="message-error">{{ $message }}</span>
+                        @enderror
+                    </div>
+
 {{--                    @if(empty($id_users))--}}
                         <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
                             <label for="password" class="form-label">{{!empty($id_users) ? 'Actualizar Contraseña': 'Contraseña'}}</label>
@@ -168,6 +177,7 @@
                                 <th>Nombre de usuario</th>
                                 <th>Correo electronico</th>
                                 <th>Rol</th>
+                                <th>Cargo</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
@@ -198,6 +208,7 @@
                                                 {{$rol->name}}
                                             </span>
                                         </td>
+                                        <td>{{$me->users_cargo}}</td>
                                         <td>
                                             <span class="font-bold badge {{$me->users_status == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
                                                 {{$me->users_status == 1 ? 'Habilitado ' : 'Desabilitado'}}

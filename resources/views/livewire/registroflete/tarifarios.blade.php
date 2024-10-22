@@ -57,7 +57,7 @@
                     @endif
 
                     <div class="col-lg-6 col-md-8 col-sm-12 mb-3">
-                        <label for="tarifa_cap_min" class="form-label">Capacidad mínima (*)</label>
+                        <label for="tarifa_cap_min" class="form-label">Capacidad mínima (*) (Capacidad en kilos)</label>
                         <x-input-general  type="text" id="tarifa_cap_min" wire:model="tarifa_cap_min"/>
                         @error('tarifa_cap_min')
                         <span class="message-error">{{ $message }}</span>
@@ -65,7 +65,7 @@
                     </div>
 
                     <div class="col-lg-6 col-md-8 col-sm-12 mb-3">
-                        <label for="tarifa_cap_max" class="form-label">Capacidad máxima (*)</label>
+                        <label for="tarifa_cap_max" class="form-label">Capacidad máxima (*) (Capacidad en kilos)</label>
                         <x-input-general  type="text" id="tarifa_cap_max" wire:model="tarifa_cap_max"/>
                         @error('tarifa_cap_max')
                         <span class="message-error">{{ $message }}</span>
@@ -194,10 +194,11 @@
                                         <td>{{$conteo}}</td>
                                         <td>{{$ta->tipo_servicio_concepto}}</td>
                                         <td>
-                                            {{ ($ta->ubigeo_departamento ?? '') . ' - ' . ($ta->ubigeo_provincia ?? '') . ' - ' . ($ta->ubigeo_distrito ?? '') }}
+                                            {{ ($ta->salida_departamento ?? '') . ' - ' . ($ta->salida_provincia ?? '') . ' - ' . ($ta->salida_distrito ?? '') }}
                                         </td>
+                                        <!-- Ubigeo llegada -->
                                         <td>
-                                            {{ ($ta->ubigeo_departamento ?? '') . ' - ' . ($ta->ubigeo_provincia ?? '') . ' - ' . ($ta->ubigeo_distrito ?? '') }}
+                                            {{ ($ta->llegada_departamento ?? '') . ' - ' . ($ta->llegada_provincia ?? '') . ' - ' . ($ta->llegada_distrito ?? '') }}
                                         </td>
                                         <td>{{$ta->tarifa_cap_min}}</td>
                                         <td>{{$ta->tarifa_cap_max}}</td>

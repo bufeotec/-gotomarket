@@ -60,15 +60,15 @@ class Transportistas extends Component
     }
 //
     public function render(){
-        $listar_ubigeos = $this->ubigeo->listar_ubigeos();
+//        $listar_ubigeos = $this->ubigeo->listar_ubigeos();
         $transportistas = $this->transportistas->listar_transportistas($this->search_transportistas,$this->pagination_transportistas);
-        return view('livewire.gestiontransporte.transportistas',compact('transportistas', 'listar_ubigeos'));
+        return view('livewire.gestiontransporte.transportistas',compact('transportistas'));
     }
 
     public function clear_form_transportistas(){
         $this->id_transportistas = "";
 //        $this->id_tipo_servicios = "";
-        $this->id_ubigeo = "";
+//        $this->id_ubigeo = "";
         $this->transportista_ruc = "";
         $this->transportista_razon_social = "";
         $this->transportista_nom_comercial = "";
@@ -102,7 +102,7 @@ class Transportistas extends Component
         $transportistasEdit = Transportista::find(base64_decode($id));
         if ($transportistasEdit){
 //            $this->id_tipo_servicios = $transportistasEdit->id_tipo_servicios;
-            $this->id_ubigeo = $transportistasEdit->id_ubigeo;
+//            $this->id_ubigeo = $transportistasEdit->id_ubigeo;
             $this->transportista_ruc = $transportistasEdit->transportista_ruc;
             $this->transportista_razon_social = $transportistasEdit->transportista_razon_social;
             $this->transportista_nom_comercial = $transportistasEdit->transportista_nom_comercial;
@@ -124,7 +124,7 @@ class Transportistas extends Component
     public function saveTransportista(){
         try {
             $this->validate([
-                'id_ubigeo' => 'required|integer',
+                'id_ubigeo' => 'nullable|integer',
                 'transportista_ruc' => 'required|size:11',
                 'transportista_razon_social' => 'required|string',
                 'transportista_nom_comercial' => 'required|string',
@@ -136,7 +136,6 @@ class Transportistas extends Component
                 'transportista_estado' => 'nullable|integer',
                 'id_transportistas' => 'nullable|integer',
             ], [
-                'id_ubigeo.required' => 'Debes seleccionar un ubigeo.',
                 'id_ubigeo.integer' => 'El ubigeo debe ser un número entero.',
 
                 'transportista_ruc.required' => 'El RUC es obligatorio',
@@ -179,7 +178,7 @@ class Transportistas extends Component
                     DB::beginTransaction();
                     $transportistas_save = new Transportista();
                     $transportistas_save->id_users = Auth::id();
-                    $transportistas_save->id_ubigeo = $this->id_ubigeo;
+                    $transportistas_save->id_ubigeo = !empty($this->id_ubigeo) ? $this->id_ubigeo : null;
                     $transportistas_save->transportista_ruc = $this->transportista_ruc;
                     $transportistas_save->transportista_razon_social = $this->transportista_razon_social;
                     $transportistas_save->transportista_nom_comercial = $this->transportista_nom_comercial;
@@ -220,7 +219,7 @@ class Transportistas extends Component
                     DB::beginTransaction();
                     // Actualizar los datos del menú
                     $transportistas_update = Transportista::findOrFail($this->id_transportistas);
-                    $transportistas_update->id_ubigeo = $this->id_ubigeo;
+                    $transportistas_update->id_ubigeo = !empty($this->id_ubigeo) ? $this->id_ubigeo : null;
                     $transportistas_update->transportista_ruc = $this->transportista_ruc;
                     $transportistas_update->transportista_razon_social = $this->transportista_razon_social;
                     $transportistas_update->transportista_nom_comercial = $this->transportista_nom_comercial;

@@ -74,6 +74,15 @@ class Tarifarios extends Component
         $this->tarifa_estado = "";
         $this->dispatch('select_ubigeo_salida',['text' => null]);
         $this->dispatch('select_ubigeo_llegada',['text' => null]);
+
+        $ubigeoLima = DB::table('ubigeos')
+            ->where('ubigeo_departamento', 'LIMA')
+            ->where('ubigeo_provincia', 'LIMA')
+            ->where('ubigeo_distrito', 'LIMA')
+            ->first();
+        if ($ubigeoLima) {
+            $this->id_ubigeo_salida = $ubigeoLima->id_ubigeo;
+        }
     }
 
     public function edit_data($id){

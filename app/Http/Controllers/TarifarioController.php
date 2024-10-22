@@ -6,7 +6,7 @@ use App\Models\Transportista;
 use Illuminate\Http\Request;
 use App\Models\Logs;
 
-class RegistrofleteController extends Controller
+class TarifarioController extends Controller
 {
     private $logs;
     private $transportista;
@@ -15,6 +15,7 @@ class RegistrofleteController extends Controller
         $this->logs = new Logs();
         $this->transportista = new Transportista();
     }
+
     public function fletes(){
         try {
             return view('registroflete.fletes');
@@ -24,7 +25,7 @@ class RegistrofleteController extends Controller
         }
     }
 
-    public function tarifario(){
+    public function tarifas(){
         try {
             $id_transportista = base64_decode($_GET['data']);
             if ($id_transportista){

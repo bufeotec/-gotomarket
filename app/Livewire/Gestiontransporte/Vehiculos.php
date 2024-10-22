@@ -63,6 +63,7 @@ class Vehiculos extends Component
         $this->vehiculo_capacidad_volumen = $ancho * $largo * $alto;
     }
 
+
     public function render(){
         $listar_transportistas = $this->transportistas->listar_transportista_sin_id();
         $listar_vehiculos = $this->vehiculo->listar_vehiculos_por_transportistas($this->search_vehiculos, $this->pagination_vehiculos);
@@ -148,31 +149,38 @@ class Vehiculos extends Component
                     session()->flash('error', 'No tiene permisos para crear.');
                     return;
                 }
-                $microtime = microtime(true);
-                DB::beginTransaction();
-                $vehiculo_save = new Vehiculo();
-                $vehiculo_save->id_users = Auth::id();
-                $vehiculo_save->id_transportistas = $this->id_transportistas;
-                $vehiculo_save->id_tipo_vehiculo = $this->id_tipo_vehiculo;
-                $vehiculo_save->vehiculo_placa = $this->vehiculo_placa;
-                $vehiculo_save->vehiculo_capacidad_peso = $this->vehiculo_capacidad_peso;
-                $vehiculo_save->vehiculo_ancho = $this->vehiculo_ancho;
-                $vehiculo_save->vehiculo_largo = $this->vehiculo_largo;
-                $vehiculo_save->vehiculo_alto = $this->vehiculo_alto;
-                $vehiculo_save->vehiculo_capacidad_volumen = $this->vehiculo_capacidad_volumen;
-                $vehiculo_save->vehiculo_estado = 1;
-                $vehiculo_save->vehiculo_microtime = $microtime;
 
-                if ($vehiculo_save->save()) {
-                    DB::commit();
-                    // Emitir el evento al componente sidebar
+                $validar = DB::table('vehiculos')->where('vehiculo_placa', '=',$this->vehiculo_placa)->exists();
+                if (!$validar){
+                    $microtime = microtime(true);
+                    DB::beginTransaction();
+                    $vehiculo_save = new Vehiculo();
+                    $vehiculo_save->id_users = Auth::id();
+                    $vehiculo_save->id_transportistas = $this->id_transportistas;
+                    $vehiculo_save->id_tipo_vehiculo = $this->id_tipo_vehiculo;
+                    $vehiculo_save->vehiculo_placa = $this->vehiculo_placa;
+                    $vehiculo_save->vehiculo_capacidad_peso = $this->vehiculo_capacidad_peso;
+                    $vehiculo_save->vehiculo_ancho = $this->vehiculo_ancho;
+                    $vehiculo_save->vehiculo_largo = $this->vehiculo_largo;
+                    $vehiculo_save->vehiculo_alto = $this->vehiculo_alto;
+                    $vehiculo_save->vehiculo_capacidad_volumen = $this->vehiculo_capacidad_volumen;
+                    $vehiculo_save->vehiculo_estado = 1;
+                    $vehiculo_save->vehiculo_microtime = $microtime;
+
+                    if ($vehiculo_save->save()) {
+                        DB::commit();
+                        // Emitir el evento al componente sidebar
 //                    $this->dispatch('refresh_select_servicios')->to(Transportistas::class);
-                    $this->dispatch('hideModal');
-                    session()->flash('success', 'Registro guardado correctamente.');
+                        $this->dispatch('hideModal');
+                        session()->flash('success', 'Registro guardado correctamente.');
 
-                } else {
-                    DB::rollBack();
-                    session()->flash('error', 'Ocurrió un error al guardar el menú.');
+                    } else {
+                        DB::rollBack();
+                        session()->flash('error', 'Ocurrió un error al guardar el menú.');
+                        return;
+                    }
+                } else{
+                    session()->flash('error', 'La placa ingresado para el vehículo ya está registrado.');
                     return;
                 }
             } else {
@@ -180,25 +188,35 @@ class Vehiculos extends Component
                     session()->flash('error', 'No tiene permisos para actualizar este registro.');
                     return;
                 }
-                DB::beginTransaction();
-                // Actualizar los datos del menú
-                $vehiculo_update = Vehiculo::findOrFail($this->id_vehiculo);
-                $vehiculo_update->id_transportistas = $this->id_transportistas;
-                $vehiculo_update->id_tipo_vehiculo = $this->id_tipo_vehiculo;
-                $vehiculo_update->vehiculo_placa = $this->vehiculo_placa;
-                $vehiculo_update->vehiculo_capacidad_peso = $this->vehiculo_capacidad_peso;
-                $vehiculo_update->vehiculo_ancho = $this->vehiculo_ancho;
-                $vehiculo_update->vehiculo_largo = $this->vehiculo_largo;
-                $vehiculo_update->vehiculo_alto = $this->vehiculo_alto;
-                $vehiculo_update->vehiculo_capacidad_volumen = $this->vehiculo_capacidad_volumen;
 
-                if (!$vehiculo_update->save()) {
-                    session()->flash('error', 'No se pudo actualizar el registro.');
+                $validar_update = DB::table('vehiculos')
+                    ->where('id_vehiculo', '<>',$this->id_vehiculo)
+                    ->where('vehiculo_placa', '=',$this->vehiculo_placa)
+                    ->exists();
+                if (!$validar_update){
+                    DB::beginTransaction();
+                    // Actualizar los datos del menú
+                    $vehiculo_update = Vehiculo::findOrFail($this->id_vehiculo);
+                    $vehiculo_update->id_transportistas = $this->id_transportistas;
+                    $vehiculo_update->id_tipo_vehiculo = $this->id_tipo_vehiculo;
+                    $vehiculo_update->vehiculo_placa = $this->vehiculo_placa;
+                    $vehiculo_update->vehiculo_capacidad_peso = $this->vehiculo_capacidad_peso;
+                    $vehiculo_update->vehiculo_ancho = $this->vehiculo_ancho;
+                    $vehiculo_update->vehiculo_largo = $this->vehiculo_largo;
+                    $vehiculo_update->vehiculo_alto = $this->vehiculo_alto;
+                    $vehiculo_update->vehiculo_capacidad_volumen = $this->vehiculo_capacidad_volumen;
+
+                    if (!$vehiculo_update->save()) {
+                        session()->flash('error', 'No se pudo actualizar el registro.');
+                        return;
+                    }
+                    DB::commit();
+                    $this->dispatch('hideModal');
+                    session()->flash('success', 'Registro actualizado correctamente.');
+                } else{
+                    session()->flash('error', 'La placa ingresado para el vehículo ya está registrado.');
                     return;
                 }
-                DB::commit();
-                $this->dispatch('hideModal');
-                session()->flash('success', 'Registro actualizado correctamente.');
             }
         } catch (\Illuminate\Validation\ValidationException $e) {
             $this->setErrorBag($e->validator->errors());

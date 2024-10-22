@@ -11,20 +11,20 @@
                         <small class="text-primary">Información del Transportista</small>
                         <hr class="mb-0">
                     </div>
-                    <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
-                        <div class="" wire:ignore>
-                            <label for="id_ubigeo" class="form-label">Ubigeo (*)</label>
-                            <select class="form-select" name="id_ubigeo" id="id_ubigeo" wire:model="id_ubigeo">
-                                <option value="" >Seleccionar...</option>
-                                @foreach($listar_ubigeos as $lu)
-                                    <option value="{{$lu->id_ubigeo}}">{{$lu->ubigeo_departamento . ' - ' . $lu->ubigeo_provincia . ' - ' . $lu->ubigeo_distrito}}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        @error('id_ubigeo')
-                        <span class="message-error">{{ $message }}</span>
-                        @enderror
-                    </div>
+{{--                    <div class="col-lg-12 col-md-12 col-sm-12 mb-3">--}}
+{{--                        <div class="" wire:ignore>--}}
+{{--                            <label for="id_ubigeo" class="form-label">Ubigeo (*)</label>--}}
+{{--                            <select class="form-select" name="id_ubigeo" id="id_ubigeo" wire:model="id_ubigeo">--}}
+{{--                                <option value="" >Seleccionar...</option>--}}
+{{--                                @foreach($listar_ubigeos as $lu)--}}
+{{--                                    <option value="{{$lu->id_ubigeo}}">{{$lu->ubigeo_departamento . ' - ' . $lu->ubigeo_provincia . ' - ' . $lu->ubigeo_distrito}}</option>--}}
+{{--                                @endforeach--}}
+{{--                            </select>--}}
+{{--                        </div>--}}
+{{--                        @error('id_ubigeo')--}}
+{{--                        <span class="message-error">{{ $message }}</span>--}}
+{{--                        @enderror--}}
+{{--                    </div>--}}
 
                     <div class="col-lg-6 col-md-4 col-sm-12 mb-3">
                         <label for="transportista_ruc" class="form-label">RUC (*)</label>
@@ -184,7 +184,7 @@
                         <x-slot name="thead">
                             <tr>
                                 <th>N°</th>
-                                <th>Ubigeo</th>
+{{--                                <th>Ubigeo</th>--}}
                                 <th>RUC</th>
                                 <th>Razón social</th>
                                 <th>Nombre comercial</th>
@@ -203,7 +203,7 @@
                                 @foreach($transportistas as $tr)
                                     <tr>
                                         <td>{{$conteo}}</td>
-                                        <td>{{$tr->ubigeo_departamento . ' - ' . $tr->ubigeo_provincia . ' - ' . $tr->ubigeo_distrito}}</td>
+{{--                                        <td>{{$tr->ubigeo_departamento . ' - ' . $tr->ubigeo_provincia . ' - ' . $tr->ubigeo_distrito}}</td>--}}
                                         <td>{{$tr->transportista_ruc}}</td>
                                         <td>{{$tr->transportista_razon_social}}</td>
                                         <td>{{$tr->transportista_nom_comercial}}</td>

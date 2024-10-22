@@ -49,7 +49,7 @@
                     </div>
 
                     <div class="col-lg-6 col-md-4 col-sm-12 mb-3">
-                        <label for="vehiculo_capacidad_peso" class="form-label">Capacidad de peso (*)</label>
+                        <label for="vehiculo_capacidad_peso" class="form-label">Capacidad de peso (*) (en kilos)</label>
                         <x-input-general  type="text" id="vehiculo_capacidad_peso" wire:model="vehiculo_capacidad_peso"/>
                         @error('vehiculo_capacidad_peso')
                         <span class="message-error">{{ $message }}</span>
@@ -57,7 +57,7 @@
                     </div>
 
                     <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                        <label for="vehiculo_ancho" class="form-label">Ancho (*) (Medida en metros)</label>
+                        <label for="vehiculo_ancho" class="form-label">Ancho (*) (Medida en centimetros)</label>
                         <x-input-general type="text" id="vehiculo_ancho" wire:model="vehiculo_ancho" wire:input="calcularVolumen"/>
                         @error('vehiculo_ancho')
                         <span class="message-error">{{ $message }}</span>
@@ -65,7 +65,7 @@
                     </div>
 
                     <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                        <label for="vehiculo_largo" class="form-label">Largo (*) (Medida en metros)</label>
+                        <label for="vehiculo_largo" class="form-label">Largo (*) (Medida en centimetros)</label>
                         <x-input-general type="text" id="vehiculo_largo" wire:model="vehiculo_largo" wire:input="calcularVolumen"/>
                         @error('vehiculo_largo')
                         <span class="message-error">{{ $message }}</span>
@@ -73,7 +73,7 @@
                     </div>
 
                     <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                        <label for="vehiculo_alto" class="form-label">Alto (*) (Medida en metros)</label>
+                        <label for="vehiculo_alto" class="form-label">Alto (*) (Medida en centimetros)</label>
                         <x-input-general type="text" id="vehiculo_alto" wire:model="vehiculo_alto" wire:input="calcularVolumen"/>
                         @error('vehiculo_alto')
                         <span class="message-error">{{ $message }}</span>
@@ -85,7 +85,7 @@
                             <small class="d-flex justify-content-end mt-4">Capacidad de Volumen</small>
                             <div class="d-flex justify-content-end align-items-center">
                                 <h3 class="numero_vehiculo">
-                                    {{$vehiculo_capacidad_volumen}} <span class="span_vehiculo">(m³)</span>
+                                    {{ number_format($vehiculo_capacidad_volumen, 2, '.', ',') }} <span class="span_vehiculo">(cm³)</span>
                                 </h3>
                             </div>
                             @error('vehiculo_capacidad_volumen')
@@ -202,11 +202,11 @@
                                         <td>{{$lv->transportista_nom_comercial}}</td>
                                         <td>{{$lv->tipo_vehiculo_concepto}}</td>
                                         <td>{{$lv->vehiculo_placa}}</td>
-                                        <td>{{$lv->vehiculo_capacidad_peso}}</td>
-                                        <td>{{$lv->vehiculo_ancho}} <b>(m)</b></td>
-                                        <td>{{$lv->vehiculo_largo}} <b>(m)</b></td>
-                                        <td>{{$lv->vehiculo_alto}} <b>(m)</b></td>
-                                        <td>{{$lv->vehiculo_capacidad_volumen}} <b>(m³)</b></td>
+                                        <td>{{$lv->vehiculo_capacidad_peso}} <b>(kg)</b></td>
+                                        <td>{{ number_format($lv->vehiculo_ancho, 2, '.', ',') }} <b>(cm)</b></td>
+                                        <td>{{ number_format($lv->vehiculo_largo, 2, '.', ',') }} <b>(cm)</b></td>
+                                        <td>{{ number_format($lv->vehiculo_alto, 2, '.', ',') }} <b>(cm)</b></td>
+                                        <td>{{ number_format($lv->vehiculo_capacidad_volumen, 2, '.', ',') }} <b>(cm³)</b></td>
                                         <td>
                                             <span class="font-bold badge {{$lv->vehiculo_estado == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
                                                 {{$lv->vehiculo_estado == 1 ? 'Habilitado ' : 'Desabilitado'}}
