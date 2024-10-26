@@ -27,10 +27,18 @@ class Vehiculo extends Model
                 ->where(function($q) use ($search) {
                     $q->where('v.vehiculo_placa', 'like', '%' . $search . '%')
                         ->orWhere('v.vehiculo_capacidad_peso', 'like', '%' . $search . '%')
-                        ->orWhere('v.vehiculo_capacidad_volumen', 'like', '%' . $search . '%')
-                        ->orWhereNull('v.vehiculo_placa')
-                        ->orWhereNull('v.vehiculo_capacidad_peso')
-                        ->orWhereNull('v.vehiculo_capacidad_volumen');
+                        ->orWhere('tv.tipo_vehiculo_concepto', 'like', '%' . $search . '%')
+                        ->orWhere('t.transportista_nom_comercial', 'like', '%' . $search . '%')
+                        ->orWhere('t.transportista_razon_social', 'like', '%' . $search . '%')
+                        ->orWhere('t.transportista_direccion', 'like', '%' . $search . '%')
+                        ->orWhere('t.transportista_ruc', 'like', '%' . $search . '%')
+                        ->orWhere('v.vehiculo_ancho', 'like', '%' . $search . '%')
+                        ->orWhere('v.vehiculo_largo', 'like', '%' . $search . '%')
+                        ->orWhere('v.vehiculo_alto', 'like', '%' . $search . '%')
+                        ->orWhere('v.vehiculo_capacidad_volumen', 'like', '%' . $search . '%');
+//                        ->orWhereNull('v.vehiculo_placa')
+//                        ->orWhereNull('v.vehiculo_capacidad_peso')
+//                        ->orWhereNull('v.vehiculo_capacidad_volumen');
                 })->orderBy('v.id_vehiculo', $order);
 
             $result = $query->paginate($pagination);

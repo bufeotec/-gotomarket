@@ -291,9 +291,10 @@
             dropdownParent: $('#modalTransportistas .modal-body')
         });
         if(text){
-            $('#select2-ubigeo-container').html(text)
+            console.log(text)
+            $('#select2-id_ubigeo-container').html(text)
         }else{
-            $('#select2-ubigeo-container').html('Seleccionar')
+            $('#select2-id_ubigeo-container').html('Seleccionar')
         }
         // Sincronizar cambios de Select2 con Livewire
         $('#id_ubigeo').on('change', function () {
