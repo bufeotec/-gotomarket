@@ -41,6 +41,7 @@ class Usuarios extends Component
     public $name;
     public $last_name;
     public $email;
+    public $users_cargo;
     public $username;
     public $profile_picture;
     public $password;
@@ -51,6 +52,13 @@ class Usuarios extends Component
         $this->logs = new Logs();
         $this->user = new User();
         $this->general = new General();
+    }
+
+    public function generateUsername()
+    {
+        $firstName = explode(' ', trim($this->name))[0];
+        $lastName = explode(' ', trim($this->last_name))[0];
+        $this->username = strtolower($firstName . '.' . $lastName);
     }
 
     public function render()
@@ -83,6 +91,7 @@ class Usuarios extends Component
                     Rule::unique('users')->ignore($this->id_users,'id_users'), // Ignorar id en caso de actualización
                 ],
                 'id_rol' => 'required|integer|exists:roles,id',
+                'users_cargo' => 'nullable|string',
             ], [
                 'name.required' => 'El nombre es obligatorio.',
                 'name.string' => 'El nombre debe ser una cadena de texto válida.',
@@ -104,6 +113,8 @@ class Usuarios extends Component
                 'id_rol.required' => 'Debe seleccionar un rol.',
                 'id_rol.integer' => 'El rol seleccionado es inválido.',
                 'id_rol.exists' => 'El rol seleccionado no existe.',
+
+                'users_cargo.string' => 'El cargo debe ser una cadena de texto.',
 
                 'profile_picture.file' => 'Debe cargar un archivo válido.',
                 'profile_picture.mimes' => 'El archivo debe ser una imagen en formato JPG, JPEG o PNG.',
@@ -141,6 +152,7 @@ class Usuarios extends Component
                 $usuario->username = $this->username;
                 $usuario->password = bcrypt($this->password);
                 $usuario->users_status = 1;
+                $usuario->users_cargo = !empty($this->users_cargo) ? $this->users_cargo : null;
 
                 $usuario->syncRoles($role->name);
 
@@ -191,6 +203,7 @@ class Usuarios extends Component
 
                     $usuario->profile_picture = $this->general->save_files($this->profile_picture, 'configuration/users');
                 }
+                $usuario->users_cargo = !empty($this->users_cargo) ? $this->users_cargo : null;
 
                 $usuario->syncRoles($role->name);
 
@@ -220,6 +233,7 @@ class Usuarios extends Component
             $this->last_name = $usersEditar->last_name;
             $this->username = $usersEditar->username;
             $this->email = $usersEditar->email;
+            $this->users_cargo = $usersEditar->users_cargo;
             $this->id_rol = $rol->id;
             $this->id_users = $usersEditar->id_users;
             if (file_exists($usersEditar->profile_picture)){
@@ -235,6 +249,7 @@ class Usuarios extends Component
         $this->name  = "";
         $this->last_name  = "";
         $this->email  = "";
+        $this->users_cargo  = "";
         $this->username  = "";
         $this->profile_picture  = "";
         $this->password  = "";

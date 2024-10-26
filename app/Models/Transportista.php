@@ -24,7 +24,6 @@ class Transportista extends Model
         try {
 
             $query = DB::table('transportistas as t')
-                ->join('ubigeos as u','t.id_ubigeo','=','u.id_ubigeo')
                 ->where(function($q) use ($search) {
                     $q->where('t.transportista_ruc', 'like', '%' . $search . '%')
                         ->orWhere('t.transportista_razon_social', 'like', '%' . $search . '%')

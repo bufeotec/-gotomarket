@@ -11,8 +11,10 @@ use Livewire\Component;
 use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
 use App\Models\Ubigeo;
+use App\Models\TipoVehiculo;
 use App\Models\Logs;
 use App\Models\Tarifario;
+use App\Models\RegistrarHistorialUpdate;
 use App\Models\TipoServicio;
 
 class Tarifarios extends Component
@@ -23,6 +25,7 @@ class Tarifarios extends Component
     public $pagination_tarifario = 10;
     public $id_tarifario = "";
     public $id_transportistas = "";
+    public $id_tipo_vehiculo = "";
     public $id_tipo_servicio = "";
     public $id_ubigeo_salida = "";
     public $id_ubigeo_llegada = "";
@@ -31,17 +34,29 @@ class Tarifarios extends Component
     public $tarifa_monto = "";
     public $tarifa_tipo_bulto = "";
     public $tarifa_estado = "";
+    public $id_users = "";
+    public $id_registrar = "";
+    public $registro_concepto = "";
+    public $registro_hora_fecha = "";
+    public $registro_estado = "";
+    public $registro_microtime = "";
+    public $tarifa_estado_aprobacion = "";
     public $listar_servicios = array();
     public $messageDeleteTarifario = "";
+    public $historial_registros = [];
 
 
     private $logs;
     private $ubigeo;
+    private $tipovehiculo;
     private $tarifario;
+    private $registrar_historial;
     public function __construct(){
         $this->logs = new Logs();
         $this->ubigeo = new Ubigeo();
+        $this->tipovehiculo = new TipoVehiculo();
         $this->tarifario = new Tarifario();
+        $this->registrar_historial = new RegistrarHistorialUpdate();
     }
     public function mount($id) {
         $this->id_transportistas = $id;
@@ -53,9 +68,10 @@ class Tarifarios extends Component
     }
     public function render()
     {
-        $listar_ubigeos = $this->ubigeo->listar_ubigeos();
         $tarifario = $this->tarifario->listar_tarifarios($this->id_transportistas,$this->search_tarifario,$this->pagination_tarifario);
-        return view('livewire.registroflete.tarifarios', compact('listar_ubigeos', 'tarifario'));
+        $listar_ubigeos = $this->ubigeo->listar_ubigeos();
+        $listar_tipovehiculo = $this->tipovehiculo->listar_tipo_vehiculo();
+        return view('livewire.registroflete.tarifarios', compact('listar_ubigeos', 'tarifario', 'listar_tipovehiculo'));
     }
 
     public function limpiar_nombre_convenio(){
@@ -65,6 +81,7 @@ class Tarifarios extends Component
     public function clear_form_tarifario(){
         $this->id_tarifario = "";
         $this->id_tipo_servicio = "";
+        $this->id_tipo_vehiculo = "";
         $this->id_ubigeo_salida = "";
         $this->id_ubigeo_llegada = "";
         $this->tarifa_cap_min = "";
@@ -74,6 +91,15 @@ class Tarifarios extends Component
         $this->tarifa_estado = "";
         $this->dispatch('select_ubigeo_salida',['text' => null]);
         $this->dispatch('select_ubigeo_llegada',['text' => null]);
+
+        $ubigeoLima = DB::table('ubigeos')
+            ->where('ubigeo_departamento', 'LIMA')
+            ->where('ubigeo_provincia', 'LIMA')
+            ->where('ubigeo_distrito', 'LIMA')
+            ->first();
+        if ($ubigeoLima) {
+            $this->id_ubigeo_salida = $ubigeoLima->id_ubigeo;
+        }
     }
 
     public function edit_data($id){
@@ -81,6 +107,7 @@ class Tarifarios extends Component
         if ($tarifario_Edit){
             $this->id_transportistas = $tarifario_Edit->id_transportistas;
             $this->id_tipo_servicio = $tarifario_Edit->id_tipo_servicio;
+            $this->id_tipo_vehiculo = $tarifario_Edit->id_tipo_vehiculo;
             $this->id_ubigeo_salida = $tarifario_Edit->id_ubigeo_salida;
             $this->id_ubigeo_llegada = $tarifario_Edit->id_ubigeo_llegada;
             $this->tarifa_cap_min = $tarifario_Edit->tarifa_cap_min;
@@ -97,11 +124,21 @@ class Tarifarios extends Component
         }
     }
 
+    public function ver_registro($id){
+        $tarifario_id = base64_decode($id);
+        $this->historial_registros = RegistrarHistorialUpdate::where('id_tarifario', $tarifario_id)
+            ->join('users as u', 'registrar_historial_updates.id_users', '=', 'u.id_users')
+            ->get();
+    }
+
+
+
     public function saveTarifario() {
         try {
             $this->validate([
                 'id_transportistas' => 'required|integer',
                 'id_tipo_servicio' => 'required|integer',
+                'id_tipo_vehiculo' => 'nullable|integer',
                 'id_ubigeo_salida' => 'required_if:id_tipo_servicio,2|nullable|integer',
                 'id_ubigeo_llegada' => 'required_if:id_tipo_servicio,2|nullable|integer',
                 'tarifa_cap_min' => 'required|numeric',
@@ -116,6 +153,8 @@ class Tarifarios extends Component
 
                 'id_tipo_servicio.required' => 'Debes seleccionar un servicio.',
                 'id_tipo_servicio.integer' => 'El servicio debe ser un número entero.',
+
+                'id_tipo_vehiculo.integer' => 'El estado debe ser un número entero.',
 
                 'id_ubigeo_salida.required_if' => 'La salida es obligatoria para servicios provinciales.',
                 'id_ubigeo_salida.integer' => 'La salida debe ser un número entero.',
@@ -161,14 +200,16 @@ class Tarifarios extends Component
                     $tarifario_save->id_users = Auth::id();
                     $tarifario_save->id_transportistas = $this->id_transportistas;
                     $tarifario_save->id_tipo_servicio = $this->id_tipo_servicio;
-                    $tarifario_save->id_ubigeo_salida = !empty($this->id_ubigeo_salida) ? $this->id_ubigeo_salida : null;
-                    $tarifario_save->id_ubigeo_llegada = !empty($this->id_ubigeo_llegada) ? $this->id_ubigeo_llegada : null;
+                    $tarifario_save->id_tipo_vehiculo = !empty($this->id_tipo_vehiculo) ? $this->id_tipo_vehiculo : null;
+                    $tarifario_save->id_ubigeo_salida = $this->id_tipo_servicio == 2 ? $this->id_ubigeo_salida : null;
+                    $tarifario_save->id_ubigeo_llegada = $this->id_tipo_servicio == 2 ? $this->id_ubigeo_llegada : null;
                     $tarifario_save->tarifa_cap_min = $this->tarifa_cap_min;
                     $tarifario_save->tarifa_cap_max = $this->tarifa_cap_max;
                     $tarifario_save->tarifa_monto = $this->tarifa_monto;
                     $tarifario_save->tarifa_tipo_bulto = $this->tarifa_tipo_bulto;
                     $tarifario_save->tarifa_estado = 1;
                     $tarifario_save->tarifa_microtime = $microtime;
+                    $tarifario_save->tarifa_estado_aprobacion = 0;
 
                     if ($tarifario_save->save()) {
                         DB::commit();
@@ -191,6 +232,7 @@ class Tarifarios extends Component
                 $this->validate([
                     'id_transportistas' => 'required|integer',
                     'id_tipo_servicio' => 'required|integer',
+                    'id_tipo_vehiculo' => 'nullable|integer',
                     'id_ubigeo_salida' => 'required_if:id_tipo_servicio,2|nullable|integer',
                     'id_ubigeo_llegada' => 'required_if:id_tipo_servicio,2|nullable|integer',
                     'tarifa_cap_min' => 'required|numeric',
@@ -205,6 +247,8 @@ class Tarifarios extends Component
 
                     'id_tipo_servicio.required' => 'Debes seleccionar un servicio.',
                     'id_tipo_servicio.integer' => 'El servicio debe ser un número entero.',
+
+                    'id_tipo_vehiculo.integer' => 'El estado debe ser un número entero.',
 
                     'id_ubigeo_salida.required_if' => 'La salida es obligatoria para servicios provinciales.',
                     'id_ubigeo_salida.integer' => 'La salida debe ser un número entero.',
@@ -238,23 +282,91 @@ class Tarifarios extends Component
                     ->first();
 
                 if (!$validar) {
-                    // Actualizar los datos
+                    // Obtener el registro actual antes de realizar cambios
                     $tarifario_update = Tarifario::findOrFail($this->id_tarifario);
+                    // Guardar los valores originales para verificar cambios
+                    $originalValues = $tarifario_update->getOriginal();
+                    // Actualizar los campos del registro
                     $tarifario_update->id_tipo_servicio = $this->id_tipo_servicio;
-                    $tarifario_update->id_ubigeo_salida = !empty($this->id_ubigeo_salida) ? $this->id_ubigeo_salida : null;
-                    $tarifario_update->id_ubigeo_llegada = !empty($this->id_ubigeo_llegada) ? $this->id_ubigeo_llegada : null;
+                    $tarifario_update->id_tipo_vehiculo = !empty($this->id_tipo_vehiculo) ? $this->id_tipo_vehiculo : null;
+                    $tarifario_update->id_ubigeo_salida = $this->id_tipo_servicio == 2 ? $this->id_ubigeo_salida : null;
+                    $tarifario_update->id_ubigeo_llegada = $this->id_tipo_servicio == 2 ? $this->id_ubigeo_llegada : null;
                     $tarifario_update->tarifa_cap_min = $this->tarifa_cap_min;
                     $tarifario_update->tarifa_cap_max = $this->tarifa_cap_max;
                     $tarifario_update->tarifa_monto = $this->tarifa_monto;
                     $tarifario_update->tarifa_tipo_bulto = $this->tarifa_tipo_bulto;
 
-                    if (!$tarifario_update->save()) {
-                        session()->flash('error', 'No se pudo actualizar el registro.');
-                        return;
+                    // Inicializar el mensaje de registro
+                    $registro_concepto = [];
+                    $usuario_actual = auth()->user()->name;
+
+                    // Verificar si hubo algún cambio en los campos
+                    if (
+                        $originalValues['id_tipo_servicio'] !== $this->id_tipo_servicio ||
+                        $originalValues['id_tipo_vehiculo'] !== $this->id_tipo_vehiculo ||
+                        $originalValues['id_ubigeo_salida'] !== ($this->id_tipo_servicio == 2 ? $this->id_ubigeo_salida : null) ||
+                        $originalValues['id_ubigeo_llegada'] !== ($this->id_tipo_servicio == 2 ? $this->id_ubigeo_llegada : null) ||
+                        $originalValues['tarifa_cap_min'] !== $this->tarifa_cap_min ||
+                        $originalValues['tarifa_cap_max'] !== $this->tarifa_cap_max ||
+                        $originalValues['tarifa_monto'] !== $this->tarifa_monto ||
+                        $originalValues['tarifa_tipo_bulto'] !== $this->tarifa_tipo_bulto
+                    ) {
+                        // Cambiar tarifa_estado_aprobacion a 0 solo si hubo cambios en los campos
+                        $tarifario_update->tarifa_estado_aprobacion = 0;
+
+                        // Agregar los cambios al mensaje
+                        if ($originalValues['id_tipo_servicio'] !== $this->id_tipo_servicio) {
+                            $registro_concepto[] = "Tipo de servicio de '{$originalValues['id_tipo_servicio']}' cambio a '{$this->id_tipo_servicio}'";
+                        }
+                        if ($originalValues['id_tipo_vehiculo'] !== $this->id_tipo_vehiculo) {
+                            $registro_concepto[] = "Tipo de vehículo de '{$originalValues['id_tipo_vehiculo']}' cambio a '{$this->id_tipo_vehiculo}'";
+                        }
+                        if ($originalValues['id_ubigeo_salida'] !== ($this->id_tipo_servicio == 2 ? $this->id_ubigeo_salida : null)) {
+                            $registro_concepto[] = "Ubigeo de salida de '{$originalValues['id_ubigeo_salida']}' cambio a '{$this->id_ubigeo_salida}'";
+                        }
+                        if ($originalValues['id_ubigeo_llegada'] !== ($this->id_tipo_servicio == 2 ? $this->id_ubigeo_llegada : null)) {
+                            $registro_concepto[] = "Ubigeo de llegada de '{$originalValues['id_ubigeo_llegada']}' cambio a '{$this->id_ubigeo_llegada}'";
+                        }
+                        if ($originalValues['tarifa_cap_min'] !== $this->tarifa_cap_min) {
+                            $registro_concepto[] = "Capacidad mínima de '{$originalValues['tarifa_cap_min']}' cambio a '{$this->tarifa_cap_min}'";
+                        }
+                        if ($originalValues['tarifa_cap_max'] !== $this->tarifa_cap_max) {
+                            $registro_concepto[] = "Capacidad máxima de '{$originalValues['tarifa_cap_max']}' cambio a '{$this->tarifa_cap_max}'";
+                        }
+                        if ($originalValues['tarifa_monto'] !== $this->tarifa_monto) {
+                            $registro_concepto[] = "Monto de '{$originalValues['tarifa_monto']}' cambio a '{$this->tarifa_monto}'";
+                        }
+                        if ($originalValues['tarifa_tipo_bulto'] !== $this->tarifa_tipo_bulto) {
+                            $registro_concepto[] = "Tipo de bulto de '{$originalValues['tarifa_tipo_bulto']}' cambio a '{$this->tarifa_tipo_bulto}'";
+                        }
                     }
-                    DB::commit();
-                    $this->dispatch('hideModal');
-                    session()->flash('success', 'Registro actualizado correctamente.');
+
+                    // Guardar los cambios solo si se realizaron cambios
+                    if (!empty($registro_concepto)) {
+                        // Guardar el tarifario actualizado
+                        if (!$tarifario_update->save()) {
+                            session()->flash('error', 'No se pudo actualizar el registro.');
+                            return;
+                        }
+
+                        // Crear el registro de historial
+                        $this->registrar_historial = new RegistrarHistorialUpdate();
+                        $this->registrar_historial->id_tarifario = $this->id_tarifario;
+                        $this->registrar_historial->id_users = auth()->id(); // Asegúrate de tener autenticación para obtener el id del usuario
+                        $this->registrar_historial->registro_concepto = "El usuario {$usuario_actual} ha actualizado en los siguientes campos: " . implode(", ", $registro_concepto); // Convertir el array en texto
+                        $this->registrar_historial->registro_hora_fecha = now(); // Hora y fecha actual
+                        $this->registrar_historial->registro_estado = 1; // O el estado que desees guardar
+                        $this->registrar_historial->registro_microtime = microtime(true); // Guarda el microtiempo actual
+                        $this->registrar_historial->save();
+
+                        DB::commit();
+                        $this->dispatch('hideModal');
+                        session()->flash('success', 'Registro actualizado correctamente.');
+                    } else {
+                        // Si no se realizaron cambios, también cerrar el modal
+                        $this->dispatch('hideModal');
+                        session()->flash('success', 'No se realizaron cambios en los registros.');
+                    }
                 } else {
                     session()->flash('error', 'El rango de capacidad se solapa con un registro existente.');
                     return;
