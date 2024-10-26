@@ -40,7 +40,10 @@ class Tarifario extends Model
                 ->where('t.id_transportistas', '=', $id)
                 ->where(function($q) use ($search) {
                     $q->where('t.tarifa_monto', 'like', '%' . $search . '%')
-                        ->orWhereNull('t.tarifa_monto');
+                        ->orWhere('t.tarifa_tipo_bulto', 'like', '%' . $search . '%')
+                        ->orWhere('t.tarifa_cap_min', 'like', '%' . $search . '%')
+                        ->orWhere('t.tarifa_cap_max', 'like', '%' . $search . '%')
+                        ->orWhere('ts.tipo_servicio_concepto', 'like', '%' . $search . '%');
                 })
                 ->orderBy('t.id_tarifario', $order);
 

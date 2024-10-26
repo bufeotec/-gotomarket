@@ -257,9 +257,9 @@
                                         <td>
                                             {{ ($ta->llegada_departamento ?? '') . ' - ' . ($ta->llegada_provincia ?? '') . ' - ' . ($ta->llegada_distrito ?? '') }}
                                         </td>
-                                        <td>{{$ta->tarifa_cap_min}}</td>
-                                        <td>{{$ta->tarifa_cap_max}}</td>
-                                        <td>{{$ta->tarifa_monto}} <b>(t)</b></td>
+                                        <td>{{$ta->tarifa_cap_min}} <small class="text-dark">(KG)</small></td>
+                                        <td>{{$ta->tarifa_cap_max}} <small class="text-dark">(KG)</small></td>
+                                        <td>S/ {{$ta->tarifa_monto}}</td>
                                         <td>
                                             <span class="font-bold badge {{$ta->tarifa_estado_aprobacion == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
                                                 {{$ta->tarifa_estado_aprobacion == 1 ? 'Aprobado' : 'Pendiente'}}
@@ -304,7 +304,7 @@
                                 @endforeach
                             @else
                                 <tr class="odd">
-                                    <td valign="top" colspan="9" class="dataTables_empty text-center">
+                                    <td valign="top" colspan="12" class="dataTables_empty text-center">
                                         No se han encontrado resultados.
                                     </td>
                                 </tr>
