@@ -44,8 +44,6 @@ class Tarifarios extends Component
     public $listar_servicios = array();
     public $messageDeleteTarifario = "";
     public $historial_registros = [];
-
-
     private $logs;
     private $ubigeo;
     private $tipovehiculo;
@@ -131,7 +129,22 @@ class Tarifarios extends Component
             ->get();
     }
 
-
+    public function ver_detalles($id){
+        $tarifario_detalle = Tarifario::find(base64_decode($id));
+        if ($tarifario_detalle){
+            $this->id_users = $tarifario_detalle->id_users;
+            $this->id_transportistas = $tarifario_detalle->id_transportistas;
+            $this->id_tipo_vehiculo = $tarifario_detalle->id_tipo_vehiculo;
+            $this->id_tipo_servicio = $tarifario_detalle->id_tipo_servicio;
+            $this->id_ubigeo_salida = $tarifario_detalle->id_ubigeo_salida;
+            $this->id_ubigeo_llegada = $tarifario_detalle->id_ubigeo_llegada;
+            $this->tarifa_cap_min = $tarifario_detalle->tarifa_cap_min;
+            $this->tarifa_cap_max = $tarifario_detalle->tarifa_cap_max;
+            $this->tarifa_monto = $tarifario_detalle->tarifa_monto;
+            $this->tarifa_tipo_bulto = $tarifario_detalle->tarifa_tipo_bulto;
+            $this->id_tarifario = $tarifario_detalle->id_tarifario;
+        }
+    }
 
     public function saveTarifario() {
         try {
@@ -316,28 +329,28 @@ class Tarifarios extends Component
 
                         // Agregar los cambios al mensaje
                         if ($originalValues['id_tipo_servicio'] !== $this->id_tipo_servicio) {
-                            $registro_concepto[] = "Tipo de servicio de '{$originalValues['id_tipo_servicio']}' cambio a '{$this->id_tipo_servicio}'";
+                            $registro_concepto[] = "Tipo de servicio de '{$originalValues['id_tipo_servicio']}' hasta '{$this->id_tipo_servicio}'";
                         }
                         if ($originalValues['id_tipo_vehiculo'] !== $this->id_tipo_vehiculo) {
-                            $registro_concepto[] = "Tipo de vehículo de '{$originalValues['id_tipo_vehiculo']}' cambio a '{$this->id_tipo_vehiculo}'";
+                            $registro_concepto[] = "Tipo de vehículo de '{$originalValues['id_tipo_vehiculo']}' hasta '{$this->id_tipo_vehiculo}'";
                         }
                         if ($originalValues['id_ubigeo_salida'] !== ($this->id_tipo_servicio == 2 ? $this->id_ubigeo_salida : null)) {
-                            $registro_concepto[] = "Ubigeo de salida de '{$originalValues['id_ubigeo_salida']}' cambio a '{$this->id_ubigeo_salida}'";
+                            $registro_concepto[] = "Ubigeo de salida de '{$originalValues['id_ubigeo_salida']}' hasta '{$this->id_ubigeo_salida}'";
                         }
                         if ($originalValues['id_ubigeo_llegada'] !== ($this->id_tipo_servicio == 2 ? $this->id_ubigeo_llegada : null)) {
-                            $registro_concepto[] = "Ubigeo de llegada de '{$originalValues['id_ubigeo_llegada']}' cambio a '{$this->id_ubigeo_llegada}'";
+                            $registro_concepto[] = "Ubigeo de llegada de '{$originalValues['id_ubigeo_llegada']}' hasta '{$this->id_ubigeo_llegada}'";
                         }
                         if ($originalValues['tarifa_cap_min'] !== $this->tarifa_cap_min) {
-                            $registro_concepto[] = "Capacidad mínima de '{$originalValues['tarifa_cap_min']}' cambio a '{$this->tarifa_cap_min}'";
+                            $registro_concepto[] = "Capacidad mínima de '{$originalValues['tarifa_cap_min']}' hasta '{$this->tarifa_cap_min}'";
                         }
                         if ($originalValues['tarifa_cap_max'] !== $this->tarifa_cap_max) {
-                            $registro_concepto[] = "Capacidad máxima de '{$originalValues['tarifa_cap_max']}' cambio a '{$this->tarifa_cap_max}'";
+                            $registro_concepto[] = "Capacidad máxima de '{$originalValues['tarifa_cap_max']}' hasta '{$this->tarifa_cap_max}'";
                         }
                         if ($originalValues['tarifa_monto'] !== $this->tarifa_monto) {
-                            $registro_concepto[] = "Monto de '{$originalValues['tarifa_monto']}' cambio a '{$this->tarifa_monto}'";
+                            $registro_concepto[] = "Monto de '{$originalValues['tarifa_monto']}' hasta '{$this->tarifa_monto}'";
                         }
                         if ($originalValues['tarifa_tipo_bulto'] !== $this->tarifa_tipo_bulto) {
-                            $registro_concepto[] = "Tipo de bulto de '{$originalValues['tarifa_tipo_bulto']}' cambio a '{$this->tarifa_tipo_bulto}'";
+                            $registro_concepto[] = "Tipo de bulto de '{$originalValues['tarifa_tipo_bulto']}' hasta '{$this->tarifa_tipo_bulto}'";
                         }
                     }
 
@@ -353,7 +366,7 @@ class Tarifarios extends Component
                         $this->registrar_historial = new RegistrarHistorialUpdate();
                         $this->registrar_historial->id_tarifario = $this->id_tarifario;
                         $this->registrar_historial->id_users = auth()->id(); // Asegúrate de tener autenticación para obtener el id del usuario
-                        $this->registrar_historial->registro_concepto = "El usuario {$usuario_actual} ha actualizado en los siguientes campos: " . implode(", ", $registro_concepto); // Convertir el array en texto
+                        $this->registrar_historial->registro_concepto = "Se realizaron cambios de: " . implode(", ", $registro_concepto); // Convertir el array en texto
                         $this->registrar_historial->registro_hora_fecha = now(); // Hora y fecha actual
                         $this->registrar_historial->registro_estado = 1; // O el estado que desees guardar
                         $this->registrar_historial->registro_microtime = microtime(true); // Guarda el microtiempo actual
@@ -390,9 +403,9 @@ class Tarifarios extends Component
             $this->id_tarifario = $id;
             $this->tarifa_estado = $status;
             if ($status == 0){
-                $this->messageDeleteTarifario = "¿Está seguro que desea deshabilitar este registro?";
+                $this->messageDeleteTarifario = "¿Está seguro que desea eliminar este registro?";
             }else{
-                $this->messageDeleteTarifario = "¿Está seguro que desea habilitar este registro?";
+                $this->messageDeleteTarifario = "¿Está seguro que desea eliminar este registro?";
             }
         }
     }
@@ -424,9 +437,9 @@ class Tarifarios extends Component
                 DB::commit();
                 $this->dispatch('hideModalDelete');
                 if ($this->tarifa_estado == 0){
-                    session()->flash('success', 'Registro deshabilitado correctamente.');
+                    session()->flash('success', 'Registro eliminado correctamente.');
                 }else{
-                    session()->flash('success', 'Registro habilitado correctamente.');
+                    session()->flash('success', 'Registro eliminado correctamente.');
                 }
             } else {
                 DB::rollBack();

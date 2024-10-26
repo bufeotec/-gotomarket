@@ -124,13 +124,12 @@
     <x-modal-general wire:ignore.self>
         <x-slot name="id_modal">modalVerRegistro</x-slot>
         <x-slot name="tama">modal-lg</x-slot>
-        <x-slot name="titleModal">Detalles de los registros</x-slot>
+        <x-slot name="titleModal">Detalles de los registros actualizados</x-slot>
         <x-slot name="modalContent">
             <x-table-general class="table table-bordered">
                 <x-slot name="thead">
                 <tr>
                     <th>N°</th>
-                    <th>Usuario</th>
                     <th>Concepto</th>
                     <th>Fecha y Hora</th>
                 </tr>
@@ -141,7 +140,6 @@
                         @foreach ($historial_registros as $registro)
                             <tr>
                                 <td>{{ $conteo }}</td>
-                                <td>{{ $registro->name }}</td>
                                 <td>{{ $registro->registro_concepto }}</td>
                                 <td>{{ $registro->registro_hora_fecha }}</td>
                             </tr>
@@ -159,6 +157,93 @@
         </x-slot>
     </x-modal-general>
     {{--    FIN MODAL DE VER REGISTRO--}}
+
+    {{--    MODAL VER DETALLES --}}
+    <x-modal-general wire:ignore.self>
+        <x-slot name="id_modal">modalVerDetalles</x-slot>
+        <x-slot name="tama">modal-lg</x-slot>
+        <x-slot name="titleModal">Detalles de la Tarifa</x-slot>
+        <x-slot name="modalContent">
+            <div class="container">
+                <div class="row">
+                    @php
+                        // Obtener información del usuario, transportista, etc.
+                        $user = \App\Models\User::find($id_users);
+                        $nombre_usuario = $user ? $user->name : 'No disponible';
+
+                        $transportista = \App\Models\Transportista::find($id_transportistas);
+                        $nombre_transportista = $transportista ? $transportista->transportista_nom_comercial : 'No disponible';
+
+                        $tipo_servicio = \App\Models\TipoServicio::find($id_tipo_servicio);
+                        $nombre_tipo_servicio = $tipo_servicio ? $tipo_servicio->tipo_servicio_concepto : 'No disponible';
+
+                        $tipo_vehiculo = \App\Models\TipoVehiculo::find($id_tipo_vehiculo);
+                        $nombre_tipo_vehiculo = $tipo_vehiculo ? $tipo_vehiculo->tipo_vehiculo_concepto : 'No disponible';
+
+                        $ubigeo_salida = \App\Models\Ubigeo::find($id_ubigeo_salida);
+                        $nombre_ubigeo_salida = $ubigeo_salida ? "{$ubigeo_salida->ubigeo_departamento}, {$ubigeo_salida->ubigeo_provincia}, {$ubigeo_salida->ubigeo_distrito}" : 'No disponible';
+
+                        $ubigeo_llegada = \App\Models\Ubigeo::find($id_ubigeo_llegada);
+                        $nombre_ubigeo_llegada = $ubigeo_llegada ? "{$ubigeo_llegada->ubigeo_departamento}, {$ubigeo_llegada->ubigeo_provincia}, {$ubigeo_llegada->ubigeo_distrito}" : 'No disponible';
+                    @endphp
+
+                        <!-- Información en columnas de 4 -->
+                    <div class="col-lg-4 mb-3">
+                        <strong style="color: #8c1017">Apellidos y nombres:</strong>
+                        <p>{{ $nombre_usuario }}</p>
+                    </div>
+
+                    <div class="col-lg-4 mb-3">
+                        <strong style="color: #8c1017">Transportista:</strong>
+                        <p>{{ $nombre_transportista }}</p>
+                    </div>
+
+                    <div class="col-lg-4 mb-3">
+                        <strong style="color: #8c1017">Tipo de Servicio:</strong>
+                        <p>{{ $nombre_tipo_servicio }}</p>
+                    </div>
+
+                    @if($id_tipo_servicio != 1)
+                        <div class="col-lg-4 mb-3">
+                            <strong style="color: #8c1017">Ubigeo Salida:</strong>
+                            <p>{{ $nombre_ubigeo_salida }}</p>
+                        </div>
+                        <div class="col-lg-4 mb-3">
+                            <strong style="color: #8c1017">Ubigeo Llegada:</strong>
+                            <p>{{ $nombre_ubigeo_llegada }}</p>
+                        </div>
+                    @endif
+
+                    @if($id_tipo_servicio != 2)
+                        <div class="col-lg-4 mb-3">
+                            <strong style="color: #8c1017">Tipo de Vehículo:</strong>
+                            <p>{{ $nombre_tipo_vehiculo }}</p>
+                        </div>
+                    @endif
+
+                    <div class="col-lg-4 mb-3">
+                        <strong style="color: #8c1017">Capacidad Mínima:</strong>
+                        <p>{{ $tarifa_cap_min }}</p>
+                    </div>
+
+                    <div class="col-lg-4 mb-3">
+                        <strong style="color: #8c1017">Capacidad Máxima:</strong>
+                        <p>{{ $tarifa_cap_max }}</p>
+                    </div>
+
+                    <div class="col-lg-4 mb-3">
+                        <strong style="color: #8c1017">Monto de Tarifa:</strong>
+                        <p>{{ $tarifa_monto }}</p>
+                    </div>
+
+                    <div class="col-lg-4 mb-3">
+                        <strong style="color: #8c1017">Tipo de Bulto:</strong>
+                        <p>{{ $tarifa_tipo_bulto }}</p>
+                    </div>
+                </div></div>
+        </x-slot>
+    </x-modal-general>
+    {{--    FIN MODAL VER DETALLES --}}
 
     {{--    MODAL DELETE--}}
     <x-modal-delete  wire:ignore.self >
@@ -228,14 +313,10 @@
                             <tr>
                                 <th>N°</th>
                                 <th>Tipo de servicio</th>
-                                <th>Tipo de vehículo</th>
-                                <th>Ubigeo salida</th>
-                                <th>Ubigeo llegada</th>
                                 <th>Capacidad mínima</th>
                                 <th>Capacidad máxima</th>
                                 <th>Monto de la tarifa</th>
                                 <th>Estado de aprobación</th>
-                                <th>Tipo de bulto</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
@@ -248,15 +329,6 @@
                                     <tr>
                                         <td>{{$conteo}}</td>
                                         <td>{{$ta->tipo_servicio_concepto}}</td>
-                                        <td>{{$ta->tipo_vehiculo_concepto ?? '-'}}</td>
-                                        <!-- Ubigeo salida -->
-                                        <td>
-                                            {{ ($ta->salida_departamento ?? '') . ' - ' . ($ta->salida_provincia ?? '') . ' - ' . ($ta->salida_distrito ?? '') }}
-                                        </td>
-                                        <!-- Ubigeo llegada -->
-                                        <td>
-                                            {{ ($ta->llegada_departamento ?? '') . ' - ' . ($ta->llegada_provincia ?? '') . ' - ' . ($ta->llegada_distrito ?? '') }}
-                                        </td>
                                         <td>{{$ta->tarifa_cap_min}} <small class="text-dark">(KG)</small></td>
                                         <td>{{$ta->tarifa_cap_max}} <small class="text-dark">(KG)</small></td>
                                         <td>S/ {{$ta->tarifa_monto}}</td>
@@ -265,7 +337,6 @@
                                                 {{$ta->tarifa_estado_aprobacion == 1 ? 'Aprobado' : 'Pendiente'}}
                                             </span>
                                         </td>
-                                        <td>{{$ta->tarifa_tipo_bulto}}</td>
                                         <td>
                                             <span class="font-bold badge {{$ta->tarifa_estado == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
                                                 {{$ta->tarifa_estado == 1 ? 'Habilitado ' : 'Desabilitado'}}
@@ -280,7 +351,9 @@
                                             @if($rolId == 1 || $rolId == 2)
                                                 <x-btn-accion class=" text-primary"  wire:click="edit_data('{{ base64_encode($ta->id_tarifario) }}')" data-bs-toggle="modal" data-bs-target="#modalTarifario"><x-slot name="message"><i class="fa-solid fa-pen-to-square"></i></x-slot></x-btn-accion>
 
-                                                <x-btn-accion style="color: green" class=""  wire:click="ver_registro('{{ base64_encode($ta->id_tarifario) }}')" data-bs-toggle="modal" data-bs-target="#modalVerRegistro"><x-slot name="message"><i class="fa-solid fa-eye"></i></x-slot></x-btn-accion>
+                                                <x-btn-accion class="text-warning"  wire:click="ver_registro('{{ base64_encode($ta->id_tarifario) }}')" data-bs-toggle="modal" data-bs-target="#modalVerRegistro"><x-slot name="message"><i class="fa-solid fa-clock-rotate-left"></i></x-slot></x-btn-accion>
+
+                                                <x-btn-accion style="color: green"  wire:click="ver_detalles('{{ base64_encode($ta->id_tarifario) }}')" data-bs-toggle="modal" data-bs-target="#modalVerDetalles"><x-slot name="message"><i class="fa-solid fa-eye"></i></x-slot></x-btn-accion>
 
                                                 @if($ta->tarifa_estado == 1)
                                                     <x-btn-accion class=" text-danger" wire:click="btn_disable('{{ base64_encode($ta->id_tarifario) }}',0)" data-bs-toggle="modal" data-bs-target="#modalDeleteTarifario">

@@ -38,6 +38,7 @@ class Tarifario extends Model
                     'ub.ubigeo_distrito as llegada_distrito'
                 )
                 ->where('t.id_transportistas', '=', $id)
+                ->where('t.tarifa_estado', '=', 1)
                 ->where(function($q) use ($search) {
                     $q->where('t.tarifa_monto', 'like', '%' . $search . '%')
                         ->orWhere('t.tarifa_tipo_bulto', 'like', '%' . $search . '%')
