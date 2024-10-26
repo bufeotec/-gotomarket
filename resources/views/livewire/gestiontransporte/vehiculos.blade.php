@@ -49,7 +49,7 @@
                     </div>
 
                     <div class="col-lg-6 col-md-4 col-sm-12 mb-3">
-                        <label for="vehiculo_capacidad_peso" class="form-label">Capacidad de peso (*) (en kilos)</label>
+                        <label for="vehiculo_capacidad_peso" class="form-label">Capacidad de peso (*) (en kg)</label>
                         <x-input-general  type="text" id="vehiculo_capacidad_peso" wire:model="vehiculo_capacidad_peso"/>
                         @error('vehiculo_capacidad_peso')
                         <span class="message-error">{{ $message }}</span>
@@ -57,24 +57,24 @@
                     </div>
 
                     <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                        <label for="vehiculo_ancho" class="form-label">Ancho (*) (Medida en centimetros)</label>
-                        <x-input-general type="text" id="vehiculo_ancho" wire:model="vehiculo_ancho" wire:input="calcularVolumen"/>
+                        <label for="vehiculo_ancho" class="form-label">Ancho (*) (Medida en cm)</label>
+                        <x-input-general type="text" id="vehiculo_ancho" wire:model="vehiculo_ancho" wire:input="calcularVolumen" onkeyup="validar_numeros(this.id)" />
                         @error('vehiculo_ancho')
                         <span class="message-error">{{ $message }}</span>
                         @enderror
                     </div>
 
                     <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                        <label for="vehiculo_largo" class="form-label">Largo (*) (Medida en centimetros)</label>
-                        <x-input-general type="text" id="vehiculo_largo" wire:model="vehiculo_largo" wire:input="calcularVolumen"/>
+                        <label for="vehiculo_largo" class="form-label">Largo (*) (Medida en cm)</label>
+                        <x-input-general type="text" id="vehiculo_largo" wire:model="vehiculo_largo" wire:input="calcularVolumen" onkeyup="validar_numeros(this.id)" />
                         @error('vehiculo_largo')
                         <span class="message-error">{{ $message }}</span>
                         @enderror
                     </div>
 
                     <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                        <label for="vehiculo_alto" class="form-label">Alto (*) (Medida en centimetros)</label>
-                        <x-input-general type="text" id="vehiculo_alto" wire:model="vehiculo_alto" wire:input="calcularVolumen"/>
+                        <label for="vehiculo_alto" class="form-label">Alto (*) (Medida en cm)</label>
+                        <x-input-general type="text" id="vehiculo_alto" wire:model="vehiculo_alto" wire:input="calcularVolumen" onkeyup="validar_numeros(this.id)" />
                         @error('vehiculo_alto')
                         <span class="message-error">{{ $message }}</span>
                         @enderror
@@ -261,5 +261,10 @@
     $wire.on('hideModalDelete', () => {
         $('#modalDeleteVehiculos').modal('hide');
     });
+
+    function soloNumerosYPuntuacion(event) {
+        const input = event.target;
+        input.value = input.value.replace(/[^0-9.,]/g, '');
+    }
 </script>
 @endscript

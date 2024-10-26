@@ -25,7 +25,20 @@
                         @enderror
                     </div>
 
-                    @if($id_tipo_servicio == 2)
+                    @if($id_tipo_servicio == 1)
+                        <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                            <label for="id_tipo_vehiculo" class="form-label">Tipo de vehículos (*)</label>
+                            <select class="form-select" name="id_tipo_vehiculo" id="id_tipo_vehiculo" wire:model="id_tipo_vehiculo">
+                                <option value="" >Seleccionar...</option>
+                                @foreach($listar_tipovehiculo as $tv)
+                                    <option value="{{$tv->id_tipo_vehiculo}}">{{$tv->tipo_vehiculo_concepto}}</option>
+                                @endforeach
+                            </select>
+                            @error('id_tipo_vehiculo')
+                            <span class="message-error">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    @elseif($id_tipo_servicio == 2)
                         <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
                             <div class="" wire:ignore>
                                 <label for="id_ubigeo_salida" class="form-label">Ubigeo salida (*)</label>
@@ -57,7 +70,7 @@
                     @endif
 
                     <div class="col-lg-6 col-md-8 col-sm-12 mb-3">
-                        <label for="tarifa_cap_min" class="form-label">Capacidad mínima (*) (Capacidad en kilos)</label>
+                        <label for="tarifa_cap_min" class="form-label">Capacidad mínima (*) (Capacidad en kg)</label>
                         <x-input-general  type="text" id="tarifa_cap_min" wire:model="tarifa_cap_min"/>
                         @error('tarifa_cap_min')
                         <span class="message-error">{{ $message }}</span>
@@ -65,7 +78,7 @@
                     </div>
 
                     <div class="col-lg-6 col-md-8 col-sm-12 mb-3">
-                        <label for="tarifa_cap_max" class="form-label">Capacidad máxima (*) (Capacidad en kilos)</label>
+                        <label for="tarifa_cap_max" class="form-label">Capacidad máxima (*) (Capacidad en kg)</label>
                         <x-input-general  type="text" id="tarifa_cap_max" wire:model="tarifa_cap_max"/>
                         @error('tarifa_cap_max')
                         <span class="message-error">{{ $message }}</span>
@@ -106,6 +119,46 @@
         </x-slot>
     </x-modal-general>
     {{--    FIN MODAL REGISTRO TRANSPORTISTAS--}}
+
+{{--    MODAL DE VER REGISTRO--}}
+    <x-modal-general wire:ignore.self>
+        <x-slot name="id_modal">modalVerRegistro</x-slot>
+        <x-slot name="tama">modal-lg</x-slot>
+        <x-slot name="titleModal">Detalles de los registros</x-slot>
+        <x-slot name="modalContent">
+            <x-table-general class="table table-bordered">
+                <x-slot name="thead">
+                <tr>
+                    <th>N°</th>
+                    <th>Usuario</th>
+                    <th>Concepto</th>
+                    <th>Fecha y Hora</th>
+                </tr>
+                </x-slot>
+                <x-slot name="tbody">
+                    @if(count($historial_registros) > 0)
+                        @php $conteo = 1; @endphp
+                        @foreach ($historial_registros as $registro)
+                            <tr>
+                                <td>{{ $conteo }}</td>
+                                <td>{{ $registro->name }}</td>
+                                <td>{{ $registro->registro_concepto }}</td>
+                                <td>{{ $registro->registro_hora_fecha }}</td>
+                            </tr>
+                            @php $conteo++; @endphp
+                        @endforeach
+                    @else
+                        <tr class="odd">
+                            <td valign="top" colspan="9" class="dataTables_empty text-center">
+                                No se han encontrado resultados.
+                            </td>
+                        </tr>
+                    @endif
+                </x-slot>
+            </x-table-general>
+        </x-slot>
+    </x-modal-general>
+    {{--    FIN MODAL DE VER REGISTRO--}}
 
     {{--    MODAL DELETE--}}
     <x-modal-delete  wire:ignore.self >
@@ -175,11 +228,13 @@
                             <tr>
                                 <th>N°</th>
                                 <th>Tipo de servicio</th>
+                                <th>Tipo de vehículo</th>
                                 <th>Ubigeo salida</th>
                                 <th>Ubigeo llegada</th>
                                 <th>Capacidad mínima</th>
                                 <th>Capacidad máxima</th>
                                 <th>Monto de la tarifa</th>
+                                <th>Estado de aprobación</th>
                                 <th>Tipo de bulto</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
@@ -193,6 +248,8 @@
                                     <tr>
                                         <td>{{$conteo}}</td>
                                         <td>{{$ta->tipo_servicio_concepto}}</td>
+                                        <td>{{$ta->tipo_vehiculo_concepto ?? '-'}}</td>
+                                        <!-- Ubigeo salida -->
                                         <td>
                                             {{ ($ta->salida_departamento ?? '') . ' - ' . ($ta->salida_provincia ?? '') . ' - ' . ($ta->salida_distrito ?? '') }}
                                         </td>
@@ -203,28 +260,43 @@
                                         <td>{{$ta->tarifa_cap_min}}</td>
                                         <td>{{$ta->tarifa_cap_max}}</td>
                                         <td>{{$ta->tarifa_monto}} <b>(t)</b></td>
+                                        <td>
+                                            <span class="font-bold badge {{$ta->tarifa_estado_aprobacion == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
+                                                {{$ta->tarifa_estado_aprobacion == 1 ? 'Aprobado' : 'Pendiente'}}
+                                            </span>
+                                        </td>
                                         <td>{{$ta->tarifa_tipo_bulto}}</td>
                                         <td>
                                             <span class="font-bold badge {{$ta->tarifa_estado == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
-                                                {{$ta->transportista_estado == 1 ? 'Habilitado ' : 'Desabilitado'}}
+                                                {{$ta->tarifa_estado == 1 ? 'Habilitado ' : 'Desabilitado'}}
                                             </span>
                                         </td>
 
                                         <td>
-                                            <x-btn-accion class=" text-primary"  wire:click="edit_data('{{ base64_encode($ta->id_tarifario) }}')" data-bs-toggle="modal" data-bs-target="#modalTarifario"><x-slot name="message"><i class="fa-solid fa-pen-to-square"></i></x-slot></x-btn-accion>
+                                            @php
+                                                $rol = \Illuminate\Support\Facades\Auth::user()->roles->first(); // Obtén el primer rol asignado
+                                                $rolId = $rol->id; // ID del rol
+                                            @endphp
+                                            @if($rolId == 1 || $rolId == 2)
+                                                <x-btn-accion class=" text-primary"  wire:click="edit_data('{{ base64_encode($ta->id_tarifario) }}')" data-bs-toggle="modal" data-bs-target="#modalTarifario"><x-slot name="message"><i class="fa-solid fa-pen-to-square"></i></x-slot></x-btn-accion>
 
-                                            @if($ta->tarifa_estado == 1)
-                                                <x-btn-accion class=" text-danger" wire:click="btn_disable('{{ base64_encode($ta->id_tarifario) }}',0)" data-bs-toggle="modal" data-bs-target="#modalDeleteTarifario">
-                                                    <x-slot name="message">
-                                                        <i class="fa-solid fa-ban"></i>
-                                                    </x-slot>
-                                                </x-btn-accion>
+                                                <x-btn-accion style="color: green" class=""  wire:click="ver_registro('{{ base64_encode($ta->id_tarifario) }}')" data-bs-toggle="modal" data-bs-target="#modalVerRegistro"><x-slot name="message"><i class="fa-solid fa-eye"></i></x-slot></x-btn-accion>
+
+                                                @if($ta->tarifa_estado == 1)
+                                                    <x-btn-accion class=" text-danger" wire:click="btn_disable('{{ base64_encode($ta->id_tarifario) }}',0)" data-bs-toggle="modal" data-bs-target="#modalDeleteTarifario">
+                                                        <x-slot name="message">
+                                                            <i class="fa-solid fa-ban"></i>
+                                                        </x-slot>
+                                                    </x-btn-accion>
+                                                @else
+                                                    <x-btn-accion class=" text-success" wire:click="btn_disable('{{ base64_encode($ta->id_tarifario) }}',1)" data-bs-toggle="modal" data-bs-target="#modalDeleteTarifario">
+                                                        <x-slot name="message">
+                                                            <i class="fa-solid fa-check"></i>
+                                                        </x-slot>
+                                                    </x-btn-accion>
+                                                @endif
                                             @else
-                                                <x-btn-accion class=" text-success" wire:click="btn_disable('{{ base64_encode($ta->id_tarifario) }}',1)" data-bs-toggle="modal" data-bs-target="#modalDeleteTarifario">
-                                                    <x-slot name="message">
-                                                        <i class="fa-solid fa-check"></i>
-                                                    </x-slot>
-                                                </x-btn-accion>
+                                                <x-btn-accion class=" text-primary"  wire:click="edit_data('{{ base64_encode($ta->id_tarifario) }}')" data-bs-toggle="modal" data-bs-target="#modalTarifario"><x-slot name="message"><i class="fa-solid fa-pen-to-square"></i></x-slot></x-btn-accion>
                                             @endif
                                         </td>
                                     </tr>
