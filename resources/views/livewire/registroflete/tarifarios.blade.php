@@ -130,6 +130,7 @@
                 <x-slot name="thead">
                 <tr>
                     <th>N°</th>
+                    <th>Usuario</th>
                     <th>Concepto</th>
                     <th>Fecha y Hora</th>
                 </tr>
@@ -140,8 +141,9 @@
                         @foreach ($historial_registros as $registro)
                             <tr>
                                 <td>{{ $conteo }}</td>
+                                <td>{{ $registro->name }} {{ $registro->last_name }}</td>
                                 <td>{{ $registro->registro_concepto }}</td>
-                                <td>{{ $registro->registro_hora_fecha }}</td>
+                                <td>{{ date('d-m-Y H:i:s',strtotime($registro->registro_hora_fecha)) }}</td>
                             </tr>
                             @php $conteo++; @endphp
                         @endforeach
@@ -169,10 +171,10 @@
                     @php
                         // Obtener información del usuario, transportista, etc.
                         $user = \App\Models\User::find($id_users);
-                        $nombre_usuario = $user ? $user->name : 'No disponible';
+                        $nombre_usuario = $user ? $user->name.' '.$user->last_name : 'No disponible';
 
                         $transportista = \App\Models\Transportista::find($id_transportistas);
-                        $nombre_transportista = $transportista ? $transportista->transportista_nom_comercial : 'No disponible';
+                        $nombre_transportista = $transportista ? $transportista->transportista_nom_comercial.' - '.$transportista->transportista_ruc : 'No disponible';
 
                         $tipo_servicio = \App\Models\TipoServicio::find($id_tipo_servicio);
                         $nombre_tipo_servicio = $tipo_servicio ? $tipo_servicio->tipo_servicio_concepto : 'No disponible';
@@ -188,58 +190,84 @@
                     @endphp
 
                         <!-- Información en columnas de 4 -->
-                    <div class="col-lg-4 mb-3">
-                        <strong style="color: #8c1017">Apellidos y nombres:</strong>
-                        <p>{{ $nombre_usuario }}</p>
-                    </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        <div class="row">
+                            <div class="col-lg-12 col-md-12 col-sm-12">
+                                <h6>Información del transporte</h6>
+                                <hr>
+                            </div>
+                            <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
+                                <strong style="color: #8c1017">Usuario de registro:</strong>
+                                <p>{{ $nombre_usuario }}</p>
+                            </div>
+                            <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
+                                <strong style="color: #8c1017">Transportista:</strong>
+                                <p>{{ $nombre_transportista }}</p>
+                            </div>
+                            <div class="col-lg-2 mb-3">
+                                <strong style="color: #8c1017">Servicio:</strong>
+                                <p>{{ $nombre_tipo_servicio }}</p>
+                            </div>
 
-                    <div class="col-lg-4 mb-3">
-                        <strong style="color: #8c1017">Transportista:</strong>
-                        <p>{{ $nombre_transportista }}</p>
-                    </div>
+                            @if($id_tipo_servicio != 1)
+                                <div class="col-lg-5 mb-3">
+                                    <strong style="color: #8c1017">Ubigeo Salida:</strong>
+                                    <p>{{ $nombre_ubigeo_salida }}</p>
+                                </div>
+                                <div class="col-lg-5 mb-3">
+                                    <strong style="color: #8c1017">Ubigeo Llegada:</strong>
+                                    <p>{{ $nombre_ubigeo_llegada }}</p>
+                                </div>
+                            @endif
 
-                    <div class="col-lg-4 mb-3">
-                        <strong style="color: #8c1017">Tipo de Servicio:</strong>
-                        <p>{{ $nombre_tipo_servicio }}</p>
-                    </div>
-
-                    @if($id_tipo_servicio != 1)
-                        <div class="col-lg-4 mb-3">
-                            <strong style="color: #8c1017">Ubigeo Salida:</strong>
-                            <p>{{ $nombre_ubigeo_salida }}</p>
+                            @if($id_tipo_servicio != 2)
+                                <div class="col-lg-4 mb-3">
+                                    <strong style="color: #8c1017">Tipo de Vehículo:</strong>
+                                    <p>{{ $nombre_tipo_vehiculo }}</p>
+                                </div>
+                            @endif
                         </div>
-                        <div class="col-lg-4 mb-3">
-                            <strong style="color: #8c1017">Ubigeo Llegada:</strong>
-                            <p>{{ $nombre_ubigeo_llegada }}</p>
+                    </div>
+
+
+
+
+
+
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        <div class="row">
+                            <div class="col-lg-12 col-md-12 col-sm-12">
+                                <h6>Capacidad y Costos</h6>
+                                <hr>
+                            </div>
+
+                            <div class="col-lg-4 mb-3">
+                                <strong style="color: #8c1017">Capacidad Mínima:</strong>
+                                <p>{{ $tarifa_cap_min }} <small>Kg</small></p>
+                            </div>
+
+                            <div class="col-lg-4 mb-3">
+                                <strong style="color: #8c1017">Capacidad Máxima:</strong>
+                                <p>{{ $tarifa_cap_max }} <small>Kg</small></p>
+                            </div>
+
+                            <div class="col-lg-4 mb-3">
+                                <strong style="color: #8c1017">Monto de Tarifa:</strong>
+                                <p>{{ 'S/ '.$tarifa_monto }}</p>
+                            </div>
+
+                            <div class="col-lg-4 mb-3">
+                                <strong style="color: #8c1017">Tipo de Bulto:</strong>
+                                <p>{{ $tarifa_tipo_bulto }}</p>
+                            </div>
+
                         </div>
-                    @endif
-
-                    @if($id_tipo_servicio != 2)
-                        <div class="col-lg-4 mb-3">
-                            <strong style="color: #8c1017">Tipo de Vehículo:</strong>
-                            <p>{{ $nombre_tipo_vehiculo }}</p>
-                        </div>
-                    @endif
-
-                    <div class="col-lg-4 mb-3">
-                        <strong style="color: #8c1017">Capacidad Mínima:</strong>
-                        <p>{{ $tarifa_cap_min }}</p>
                     </div>
 
-                    <div class="col-lg-4 mb-3">
-                        <strong style="color: #8c1017">Capacidad Máxima:</strong>
-                        <p>{{ $tarifa_cap_max }}</p>
-                    </div>
 
-                    <div class="col-lg-4 mb-3">
-                        <strong style="color: #8c1017">Monto de Tarifa:</strong>
-                        <p>{{ $tarifa_monto }}</p>
-                    </div>
 
-                    <div class="col-lg-4 mb-3">
-                        <strong style="color: #8c1017">Tipo de Bulto:</strong>
-                        <p>{{ $tarifa_tipo_bulto }}</p>
-                    </div>
+
+
                 </div></div>
         </x-slot>
     </x-modal-general>
@@ -348,13 +376,11 @@
                                                 $rol = \Illuminate\Support\Facades\Auth::user()->roles->first(); // Obtén el primer rol asignado
                                                 $rolId = $rol->id; // ID del rol
                                             @endphp
+                                            <x-btn-accion class=" text-primary"  wire:click="edit_data('{{ base64_encode($ta->id_tarifario) }}')" data-bs-toggle="modal" data-bs-target="#modalTarifario"><x-slot name="message"><i class="fa-solid fa-pen-to-square"></i></x-slot></x-btn-accion>
+                                            <x-btn-accion style="color: green"  wire:click="ver_detalles('{{ base64_encode($ta->id_tarifario) }}')" data-bs-toggle="modal" data-bs-target="#modalVerDetalles"><x-slot name="message"><i class="fa-solid fa-eye"></i></x-slot></x-btn-accion>
+
                                             @if($rolId == 1 || $rolId == 2)
-                                                <x-btn-accion class=" text-primary"  wire:click="edit_data('{{ base64_encode($ta->id_tarifario) }}')" data-bs-toggle="modal" data-bs-target="#modalTarifario"><x-slot name="message"><i class="fa-solid fa-pen-to-square"></i></x-slot></x-btn-accion>
-
                                                 <x-btn-accion class="text-warning"  wire:click="ver_registro('{{ base64_encode($ta->id_tarifario) }}')" data-bs-toggle="modal" data-bs-target="#modalVerRegistro"><x-slot name="message"><i class="fa-solid fa-clock-rotate-left"></i></x-slot></x-btn-accion>
-
-                                                <x-btn-accion style="color: green"  wire:click="ver_detalles('{{ base64_encode($ta->id_tarifario) }}')" data-bs-toggle="modal" data-bs-target="#modalVerDetalles"><x-slot name="message"><i class="fa-solid fa-eye"></i></x-slot></x-btn-accion>
-
                                                 @if($ta->tarifa_estado == 1)
                                                     <x-btn-accion class=" text-danger" wire:click="btn_disable('{{ base64_encode($ta->id_tarifario) }}',0)" data-bs-toggle="modal" data-bs-target="#modalDeleteTarifario">
                                                         <x-slot name="message">

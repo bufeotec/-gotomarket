@@ -124,14 +124,17 @@ class Tarifarios extends Component
 
     public function ver_registro($id){
         $tarifario_id = base64_decode($id);
-        $this->historial_registros = RegistrarHistorialUpdate::where('id_tarifario', $tarifario_id)
-            ->join('users as u', 'registrar_historial_updates.id_users', '=', 'u.id_users')
+        // los where deben ir siempre al último. -
+        $this->historial_registros = DB::table('registrar_historial_updates as r')
+            ->join('users as u', 'r.id_users', '=', 'u.id_users')
+            ->where('id_tarifario', $tarifario_id)
             ->get();
     }
 
     public function ver_detalles($id){
         $tarifario_detalle = Tarifario::find(base64_decode($id));
         if ($tarifario_detalle){
+            $this->
             $this->id_users = $tarifario_detalle->id_users;
             $this->id_transportistas = $tarifario_detalle->id_transportistas;
             $this->id_tipo_vehiculo = $tarifario_detalle->id_tipo_vehiculo;
