@@ -1,13 +1,13 @@
 <div>
     @livewire('gestiontransporte.tipovehiculos')
 
-    {{--    MODAL REGISTRO TRANSPORTISTAS--}}
+    {{--    MODAL REGISTRO VEHICULO--}}
     <x-modal-general  wire:ignore.self >
         <x-slot name="id_modal">modalVehiculos</x-slot>
         <x-slot name="tama">modal-lg</x-slot>
         <x-slot name="titleModal">Gestionar Vehiculos</x-slot>
         <x-slot name="modalContent">
-            <form wire:submit.prevent="saveTransportista">
+            <form wire:submit.prevent="saveVehiculo">
                 <div class="row">
                     <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
                         <small class="text-primary">Información del Vehículo</small>
@@ -111,7 +111,7 @@
             </form>
         </x-slot>
     </x-modal-general>
-    {{--    FIN MODAL REGISTRO TRANSPORTISTAS--}}
+    {{--    FIN MODAL REGISTRO VEHICULO--}}
 
     {{--    MODAL DELETE--}}
     <x-modal-delete  wire:ignore.self >
@@ -250,7 +250,8 @@
             </div>
         </x-slot>
     </x-card-general-view>
-    {{--    {{ $menus->links(data: ['scrollTo' => false]) }}--}}
+    {{ $listar_vehiculos->links(data: ['scrollTo' => false]) }}
+
 </div>
 
 @script

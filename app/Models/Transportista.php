@@ -48,8 +48,17 @@ class Transportista extends Model
                 ->where(function($q) use ($search) {
                     $q->where('t.transportista_ruc', 'like', '%' . $search . '%')
                         ->orWhere('t.transportista_razon_social', 'like', '%' . $search . '%')
+                        ->orWhere('t.transportista_nom_comercial', 'like', '%' . $search . '%')
+                        ->orWhere('t.transportista_contacto', 'like', '%' . $search . '%')
+                        ->orWhere('t.transportista_correo', 'like', '%' . $search . '%')
+                        ->orWhere('t.transportista_telefono', 'like', '%' . $search . '%')
+                        ->orWhere('t.transportista_cargo', 'like', '%' . $search . '%')
+
                         ->orWhereNull('t.transportista_ruc')
-                        ->orWhereNull('t.transportista_razon_social');
+                        ->orWhereNull('t.transportista_razon_social')
+                        ->orWhereNull('t.transportista_nom_comercial')
+                        ->orWhereNull('t.transportista_contacto')
+                        ->orWhereNull('t.transportista_cargo');
                 })->orderBy('t.id_transportistas', $order);
 
             $result = $query->paginate($pagination);

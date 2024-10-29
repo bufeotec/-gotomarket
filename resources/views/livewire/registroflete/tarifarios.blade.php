@@ -456,7 +456,7 @@
             </div>
         </x-slot>
     </x-card-general-view>
-    {{--    {{ $transportistas->links(data: ['scrollTo' => false]) }}--}}
+{{--        {{ $tarifario->links(data: ['scrollTo' => false]) }}--}}
 </div>
 
 @script

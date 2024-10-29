@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Request;
 
 class Vehiculos extends Component
 {
+    use WithPagination, WithoutUrlPagination;
     private $logs;
     private $tipovehiculo;
     private $transportistas;
@@ -101,7 +102,7 @@ class Vehiculos extends Component
         }
     }
 
-    public function saveTransportista(){
+    public function saveVehiculo(){
         try {
             $this->validate([
                 'id_transportistas' => 'required|integer',

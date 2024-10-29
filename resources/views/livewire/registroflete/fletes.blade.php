@@ -80,5 +80,5 @@
             </div>
         </x-slot>
     </x-card-general-view>
+    {{ $transportistas->links(data: ['scrollTo' => false]) }}
 </div>
-

@@ -6,10 +6,12 @@ use App\Models\General;
 use App\Models\Logs;
 use Livewire\Component;
 use App\Models\Transportista;
+use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
 
 class Fletes extends Component
 {
+    use WithPagination, WithoutUrlPagination;
     private $logs;
     private $transportistas;
     public $search_transportistas;
