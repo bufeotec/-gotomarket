@@ -24,6 +24,7 @@ class Transportista extends Model
         try {
 
             $query = DB::table('transportistas as t')
+                ->where('t.transportista_estado', '=', 1)
                 ->where(function($q) use ($search) {
                     $q->where('t.transportista_ruc', 'like', '%' . $search . '%')
                         ->orWhere('t.transportista_razon_social', 'like', '%' . $search . '%')

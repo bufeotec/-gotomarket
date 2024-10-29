@@ -32,6 +32,7 @@ class Validartarifas extends Component
     public $messageValidarAprobacion = "";
     public $messageDeleteTarifario = "";
     public $historial_registros = [];
+    public $detalles = [];
     private $logs;
     private $tarifario;
     private $registrar_historial;
@@ -47,20 +48,8 @@ class Validartarifas extends Component
     }
 
     public function ver_detalle($id){
-        $tarifario_detalle = Tarifario::find(base64_decode($id));
-        if ($tarifario_detalle){
-            $this->id_users = $tarifario_detalle->id_users;
-            $this->id_transportistas = $tarifario_detalle->id_transportistas;
-            $this->id_tipo_vehiculo = $tarifario_detalle->id_tipo_vehiculo;
-            $this->id_tipo_servicio = $tarifario_detalle->id_tipo_servicio;
-            $this->id_ubigeo_salida = $tarifario_detalle->id_ubigeo_salida;
-            $this->id_ubigeo_llegada = $tarifario_detalle->id_ubigeo_llegada;
-            $this->tarifa_cap_min = $tarifario_detalle->tarifa_cap_min;
-            $this->tarifa_cap_max = $tarifario_detalle->tarifa_cap_max;
-            $this->tarifa_monto = $tarifario_detalle->tarifa_monto;
-            $this->tarifa_tipo_bulto = $tarifario_detalle->tarifa_tipo_bulto;
-            $this->id_tarifario = $tarifario_detalle->id_tarifario;
-        }
+        $id_tarifario = base64_decode($id);
+        $this->detalles = Tarifario::where('id_tarifario', $id_tarifario)->first();
     }
     public function ver_registro($id){
         $tarifario_id = base64_decode($id);

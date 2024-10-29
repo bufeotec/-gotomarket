@@ -202,7 +202,7 @@
                                         <td>{{$lv->transportista_nom_comercial}}</td>
                                         <td>{{$lv->tipo_vehiculo_concepto}}</td>
                                         <td>{{$lv->vehiculo_placa}}</td>
-                                        <td>{{$lv->vehiculo_capacidad_peso}} <b>(kg)</b></td>
+                                        <td>{{ number_format($lv->vehiculo_capacidad_peso, 2, '.', ',') }} <b>(kg)</b></td>
                                         <td>{{ number_format($lv->vehiculo_ancho, 2, '.', ',') }} <b>(cm)</b></td>
                                         <td>{{ number_format($lv->vehiculo_largo, 2, '.', ',') }} <b>(cm)</b></td>
                                         <td>{{ number_format($lv->vehiculo_alto, 2, '.', ',') }} <b>(cm)</b></td>

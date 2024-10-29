@@ -21,7 +21,6 @@ return new class extends Migration
             $table->decimal('tarifa_cap_min', 10,2);
             $table->decimal('tarifa_cap_max', 10,2);
             $table->decimal('tarifa_monto', 10,2);
-            $table->string('tarifa_tipo_bulto');
             $table->tinyInteger('tarifa_estado');
             $table->string('tarifa_microtime');
             $table->timestamps();

@@ -13,80 +13,124 @@
             <x-slot name="modalContent">
                 <div class="container">
                     <div class="row">
-                        @php
-                            // Obtener información del usuario, transportista, etc.
-                            $user = \App\Models\User::find($id_users);
-                            $nombre_usuario = $user ? $user->name : 'No disponible';
+                        @if(isset($detalles) && $detalles)
+                            @php
+                                $nombre_usuario = "No disponible";
+                                if ($detalles->id_users){
+                                    $user = \App\Models\User::find($detalles->id_users);
+                                    $nombre_usuario = $user ? $user->name . ' ' . $user->last_name : '';
+                                }
+                                $nombre_transportista = "No disponible";
+                                if ($detalles->id_transportistas){
+                                    $transportista = \App\Models\Transportista::find($detalles->id_transportistas);
+                                    $nombre_transportista = $transportista ? $transportista->transportista_nom_comercial.' - '.$transportista->transportista_ruc : '';
+                                }
 
-                            $transportista = \App\Models\Transportista::find($id_transportistas);
-                            $nombre_transportista = $transportista ? $transportista->transportista_nom_comercial : 'No disponible';
+                                $nombre_tipo_servicio = "No disponible";
+                                if ($detalles->id_tipo_servicio){
+                                    $tipo_servicio = \App\Models\TipoServicio::find($detalles->id_tipo_servicio);
+                                    $nombre_tipo_servicio = $tipo_servicio ? $tipo_servicio->tipo_servicio_concepto : 'No disponible';
+                                }
 
-                            $tipo_servicio = \App\Models\TipoServicio::find($id_tipo_servicio);
-                            $nombre_tipo_servicio = $tipo_servicio ? $tipo_servicio->tipo_servicio_concepto : 'No disponible';
+                                $nombre_tipo_vehiculo = "";
+                                if ($detalles->id_tipo_vehiculo){
+                                    $tipo_vehiculo = \App\Models\TipoVehiculo::find($detalles->id_tipo_vehiculo);
+                                    $nombre_tipo_vehiculo = $tipo_vehiculo ? $tipo_vehiculo->tipo_vehiculo_concepto : '';
+                                }
 
-                            $tipo_vehiculo = \App\Models\TipoVehiculo::find($id_tipo_vehiculo);
-                            $nombre_tipo_vehiculo = $tipo_vehiculo ? $tipo_vehiculo->tipo_vehiculo_concepto : 'No disponible';
+                                $nombre_ubigeo_salida = "";
+                                if ($detalles->id_ubigeo_salida){
+                                    $ubigeo_salida = \App\Models\Ubigeo::find($detalles->id_ubigeo_salida);
+                                    $nombre_ubigeo_salida = $ubigeo_salida ? "{$ubigeo_salida->ubigeo_departamento}, {$ubigeo_salida->ubigeo_provincia}, {$ubigeo_salida->ubigeo_distrito}" : '';
+                                }
 
-                            $ubigeo_salida = \App\Models\Ubigeo::find($id_ubigeo_salida);
-                            $nombre_ubigeo_salida = $ubigeo_salida ? "{$ubigeo_salida->ubigeo_departamento}, {$ubigeo_salida->ubigeo_provincia}, {$ubigeo_salida->ubigeo_distrito}" : 'No disponible';
+                                $nombre_ubigeo_llegada = "";
+                                if ($detalles->id_ubigeo_llegada){
+                                    $ubigeo_llegada = \App\Models\Ubigeo::find($detalles->id_ubigeo_llegada);
+                                    $nombre_ubigeo_llegada = $ubigeo_llegada ? "{$ubigeo_llegada->ubigeo_departamento}, {$ubigeo_llegada->ubigeo_provincia}, {$ubigeo_llegada->ubigeo_distrito}" : '';
+                                }
 
-                            $ubigeo_llegada = \App\Models\Ubigeo::find($id_ubigeo_llegada);
-                            $nombre_ubigeo_llegada = $ubigeo_llegada ? "{$ubigeo_llegada->ubigeo_departamento}, {$ubigeo_llegada->ubigeo_provincia}, {$ubigeo_llegada->ubigeo_distrito}" : 'No disponible';
-                        @endphp
+                                $nombre_medida = "";
+                                if ($detalles->id_medida){
+                                    $media = \App\Models\Medida::find($detalles->id_medida);
+                                    $nombre_medida = $media ? $media->medida_nombre : "";
+                                }
+                            @endphp
 
-                            <!-- Información en columnas de 4 -->
-                        <div class="col-lg-4 mb-3">
-                            <strong style="color: #8c1017">Apellidos y nombres:</strong>
-                            <p>{{ $nombre_usuario }}</p>
-                        </div>
+                            <div class="col-lg-12 col-md-12 col-sm-12">
+                                <div class="row">
+                                    <div class="col-lg-12 col-md-12 col-sm-12">
+                                        <h6>Información del transporte</h6>
+                                        <hr>
+                                    </div>
+                                    <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
+                                        <strong style="color: #8c1017">Usuario de registro:</strong>
+                                        <p>{{ $nombre_usuario}}</p>
+                                    </div>
 
-                        <div class="col-lg-4 mb-3">
-                            <strong style="color: #8c1017">Transportista:</strong>
-                            <p>{{ $nombre_transportista }}</p>
-                        </div>
+                                    <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
+                                        <strong style="color: #8c1017">Transportista:</strong>
+                                        <p>{{ $nombre_transportista }}</p>
+                                    </div>
 
-                        <div class="col-lg-4 mb-3">
-                            <strong style="color: #8c1017">Tipo de Servicio:</strong>
-                            <p>{{ $nombre_tipo_servicio }}</p>
-                        </div>
+                                    <div class="col-lg-3 mb-3">
+                                        <strong style="color: #8c1017">Servicio:</strong>
+                                        <p>{{ $nombre_tipo_servicio }}</p>
+                                    </div>
 
-                        @if($id_tipo_servicio != 1)
-                            <div class="col-lg-4 mb-3">
-                                <strong style="color: #8c1017">Ubigeo Salida:</strong>
-                                <p>{{ $nombre_ubigeo_salida }}</p>
+                                    <div class="col-lg-3 mb-3">
+                                        <strong style="color: #8c1017">Tipo de cobro:</strong>
+                                        <p>{{ $nombre_medida }}</p>
+                                    </div>
+
+                                    @if($detalles->id_tipo_servicio == 1)
+                                        <div class="col-lg-4 mb-3">
+                                            <strong style="color: #8c1017">Tipo de Vehículo:</strong>
+                                            <p>{{ $nombre_tipo_vehiculo }}</p>
+                                        </div>
+                                    @elseif($detalles->id_tipo_servicio == 2)
+                                        <div class="col-lg-3 mb-3">
+                                            <strong style="color: #8c1017">Ubigeo Salida:</strong>
+                                            <p>{{ $nombre_ubigeo_salida }}</p>
+                                        </div>
+                                        <div class="col-lg-3 mb-3">
+                                            <strong style="color: #8c1017">Ubigeo Llegada:</strong>
+                                            <p>{{ $nombre_ubigeo_llegada }}</p>
+                                        </div>
+                                    @endif
+                                </div>
                             </div>
-                            <div class="col-lg-4 mb-3">
-                                <strong style="color: #8c1017">Ubigeo Llegada:</strong>
-                                <p>{{ $nombre_ubigeo_llegada }}</p>
+
+
+                            <div class="col-lg-12 col-md-12 col-sm-12">
+                                <div class="row">
+                                    <div class="col-lg-12 col-md-12 col-sm-12">
+                                        <h6>Capacidad y Costos</h6>
+                                        <hr>
+                                    </div>
+                                    <div class="col-lg-4 mb-3">
+                                        <strong style="color: #8c1017">Capacidad Mínima:</strong>
+                                        <p>{{ isset($detalles->tarifa_cap_min) ? number_format($detalles->tarifa_cap_min, 2, '.', ',') : 'No disponible' }}
+                                            <small>
+                                                {{ $detalles->id_medida == 23 ? 'Kg' : ($detalles->id_medida == 9 ? 'cm³' : '') }}
+                                            </small>
+                                        </p>
+                                    </div>
+                                    <div class="col-lg-4 mb-3">
+                                        <strong style="color: #8c1017">Capacidad Máxima:</strong>
+                                        <p>{{ isset($detalles->tarifa_cap_max) ? number_format($detalles->tarifa_cap_max, 2, '.', ',') : 'No disponible' }}
+                                            <small>
+                                                {{ $detalles->id_medida == 23 ? 'Kg' : ($detalles->id_medida == 9 ? 'cm³' : '') }}
+                                            </small>
+                                        </p>
+                                    </div>
+                                    <div class="col-lg-4 mb-3">
+                                        <strong style="color: #8c1017">Monto de Tarifa:</strong>
+                                        <p>{{ isset($detalles->tarifa_monto) ? 'S/ ' . number_format($detalles->tarifa_monto, 2, '.', ',') : 'No disponible' }}</p>
+                                    </div>
+                                </div>
                             </div>
                         @endif
-
-                        @if($id_tipo_servicio != 2)
-                            <div class="col-lg-4 mb-3">
-                                <strong style="color: #8c1017">Tipo de Vehículo:</strong>
-                                <p>{{ $nombre_tipo_vehiculo }}</p>
-                            </div>
-                        @endif
-
-                        <div class="col-lg-4 mb-3">
-                            <strong style="color: #8c1017">Capacidad Mínima:</strong>
-                            <p>{{ $tarifa_cap_min }}</p>
-                        </div>
-
-                        <div class="col-lg-4 mb-3">
-                            <strong style="color: #8c1017">Capacidad Máxima:</strong>
-                            <p>{{ $tarifa_cap_max }}</p>
-                        </div>
-
-                        <div class="col-lg-4 mb-3">
-                            <strong style="color: #8c1017">Monto de Tarifa:</strong>
-                            <p>{{ $tarifa_monto }}</p>
-                        </div>
-
-                        <div class="col-lg-4 mb-3">
-                            <strong style="color: #8c1017">Tipo de Bulto:</strong>
-                            <p>{{ $tarifa_tipo_bulto }}</p>
-                        </div>
                     </div>
                 </div>
             </x-slot>
@@ -196,6 +240,13 @@
     </x-modal-delete>
 
 {{--    FIN MODAL DELETE--}}
+
+        <div class="row">
+            <div class="col-lg-6 col-md-6 col-sm-12 d-flex align-items-center mb-2">
+                <input type="text" class="form-control w-50 me-4"  wire:model.live="search_tarifario" placeholder="Buscar">
+                <x-select-filter wire:model.live="pagination_tarifario" />
+            </div>
+        </div>
 
     @if (session()->has('success'))
         <div class="alert alert-success alert-dismissible show fade mt-2">
