@@ -41,6 +41,26 @@ class Transportista extends Model
         return $result;
     }
 
+    public function listar_transportistas_new($search,$pagination,$order = 'asc'){
+        try {
+
+            $query = DB::table('transportistas as t')
+                ->where(function($q) use ($search) {
+                    $q->where('t.transportista_ruc', 'like', '%' . $search . '%')
+                        ->orWhere('t.transportista_razon_social', 'like', '%' . $search . '%')
+                        ->orWhereNull('t.transportista_ruc')
+                        ->orWhereNull('t.transportista_razon_social');
+                })->orderBy('t.id_transportistas', $order);
+
+            $result = $query->paginate($pagination);
+
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
+
     public function listar_transportista_por_id($id){
         try {
             $result = DB::table('transportistas')->where('id_transportistas','=',$id)->first();

@@ -216,7 +216,9 @@
                             $nombre_medida = "";
                             if ($detalles->id_medida){
                                 $media = \App\Models\Medida::find($detalles->id_medida);
-                                $nombre_medida = $media ? $media->medida_nombre : "";
+                                if ($media){
+                                    $nombre_medida =  $media->id_medida == 23 ? 'PESO' : "VOLUMEN";
+                                }
                             }
                         @endphp
 
@@ -385,17 +387,17 @@
                                     <tr>
                                         <td>{{$conteo}}</td>
                                         <td>{{$ta->tipo_servicio_concepto}}</td>
-                                        <td>{{ $ta->medida_nombre }}</td>
+                                        <td>{{ $ta->id_medida == 23 ? 'PESO' : 'VOLUMEN' }}</td>
                                         <td>
                                             {{ number_format($ta->tarifa_cap_min, 2, '.', ',') }}
                                             <small class="text-dark">
-                                                ({{ $ta->id_medida == 23 ? 'KG' : ($ta->id_medida == 9 ? 'cm³' : '') }})
+                                                ({{ $ta->id_medida == 23 ? 'Kg' : ($ta->id_medida == 9 ? 'cm³' : '') }})
                                             </small>
                                         </td>
                                         <td>
                                             {{ number_format($ta->tarifa_cap_max, 2, '.', ',') }}
                                             <small class="text-dark">
-                                                ({{ $ta->id_medida == 23 ? 'KG' : ($ta->id_medida == 9 ? 'cm³' : '') }})
+                                                ({{ $ta->id_medida == 23 ? 'Kg' : ($ta->id_medida == 9 ? 'cm³' : '') }})
                                             </small>
                                         </td>
                                         <td>S/ {{number_format($ta->tarifa_monto, 2, '.', ',')}}</td>

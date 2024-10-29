@@ -61,7 +61,7 @@ class Transportistas extends Component
 //
     public function render(){
 //        $listar_ubigeos = $this->ubigeo->listar_ubigeos();
-        $transportistas = $this->transportistas->listar_transportistas($this->search_transportistas,$this->pagination_transportistas);
+        $transportistas = $this->transportistas->listar_transportistas_new($this->search_transportistas,$this->pagination_transportistas);
         return view('livewire.gestiontransporte.transportistas',compact('transportistas'));
     }
 

@@ -66,6 +66,9 @@ class Tarifario extends Model
 
     public function lista_tarifas_pendientes($search,$pagination,$order = 'asc'){
         try {
+            // Quitar de la tabla de validar tarifas los ubigeos.
+            // buscar por las tablas tarifarios,transportistas,tipo_servicios,users
+            // Campos para la busqueda : Usuario Transportista	Tipo de servicio,Capacidad mínima	Capacidad máxima	Monto de la tarifa
             $query = DB::table('tarifarios as t')
                 ->join('transportistas as tr', 't.id_transportistas', '=', 'tr.id_transportistas')
                 ->join('tipo_servicios as ts', 't.id_tipo_servicio', '=', 'ts.id_tipo_servicios')
