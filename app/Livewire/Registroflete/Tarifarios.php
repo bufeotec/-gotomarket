@@ -142,7 +142,7 @@ class Tarifarios extends Component
             $this->validate([
                 'id_transportistas' => 'required|integer',
                 'id_tipo_servicio' => 'required|integer',
-                'id_tipo_vehiculo' => 'nullable|integer',
+                'id_tipo_vehiculo' => 'required_if:id_tipo_servicio,1|nullable|integer',
                 'id_ubigeo_salida' => 'required_if:id_tipo_servicio,2|nullable|integer',
                 'id_ubigeo_llegada' => 'required_if:id_tipo_servicio,2|nullable|integer',
                 'id_medida' => 'required|integer',
@@ -158,7 +158,8 @@ class Tarifarios extends Component
                 'id_tipo_servicio.required' => 'Debes seleccionar un servicio.',
                 'id_tipo_servicio.integer' => 'El servicio debe ser un número entero.',
 
-                'id_tipo_vehiculo.integer' => 'El estado debe ser un número entero.',
+                'id_tipo_vehiculo.required_if' => 'Debes seleccionar un tipo de vehículo.',
+                'id_tipo_vehiculo.integer' => 'El tipo de vehículo debe ser un número entero.',
 
                 'id_ubigeo_salida.required_if' => 'La salida es obligatoria para servicios provinciales.',
                 'id_ubigeo_salida.integer' => 'La salida debe ser un número entero.',
@@ -204,7 +205,7 @@ class Tarifarios extends Component
                     $tarifario_save->id_users = Auth::id();
                     $tarifario_save->id_transportistas = $this->id_transportistas;
                     $tarifario_save->id_tipo_servicio = $this->id_tipo_servicio;
-                    $tarifario_save->id_tipo_vehiculo = !empty($this->id_tipo_vehiculo) ? $this->id_tipo_vehiculo : null;
+                    $tarifario_save->id_tipo_vehiculo = $this->id_tipo_servicio == 1 ? $this->id_tipo_vehiculo : null;
                     $tarifario_save->id_ubigeo_salida = $this->id_tipo_servicio == 2 ? $this->id_ubigeo_salida : null;
                     $tarifario_save->id_ubigeo_llegada = $this->id_tipo_servicio == 2 ? $this->id_ubigeo_llegada : null;
                     $tarifario_save->id_medida = $this->id_medida;
@@ -236,7 +237,7 @@ class Tarifarios extends Component
                 $this->validate([
                     'id_transportistas' => 'required|integer',
                     'id_tipo_servicio' => 'required|integer',
-                    'id_tipo_vehiculo' => 'nullable|integer',
+                    'id_tipo_vehiculo' => 'required_if:id_tipo_servicio,1|nullable|integer',
                     'id_ubigeo_salida' => 'required_if:id_tipo_servicio,2|nullable|integer',
                     'id_ubigeo_llegada' => 'required_if:id_tipo_servicio,2|nullable|integer',
                     'id_medida' => 'required|integer',
@@ -252,7 +253,8 @@ class Tarifarios extends Component
                     'id_tipo_servicio.required' => 'Debes seleccionar un servicio.',
                     'id_tipo_servicio.integer' => 'El servicio debe ser un número entero.',
 
-                    'id_tipo_vehiculo.integer' => 'El estado debe ser un número entero.',
+                    'id_tipo_vehiculo.required_if' => 'Debes seleccionar un tipo de vehículo.',
+                    'id_tipo_vehiculo.integer' => 'El tipo de vehículo debe ser un número entero.',
 
                     'id_ubigeo_salida.required_if' => 'La salida es obligatoria para servicios provinciales.',
                     'id_ubigeo_salida.integer' => 'La salida debe ser un número entero.',
@@ -292,7 +294,7 @@ class Tarifarios extends Component
                     $originalValues = $tarifario_update->getOriginal();
                     // Actualizar los campos del registro
                     $tarifario_update->id_tipo_servicio = $this->id_tipo_servicio;
-                    $tarifario_update->id_tipo_vehiculo = !empty($this->id_tipo_vehiculo) ? $this->id_tipo_vehiculo : null;
+                    $tarifario_update->id_tipo_vehiculo = $this->id_tipo_servicio == 1 ? $this->id_tipo_vehiculo : null;
                     $tarifario_update->id_ubigeo_salida = $this->id_tipo_servicio == 2 ? $this->id_ubigeo_salida : null;
                     $tarifario_update->id_ubigeo_llegada = $this->id_tipo_servicio == 2 ? $this->id_ubigeo_llegada : null;
                     $tarifario_update->id_medida = $this->id_medida;
@@ -307,7 +309,7 @@ class Tarifarios extends Component
                     // Verificar si hubo algún cambio en los campos
                     if (
                         $originalValues['id_tipo_servicio'] !== $this->id_tipo_servicio ||
-                        $originalValues['id_tipo_vehiculo'] !== $this->id_tipo_vehiculo ||
+                        $originalValues['id_tipo_vehiculo'] !== ($this->id_tipo_servicio == 1 ? $this->id_tipo_vehiculo : null) ||
                         $originalValues['id_ubigeo_salida'] !== ($this->id_tipo_servicio == 2 ? $this->id_ubigeo_salida : null) ||
                         $originalValues['id_ubigeo_llegada'] !== ($this->id_tipo_servicio == 2 ? $this->id_ubigeo_llegada : null) ||
                         $originalValues['id_medida'] !== $this->id_medida ||
@@ -322,7 +324,7 @@ class Tarifarios extends Component
                         if ($originalValues['id_tipo_servicio'] !== $this->id_tipo_servicio) {
                             $registro_concepto[] = "Tipo de servicio de '{$originalValues['id_tipo_servicio']}' hasta '{$this->id_tipo_servicio}'";
                         }
-                        if ($originalValues['id_tipo_vehiculo'] !== $this->id_tipo_vehiculo) {
+                        if ($originalValues['id_tipo_vehiculo'] !== ($this->id_tipo_servicio == 1 ? $this->id_tipo_vehiculo : null)) {
                             $registro_concepto[] = "Tipo de vehículo de '{$originalValues['id_tipo_vehiculo']}' hasta '{$this->id_tipo_vehiculo}'";
                         }
                         if ($originalValues['id_ubigeo_salida'] !== ($this->id_tipo_servicio == 2 ? $this->id_ubigeo_salida : null)) {
