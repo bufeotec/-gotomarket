@@ -26,7 +26,7 @@
                     </div>
 
                     <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
-                        <label for="id_medida" class="form-label">Tipo de cobro (*)</label>
+                        <label for="id_medida" class="form-label">Unidad de medida (*)</label>
                         <select class="form-select" name="id_medida" id="id_medida" wire:model.live="id_medida">
                             <option value="" disabled>Seleccionar...</option>
                             <option value="23"> Peso </option>
@@ -370,7 +370,7 @@
                             <tr>
                                 <th>N°</th>
                                 <th>Tipo de servicio</th>
-                                <th>Tipo de cobro</th>
+                                <th>Unidad de medida</th>
                                 <th>Capacidad mínima</th>
                                 <th>Capacidad máxima</th>
                                 <th>Monto de la tarifa</th>
