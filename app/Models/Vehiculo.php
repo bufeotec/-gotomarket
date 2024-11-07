@@ -19,6 +19,18 @@ class Vehiculo extends Model
         $this->logs = new Logs();
     }
 
+    public function listar_vehiculo(){
+        try {
+
+            $result = Vehiculo::get();
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
+
     public function listar_vehiculos_por_transportistas($search,$pagination,$order = 'asc'){
         try {
             $query = DB::table('vehiculos as v')

@@ -202,11 +202,11 @@
                                         <td>{{$lv->transportista_nom_comercial}}</td>
                                         <td>{{$lv->tipo_vehiculo_concepto}}</td>
                                         <td>{{$lv->vehiculo_placa}}</td>
-                                        <td>{{ number_format($lv->vehiculo_capacidad_peso, 2, '.', ',') }} <b>(kg)</b></td>
-                                        <td>{{ number_format($lv->vehiculo_ancho, 2, '.', ',') }} <b>(cm)</b></td>
-                                        <td>{{ number_format($lv->vehiculo_largo, 2, '.', ',') }} <b>(cm)</b></td>
-                                        <td>{{ number_format($lv->vehiculo_alto, 2, '.', ',') }} <b>(cm)</b></td>
-                                        <td>{{ number_format($lv->vehiculo_capacidad_volumen, 2, '.', ',') }} <b>(cm³)</b></td>
+                                        <td>{{ number_format($lv->vehiculo_capacidad_peso, 0, '.', ',') }} <b>(kg)</b></td>
+                                        <td>{{ number_format($lv->vehiculo_ancho, 0, '.', ',') }} <b>(cm)</b></td>
+                                        <td>{{ number_format($lv->vehiculo_largo, 0, '.', ',') }} <b>(cm)</b></td>
+                                        <td>{{ number_format($lv->vehiculo_alto, 0, '.', ',') }} <b>(cm)</b></td>
+                                        <td>{{ number_format($lv->vehiculo_capacidad_volumen, 0, '.', ',') }} <b>(cm³)</b></td>
                                         <td>
                                             <span class="font-bold badge {{$lv->vehiculo_estado == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
                                                 {{$lv->vehiculo_estado == 1 ? 'Habilitado ' : 'Desabilitado'}}

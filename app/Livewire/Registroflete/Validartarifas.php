@@ -51,10 +51,11 @@ class Validartarifas extends Component
         $id_tarifario = base64_decode($id);
         $this->detalles = Tarifario::where('id_tarifario', $id_tarifario)->first();
     }
-    public function ver_registro($id){
+    public function ver_registro($id) {
         $tarifario_id = base64_decode($id);
         $this->historial_registros = RegistrarHistorialUpdate::where('id_tarifario', $tarifario_id)
             ->join('users as u', 'registrar_historial_updates.id_users', '=', 'u.id_users')
+            ->orderBy('registrar_historial_updates.created_at', 'desc')
             ->get();
     }
 

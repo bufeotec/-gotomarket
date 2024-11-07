@@ -38,10 +38,16 @@
                                 $nombre_ubigeo_salida = $ubigeo_salida ? "{$ubigeo_salida->ubigeo_departamento}, {$ubigeo_salida->ubigeo_provincia}, {$ubigeo_salida->ubigeo_distrito}" : '';
                             }
 
-                            $nombre_ubigeo_llegada = "";
-                            if ($detalles->id_ubigeo_llegada){
-                                $ubigeo_llegada = \App\Models\Ubigeo::find($detalles->id_ubigeo_llegada);
-                                $nombre_ubigeo_llegada = $ubigeo_llegada ? "{$ubigeo_llegada->ubigeo_departamento}, {$ubigeo_llegada->ubigeo_provincia}, {$ubigeo_llegada->ubigeo_distrito}" : '';
+                            $departamento = \App\Models\Departamento::find($detalles->id_departamento);
+                            $nombre_departamento = $departamento ? $departamento->departamento_nombre : 'Sin departamento';
+
+                            $provincia = \App\Models\Provincia::find($detalles->id_provincia);
+                            $nombre_provincia = $provincia ? $provincia->provincia_nombre : 'Sin provincia';
+
+                            if ($detalles->id_distrito) {
+                                $distritos = \App\Models\Distrito::where('id_distrito', $detalles->id_distrito)->get();
+                            } else {
+                                $distritos = \App\Models\Distrito::where('id_provincia', $detalles->id_provincia)->get();
                             }
 
                             $nombre_medida = "";
@@ -69,13 +75,13 @@
                                     <p>{{ $nombre_transportista }}</p>
                                 </div>
 
-                                <div class="col-lg-3 mb-3">
+                                <div class="col-lg-4 mb-3">
                                     <strong style="color: #8c1017">Servicio:</strong>
                                     <p>{{ $nombre_tipo_servicio }}</p>
                                 </div>
 
-                                <div class="col-lg-3 mb-3">
-                                    <strong style="color: #8c1017">Tipo de cobro:</strong>
+                                <div class="col-lg-4 mb-3">
+                                    <strong style="color: #8c1017">Unidad de medida:</strong>
                                     <p>{{ $nombre_medida }}</p>
                                 </div>
 
@@ -85,18 +91,45 @@
                                         <p>{{ $nombre_tipo_vehiculo }}</p>
                                     </div>
                                 @elseif($detalles->id_tipo_servicio == 2)
-                                    <div class="col-lg-3 mb-3">
+                                    <div class="col-lg-4 mb-3">
                                         <strong style="color: #8c1017">Ubigeo Salida:</strong>
                                         <p>{{ $nombre_ubigeo_salida }}</p>
                                     </div>
-                                    <div class="col-lg-3 mb-3">
-                                        <strong style="color: #8c1017">Ubigeo Llegada:</strong>
-                                        <p>{{ $nombre_ubigeo_llegada }}</p>
+                                    <div class="col-lg-12 mb-3">
+                                        <div class="row">
+                                            <div class="col-lg-12">
+                                                {{--                                                <strong style="color: #8c1017">Ubigeo Llegada</strong>--}}
+                                                <h6>Ubigeo Llegada</h6>
+                                            </div>
+                                            <div class="col-lg-4">
+                                                <strong style="color: #8c1017">Departamento:</strong>
+                                                <p>{{ $nombre_departamento }}</p>
+                                            </div>
+                                            <div class="col-lg-4">
+                                                <strong style="color: #8c1017">Provincia:</strong>
+                                                <p>{{ $nombre_provincia }}</p>
+                                            </div>
+                                            <div class="col-lg-4">
+                                                <strong style="color: #8c1017">Distrito:</strong>
+                                                @if($detalles->id_distrito)
+                                                    <p>{{ $distritos->first()->distrito_nombre }}</p>
+                                                @else
+                                                    @if($distritos->isNotEmpty())
+                                                        <ul>
+                                                            @foreach($distritos as $distrito)
+                                                                <li>{{ $distrito->distrito_nombre }}</li>
+                                                            @endforeach
+                                                        </ul>
+                                                    @else
+                                                        <p>No hay distritos disponibles</p>
+                                                    @endif
+                                                @endif
+                                            </div>
+                                        </div>
                                     </div>
                                 @endif
                             </div>
                         </div>
-
 
                         <div class="col-lg-12 col-md-12 col-sm-12">
                             <div class="row">
@@ -106,7 +139,7 @@
                                 </div>
                                 <div class="col-lg-4 mb-3">
                                     <strong style="color: #8c1017">Capacidad Mínima:</strong>
-                                    <p>{{ isset($detalles->tarifa_cap_min) ? number_format($detalles->tarifa_cap_min, 2, '.', ',') : '' }}
+                                    <p>{{ isset($detalles->tarifa_cap_min) ? number_format($detalles->tarifa_cap_min, 2, '.', ',') : 'No disponible' }}
                                         <small>
                                             {{ $detalles->id_medida == 23 ? 'Kg' : ($detalles->id_medida == 9 ? 'cm³' : '') }}
                                         </small>
@@ -114,7 +147,7 @@
                                 </div>
                                 <div class="col-lg-4 mb-3">
                                     <strong style="color: #8c1017">Capacidad Máxima:</strong>
-                                    <p>{{ isset($detalles->tarifa_cap_max) ? number_format($detalles->tarifa_cap_max, 2, '.', ',') : '' }}
+                                    <p>{{ isset($detalles->tarifa_cap_max) ? number_format($detalles->tarifa_cap_max, 2, '.', ',') : 'No disponible' }}
                                         <small>
                                             {{ $detalles->id_medida == 23 ? 'Kg' : ($detalles->id_medida == 9 ? 'cm³' : '') }}
                                         </small>
@@ -122,7 +155,7 @@
                                 </div>
                                 <div class="col-lg-4 mb-3">
                                     <strong style="color: #8c1017">Monto de Tarifa:</strong>
-                                    <p>{{ isset($detalles->tarifa_monto) ? 'S/ ' . number_format($detalles->tarifa_monto, 2, '.', ',') : '' }}</p>
+                                    <p>{{ isset($detalles->tarifa_monto) ? 'S/ ' . number_format($detalles->tarifa_monto, 2, '.', ',') : 'No disponible' }}</p>
                                 </div>
                             </div>
                         </div>
@@ -154,7 +187,7 @@
                         @foreach ($historial_registros as $registro)
                             <tr>
                                 <td>{{ $conteo }}</td>
-                                <td>{{ $registro->name }}</td>
+                                <td>{{ $registro->name }} {{ $registro->last_name }}</td>
                                 <td>{{ $registro->registro_concepto }}</td>
                                 <td>{{ $registro->registro_hora_fecha }}</td>
                             </tr>

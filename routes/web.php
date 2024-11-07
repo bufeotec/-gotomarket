@@ -7,6 +7,7 @@ use App\Http\Controllers\GestiontransporteController;
 //use App\Http\Controllers\RegistrofleteController;
 use App\Http\Controllers\TarifarioController;
 use App\Http\Controllers\IntranetController;
+use App\Http\Controllers\ProgramacioncamionController;
 
 route::get('/phpinfo', function(){
     phpinfo();
@@ -48,4 +49,10 @@ Route::prefix('Tarifario')->middleware('auth')->group(function () {
     route::get('/fletes',[TarifarioController::class ,'fletes'])->name('Tarifario.fletes')->middleware('verifyUserStatus')->middleware('can:fletes');
     route::get('/tarifas',[TarifarioController::class ,'tarifas'])->name('Tarifario.tarifas')->middleware('verifyUserStatus')->middleware('can:tarifas');
     route::get('/validar_tarifa',[TarifarioController::class ,'validar_tarifa'])->name('Tarifario.validar_tarifa')->middleware('verifyUserStatus')->middleware('can:validar_tarifa');
+});
+
+
+Route::prefix('Programacioncamion')->middleware('auth')->group(function () {
+    /* FLETES - TARIFARIOS */
+    route::get('/programar_camion',[ProgramacioncamionController::class ,'programar_camion'])->name('Programacioncamion.programar_camion')->middleware('verifyUserStatus')->middleware('can:programar_camion');
 });
