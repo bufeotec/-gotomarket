@@ -96,10 +96,21 @@ class Programarcamion extends Component
         return view('livewire.programacioncamiones.programarcamion', compact('listar_transportistas', 'listar_tipo_vehiculo', 'listar_tipo_servicio', 'listar_departamento'));
     }
 
+    public function actualizarSeleccion()
+    {
+        $this->calcularTarifa();
+        $this->listar_provincias();
+    }
+    public function actualizarSeleccionDistritos()
+    {
+        $this->calcularTarifa();
+        $this->listar_distritos();
+    }
+
     public function listar_provincias(){
         $valor = $this->id_departamento;
         if ($valor){
-            $this->provincias=DB::table('provincias')->where('id_departamento', '=', $valor)->get();
+            $this->provincias = DB::table('provincias')->where('id_departamento', '=', $valor)->get();
         }
     }
 
