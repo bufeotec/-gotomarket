@@ -112,6 +112,22 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        'sqlsrv_external' => [
+            'driver' => 'sqlsrv',
+            'host' => env('EXTERNAL_DB_HOST', '161.132.173.106'),
+            'port' => env('EXTERNAL_DB_PORT', '1434'),
+            'database' => env('EXTERNAL_DB_DATABASE', '003BDCOMUN'),
+            'username' => env('EXTERNAL_DB_USERNAME', 'UsuarioPruebas'),
+            'password' => env('EXTERNAL_DB_PASSWORD', 'Bufeo2024*'),
+            'charset' => 'utf8',
+            'collation' => 'utf8_general_ci',
+            'options'   => [
+                PDO::SQLSRV_ATTR_ENCODING => PDO::SQLSRV_ENCODING_UTF8,
+                PDO::SQLSRV_ATTR_FETCHES_NUMERIC_TYPE => true,
+            ],
+            'encrypt' => 'no',
+        ],
+
 //        'external_db' => [
 //            'driver' => 'mysql',
 //            'host' => env('DB_EXTERNAL_HOST', '127.0.0.1'),

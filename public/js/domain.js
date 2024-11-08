@@ -85,7 +85,7 @@ function validar_numeros(id) {
         //var long = text.length;
         //var text_to_extract = long - 1;
         //document.getElementById(id).value = text.substring(0, text_to_extract);
-        var re = /[a-zA-ZñáéíóúÁÉÍÓÚ´.*+?^$&!¡¿#%/{}()='|[\]\\"]/g;
+        var re = /[a-zA-ZñáéíóúÁÉÍÓÚ´*+?^$&!¡¿#%/{}()='|[\]\\"]/g;
         document.getElementById(id).value = text.replace(re, '');
         return false;
     }

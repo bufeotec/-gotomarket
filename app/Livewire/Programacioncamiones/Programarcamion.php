@@ -59,9 +59,9 @@ class Programarcamion extends Component
     ];
 
     public $clientes = [
-        ['id' => 1, 'nombre' => 'Shambo', 'ruc' => '20305687411'],
-        ['id' => 2, 'nombre' => 'Topitop', 'ruc' => '20457865499'],
-        ['id' => 3, 'nombre' => 'Quispe', 'ruc' => '20025674522'],
+        ['id' => 2, 'nombre' => 'Shambo', 'ruc' => '20305687411'],
+        ['id' => 3, 'nombre' => 'Topitop', 'ruc' => '20457865499'],
+        ['id' => 4, 'nombre' => 'Quispe', 'ruc' => '20025674522'],
     ];
 
     public $facturasCli = [
@@ -129,15 +129,14 @@ class Programarcamion extends Component
     }
 
     public $facturasPorCliente = [];
-    public function updateSearchCliente($id)
-    {
+    public function updateSearchCliente($id){
         $cliente = collect($this->clientes)->firstWhere('id', $id);
-
         // Actualiza solo los campos relacionados con el cliente seleccionado.
         if ($cliente) {
-            $this->selectedCliente = $id;  // Guardar ID del cliente seleccionado
-            $this->searchCliente = $cliente['nombre'] . ' ' . $cliente['ruc'];  // Mostrar nombre y RUC
-
+            $this->selectedCliente = $id;
+            $this->searchCliente = $cliente['nombre'] . ' ' . $cliente['ruc'];
+            $this->selectedClientes = [];
+            $this->totalPeso = 0;
             // Actualizar `facturasPorCliente` sin afectar otros campos.
             $this->facturasPorCliente = collect($this->facturasCli)
                 ->where('nombre', $cliente['nombre'])
@@ -152,7 +151,6 @@ class Programarcamion extends Component
                 ->toArray();
         }
     }
-
 
     public function buscarFacturas(){
         $this->filteredFacturas = array_filter($this->facturas, function ($factura) {
@@ -208,64 +206,48 @@ class Programarcamion extends Component
         $this->tarifa_estado_aprobacion = null;
 
         try {
-            // Verificar si existe un vehículo que coincida con el transportista
-            $vehiculoQuery = DB::table('vehiculos')
-                ->where('id_transportistas', $this->id_transportistas)
-                ->where('vehiculo_estado', 1);
+            if ($this->id_tipo_servicios == 2) {
+                $tarifarioQuery = DB::table('tarifarios')
+                    ->where('id_transportistas', $this->id_transportistas)
+                    ->where('id_tipo_servicio', $this->id_tipo_servicios)
+                    ->where('id_departamento', $this->id_departamento)
+                    ->where('id_provincia', $this->id_provincia)
+                    ->where('tarifa_cap_min', '<=', $this->totalPeso)
+                    ->where('tarifa_cap_max', '>=', $this->totalPeso)
+                    ->where('tarifa_estado', 1);
 
-            // Si el tipo de servicio NO es 2, entonces verificamos el tipo de vehículo
-            if ($this->id_tipo_servicios != 2) {
-                $vehiculoQuery->where('id_tipo_vehiculo', $this->id_tipo_vehiculo);
+                // Verifica que id_distrito tenga un valor específico antes de incluirlo
+                if (!is_null($this->id_distrito) && $this->id_distrito != '') {
+                    $tarifarioQuery->where('id_distrito', $this->id_distrito);
+                }
+
+                $tarifario = $tarifarioQuery->first();
+            } else {
+                $tarifario = DB::table('tarifarios')
+                    ->where('id_transportistas', $this->id_transportistas)
+                    ->where('id_tipo_servicio', $this->id_tipo_servicios)
+                    ->where('id_tipo_vehiculo', $this->id_tipo_vehiculo)
+                    ->where('tarifa_cap_min', '<=', $this->totalPeso)
+                    ->where('tarifa_cap_max', '>=', $this->totalPeso)
+                    ->where('tarifa_estado', 1)
+                    ->first();
             }
 
-            $vehiculo = $vehiculoQuery->first();
-
-            if ($vehiculo) {
-                // Verificar si el tipo de servicio es 2
-                if ($this->id_tipo_servicios == 2) {
-                    // Construir la consulta del tarifario
-                    $tarifarioQuery = DB::table('tarifarios')
-                        ->where('id_transportistas', $this->id_transportistas)
-                        ->where('id_tipo_servicio', $this->id_tipo_servicios)
-                        ->where('id_departamento', $this->id_departamento)
-                        ->where('id_provincia', $this->id_provincia)
-                        ->where('tarifa_cap_min', '<=', $this->totalPeso)
-                        ->where('tarifa_cap_max', '>=', $this->totalPeso)
-                        ->where('tarifa_estado', 1);
-
-                    // Si id_distrito no es null, agregarlo a la consulta
-                    if (!is_null($this->id_distrito)) {
-                        $tarifarioQuery->where('id_distrito', $this->id_distrito);
-                    }
-
-                    $tarifario = $tarifarioQuery->first();
-                } else {
-                    // Buscar el tarifario que coincida con el peso, capacidad del vehículo y tipo de vehículo
-                    $tarifario = DB::table('tarifarios')
-                        ->where('id_transportistas', $this->id_transportistas)
-                        ->where('id_tipo_servicio', $this->id_tipo_servicios)
-                        ->where('id_tipo_vehiculo', $this->id_tipo_vehiculo)
-                        ->where('tarifa_cap_min', '<=', $this->totalPeso)
-                        ->where('tarifa_cap_max', '>=', $this->totalPeso)
-                        ->where('tarifa_estado', 1)
-                        ->first();
+            if ($tarifario) {
+                if ($tarifario->tarifa_estado_aprobacion == 1) {
+                    $this->tarifa = $tarifario->tarifa_monto;
                 }
-
-                if ($tarifario) {
-                    if ($tarifario->tarifa_estado_aprobacion == 1) {
-                        $this->tarifa = $tarifario->tarifa_monto;
-                    }
-                    $this->tarifa_estado_aprobacion = $tarifario->tarifa_estado_aprobacion;
-                }
+                $this->tarifa_estado_aprobacion = $tarifario->tarifa_estado_aprobacion;
             } else {
                 $this->tarifa = null;
                 $this->tarifa_estado_aprobacion = null;
-                session()->flash('error', 'No se encontró un vehículo que coincida con el tipo seleccionado.');
+                session()->flash('error', 'No se encontró un tarifario que coincida con los criterios especificados.');
             }
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);
         }
     }
+
 
 
     public function resetearCampoTipoServicio(){

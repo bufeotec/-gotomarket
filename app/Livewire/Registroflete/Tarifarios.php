@@ -87,6 +87,10 @@ class Tarifarios extends Component
         $listar_ubigeos = $this->ubigeo->listar_ubigeos();
         $listar_tipovehiculo = $this->tipovehiculo->listar_tipo_vehiculo();
         $listar_departamento = $this->departamento->lista_departamento();
+//        $resultados = DB::connection('sqlsrv_external')
+//            ->table('NUM_DOCCOMPRAS')
+//            ->select('*')
+//            ->get();
         return view('livewire.registroflete.tarifarios', compact('listar_ubigeos', 'tarifario', 'listar_tipovehiculo', 'listar_departamento'));
     }
 
@@ -116,7 +120,7 @@ class Tarifarios extends Component
         $this->id_departamento = "";
         $this->id_provincia = "";
         $this->id_distrito = "";
-        $this->id_medida = "";
+        $this->id_medida = 23;
         $this->tarifa_cap_min = "";
         $this->tarifa_cap_max = "";
         $this->tarifa_monto = "";
@@ -270,7 +274,7 @@ class Tarifarios extends Component
                         session()->flash('error', 'Ocurrió un error al guardar el registro.');
                     }
                 } else{
-                    session()->flash('error', 'El rango de capacidad se solapa con un registro existente.');
+                    session()->flash('error', 'El rango de capacidad se cruza con un registro existente.');
                     return;
                 }
             } else {
@@ -466,7 +470,7 @@ class Tarifarios extends Component
                         session()->flash('success', 'No se realizaron cambios en los registros.');
                     }
                 } else {
-                    session()->flash('error', 'El rango de capacidad se solapa con un registro existente.');
+                    session()->flash('error', 'El rango de capacidad se cruza con un registro existente.');
                     return;
                 }
             }

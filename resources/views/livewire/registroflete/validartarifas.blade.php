@@ -139,7 +139,8 @@
                                 </div>
                                 <div class="col-lg-4 mb-3">
                                     <strong style="color: #8c1017">Capacidad Mínima:</strong>
-                                    <p>{{ isset($detalles->tarifa_cap_min) ? number_format($detalles->tarifa_cap_min, 2, '.', ',') : 'No disponible' }}
+                                    <p>
+                                        {{ isset($detalles->tarifa_cap_min) ? (fmod($detalles->tarifa_cap_min, 1) != 0 ? number_format($detalles->tarifa_cap_min, 2, '.', ',') : number_format($detalles->tarifa_cap_min, 0, '.', ',')) : 'No disponible' }}
                                         <small>
                                             {{ $detalles->id_medida == 23 ? 'Kg' : ($detalles->id_medida == 9 ? 'cm³' : '') }}
                                         </small>
@@ -147,7 +148,8 @@
                                 </div>
                                 <div class="col-lg-4 mb-3">
                                     <strong style="color: #8c1017">Capacidad Máxima:</strong>
-                                    <p>{{ isset($detalles->tarifa_cap_max) ? number_format($detalles->tarifa_cap_max, 2, '.', ',') : 'No disponible' }}
+                                    <p>
+                                        {{ isset($detalles->tarifa_cap_max) ? (fmod($detalles->tarifa_cap_max, 1) != 0 ? number_format($detalles->tarifa_cap_max, 2, '.', ',') : number_format($detalles->tarifa_cap_max, 0, '.', ',')) : 'No disponible' }}
                                         <small>
                                             {{ $detalles->id_medida == 23 ? 'Kg' : ($detalles->id_medida == 9 ? 'cm³' : '') }}
                                         </small>
@@ -155,7 +157,9 @@
                                 </div>
                                 <div class="col-lg-4 mb-3">
                                     <strong style="color: #8c1017">Monto de Tarifa:</strong>
-                                    <p>{{ isset($detalles->tarifa_monto) ? 'S/ ' . number_format($detalles->tarifa_monto, 2, '.', ',') : 'No disponible' }}</p>
+                                    <p>
+                                        {{ isset($detalles->tarifa_monto) ? 'S/ ' . (fmod($detalles->tarifa_monto, 1) != 0 ? number_format($detalles->tarifa_monto, 2, '.', ',') : number_format($detalles->tarifa_monto, 0, '.', ',')) : 'No disponible' }}
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -312,18 +316,24 @@
                                         <td>{{$ta->transportista_nom_comercial}}</td>
                                         <td>{{$ta->tipo_servicio_concepto}}</td>
                                         <td>
-                                            {{ number_format($ta->tarifa_cap_min, 2, '.', ',') }}
+                                            {{ fmod($ta->tarifa_cap_min, 1) != 0 ? number_format($ta->tarifa_cap_min, 2, '.', ',') : number_format($ta->tarifa_cap_min, 0, '.', ',') }}
                                             <small class="text-dark">
-                                                ({{ $ta->id_medida == 23 ? 'Kg' : ($ta->id_medida == 9 ? 'cm³' : '') }})
+                                                {{ $ta->id_tipo_servicio == 1 ? '(Kg)' : ($ta->id_tipo_servicio == 2 ? ($ta->id_medida == 9 ? '(Kg)' : ($ta->id_medida == 23 ? '(cm³)' : '')) : '') }}
+                                            </small>
+                                        </td>
+
+                                        <td>
+                                            {{ fmod($ta->tarifa_cap_max, 1) != 0 ? number_format($ta->tarifa_cap_max, 2, '.', ',') : number_format($ta->tarifa_cap_max, 0, '.', ',') }}
+                                            <small class="text-dark">
+                                                {{ $ta->id_tipo_servicio == 1 ? '(Kg)' : ($ta->id_tipo_servicio == 2 ? ($ta->id_medida == 9 ? '(Kg)' : ($ta->id_medida == 23 ? '(cm³)' : '')) : '') }}
                                             </small>
                                         </td>
                                         <td>
-                                            {{ number_format($ta->tarifa_cap_max, 2, '.', ',') }}
+                                            S/ {{ fmod($ta->tarifa_monto, 1) != 0 ? number_format($ta->tarifa_monto, 2, '.', ',') : number_format($ta->tarifa_monto, 0, '.', ',') }}
                                             <small class="text-dark">
-                                                ({{ $ta->id_medida == 23 ? 'Kg' : ($ta->id_medida == 9 ? 'cm³' : '') }})
+                                                {{ $ta->id_tipo_servicio == 1 ? '/ VIAJE' : ($ta->id_tipo_servicio == 2 ? '/ kg' : '') }}
                                             </small>
                                         </td>
-                                        <td>S/ {{number_format($ta->tarifa_monto, 2, '.', ',')}}</td>
                                         <td>
                                             <x-btn-accion class=" text-primary"  wire:click="ver_detalle('{{ base64_encode($ta->id_tarifario) }}')" data-bs-toggle="modal" data-bs-target="#modalVerDetalles"><x-slot name="message"><i class="fa-solid fa-eye"></i></x-slot></x-btn-accion>
 

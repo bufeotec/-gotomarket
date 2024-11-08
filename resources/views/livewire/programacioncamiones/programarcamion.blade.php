@@ -94,7 +94,7 @@
                                 <h4>Vehículo</h4>
                             </div>
                             <div class="card-body">
-                                <select class="form-select" wire:change="calcularTarifa" wire:model="id_vehiculo" name="id_vehiculo" id="id_vehiculo">
+                                <select class="form-select" wire:model="id_vehiculo" name="id_vehiculo" id="id_vehiculo">
                                     <option value="" disabled>Seleccionar...</option>
                                     @foreach($vehiculos as $lv)
                                         <option value="{{ $lv->id_vehiculo }}">{{ $lv->vehiculo_placa }}</option>
@@ -108,7 +108,7 @@
                             <div class="col-lg-4 col-md-4">
                                 <div class="card">
                                     <div class="card-header">
-                                        <h4>Mano de obra</h4>
+                                        <h4>Mano de obra S/</h4>
                                     </div>
                                     <div class="card-body">
                                         <input class="form-control" type="text" id="despacho_mano_obra" onkeyup="validar_numeros(this.id)" name="despacho_mano_obra" wire:model="despacho_mano_obra" />
@@ -118,7 +118,7 @@
                             <div class="col-lg-4 col-md-4">
                                 <div class="card">
                                     <div class="card-header">
-                                        <h4>Otros</h4>
+                                        <h4>Otros S/</h4>
                                     </div>
                                     <div class="card-body">
                                         <input class="form-control" type="text" id="despacho_otro" onkeyup="validar_numeros(this.id)" name="despacho_otro" wire:model="despacho_otro" />
@@ -160,14 +160,6 @@
                                 </div>
                                 <div class="mt-3 d-flex justify-content-between align-items-center text-center">
                                     <div class="text-center d-flex justify-content-center align-items-center gap-2">
-                                        @if($tarifa)
-                                            <p class="mb-0">Tarifa: </p>
-                                            <h4 class="mb-0 text-dark">{{ $tarifa }}</h4>
-                                        @else
-                                            <p class="mb-0">No se encontró una tarifa.</p>
-                                        @endif
-                                    </div>
-                                    <div class="text-center d-flex justify-content-center align-items-center gap-2">
                                         <p class="mb-0">Total Peso Seleccionado:</p>
                                         <h4 class="mb-0 text-dark">
                                             <span wire:loading.remove>{{ $totalPeso }} kg</span>
@@ -175,6 +167,15 @@
                                                 <div class="loading-circle"></div>
                                             </div>
                                         </h4>
+                                    </div>
+
+                                    <div class="text-center d-flex justify-content-center align-items-center gap-2">
+                                        @if($tarifa)
+                                            <p class="mb-0">Tarifa: </p>
+                                            <h4 class="mb-0 text-dark">S/ {{ $tarifa }}</h4>
+                                        @else
+                                            <p class="mb-0">No se encontró una tarifa.</p>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -188,7 +189,7 @@
                     <div class="col-lg-4 col-md-4">
                         <div class="card">
                             <div class="card-header">
-                                <h4>Mano de obra</h4>
+                                <h4>Mano de obra S/</h4>
                             </div>
                             <div class="card-body">
                                 <input class="form-control" type="text" id="despacho_mano_obra" name="despacho_mano_obra" wire:model="despacho_mano_obra" />
@@ -198,7 +199,7 @@
                     <div class="col-lg-4 col-md-4">
                         <div class="card">
                             <div class="card-header">
-                                <h4>Otros</h4>
+                                <h4>Otros S/</h4>
                             </div>
                             <div class="card-body">
                                 <input class="form-control" type="text" id="despacho_otro" name="despacho_otro" wire:model="despacho_otro" />
@@ -300,15 +301,6 @@
                                                 @endforeach
                                                 <div class="mt-3 d-flex justify-content-between align-items-center text-center">
                                                     <div class="text-center d-flex justify-content-center align-items-center gap-2">
-                                                        @if($tarifa)
-                                                            <p class="mb-0">Tarifa: </p>
-                                                            <h4 class="mb-0 text-dark">{{ $tarifa }}</h4>
-                                                        @else
-                                                            <p class="mb-0">No se encontró una tarifa.</p>
-                                                        @endif
-                                                    </div>
-
-                                                    <div class="text-center d-flex justify-content-center align-items-center gap-2">
                                                         <p class="mb-0">Total Peso Seleccionado:</p>
                                                         <h4 class="mb-0 text-dark">
                                                             <span wire:loading.remove>{{ $totalPeso }} kg</span>
@@ -316,6 +308,15 @@
                                                                 <div class="loading-circle"></div>
                                                             </div>
                                                         </h4>
+                                                    </div>
+
+                                                    <div class="text-center d-flex justify-content-center align-items-center gap-2">
+                                                        @if($tarifa)
+                                                            <p class="mb-0">Tarifa: </p>
+                                                            <h4 class="mb-0 text-dark">S/ {{  $tarifa }}</h4>
+                                                        @else
+                                                            <p class="mb-0">No se encontró una tarifa.</p>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             @else
@@ -372,7 +373,7 @@
         .loading-circle-container {
             position: absolute;
             top: 90%;
-            left: 97%;
+            left: 30%;
             transform: translate(-50%, -50%);
             z-index: 10;
         }

@@ -50,7 +50,7 @@
 
                     <div class="col-lg-6 col-md-4 col-sm-12 mb-3">
                         <label for="vehiculo_capacidad_peso" class="form-label">Capacidad de peso (*) (en kg)</label>
-                        <x-input-general  type="text" id="vehiculo_capacidad_peso" wire:model="vehiculo_capacidad_peso"/>
+                        <x-input-general  type="text" id="vehiculo_capacidad_peso" wire:model="vehiculo_capacidad_peso" onkeyup="validar_numeros(this.id)"/>
                         @error('vehiculo_capacidad_peso')
                         <span class="message-error">{{ $message }}</span>
                         @enderror
@@ -202,11 +202,26 @@
                                         <td>{{$lv->transportista_nom_comercial}}</td>
                                         <td>{{$lv->tipo_vehiculo_concepto}}</td>
                                         <td>{{$lv->vehiculo_placa}}</td>
-                                        <td>{{ number_format($lv->vehiculo_capacidad_peso, 0, '.', ',') }} <b>(kg)</b></td>
-                                        <td>{{ number_format($lv->vehiculo_ancho, 0, '.', ',') }} <b>(cm)</b></td>
-                                        <td>{{ number_format($lv->vehiculo_largo, 0, '.', ',') }} <b>(cm)</b></td>
-                                        <td>{{ number_format($lv->vehiculo_alto, 0, '.', ',') }} <b>(cm)</b></td>
-                                        <td>{{ number_format($lv->vehiculo_capacidad_volumen, 0, '.', ',') }} <b>(cm³)</b></td>
+                                        <td>
+                                            {{ fmod($lv->vehiculo_capacidad_peso, 1) != 0 ? number_format($lv->vehiculo_capacidad_peso, 2, '.', ',') : number_format($lv->vehiculo_capacidad_peso, 0, '.', ',') }}
+                                            <b>(kg)</b>
+                                        </td>
+                                        <td>
+                                            {{ fmod($lv->vehiculo_ancho, 1) != 0 ? number_format($lv->vehiculo_ancho, 2, '.', ',') : number_format($lv->vehiculo_ancho, 0, '.', ',') }}
+                                            <b>(cm)</b>
+                                        </td>
+                                        <td>
+                                            {{ fmod($lv->vehiculo_largo, 1) != 0 ? number_format($lv->vehiculo_largo, 2, '.', ',') : number_format($lv->vehiculo_largo, 0, '.', ',') }}
+                                            <b>(cm)</b>
+                                        </td>
+                                        <td>
+                                            {{ fmod($lv->vehiculo_alto, 1) != 0 ? number_format($lv->vehiculo_alto, 2, '.', ',') : number_format($lv->vehiculo_alto, 0, '.', ',') }}
+                                            <b>(cm)</b>
+                                        </td>
+                                        <td>
+                                            {{ fmod($lv->vehiculo_capacidad_volumen, 1) != 0 ? number_format($lv->vehiculo_capacidad_volumen, 2, '.', ',') : number_format($lv->vehiculo_capacidad_volumen, 0, '.', ',') }}
+                                            <b>(cm³)</b>
+                                        </td>
                                         <td>
                                             <span class="font-bold badge {{$lv->vehiculo_estado == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
                                                 {{$lv->vehiculo_estado == 1 ? 'Habilitado ' : 'Desabilitado'}}

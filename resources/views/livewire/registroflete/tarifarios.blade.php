@@ -4,6 +4,7 @@
     {{--    MODAL REGISTRO TARIFARIOS--}}
     <x-modal-general  wire:ignore.self >
         <x-slot name="id_modal">modalTarifario</x-slot>
+        <x-slot name="tama">modal-lg</x-slot>
         <x-slot name="titleModal">Gestionar Tarifarios</x-slot>
         <x-slot name="modalContent">
             <form wire:submit.prevent="saveTarifario">
@@ -12,126 +13,138 @@
                         <small class="text-primary">Información de tarifas</small>
                         <hr class="mb-0">
                     </div>
-                    <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
-                        <label for="id_tipo_servicio" class="form-label">Tipo de servicios (*)</label>
-                        <select class="form-select" name="id_tipo_servicios" id="id_tipo_servicio" wire:model.live="id_tipo_servicio">
-                            <option value="" disabled>Seleccionar...</option>
-                            @foreach($listar_servicios as $li)
-                                <option value="{{$li->id_tipo_servicios}}">{{$li->tipo_servicio_concepto}}</option>
-                            @endforeach
-                        </select>
-                        @error('id_tipo_servicio')
-                        <span class="message-error">{{ $message }}</span>
-                        @enderror
+                    <div class="row">
+                        <div class="col-lg-6 col-md-12 col-sm-12 mb-4">
+                            <label for="id_tipo_servicio" class="form-label">Tipo de servicios (*)</label>
+                            <select class="form-select" name="id_tipo_servicios" id="id_tipo_servicio" wire:model.live="id_tipo_servicio">
+                                <option value="" disabled>Seleccionar...</option>
+                                @foreach($listar_servicios as $li)
+                                    <option value="{{$li->id_tipo_servicios}}">{{$li->tipo_servicio_concepto}}</option>
+                                @endforeach
+                            </select>
+                            @error('id_tipo_servicio')
+                            <span class="message-error">{{ $message }}</span>
+                            @enderror
+                        </div>
+
+                        @if($id_tipo_servicio == 1)
+                            <div class="col-lg-6 col-md-12 col-sm-12 mb-4">
+                                <label for="id_tipo_vehiculo" class="form-label">Tipo de vehículos (*)</label>
+                                <select class="form-select" name="id_tipo_vehiculo" id="id_tipo_vehiculo" wire:model="id_tipo_vehiculo">
+                                    <option value="" >Seleccionar...</option>
+                                    @foreach($listar_tipovehiculo as $tv)
+                                        <option value="{{$tv->id_tipo_vehiculo}}">{{$tv->tipo_vehiculo_concepto}}</option>
+                                    @endforeach
+                                </select>
+                                @error('id_tipo_vehiculo')
+                                <span class="message-error">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        @endif
                     </div>
 
                     @if($id_tipo_servicio == 2)
-                        <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
-                            <label for="id_medida" class="form-label">Unidad de medida (*)</label>
-                            <select class="form-select" name="id_medida" id="id_medida" wire:model.live="id_medida">
-                                <option value="">Seleccionar...</option>
-                                <option value="23"> Peso </option>
-                                <option value="9"> Volumen </option>
-                            </select>
-                            @error('id_medida')
-                            <span class="message-error">{{ $message }}</span>
-                            @enderror
-                        </div>
-                    @endif
+                        <div class="row">
+                            <div class="col-lg-6 col-md-12 col-sm-12 mb-4">
+                                <div class="" wire:ignore>
+                                    <label for="id_ubigeo_salida" class="form-label">Ubigeo salida (*)</label>
+                                    <select class="form-select" name="id_ubigeo_salida" id="id_ubigeo_salida" wire:model="id_ubigeo_salida">
+                                        <option value="" >Seleccionar...</option>
+                                        @foreach($listar_ubigeos as $lu)
+                                            <option value="{{$lu->id_ubigeo}}">{{$lu->ubigeo_departamento . ' - ' . $lu->ubigeo_provincia . ' - ' . $lu->ubigeo_distrito}}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                @error('id_ubigeo_salida')
+                                <span class="message-error">{{ $message }}</span>
+                                @enderror
+                            </div>
 
-                    @if($id_tipo_servicio == 1)
-                        <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
-                            <label for="id_tipo_vehiculo" class="form-label">Tipo de vehículos (*)</label>
-                            <select class="form-select" name="id_tipo_vehiculo" id="id_tipo_vehiculo" wire:model="id_tipo_vehiculo">
-                                <option value="" >Seleccionar...</option>
-                                @foreach($listar_tipovehiculo as $tv)
-                                    <option value="{{$tv->id_tipo_vehiculo}}">{{$tv->tipo_vehiculo_concepto}}</option>
-                                @endforeach
-                            </select>
-                            @error('id_tipo_vehiculo')
-                            <span class="message-error">{{ $message }}</span>
-                            @enderror
+                            <div class="col-lg-6 col-md-12 col-sm-12 mb-4">
+                                <label for="id_medida" class="form-label">Unidad de medida (*)</label>
+                                <select class="form-select" name="id_medida" id="id_medida" wire:model.live="id_medida">
+                                    <option value="">Seleccionar...</option>
+                                    <option value="23"> Peso </option>
+                                    <option value="9"> Volumen </option>
+                                </select>
+                                @error('id_medida')
+                                <span class="message-error">{{ $message }}</span>
+                                @enderror
+                            </div>
                         </div>
-                    @elseif($id_tipo_servicio == 2)
-                        <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
-                            <div class="" wire:ignore>
-                                <label for="id_ubigeo_salida" class="form-label">Ubigeo salida (*)</label>
-                                <select class="form-select" name="id_ubigeo_salida" id="id_ubigeo_salida" wire:model="id_ubigeo_salida">
-                                    <option value="" >Seleccionar...</option>
-                                    @foreach($listar_ubigeos as $lu)
-                                        <option value="{{$lu->id_ubigeo}}">{{$lu->ubigeo_departamento . ' - ' . $lu->ubigeo_provincia . ' - ' . $lu->ubigeo_distrito}}</option>
+
+                        <div class="row">
+                            <div class="col-lg-4 col-md-4 col-sm-12 mb-4">
+                                <label for="id_departamento" class="form-label">Departamento llegada (*)</label>
+                                <select class="form-select" name="id_departamento" id="id_departamento" wire:model="id_departamento" wire:change="listar_provincias">
+                                    <option value="">Seleccionar...</option>
+                                    @foreach($listar_departamento as $de)
+                                        <option value="{{ $de->id_departamento }}">{{ $de->departamento_nombre }}</option>
                                     @endforeach
                                 </select>
+                                @error('id_departamento') <span class="message-error">{{ $message }}</span> @enderror
                             </div>
-                            @error('id_ubigeo_salida')
-                            <span class="message-error">{{ $message }}</span>
-                            @enderror
-                        </div>
 
-                        <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
-                            <label for="id_departamento" class="form-label">Departamento llegada (*)</label>
-                            <select class="form-select" name="id_departamento" id="id_departamento" wire:model="id_departamento" wire:change="listar_provincias">
-                                <option value="">Seleccionar...</option>
-                                @foreach($listar_departamento as $de)
-                                    <option value="{{ $de->id_departamento }}">{{ $de->departamento_nombre }}</option>
-                                @endforeach
-                            </select>
-                            @error('id_departamento') <span class="message-error">{{ $message }}</span> @enderror
-                        </div>
+                            <div class="col-lg-4 col-md-4 col-sm-12 mb-4">
+                                <label for="id_provincia" class="form-label">Provincia llegada (*)</label>
+                                <select class="form-select" name="id_provincia" id="id_provincia" wire:model="id_provincia"  wire:change="listar_distritos" {{ empty($provincias) ? 'disabled' : '' }}>
+                                    <option value="">Seleccionar...</option>
+                                    @foreach($provincias as $pr)
+                                        <option value="{{ $pr->id_provincia }}" {{ $pr->id_provincia == $id_provincia ? 'selected' : '' }}>{{ $pr->provincia_nombre }}</option>
+                                    @endforeach
+                                </select>
+                                @error('id_provincia') <span class="message-error">{{ $message }}</span> @enderror
+                            </div>
 
-                        <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
-                            <label for="id_provincia" class="form-label">Provincia llegada (*)</label>
-                            <select class="form-select" name="id_provincia" id="id_provincia" wire:model="id_provincia"  wire:change="listar_distritos" {{ empty($provincias) ? 'disabled' : '' }}>
-                                <option value="">Seleccionar...</option>
-                                @foreach($provincias as $pr)
-                                    <option value="{{ $pr->id_provincia }}" {{ $pr->id_provincia == $id_provincia ? 'selected' : '' }}>{{ $pr->provincia_nombre }}</option>
-                                @endforeach
-                            </select>
-                            @error('id_provincia') <span class="message-error">{{ $message }}</span> @enderror
-                        </div>
-
-                        <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
-                            <label for="id_distrito" class="form-label">Distrito llegada</label>
-                            <select class="form-select" name="id_distrito" id="id_distrito" wire:model="id_distrito" {{ empty($distritos) ? 'disabled' : '' }}>
-                                <option value="">Todos los distritos</option>
-                                @foreach($distritos as $di)
-                                    <option value="{{ $di->id_distrito }}" {{ $di->id_distrito == $id_distrito ? 'selected' : '' }}>{{ $di->distrito_nombre }}</option>
-                                @endforeach
-                            </select>
-                            @error('id_distrito') <span class="message-error">{{ $message }}</span> @enderror
+                            <div class="col-lg-4 col-md-4 col-sm-12 mb-4">
+                                <label for="id_distrito" class="form-label">Distrito llegada</label>
+                                <select class="form-select" name="id_distrito" id="id_distrito" wire:model="id_distrito" {{ empty($distritos) ? 'disabled' : '' }}>
+                                    <option value="">Todos los distritos</option>
+                                    @foreach($distritos as $di)
+                                        <option value="{{ $di->id_distrito }}" {{ $di->id_distrito == $id_distrito ? 'selected' : '' }}>{{ $di->distrito_nombre }}</option>
+                                    @endforeach
+                                </select>
+                                @error('id_distrito') <span class="message-error">{{ $message }}</span> @enderror
+                            </div>
                         </div>
                     @endif
 
                     @php
-                        $capacidadTexto = ($id_medida == 23) ? '(Capacidad en kg)' : (($id_medida == 9) ? '(Capacidad en cm³)' : '');
+                        if ($id_tipo_servicio == 2) {
+                            $capacidadTexto = ($id_medida == 23) ? '(Capacidad en kg)' : (($id_medida == 9) ? '(Capacidad en cm³)' : '');
+                        } else {
+                            $capacidadTexto = '';
+                        }
                     @endphp
 
-                    <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
-                        <label for="tarifa_cap_min" class="form-label">Capacidad mínima (*) {{ $capacidadTexto }}</label>
-                        <x-input-general type="text" id="tarifa_cap_min" wire:model="tarifa_cap_min"/>
-                        @error('tarifa_cap_min')
-                        <span class="message-error">{{ $message }}</span>
-                        @enderror
-                    </div>
+                    <div class="row">
+                        <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
+                            <label for="tarifa_cap_min" class="form-label">Capacidad mínima (*) {{ $capacidadTexto }}</label>
+                            <x-input-general type="text" id="tarifa_cap_min" wire:model="tarifa_cap_min" onkeyup="validar_numeros(this.id)" />
+                            @error('tarifa_cap_min')
+                            <span class="message-error">{{ $message }}</span>
+                            @enderror
+                        </div>
 
-                    <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
-                        <label for="tarifa_cap_max" class="form-label">Capacidad máxima (*) {{ $capacidadTexto }}</label>
-                        <x-input-general type="text" id="tarifa_cap_max" wire:model="tarifa_cap_max"/>
-                        @error('tarifa_cap_max')
-                        <span class="message-error">{{ $message }}</span>
-                        @enderror
-                    </div>
+                        <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
+                            <label for="tarifa_cap_max" class="form-label">Capacidad máxima (*) {{ $capacidadTexto }}</label>
+                            <x-input-general type="text" id="tarifa_cap_max" wire:model="tarifa_cap_max" onkeyup="validar_numeros(this.id)" />
+                            @error('tarifa_cap_max')
+                            <span class="message-error">{{ $message }}</span>
+                            @enderror
+                        </div>
 
-                    @php
-                        $cobroViaje = ($id_tipo_servicio == 1) ? '/ Cobro por viaje' : '';
-                    @endphp
+                        @php
+                            $cobroViaje = ($id_tipo_servicio == 1) ? '/ Cobro por viaje' : '';
+                        @endphp
 
-                    <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
-                        <label for="tarifa_monto" class="form-label">Monto de la tarifa (*) {{ $cobroViaje }}</label>
-                        <x-input-general type="text" id="tarifa_monto" wire:model="tarifa_monto"/>
-                        @error('tarifa_monto')
-                        <span class="message-error">{{ $message }}</span>
-                        @enderror
+                        <div class="col-lg-4 col-md-12 col-sm-12 mb-4">
+                            <label for="tarifa_monto" class="form-label">Monto de la tarifa (*) {{ $cobroViaje }}</label>
+                            <x-input-general type="text" id="tarifa_monto" wire:model="tarifa_monto" onkeyup="validar_numeros(this.id)" />
+                            @error('tarifa_monto')
+                            <span class="message-error">{{ $message }}</span>
+                            @enderror
+                        </div>
                     </div>
 
                     <div class="col-lg-12 col-md-12 col-sm-12">
@@ -285,7 +298,8 @@
                                 </div>
                                 <div class="col-lg-4 mb-3">
                                     <strong style="color: #8c1017">Capacidad Mínima:</strong>
-                                    <p>{{ isset($detalles->tarifa_cap_min) ? number_format($detalles->tarifa_cap_min, 2, '.', ',') : 'No disponible' }}
+                                    <p>
+                                        {{ isset($detalles->tarifa_cap_min) ? (fmod($detalles->tarifa_cap_min, 1) != 0 ? number_format($detalles->tarifa_cap_min, 2, '.', ',') : number_format($detalles->tarifa_cap_min, 0, '.', ',')) : 'No disponible' }}
                                         <small>
                                             {{ $detalles->id_medida == 23 ? 'Kg' : ($detalles->id_medida == 9 ? 'cm³' : '') }}
                                         </small>
@@ -293,7 +307,8 @@
                                 </div>
                                 <div class="col-lg-4 mb-3">
                                     <strong style="color: #8c1017">Capacidad Máxima:</strong>
-                                    <p>{{ isset($detalles->tarifa_cap_max) ? number_format($detalles->tarifa_cap_max, 2, '.', ',') : 'No disponible' }}
+                                    <p>
+                                        {{ isset($detalles->tarifa_cap_max) ? (fmod($detalles->tarifa_cap_max, 1) != 0 ? number_format($detalles->tarifa_cap_max, 2, '.', ',') : number_format($detalles->tarifa_cap_max, 0, '.', ',')) : 'No disponible' }}
                                         <small>
                                             {{ $detalles->id_medida == 23 ? 'Kg' : ($detalles->id_medida == 9 ? 'cm³' : '') }}
                                         </small>
@@ -301,7 +316,9 @@
                                 </div>
                                 <div class="col-lg-4 mb-3">
                                     <strong style="color: #8c1017">Monto de Tarifa:</strong>
-                                    <p>{{ isset($detalles->tarifa_monto) ? 'S/ ' . number_format($detalles->tarifa_monto, 2, '.', ',') : 'No disponible' }}</p>
+                                    <p>
+                                        {{ isset($detalles->tarifa_monto) ? 'S/ ' . (fmod($detalles->tarifa_monto, 1) != 0 ? number_format($detalles->tarifa_monto, 2, '.', ',') : number_format($detalles->tarifa_monto, 0, '.', ',')) : 'No disponible' }}
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -436,21 +453,27 @@
                                 @foreach($tarifario as $ta)
                                     <tr>
                                         <td>{{$conteo}}</td>
-                                        <td>{{$ta->tipo_servicio_concepto}}</td>
+                                        <td>{{ $ta->tipo_servicio_concepto }}</td>
                                         <td>{{ is_null($ta->id_medida) ? '-' : ($ta->id_medida == 23 ? 'PESO' : 'VOLUMEN') }}</td>
                                         <td>
-                                            {{ number_format($ta->tarifa_cap_min, 2, '.', ',') }}
+                                            {{ fmod($ta->tarifa_cap_min, 1) != 0 ? number_format($ta->tarifa_cap_min, 2, '.', ',') : number_format($ta->tarifa_cap_min, 0, '.', ',') }}
                                             <small class="text-dark">
-                                                {{ $ta->id_medida == 23 ? '(Kg)' : ($ta->id_medida == 9 ? '(cm³)' : '') }}
+                                                {{ $ta->id_tipo_servicio == 1 ? '(Kg)' : ($ta->id_tipo_servicio == 2 ? ($ta->id_medida == 9 ? '(Kg)' : ($ta->id_medida == 23 ? '(cm³)' : '')) : '') }}
+                                            </small>
+                                        </td>
+
+                                        <td>
+                                            {{ fmod($ta->tarifa_cap_max, 1) != 0 ? number_format($ta->tarifa_cap_max, 2, '.', ',') : number_format($ta->tarifa_cap_max, 0, '.', ',') }}
+                                            <small class="text-dark">
+                                                {{ $ta->id_tipo_servicio == 1 ? '(Kg)' : ($ta->id_tipo_servicio == 2 ? ($ta->id_medida == 9 ? '(Kg)' : ($ta->id_medida == 23 ? '(cm³)' : '')) : '') }}
                                             </small>
                                         </td>
                                         <td>
-                                            {{ number_format($ta->tarifa_cap_max, 2, '.', ',') }}
+                                            S/ {{ fmod($ta->tarifa_monto, 1) != 0 ? number_format($ta->tarifa_monto, 2, '.', ',') : number_format($ta->tarifa_monto, 0, '.', ',') }}
                                             <small class="text-dark">
-                                                {{ $ta->id_medida == 23 ? '(Kg)' : ($ta->id_medida == 9 ? '(cm³)' : '') }}
+                                                {{ $ta->id_tipo_servicio == 1 ? '/ VIAJE' : ($ta->id_tipo_servicio == 2 ? '/ kg' : '') }}
                                             </small>
                                         </td>
-                                        <td>S/ {{number_format($ta->tarifa_monto, 2, '.', ',')}}</td>
                                         <td>
                                             <span class="font-bold badge {{$ta->tarifa_estado_aprobacion == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
                                                 {{$ta->tarifa_estado_aprobacion == 1 ? 'Aprobado' : 'Pendiente'}}
