@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Programacioncamiones;
 
+use App\Models\Tarifario;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use App\Models\Logs;
@@ -36,6 +37,9 @@ class Programarcamion extends Component
     public $selected_transportista = null;
 
     public $search = "";
+    public $despacho_fecha = "";
+    public $despacho_mano_obra = "";
+    public $despacho_otros = "";
     public $searchFactura = "";
     public $searchCliente = "";
     public $id_transportistas = "";
@@ -45,17 +49,18 @@ class Programarcamion extends Component
     public $id_departamento = "";
     public $id_provincia = "";
     public $id_distrito = "";
+    public $selectedVehiculo = null;
     public $despacho_tipo = "";
     public $despacho_peso_total = "";
     public $despacho_costo_total = "";
     public $despacho_estado = "";
     public $despacho_microtime = "";
-    public $despacho_mano_obra = "";
     public $despacho_otro = "";
     public $facturas = [
-        ['id' => 1, 'serie' => 'FC-001', 'nombre' => 'Cliente A', 'peso' => 250],
-        ['id' => 2, 'serie' => 'FC-002', 'nombre' => 'Cliente B', 'peso' => 300],
-        ['id' => 3, 'serie' => 'FC-003', 'nombre' => 'Cliente C', 'peso' => 450],
+        ['id' => 1, 'serie' => 'FC-001', 'nombre' => 'Cliente A', 'peso' => 250, 'volumen' => 250000 ],
+        ['id' => 2, 'serie' => 'FC-002', 'nombre' => 'Cliente B', 'peso' => 300, 'volumen' => 300000],
+        ['id' => 3, 'serie' => 'FC-003', 'nombre' => 'Cliente C', 'peso' => 450, 'volumen' => 450000],
+        ['id' => 4, 'serie' => 'FC-004', 'nombre' => 'Cliente D', 'peso' => 110, 'volumen' => 110000],
     ];
 
     public $clientes = [
@@ -65,12 +70,12 @@ class Programarcamion extends Component
     ];
 
     public $facturasCli = [
-        ['id' => 1, 'serie' => 'FC-001', 'nombre' => 'Shambo', 'peso' => 250],
-        ['id' => 2, 'serie' => 'FC-002', 'nombre' => 'Shambo', 'peso' => 300],
-        ['id' => 3, 'serie' => 'FC-003', 'nombre' => 'Topitop', 'peso' => 450],
-        ['id' => 4, 'serie' => 'FC-004', 'nombre' => 'Topitop', 'peso' => 500],
-        ['id' => 5, 'serie' => 'FC-005', 'nombre' => 'Quispe', 'peso' => 290],
-        ['id' => 6, 'serie' => 'FC-006', 'nombre' => 'Quispe', 'peso' => 700],
+        ['id' => 1, 'serie' => 'FC-001', 'nombre' => 'Shambo', 'peso' => 250, 'volumen' => 250000],
+        ['id' => 2, 'serie' => 'FC-002', 'nombre' => 'Shambo', 'peso' => 300, 'volumen' => 300000],
+        ['id' => 3, 'serie' => 'FC-003', 'nombre' => 'Topitop', 'peso' => 450, 'volumen' => 450000],
+        ['id' => 4, 'serie' => 'FC-004', 'nombre' => 'Topitop', 'peso' => 500, 'volumen' => 500000],
+        ['id' => 5, 'serie' => 'FC-005', 'nombre' => 'Quispe', 'peso' => 290, 'volumen' => 290000],
+        ['id' => 6, 'serie' => 'FC-006', 'nombre' => 'Quispe', 'peso' => 700, 'volumen' => 700000],
     ];
 
     public $filteredFacturas = [];
@@ -78,7 +83,8 @@ class Programarcamion extends Component
     public $selectedFacturas = [];
     public $selectedClientes = [];
     public $selectedCliente = null;
-    public $totalPeso = 0;
+    public $pesoTotal = 0;
+    public $volumenTotal = 0;
     public $tarifa = null;
     public $tarifa_estado_aprobacion;
     public $selected_tipo_servicio = null;
@@ -90,21 +96,15 @@ class Programarcamion extends Component
         $this->buscarFacturas();
         $this->buscarClientes();
         $listar_tipo_vehiculo = $this->tipovehiculo->listar_tipo_vehiculo();
-        $listar_transportistas = $this->listarTransportistasProgramarCamion($this->search);
         $listar_tipo_servicio = $this->tiposervicio->listar_tipo_servicios();
         $listar_departamento = $this->departamento->lista_departamento();
-        return view('livewire.programacioncamiones.programarcamion', compact('listar_transportistas', 'listar_tipo_vehiculo', 'listar_tipo_servicio', 'listar_departamento'));
+        $listar_vehiculos = $this->vehiculo->obtener_vehiculos_con_tarifarios();
+        $this->compararPesoConVehiculos($listar_vehiculos);
+        return view('livewire.programacioncamiones.programarcamion', compact('listar_tipo_vehiculo', 'listar_tipo_servicio', 'listar_departamento', 'listar_vehiculos'));
     }
 
-    public function actualizarSeleccion()
-    {
-        $this->calcularTarifa();
-        $this->listar_provincias();
-    }
-    public function actualizarSeleccionDistritos()
-    {
-        $this->calcularTarifa();
-        $this->listar_distritos();
+    public function mount() {
+        $this->despacho_fecha = now()->toDateString();
     }
 
     public function listar_provincias(){
@@ -136,231 +136,141 @@ class Programarcamion extends Component
             $this->selectedCliente = $id;
             $this->searchCliente = $cliente['nombre'] . ' ' . $cliente['ruc'];
             $this->selectedClientes = [];
-            $this->totalPeso = 0;
             // Actualizar `facturasPorCliente` sin afectar otros campos.
             $this->facturasPorCliente = collect($this->facturasCli)
                 ->where('nombre', $cliente['nombre'])
-                ->map(function ($factura) {
+                ->map(function ($facturasCli) {
                     return [
-                        'id' => $factura['id'],
-                        'serie' => $factura['serie'],
-                        'nombre' => $factura['nombre'],
-                        'peso' => $factura['peso'],
+                        'id' => $facturasCli['id'],
+                        'serie' => $facturasCli['serie'],
+                        'nombre' => $facturasCli['nombre'],
+                        'peso' => $facturasCli['peso'],
+                        'volumen' => $facturasCli['volumen'],
                     ];
                 })
                 ->toArray();
         }
     }
 
-    public function buscarFacturas(){
+    public function seleccionarFacturaCliente($facturaId) {
+        $factura = collect($this->facturasPorCliente)->firstWhere('id', $facturaId);
+        if ($factura) {
+            // Agregar la factura seleccionada a la lista de facturas
+            $this->selectedFacturas[] = $factura;
+            $this->pesoTotal += $factura['peso'];
+            $this->volumenTotal += $factura['volumen'];
+            // Eliminar la factura de `facturasPorCliente`
+            $this->facturasPorCliente = array_filter($this->facturasPorCliente, fn($f) => $f['id'] !== $facturaId);
+            // Recalcula las sugerencias de vehículos según el peso total actualizado
+            $this->compararPesoConVehiculos($this->vehiculo->obtener_vehiculos_con_tarifarios());
+        }
+    }
+
+    public function buscarFacturas() {
         $this->filteredFacturas = array_filter($this->facturas, function ($factura) {
-            return str_contains(strtolower($factura['serie']), strtolower($this->searchFactura)) ||
-                str_contains(strtolower($factura['nombre']), strtolower($this->searchFactura)) ||
-                str_contains((string) $factura['peso'], $this->searchFactura);
+            return (str_contains(strtolower($factura['serie']), strtolower($this->searchFactura)) ||
+                    str_contains(strtolower($factura['nombre']), strtolower($this->searchFactura)) ||
+                    str_contains((string) $factura['peso'], $this->searchFactura) ||
+                    str_contains((string) $factura['volumen'], $this->searchFactura))
+                && !in_array($factura, $this->selectedFacturas);
         });
     }
 
-    public function listarTransportistasProgramarCamion($search = ''){
-        try {
-            $query = DB::table('transportistas')
-                ->where('transportista_estado', '=', 1);
+    public function seleccionarFactura($facturaId) {
+        $factura = collect($this->facturas)->firstWhere('id', $facturaId);
+        if ($factura) {
+            // Agregar la factura seleccionada y actualizar el peso y volumen total
+            $this->selectedFacturas[] = $factura;
+            $this->pesoTotal += $factura['peso'];
+            $this->volumenTotal += $factura['volumen']; // Sumar volumen
 
-            if (!empty($search)) {
-                $query->where('transportista_nom_comercial', 'like', '%' . $search . '%');
-            }
+            // Eliminar la factura de la lista de facturas filtradas
+            $this->filteredFacturas = array_filter($this->filteredFacturas, fn($f) => $f['id'] !== $facturaId);
 
-            return $query->orderBy('id_transportistas', 'desc')->take(10)->get();
-        } catch (\Exception $e) {
-            $this->logs->insertarLog($e);
-            return [];
+            // Comparar el peso total con los vehículos nuevamente
+            $this->compararPesoConVehiculos($this->vehiculo->listar_vehiculo());
         }
     }
 
-    public function selectTransportista($id){
-        $this->selected_transportista = $id;
-        $this->id_transportistas = $id;
-        $this->id_tipo_servicios = "";
-        $this->id_tipo_vehiculo = "";
-        $this->selectedFacturas = [];
-        $this->totalPeso = 0;
+    public $vehiculosSugeridos = [];
+    public function eliminarFacturaSeleccionada($facturaId) {
+        // Encuentra la factura en las seleccionadas
+        $factura = collect($this->selectedFacturas)->firstWhere('id', $facturaId);
+        if ($factura) {
+            // Elimina la factura de la lista de seleccionadas y actualiza el peso y volumen total
+            $this->selectedFacturas = array_filter($this->selectedFacturas, fn($f) => $f['id'] !== $facturaId);
+            $this->pesoTotal -= $factura['peso'];
+            $this->volumenTotal -= $factura['volumen']; // Restar volumen
+
+            // Restaurar la factura en `facturasPorCliente` si el cliente seleccionado coincide
+            if ($factura['nombre'] === explode(' ', $this->searchCliente)[0]) {
+                $this->facturasPorCliente[] = $factura;
+            }
+
+            // Recalcula las sugerencias de vehículos
+            $this->compararPesoConVehiculos($this->vehiculo->listar_vehiculo());
+            // Vuelve a ordenar `facturasPorCliente` si es necesario
+            $this->facturasPorCliente = array_values($this->facturasPorCliente);
+        }
     }
 
-    public function calculateTotalPeso(){
-        $this->totalPeso = collect($this->selectedFacturas)
-            ->map(fn($facturaId) => collect($this->facturas)->firstWhere('id', $facturaId)['peso'] ?? 0)
-            ->sum();
-        $this->calcularTarifa();
-
-    }
-
-    public function calculateTotalPesoCliente(){
-        $this->totalPeso = collect($this->selectedClientes)
-            ->map(fn($facturaId) => collect($this->facturasCli)->firstWhere('id', $facturaId)['peso'] ?? 0)
-            ->sum();
-        $this->calcularTarifa();
-
-    }
-
-    public function calcularTarifa() {
-        $this->tarifa = null;
-        $this->tarifa_estado_aprobacion = null;
-
-        try {
+    // Comparar el peso total con la capacidad de los vehículos
+    public function compararPesoConVehiculos($listar_vehiculos){
+        $this->vehiculosSugeridos = [];
+        foreach ($listar_vehiculos as $vehiculo) {
+            // Verificar que el peso del vehículo esté dentro del rango permitido
+            $pesoEnRango = $vehiculo->vehiculo_capacidad_peso >= $this->pesoTotal;
+            if (!empty($vehiculo->tarifa_cap_min) && !empty($vehiculo->tarifa_cap_max)) {
+                $pesoEnRango = $pesoEnRango &&
+                    $this->pesoTotal >= $vehiculo->tarifa_cap_min &&
+                    $this->pesoTotal <= $vehiculo->tarifa_cap_max;
+            }
+            // Verificación de la ubicación si el servicio es del tipo 2
+            $ubicacionCoincide = true;
             if ($this->id_tipo_servicios == 2) {
-                $tarifarioQuery = DB::table('tarifarios')
-                    ->where('id_transportistas', $this->id_transportistas)
-                    ->where('id_tipo_servicio', $this->id_tipo_servicios)
-                    ->where('id_departamento', $this->id_departamento)
-                    ->where('id_provincia', $this->id_provincia)
-                    ->where('tarifa_cap_min', '<=', $this->totalPeso)
-                    ->where('tarifa_cap_max', '>=', $this->totalPeso)
-                    ->where('tarifa_estado', 1);
-
-                // Verifica que id_distrito tenga un valor específico antes de incluirlo
-                if (!is_null($this->id_distrito) && $this->id_distrito != '') {
-                    $tarifarioQuery->where('id_distrito', $this->id_distrito);
-                }
-
-                $tarifario = $tarifarioQuery->first();
-            } else {
-                $tarifario = DB::table('tarifarios')
-                    ->where('id_transportistas', $this->id_transportistas)
-                    ->where('id_tipo_servicio', $this->id_tipo_servicios)
-                    ->where('id_tipo_vehiculo', $this->id_tipo_vehiculo)
-                    ->where('tarifa_cap_min', '<=', $this->totalPeso)
-                    ->where('tarifa_cap_max', '>=', $this->totalPeso)
-                    ->where('tarifa_estado', 1)
-                    ->first();
+                $ubicacionCoincide = (
+                    $vehiculo->id_departamento == $this->id_departamento &&
+                    $vehiculo->id_provincia == $this->id_provincia &&
+                    ($vehiculo->id_distrito == $this->id_distrito || $this->id_distrito === null)
+                );
             }
-
-            if ($tarifario) {
-                if ($tarifario->tarifa_estado_aprobacion == 1) {
-                    $this->tarifa = $tarifario->tarifa_monto;
-                }
-                $this->tarifa_estado_aprobacion = $tarifario->tarifa_estado_aprobacion;
-            } else {
-                $this->tarifa = null;
-                $this->tarifa_estado_aprobacion = null;
-                session()->flash('error', 'No se encontró un tarifario que coincida con los criterios especificados.');
+            if ($pesoEnRango && $ubicacionCoincide) {
+                // Calculando el porcentaje de capacidad utilizada
+                $vehiculo->vehiculo_capacidad_usada = ($this->pesoTotal / $vehiculo->vehiculo_capacidad_peso) * 100;
+                $this->vehiculosSugeridos[] = $vehiculo;
             }
-        } catch (\Exception $e) {
-            $this->logs->insertarLog($e);
         }
+        // Ordenar los vehículos sugeridos según estado de aprobación y porcentaje de capacidad usada
+        usort($this->vehiculosSugeridos, function ($a, $b) {
+            return [$b->tarifa_estado_aprobacion, $b->vehiculo_capacidad_usada] <=> [$a->tarifa_estado_aprobacion, $a->vehiculo_capacidad_usada];
+        });
     }
-
-
 
     public function resetearCampoTipoServicio(){
-        // Si el tipo de servicio es "local"
         if ($this->id_tipo_servicios == 1) {
-            $this->id_tipo_vehiculo = "";
+            $this->searchFactura = '';
+            $this->filteredFacturas = [];
+            $this->pesoTotal = 0;
+            $this->volumenTotal = 0;
             $this->selectedFacturas = [];
-            $this->totalPeso = 0;
-            $this->tarifa = null;
-            $this->vehiculos = [];
-            $this->despacho_mano_obra = "";
-            $this->despacho_otro = "";
-        }
-        // Si el tipo de servicio es "provincial"
-        elseif ($this->id_tipo_servicios == 2) {
-            // Reiniciar campos específicos del servicio "provincial"
-            $this->searchCliente = "";
+        } elseif ($this->id_tipo_servicios == 2) {
+            $this->searchCliente = '';
+            $this->filteredClientes = [];
+            $this->facturasPorCliente = [];
+            $this->selectedCliente = null;
+            $this->pesoTotal = 0;
+            $this->volumenTotal = 0;
+            $this->selectedFacturas = [];
             $this->id_departamento = "";
             $this->id_provincia = "";
             $this->id_distrito = "";
-            $this->despacho_mano_obra = "";
-            $this->despacho_otro = "";
-            $this->selectedCliente = null;
-            $this->facturasPorCliente = [];
-            $this->selectedClientes = [];
-            $this->totalPeso = 0;
-            $this->tarifa = null;
+            $this->provincias = [];
+            $this->distritos = [];
         }
-    }
-
-    public function listar_vehiculos(){
-        $valor = $this->id_tipo_vehiculo;
-        $tr = $this->id_transportistas;
-        if ($valor){
-            $this->vehiculos=DB::table('vehiculos')
-                ->where('id_tipo_vehiculo', '=', $valor)
-                ->where('id_transportistas', '=', $tr)
-                ->get();
-        }
-    }
-
-    public function resetearCampos(){
-        // Resetear los campos relevantes después de guardar el despacho
-        $this->id_transportistas = null;  // Resetear transportista seleccionado
-        $this->selected_transportista = null;
-        $this->id_tipo_servicios = null;  // Resetear tipo de servicio
-        $this->id_tipo_vehiculo = null;  // Resetear tipo de vehículo
-        $this->id_vehiculo = null;       // Resetear vehículo
-        $this->selectedFacturas = [];    // Limpiar facturas seleccionadas
-        $this->totalPeso = 0;            // Resetear peso total
-        $this->tarifa = null;            // Resetear tarifa
-        $this->tarifa_estado_aprobacion = null; // Resetear estado de aprobación de tarifa
-        $this->vehiculos = [];           // Limpiar lista de vehículos
-        $this->selectedClientes = [];    // Limpiar clientes seleccionados
-        $this->selectedCliente = null;   // Limpiar cliente seleccionado
-        $this->searchCliente = "";       // Limpiar búsqueda de clientes
-        $this->id_departamento = "";     // Limpiar departamento seleccionado
-        $this->id_provincia = "";        // Limpiar provincia seleccionada
-        $this->id_distrito = "";         // Limpiar distrito seleccionado
-        $this->search = "";              // Limpiar búsqueda de transportistas
-        $this->listarTransportistasProgramarCamion();  // Actualizar lista de transportistas
-    }
-
-    public function saveDespacho(){
-        try {
-            // Validación de los campos
-            $this->validate([
-                'id_transportistas' => 'nullable|integer',
-                'id_vehiculo' => 'nullable|integer',
-                'id_departamento' => 'nullable|integer',
-                'id_provincia' => 'nullable|integer',
-                'id_distrito' => 'nullable|integer',
-                'despacho_tipo' => 'nullable|integer',
-                'despacho_peso_total' => 'nullable|numeric',
-                'despacho_costo_total' => 'nullable|numeric',
-                'despacho_mano_obra' => 'nullable|string',
-                'despacho_otro' => 'nullable|string',
-                'despacho_estado' => 'nullable|integer',
-            ]);
-
-            // Comenzamos la transacción
-            DB::beginTransaction();
-
-            $despacho = new Despacho();
-            $despacho->id_users = Auth::id();
-            $despacho->id_transportistas = $this->id_transportistas;
-            $despacho->id_vehiculo = !empty($this->id_vehiculo) ? $this->id_vehiculo : null;
-            $despacho->id_departamento = !empty($this->id_departamento) ? $this->id_departamento : null;
-            $despacho->id_provincia = !empty($this->id_provincia) ? $this->id_provincia : null;
-            $despacho->id_distrito = !empty($this->id_distrito) ? $this->id_distrito : null;
-            $despacho->despacho_fecha = now();
-            $despacho->despacho_tipo = $this->id_tipo_servicios;
-            $despacho->despacho_peso_total = $this->totalPeso;
-            $despacho->despacho_costo_total = $this->tarifa;
-            $despacho->despacho_mano_obra = !empty($this->despacho_mano_obra) ? $this->despacho_mano_obra : null;
-            $despacho->despacho_otro = !empty($this->despacho_otro) ? $this->despacho_otro : null;
-            $despacho->despacho_estado = 1;
-            $despacho->despacho_microtime = microtime(true);
-
-            // Guardamos el despacho
-            if ($despacho->save()) {
-                DB::commit();  // Confirmamos la transacción
-                session()->flash('success', 'Despacho guardado correctamente.');
-                $this->resetearCampos();
-            } else {
-                DB::rollBack();  // Revertimos la transacción si hay un error
-                session()->flash('error', 'Ocurrió un error al guardar el despacho.');
-            }
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            session()->flash('error', 'Ocurrió un error al guardar el despacho. Por favor, inténtelo nuevamente.');
-            $this->logs->insertarLog($e);
-        }
+        $this->vehiculosSugeridos = [];
+        $this->despacho_fecha = now()->toDateString();
+        $this->despacho_mano_obra = "";
+        $this->despacho_otros = "";
+        $this->selectedVehiculo = null;
     }
 }

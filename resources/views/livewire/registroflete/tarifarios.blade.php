@@ -301,16 +301,17 @@
                                     <p>
                                         {{ isset($detalles->tarifa_cap_min) ? (fmod($detalles->tarifa_cap_min, 1) != 0 ? number_format($detalles->tarifa_cap_min, 2, '.', ',') : number_format($detalles->tarifa_cap_min, 0, '.', ',')) : 'No disponible' }}
                                         <small>
-                                            {{ $detalles->id_medida == 23 ? 'Kg' : ($detalles->id_medida == 9 ? 'cm³' : '') }}
+                                            {{ $detalles->id_tipo_servicio == 1 ? 'Kg' : ($detalles->id_tipo_servicio == 2 ? ($detalles->id_medida == 23 ? 'Kg' : ($detalles->id_medida == 9 ? 'cm³' : '')) : '') }}
                                         </small>
                                     </p>
                                 </div>
+
                                 <div class="col-lg-4 mb-3">
                                     <strong style="color: #8c1017">Capacidad Máxima:</strong>
                                     <p>
                                         {{ isset($detalles->tarifa_cap_max) ? (fmod($detalles->tarifa_cap_max, 1) != 0 ? number_format($detalles->tarifa_cap_max, 2, '.', ',') : number_format($detalles->tarifa_cap_max, 0, '.', ',')) : 'No disponible' }}
                                         <small>
-                                            {{ $detalles->id_medida == 23 ? 'Kg' : ($detalles->id_medida == 9 ? 'cm³' : '') }}
+                                            {{ $detalles->id_tipo_servicio == 1 ? 'Kg' : ($detalles->id_tipo_servicio == 2 ? ($detalles->id_medida == 23 ? 'Kg' : ($detalles->id_medida == 9 ? 'cm³' : '')) : '') }}
                                         </small>
                                     </p>
                                 </div>

@@ -31,7 +31,7 @@ class Vehiculo extends Model
         return $result;
     }
 
-    public function listar_vehiculos_por_transportistas($search,$pagination,$order = 'asc'){
+    public function listar_vehiculos_por_transportistas($search,$pagination,$order = 'desc'){
         try {
             $query = DB::table('vehiculos as v')
                 ->join('transportistas as t','v.id_transportistas','=','t.id_transportistas')
@@ -56,6 +56,59 @@ class Vehiculo extends Model
             $result = $query->paginate($pagination);
 
         }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
+
+    public function obtener_vehiculos_con_tarifarios()
+    {
+        try {
+            $query = DB::table('vehiculos as v')
+                ->join('tarifarios as t', 'v.id_transportistas', '=', 't.id_transportistas')
+                ->join('transportistas as tr', 'v.id_transportistas', '=', 'tr.id_transportistas')
+                ->select(
+                    'v.id_vehiculo',
+                    'v.vehiculo_capacidad_peso',
+                    'v.vehiculo_placa',
+                    't.tarifa_cap_min',
+                    't.tarifa_cap_max',
+                    't.tarifa_estado_aprobacion',
+                    'tr.*',
+                    'v.*',
+                    DB::raw('MAX(t.tarifa_monto) as tarifa_monto'),
+                    't.id_departamento',
+                    't.id_provincia',
+                    't.id_distrito'
+                )
+                ->where('t.tarifa_estado', 1)
+                ->where('v.vehiculo_estado', 1);
+            if ($this->id_departamento) {
+                $query->where('t.id_departamento', $this->id_departamento);
+            }
+            if ($this->id_provincia) {
+                $query->where('t.id_provincia', $this->id_provincia);
+            }
+            if ($this->id_distrito !== null) {
+                $query->where(function ($query) {
+                    $query->where('t.id_distrito', $this->id_distrito)
+                        ->orWhereNull('t.id_distrito');
+                });
+            }
+            $query->groupBy(
+                'v.id_vehiculo',
+                'v.vehiculo_capacidad_peso',
+                'v.vehiculo_placa',
+                't.tarifa_cap_min',
+                't.tarifa_cap_max',
+                't.tarifa_estado_aprobacion',
+                't.id_departamento',
+                't.id_provincia',
+                't.id_distrito'
+            );
+            $result = $query->get();
+        } catch (\Exception $e) {
             $this->logs->insertarLog($e);
             $result = [];
         }
