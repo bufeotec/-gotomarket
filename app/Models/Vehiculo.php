@@ -62,26 +62,15 @@ class Vehiculo extends Model
         return $result;
     }
 
-    public function obtener_vehiculos_con_tarifarios()
-    {
+    public function obtener_vehiculos_con_tarifarios(){
         try {
             $query = DB::table('vehiculos as v')
                 ->join('tarifarios as t', 'v.id_transportistas', '=', 't.id_transportistas')
                 ->join('transportistas as tr', 'v.id_transportistas', '=', 'tr.id_transportistas')
                 ->select(
-                    'v.id_vehiculo',
-                    'v.vehiculo_capacidad_peso',
-                    'v.vehiculo_placa',
-                    't.tarifa_cap_min',
-                    't.tarifa_cap_max',
-                    't.tarifa_estado_aprobacion',
-                    'tr.*',
-                    'v.*',
-                    DB::raw('MAX(t.tarifa_monto) as tarifa_monto'),
-                    't.id_departamento',
-                    't.id_provincia',
-                    't.id_distrito'
+                    'v.id_vehiculo', 'v.vehiculo_capacidad_peso', 'v.vehiculo_placa', 't.tarifa_cap_min', 't.tarifa_cap_max', 't.tarifa_estado_aprobacion',  'tr.*', 'v.*', DB::raw('MAX(t.tarifa_monto) as tarifa_monto'), 't.id_departamento', 't.id_provincia', 'v.id_transportistas','tr.id_transportistas', 't.id_distrito'
                 )
+                ->distinct()
                 ->where('t.tarifa_estado', 1)
                 ->where('v.vehiculo_estado', 1);
             if ($this->id_departamento) {
@@ -97,15 +86,7 @@ class Vehiculo extends Model
                 });
             }
             $query->groupBy(
-                'v.id_vehiculo',
-                'v.vehiculo_capacidad_peso',
-                'v.vehiculo_placa',
-                't.tarifa_cap_min',
-                't.tarifa_cap_max',
-                't.tarifa_estado_aprobacion',
-                't.id_departamento',
-                't.id_provincia',
-                't.id_distrito'
+                'v.id_vehiculo', 'v.vehiculo_capacidad_peso', 'v.vehiculo_placa', 't.tarifa_cap_min', 't.tarifa_cap_max', 't.tarifa_estado_aprobacion', 't.id_departamento', 't.id_provincia', 't.id_distrito'
             );
             $result = $query->get();
         } catch (\Exception $e) {

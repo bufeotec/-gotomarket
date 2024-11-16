@@ -11,13 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('despacho_ventas', function (Blueprint $table) {
-            $table->id('id_despacho_venta');
-
-            $table->foreignId('id_despacho')->nullable()->references('id_despacho')->on('despachos');
-
-
-            $table->timestamps();
+        Schema::table('despacho_ventas', function (Blueprint $table) {
+            $table->tinyInteger('despacho_venta_factura')->after('id_venta');
         });
     }
 
@@ -26,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('despacho_ventas');
+        Schema::table('despacho_ventas', function (Blueprint $table) {
+            //
+        });
     }
 };

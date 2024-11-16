@@ -247,10 +247,12 @@
                                     <p>{{ $nombre_tipo_servicio }}</p>
                                 </div>
 
-                                <div class="col-lg-4 mb-3">
-                                    <strong style="color: #8c1017">Unidad de medida:</strong>
-                                    <p>{{ $nombre_medida }}</p>
-                                </div>
+                                @if($detalles->id_tipo_servicio == 2)
+                                    <div class="col-lg-4 mb-3">
+                                        <strong style="color: #8c1017">Unidad de medida:</strong>
+                                        <p>{{ $nombre_medida }}</p>
+                                    </div>
+                                @endif
 
                                 @if($detalles->id_tipo_servicio == 1)
                                     <div class="col-lg-4 mb-3">
@@ -459,14 +461,14 @@
                                         <td>
                                             {{ fmod($ta->tarifa_cap_min, 1) != 0 ? number_format($ta->tarifa_cap_min, 2, '.', ',') : number_format($ta->tarifa_cap_min, 0, '.', ',') }}
                                             <small class="text-dark">
-                                                {{ $ta->id_tipo_servicio == 1 ? '(Kg)' : ($ta->id_tipo_servicio == 2 ? ($ta->id_medida == 9 ? '(Kg)' : ($ta->id_medida == 23 ? '(cm³)' : '')) : '') }}
+                                                {{ $ta->id_tipo_servicio == 1 ? '(Kg)' : ($ta->id_tipo_servicio == 2 ? ($ta->id_medida == 9 ? '(cm³)' : ($ta->id_medida == 23 ? '(Kg)' : '')) : '') }}
                                             </small>
                                         </td>
 
                                         <td>
                                             {{ fmod($ta->tarifa_cap_max, 1) != 0 ? number_format($ta->tarifa_cap_max, 2, '.', ',') : number_format($ta->tarifa_cap_max, 0, '.', ',') }}
                                             <small class="text-dark">
-                                                {{ $ta->id_tipo_servicio == 1 ? '(Kg)' : ($ta->id_tipo_servicio == 2 ? ($ta->id_medida == 9 ? '(Kg)' : ($ta->id_medida == 23 ? '(cm³)' : '')) : '') }}
+                                                {{ $ta->id_tipo_servicio == 1 ? '(Kg)' : ($ta->id_tipo_servicio == 2 ? ($ta->id_medida == 9 ? '(cm³)' : ($ta->id_medida == 23 ? '(Kg)' : '')) : '') }}
                                             </small>
                                         </td>
                                         <td>
