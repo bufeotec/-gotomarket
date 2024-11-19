@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id('id_programacion');
             $table->foreignId('id_users')->references('id_users')->on('users');
             $table->date('programacion_fecha');
-            $table->tinyInteger('programacion_estado')->comment('pendiente es 1, completado es 2, cancelado es 3');
+            $table->tinyInteger('programacion_estado');
             $table->string('programacion_microtime');
             $table->timestamps();
         });
