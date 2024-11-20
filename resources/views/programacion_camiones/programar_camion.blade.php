@@ -8,7 +8,7 @@
     <div class="page-heading">
         <x-navegation-view text="Programar un camión." />
 
-        @livewire('programacioncamiones.programarcamion')
+        @livewire('programacioncamiones.option-tabs')
 
     </div>
 
