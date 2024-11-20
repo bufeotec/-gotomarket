@@ -216,7 +216,7 @@
                 </div>
             @endif
 
-        @if($id_tipo_servicios == 1 || $id_tipo_servicios == 2 || $id_tipo_servicios == 3)
+            @if($id_tipo_servicios == 1 || $id_tipo_servicios == 2 || $id_tipo_servicios == 3)
                 {{-- VEHICULOS --}}
                 <div class="col-lg-12">
                     <div class="card">
@@ -242,11 +242,11 @@
                                                                     ($vehiculo->vehiculo_capacidad_usada <= 75 ? 'yellow' : 'green'))
                                                                 }};" />
                                         </svg>
-                                            <div class="circulo-vehiculo">
-                                                <div class="placa-container">
-                                                    <span class="vehiculo-placa">{{ $vehiculo->vehiculo_placa }}</span>
-                                                </div>
-                                                <div class="tarifa-container">
+                                        <div class="circulo-vehiculo">
+                                            <div class="placa-container">
+                                                <span class="vehiculo-placa">{{ $vehiculo->vehiculo_placa }}</span>
+                                            </div>
+                                            <div class="tarifa-container">
                                                     <span class="tarifa-monto">
                                                         @php
                                                             $tarifa = number_format($vehiculo->tarifa_monto, 2, '.', ',');
@@ -254,8 +254,8 @@
                                                         @endphp
                                                         S/ {{ $tarifa }}
                                                     </span>
-                                                </div>
-                                                <div class="peso-container">
+                                            </div>
+                                            <div class="peso-container">
                                                     <span class="capacidad-peso">
                                                         @php
                                                             $pesovehiculo = number_format($vehiculo->vehiculo_capacidad_peso, 2, '.', ',');
@@ -263,17 +263,17 @@
                                                         @endphp
                                                         {{ $pesovehiculo }} kg
                                                     </span>
-                                                </div>
-                                                <div class="boton-container">
-                                                    <a href="#" class="btn-ver" data-bs-toggle="modal" data-bs-target="#modalVehiculo_{{ $vehiculo->id_vehiculo }}">
-                                                        <i class="fas fa-eye"></i>
-                                                    </a>
-                                                </div>
                                             </div>
-                                            <div class="estado-circulo">
-                                                <i class="fa-solid fa-circle-check check-icon"></i>
-                                                <i class="fas fa-exclamation-circle warning-icon"></i>
+                                            <div class="boton-container">
+                                                <a href="#" class="btn-ver" data-bs-toggle="modal" data-bs-target="#modalVehiculo_{{ $vehiculo->id_vehiculo }}">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
                                             </div>
+                                        </div>
+                                        <div class="estado-circulo">
+                                            <i class="fa-solid fa-circle-check check-icon"></i>
+                                            <i class="fas fa-exclamation-circle warning-icon"></i>
+                                        </div>
                                     </label>
                                 @endforeach
                             </div>
@@ -378,70 +378,69 @@
                 </div>
             @endif
 
-                <!-- MODAL DETALLE DE VEHÍCULO -->
-                @foreach($vehiculosSugeridos as $vehiculo)
-                    <div class="modal fade" id="modalVehiculo_{{ $vehiculo->id_vehiculo }}" tabindex="-1"
-                         aria-labelledby="modalVehiculoLabel_{{ $vehiculo->id_vehiculo }}" aria-hidden="true">
-                        <div class="modal-dialog modal-lg">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="modalVehiculoLabel_{{ $vehiculo->id_vehiculo }}">
-                                        Detalles del Vehículo
-                                    </h5>
-                                </div>
-                                <div class="modal-body">
-                                    <div class="row">
-                                        <div class="col-lg-12 col-md-12 col-sm-12">
-                                            <div class="row">
-                                                <div class="col-lg-12 col-md-12 col-sm-12">
-                                                    <h6>Información del transportista</h6>
-                                                    <hr>
-                                                </div>
-                                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                                                    <strong style="color: #8c1017">Nombre comercial:</strong>
-                                                    <p>{{ $vehiculo->transportista_nom_comercial }}</p>
-                                                </div>
-                                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                                                    <strong style="color: #8c1017">RUC:</strong>
-                                                    <p>{{ $vehiculo->transportista_ruc }}</p>
-                                                </div>
-                                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                                                    <strong style="color: #8c1017">Monto de la tarifa:</strong>
-                                                    <p>S/ {{ $vehiculo->tarifa_monto }}</p>
-                                                </div>
+            <!-- MODAL DETALLE DE VEHÍCULO -->
+            @foreach($vehiculosSugeridos as $vehiculo)
+                <div class="modal fade" id="modalVehiculo_{{ $vehiculo->id_vehiculo }}" tabindex="-1"
+                     aria-labelledby="modalVehiculoLabel_{{ $vehiculo->id_vehiculo }}" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="modalVehiculoLabel_{{ $vehiculo->id_vehiculo }}">
+                                    Detalles del Vehículo
+                                </h5>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-lg-12 col-md-12 col-sm-12">
+                                        <div class="row">
+                                            <div class="col-lg-12 col-md-12 col-sm-12">
+                                                <h6>Información del transportista</h6>
+                                                <hr>
+                                            </div>
+                                            <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                                <strong style="color: #8c1017">Nombre comercial:</strong>
+                                                <p>{{ $vehiculo->transportista_nom_comercial }}</p>
+                                            </div>
+                                            <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                                <strong style="color: #8c1017">RUC:</strong>
+                                                <p>{{ $vehiculo->transportista_ruc }}</p>
+                                            </div>
+                                            <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                                <strong style="color: #8c1017">Monto de la tarifa:</strong>
+                                                <p>S/ {{ $vehiculo->tarifa_monto }}</p>
                                             </div>
                                         </div>
+                                    </div>
 
-                                        <div class="col-lg-12 col-md-12 col-sm-12">
-                                            <div class="row">
-                                                <div class="col-lg-12 col-md-12 col-sm-12">
-                                                    <h6>Información del vehículo</h6>
-                                                    <hr>
-                                                </div>
-                                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                                                    <strong style="color: #8c1017">Placa del vehículo:</strong>
-                                                    <p>{{ $vehiculo->vehiculo_placa }}</p>
-                                                </div>
-                                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                                                    <strong style="color: #8c1017">Capacidad en peso:</strong>
-                                                    <p>{{ (substr(number_format($vehiculo->vehiculo_capacidad_peso, 2, '.', ','), -3) == '.00') ? number_format($vehiculo->vehiculo_capacidad_peso, 0, '.', ',') : number_format($vehiculo->vehiculo_capacidad_peso, 2, '.', ',') }} kg</p>
-                                                </div>
-                                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                                                    <strong style="color: #8c1017">Ancho:</strong>
-                                                    <p>{{ (substr(number_format($vehiculo->vehiculo_ancho, 2, '.', ','), -3) == '.00') ? number_format($vehiculo->vehiculo_ancho, 0, '.', ',') : number_format($vehiculo->vehiculo_ancho, 2, '.', ',') }} cm</p>
-                                                </div>
-                                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                                                    <strong style="color: #8c1017">Largo:</strong>
-                                                    <p>{{ (substr(number_format($vehiculo->vehiculo_largo, 2, '.', ','), -3) == '.00') ? number_format($vehiculo->vehiculo_largo, 0, '.', ',') : number_format($vehiculo->vehiculo_largo, 2, '.', ',') }} cm</p>
-                                                </div>
-                                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                                                    <strong style="color: #8c1017">Alto:</strong>
-                                                    <p>{{ (substr(number_format($vehiculo->vehiculo_alto, 2, '.', ','), -3) == '.00') ? number_format($vehiculo->vehiculo_alto, 0, '.', ',') : number_format($vehiculo->vehiculo_alto, 2, '.', ',') }} cm</p>
-                                                </div>
-                                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                                                    <strong style="color: #8c1017">Volumen:</strong>
-                                                    <p>{{ (substr(number_format($vehiculo->vehiculo_capacidad_volumen, 2, '.', ','), -3) == '.00') ? number_format($vehiculo->vehiculo_capacidad_volumen, 0, '.', ',') : number_format($vehiculo->vehiculo_capacidad_volumen, 2, '.', ',') }} cm³</p>
-                                                </div>
+                                    <div class="col-lg-12 col-md-12 col-sm-12">
+                                        <div class="row">
+                                            <div class="col-lg-12 col-md-12 col-sm-12">
+                                                <h6>Información del vehículo</h6>
+                                                <hr>
+                                            </div>
+                                            <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                                <strong style="color: #8c1017">Placa del vehículo:</strong>
+                                                <p>{{ $vehiculo->vehiculo_placa }}</p>
+                                            </div>
+                                            <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                                <strong style="color: #8c1017">Capacidad en peso:</strong>
+                                                <p>{{ (substr(number_format($vehiculo->vehiculo_capacidad_peso, 2, '.', ','), -3) == '.00') ? number_format($vehiculo->vehiculo_capacidad_peso, 0, '.', ',') : number_format($vehiculo->vehiculo_capacidad_peso, 2, '.', ',') }} kg</p>
+                                            </div>
+                                            <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                                <strong style="color: #8c1017">Ancho:</strong>
+                                                <p>{{ (substr(number_format($vehiculo->vehiculo_ancho, 2, '.', ','), -3) == '.00') ? number_format($vehiculo->vehiculo_ancho, 0, '.', ',') : number_format($vehiculo->vehiculo_ancho, 2, '.', ',') }} cm</p>
+                                            </div>
+                                            <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                                <strong style="color: #8c1017">Largo:</strong>
+                                                <p>{{ (substr(number_format($vehiculo->vehiculo_largo, 2, '.', ','), -3) == '.00') ? number_format($vehiculo->vehiculo_largo, 0, '.', ',') : number_format($vehiculo->vehiculo_largo, 2, '.', ',') }} cm</p>
+                                            </div>
+                                            <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                                <strong style="color: #8c1017">Alto:</strong>
+                                                <p>{{ (substr(number_format($vehiculo->vehiculo_alto, 2, '.', ','), -3) == '.00') ? number_format($vehiculo->vehiculo_alto, 0, '.', ',') : number_format($vehiculo->vehiculo_alto, 2, '.', ',') }} cm</p>
+                                            </div>
+                                            <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                                <strong style="color: #8c1017">Volumen:</strong>
+                                                <p>{{ (substr(number_format($vehiculo->vehiculo_capacidad_volumen, 2, '.', ','), -3) == '.00') ? number_format($vehiculo->vehiculo_capacidad_volumen, 0, '.', ',') : number_format($vehiculo->vehiculo_capacidad_volumen, 2, '.', ',') }} cm³</p>
                                             </div>
                                         </div>
                                     </div>
@@ -449,7 +448,8 @@
                             </div>
                         </div>
                     </div>
-                @endforeach
+                </div>
+            @endforeach
 
             {{--  TABLA DE LAS COMPROBANTES SELECCIONADAS--}}
             @if($id_tipo_servicios == 1 || $id_tipo_servicios ==2)
