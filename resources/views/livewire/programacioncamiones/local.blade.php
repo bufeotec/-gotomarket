@@ -24,9 +24,9 @@
                                     @foreach($filteredFacturas as $factura)
                                         <label class="custom-checkbox factura-item d-flex align-items-center mb-2" for="factura_{{ $factura->CFNUMDOC }}">
                                             <input type="checkbox" id="factura_{{ $factura->CFNUMDOC }}" value="{{ $factura->CFNUMDOC }}"
-                                                   wire:click="seleccionarFactura({{ $factura->CFNUMDOC }})" class="form-check-input">
+                                                   wire:click="seleccionarFactura('{{$factura->CFTD}}','{{ $factura->CFNUMSER }}','{{ $factura->CFNUMDOC }}')" class="form-check-input">
                                             <div class="checkmark"></div>
-                                            <span class="serie-correlativa">{{ $factura->CFNUMDOC }}</span>
+                                            <span class="serie-correlativa">{{ $factura->CFNUMSER }} - {{ $factura->CFNUMDOC }}</span>
                                             <span class="nombre-cliente mx-2">{{ $factura->CNOMCLI }}</span>
                                             <span class="peso">Peso: {{ $factura->total_kg }} kg</span>
                                             <span class="peso">Volumen: {{ $factura->total_volumen }} cm³</span>
