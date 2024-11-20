@@ -25,17 +25,17 @@
                 </div>
             </div>
 
-            {{--   FACTURAS --}}
+            {{--   COMPROBANTES --}}
             @if($id_tipo_servicios == 1)
                 <div class="col-lg-12 col-md-6">
                     <div class="card">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h4>FACTURAS</h4>
+                            <h4>COMPROBANTES</h4>
                         </div>
                         <div class="card-body">
                             <div class="position-relative mb-3">
                                 <input type="text" class="form-control bg-dark text-white rounded-pill ps-5 custom-placeholder"
-                                       placeholder="Buscar factura" wire:model="searchFactura" wire:input="buscarFacturas"
+                                       placeholder="Buscar comprobante" wire:model="searchFactura" wire:input="buscarFacturas"
                                        style="border: none; outline: none;" />
                                 <i class="fas fa-search position-absolute"
                                    style="left: 15px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
@@ -44,7 +44,7 @@
                             @if($searchFactura != '')
                                 <div class="factura-list">
                                     @if(count($filteredFacturas) == 0)
-                                        <p>No se encontró la factura.</p>
+                                        <p>No se encontró el comprobante.</p>
                                     @else
                                         @foreach($filteredFacturas as $factura)
                                             <label class="custom-checkbox factura-item d-flex align-items-center mb-2" for="factura_{{ $factura['id'] }}">
@@ -71,7 +71,7 @@
                 </div>
             @endif
 
-            {{--   BUSCAR CLIENTE FACTURAS --}}
+            {{--   BUSCAR CLIENTE COMPROBANTES --}}
             @if($id_tipo_servicios == 2)
                 <div class="col-lg-12 col-md-6">
                     <div class="card">
@@ -120,7 +120,7 @@
                                                 </label>
                                             @endforeach
                                         @else
-                                            <p>No se encontró las facturas para este cliente.</p>
+                                            <p>No se encontró los comprobantes para este cliente.</p>
                                         @endif
                                     @endif
                                 </div>
@@ -136,22 +136,33 @@
                 </div>
             @endif
 
-            {{--   BUSCARDOR DE FACTURAS DE LOCAL Y PROVINCIAL--}}
+            {{-- BUSCADOR Y SELECTOR DE TIPO DE SERVICIO --}}
             @if($id_tipo_servicios == 3)
                 <div class="col-lg-12 col-md-6">
                     <div class="card">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h4>FACTURAS Y FACTURAS CLIENTE</h4>
+                            <h4>COMPROBANTES Y COMPROBANTES DE CLIENTE</h4>
                         </div>
                         <div class="card-body">
+                            {{-- Selector de tipo de servicio --}}
+                            <div class="mb-3">
+                                <select class="form-select" wire:model="tipoServicioSeleccionado">
+                                    <option value="" disabled>Seleccionar...</option>
+                                    @foreach($tipo_servicio_local_provincial as $tipo)
+                                        <option value="{{ $tipo->id_tipo_servicios }}">{{ $tipo->tipo_servicio_concepto }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            {{-- Buscador --}}
                             <div class="position-relative mb-3">
                                 <input type="text" class="form-control bg-dark text-white rounded-pill ps-5 custom-placeholder"
-                                       placeholder="Buscar factura o cliente" wire:model="searchFacturaCliente" wire:input="buscarFacturasYClientes"
+                                       placeholder="Buscar comprobante o cliente" wire:model="searchFacturaCliente" wire:input="buscarFacturasYClientes"
                                        style="border: none; outline: none;" />
                                 <i class="fas fa-search position-absolute"
                                    style="left: 15px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
                             </div>
 
+                            {{-- Resultados del buscador --}}
                             @if($searchFacturaCliente != '')
                                 <div class="factura-list">
                                     @if(count($filteredFacturasYClientes) == 0)
@@ -173,7 +184,6 @@
                             @endif
                         </div>
                     </div>
-                    <!-- Overlay y Spinner solo al seleccionar una factura -->
                     <div wire:loading wire:target="seleccionarFacturaClienteJunto" class="overlay__factura">
                         <div class="spinner__container__factura">
                             <div class="spinner__factura"></div>
@@ -441,12 +451,12 @@
                     </div>
                 @endforeach
 
-            {{--  TABLA DE LAS FACTURAS SELECCIONADAS--}}
-            @if($id_tipo_servicios == 1 || $id_tipo_servicios ==2 || $id_tipo_servicios ==3)
+            {{--  TABLA DE LAS COMPROBANTES SELECCIONADAS--}}
+            @if($id_tipo_servicios == 1 || $id_tipo_servicios ==2)
                 <div class="col-lg-12">
                     <div class="card">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h4 class="mb-0">FACTURAS SELECCIONADAS</h4>
+                            <h4 class="mb-0">COMPROBANTES SELECCIONADAS</h4>
                             <!-- Peso total y Volumen total alineados a la derecha -->
 
                             <div class="d-flex flex-column align-items-end ml-auto">
@@ -490,7 +500,7 @@
                                     </tbody>
                                 </table>
                             @else
-                                <p>No hay facturas seleccionadas.</p>
+                                <p>No hay comprobantes seleccionadas.</p>
                             @endif
                         </div>
                     </div>
@@ -513,25 +523,145 @@
 
                     <div class="col-lg-12">
                         <div class="row">
-                            <div class="col-lg-6">
-                                @if($id_tipo_servicios == 3 && count($selectedFacturas) > 0)
-                                    <div class="text-center">
-                                        <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalMixto">
-                                            Agregar provincial
-                                        </a>
-                                    </div>
+                            @if(count($selectedFacturas) > 0)
+                                <div class="text-center d-flex justify-content-end">
+                                    <a href="#" wire:click.prevent="guardarDespachos" class="btn text-white" style="background: #e51821">
+                                        Guardar Despacho
+                                    </a>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            {{--  TABLA PARA MIXTO  --}}
+            @if($id_tipo_servicios == 3)
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h4 class="mb-0">COMPROBANTES SELECCIONADOS</h4>
+                            <div class="d-flex flex-column align-items-end ml-auto">
+                                <div class="d-flex justify-content-center text-center py-1">
+                                    <p class="mb-0 me-2">Peso total: </p>
+                                    <h4 class="mb-0 text-dark">{{ $pesoTotal }} kg</h4>
+                                </div>
+                                <div class="d-flex justify-content-center text-center py-1">
+                                    <p class="mb-0 me-2">Volumen total: </p>
+                                    <h4 class="mb-0 text-dark">{{ $volumenTotal }} cm³</h4>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+                            <!-- Tabla para Local -->
+                            <div class="m-0">
+                                <h5>LOCAL</h5>
+                                <hr>
+                                @if(count($selectedFacturasLocal) > 0)
+                                    <table class="table">
+                                        <thead>
+                                        <tr>
+                                            <th>Serie</th>
+                                            <th>Nombre Cliente</th>
+                                            <th>Peso</th>
+                                            <th>Volumen</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        @foreach($selectedFacturasLocal as $factura)
+                                            <tr>
+                                                <td>{{ $factura['serie'] }}</td>
+                                                <td>{{ $factura['nombre'] }}</td>
+                                                <td>{{ $factura['peso'] }} kg</td>
+                                                <td>{{ $factura['volumen'] }} cm³</td>
+                                                <td>
+                                                    <a href="#"
+                                                       wire:click.prevent="eliminarSeleccion({{ $factura['id'] }}, 'local')"
+                                                       class="btn btn-danger btn-sm text-white">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                        </tbody>
+                                    </table>
+                                @else
+                                    <p>No hay comprobantes seleccionados para Local.</p>
                                 @endif
                             </div>
-                            <!-- Botón de Guardar -->
-                            <div class="col-lg-6">
-                                @if(count($selectedFacturas) > 0)
-                                    <div class="text-center">
-                                        <a href="#" wire:click.prevent="guardarDespachos" class="btn text-white" style="background: #e51821">
-                                            Guardar Despacho
-                                        </a>
-                                    </div>
+                            <!-- Tabla para Provincial -->
+                            <div class="mt-5">
+                                <h5>PROVINCIAL</h5>
+                                <hr>
+                                @if(count($selectedFacturasProvincial) > 0)
+                                    <table class="table">
+                                        <thead>
+                                        <tr>
+                                            <th>Serie</th>
+                                            <th>Nombre Cliente</th>
+                                            <th>Peso</th>
+                                            <th>Volumen</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        @foreach($selectedFacturasProvincial as $cliente => $facturas)
+                                            <tr>
+                                                <td colspan="2">
+                                                    <h6 class="mb-0">{{ $cliente }}</h6>
+                                                </td>
+                                                <td colspan="5">
+                                                    <label for="transportista_{{ $cliente }}" class="form-label mb-1">Transportista</label>
+                                                    <select class="form-select"
+                                                            id="transportista_{{ $cliente }}"
+                                                            wire:model="transportistasPorCliente.{{ $cliente }}">
+                                                        @foreach($listar_transportistas as $lt)
+                                                            <option value="{{ $lt->id_transportistas }}">{{ $lt->transportista_nom_comercial }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </td>
+                                            </tr>
+                                            @foreach($facturas as $factura)
+                                                <tr>
+                                                    <td>{{ $factura['serie'] }}</td>
+                                                    <td>{{ $factura['nombre'] }}</td>
+                                                    <td>{{ $factura['peso'] }} kg</td>
+                                                    <td>{{ $factura['volumen'] }} cm³</td>
+                                                    <td>
+                                                        <a href="#"
+                                                           wire:click.prevent="eliminarSeleccion({{ $factura['id'] }}, 'provincial')"
+                                                           class="btn btn-danger btn-sm text-white">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        @endforeach
+                                        </tbody>
+                                    </table>
+                                @else
+                                    <p>No hay comprobantes seleccionados para Provincial.</p>
                                 @endif
                             </div>
+                        </div>
+                    </div>
+                    <!-- Loading indicador -->
+                    <div wire:loading wire:target="eliminarSeleccion, eliminarFacturaSeleccionada" class="overlay__eliminar">
+                        <div class="spinner__container__eliminar">
+                            <div class="spinner__eliminar"></div>
+                        </div>
+                    </div>
+                    <div class="col-lg-12">
+                        <div class="row">
+                            @if(count($selectedFacturasLocal) > 0 && count($selectedFacturasProvincial) > 0)
+                                <div class="text-center d-flex justify-content-end">
+                                    <a href="#" wire:click.prevent="guardarDespachos" class="btn text-white" style="background: #e51821">
+                                        Guardar Despacho
+                                    </a>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -543,86 +673,6 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
-
-            {{-- MODAL PARA MIXTO --}}
-            <div class="modal fade" data-bs-backdrop="static" id="modalMixto" tabindex="-1" aria-labelledby="modalMixtoLabel" aria-hidden="true" wire:ignore.self>
-                <div class="modal-dialog modal-xl">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="modalMixtoLabel">
-                                Provincial
-                            </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="row">
-                                <!-- Lista de Facturas Seleccionadas -->
-                                <div class="col-lg-5">
-                                    <h6>Facturas Seleccionadas para Operación</h6>
-                                    @if(count($selectedFacturas) > 0)
-                                        <div class="factura-list">
-                                            @foreach($selectedFacturas as $factura)
-                                                <label class="custom-checkbox factura-item d-flex align-items-center mb-2" for="modal_factura_{{ $factura['id'] }}">
-                                                    <input type="checkbox" id="modal_factura_{{ $factura['id'] }}" value="{{ $factura['id'] }}"
-                                                           wire:model="selectedFacturasModal" class="form-check-input">
-                                                    <div class="checkmark"></div>
-                                                    <span class="serie-correlativa">{{ $factura['serie'] }}</span>
-                                                    <span class="nombre-cliente mx-2">{{ $factura['nombre'] }}</span>
-                                                    <span class="peso">Peso: {{ $factura['peso'] }} kg</span>
-                                                    <span class="volumen">Volumen: {{ $factura['volumen'] }} cm³</span>
-                                                </label>
-                                            @endforeach
-                                        </div>
-                                    @else
-                                        <p>No hay facturas seleccionadas.</p>
-                                    @endif
-                                </div>
-
-                                <div class="col-lg-7">
-                                    <div class="col-lg-12">
-                                        <div class="row">
-                                            <div class="col-lg-4 col-md-4 col-sm-12">
-                                                <div class="flex-column">
-                                                    <h5>Departamento (*)</h5>
-                                                    <select class="form-select" name="id_departamento" id="id_departamento" wire:model="id_departamento" wire:change="listar_provincias">
-                                                        <option value="">Seleccionar...</option>
-                                                        @foreach($listar_departamento as $de)
-                                                            <option value="{{ $de->id_departamento }}">{{ $de->departamento_nombre }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="col-lg-4 col-md-4 col-sm-12">
-                                                <div class="flex-column">
-                                                    <h5>Provincia (*)</h5>
-                                                    <select class="form-select" name="id_provincia" id="id_provincia" wire:model="id_provincia" wire:change="listar_distritos" {{ empty($provincias) ? 'disabled' : '' }}>
-                                                        <option value="">Seleccionar...</option>
-                                                        @foreach($provincias as $pr)
-                                                            <option value="{{ $pr->id_provincia }}" {{ $pr->id_provincia == $id_provincia ? 'selected' : '' }}>{{ $pr->provincia_nombre }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="col-lg-4 col-md-4 col-sm-12">
-                                                <div class="flex-column">
-                                                    <h5>Distrito</h5>
-                                                    <select class="form-select" name="id_distrito" id="id_distrito" wire:model="id_distrito" {{ empty($distritos) ? 'disabled' : '' }}>
-                                                        <option value="">Todos los distritos</option>
-                                                        @foreach($distritos as $di)
-                                                            <option value="{{ $di->id_distrito }}" {{ $di->id_distrito == $id_distrito ? 'selected' : '' }}>{{ $di->distrito_nombre }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -757,7 +807,7 @@
             }
         }
 
-        /* LOADING DE ELIMINAR FACTURAS */
+        /* LOADING DE ELIMINAR COMPROBANTES */
         .overlay__eliminar {
             position: fixed;
             top: 0;
@@ -824,7 +874,7 @@
             color: #fff;
         }
 
-        /*FACTURA*/
+        /* COMPROBANTES */
         .custom-checkbox input {
             display: none;
         }
