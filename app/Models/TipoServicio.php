@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class TipoServicio extends Model
 {
@@ -24,6 +25,18 @@ class TipoServicio extends Model
 
             $result = TipoServicio::get();
 
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
+
+    public function listar_tipo_servicio_local_provincial(){
+        try {
+            $result = DB::table('tipo_servicios')
+                ->whereIn('id_tipo_servicios', [1, 2])
+                ->get();
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);
             $result = [];

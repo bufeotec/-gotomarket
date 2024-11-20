@@ -78,7 +78,9 @@ class Tarifarios extends Component
     }
     #[On('refresh_select_servicios')]
     public function listarServiciosSelect(){
-        $this->listar_servicios = TipoServicio::where('tipo_servicio_estado', 1)->get();
+        $this->listar_servicios = TipoServicio::where('tipo_servicio_estado', 1)
+            ->whereIn('id_tipo_servicios', [1, 2])
+            ->get();
     }
 
     public function render()
