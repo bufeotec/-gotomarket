@@ -9,31 +9,35 @@
                     <div class="card-body">
                         <div class="position-relative mb-3">
                             <input type="text" class="form-control bg-dark text-white rounded-pill ps-5 custom-placeholder"
-                                   placeholder="Buscar comprobante"
+                                   placeholder="Buscar comprobante" wire:model="searchFactura" wire:keydown="buscar_comprobantes"
                                    style="border: none; outline: none;" />
                             <i class="fas fa-search position-absolute"
                                style="left: 15px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
                         </div>
 
-                        @if($searchFactura != '' && count($filteredFacturas) > 0)
+                        <!-- Mostrar los resultados solo si hay texto en el campo de búsqueda -->
+                        @if($searchFactura !== '')
                             <div class="factura-list">
-                                @foreach($filteredFacturas as $factura)
-                                    <label class="custom-checkbox factura-item d-flex align-items-center mb-2" for="factura_{{ $factura->CFNUMDOC }}">
-                                        <input type="checkbox" id="factura_{{ $factura->CFNUMDOC }}" value="{{ $factura->CFNUMDOC }}"
-                                               wire:click="seleccionarFactura({{ $factura->CFNUMDOC }})" class="form-check-input">
-                                        <div class="checkmark"></div>
-                                        <span class="serie-correlativa">{{ $factura->CFNUMSER }}</span>
-                                        <span class="nombre-cliente mx-2">{{ $factura->CNOMCLI }}</span>
-                                        <span class="peso">Peso: {{ $factura->total_kg }} kg</span>
-                                        <span class="peso">Volumen: {{ $factura->total_volumen }} cm³</span>
-                                    </label>
-                                @endforeach
+                                @if(count($filteredFacturas) == 0)
+                                    <p>No se encontró el comprobante.</p>
+                                @else
+                                    @foreach($filteredFacturas as $factura)
+                                        <label class="custom-checkbox factura-item d-flex align-items-center mb-2" for="factura_{{ $factura->CFNUMDOC }}">
+                                            <input type="checkbox" id="factura_{{ $factura->CFNUMDOC }}" value="{{ $factura->CFNUMDOC }}"
+                                                   wire:click="seleccionarFactura({{ $factura->CFNUMDOC }})" class="form-check-input">
+                                            <div class="checkmark"></div>
+                                            <span class="serie-correlativa">{{ $factura->CFNUMDOC }}</span>
+                                            <span class="nombre-cliente mx-2">{{ $factura->CNOMCLI }}</span>
+                                            <span class="peso">Peso: {{ $factura->total_kg }} kg</span>
+                                            <span class="peso">Volumen: {{ $factura->total_volumen }} cm³</span>
+                                        </label>
+                                    @endforeach
+                                @endif
                             </div>
-                        @elseif($searchFactura != '')
-                            <p>No se encontró el comprobante.</p>
                         @endif
                     </div>
                 </div>
+
                 <!-- Overlay y Spinner solo al seleccionar una factura -->
                 <div wire:loading wire:target="seleccionarFactura" class="overlay__factura">
                     <div class="spinner__container__factura">
@@ -41,6 +45,8 @@
                     </div>
                 </div>
             </div>
+
+
         </div>
     </div>
 

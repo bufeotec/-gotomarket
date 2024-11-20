@@ -18,7 +18,17 @@ class Local extends Component
     public $searchFactura = "";
     public $filteredFacturas = [];
     public function render(){
-        $this->filteredFacturas = $this->server->listar_comprobantes_listos_local($this->searchFactura);
         return view('livewire.programacioncamiones.local');
+    }
+
+    public function buscar_comprobantes(){
+        if ($this->searchFactura !== "") {
+            $this->filteredFacturas = $this->server->listar_comprobantes_listos_local($this->searchFactura);
+            if (!$this->filteredFacturas || count($this->filteredFacturas) == 0) {
+                $this->filteredFacturas = [];
+            }
+        } else {
+            $this->filteredFacturas = [];
+        }
     }
 }
