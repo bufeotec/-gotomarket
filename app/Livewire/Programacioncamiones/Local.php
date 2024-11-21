@@ -55,6 +55,8 @@ class Local extends Component
     }
     public function actualizarVehiculosSugeridos(){
         $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_new($this->pesoTotal, $this->volumenTotal,1,$this->id_transportistas);
+        $this->tarifaMontoSeleccionado = null;
+        $this->selectedVehiculo = null;
     }
     public function seleccionarVehiculo($vehiculoId){
         $vehiculo = collect($this->vehiculosSugeridos)->firstWhere('id_vehiculo', $vehiculoId);
@@ -85,8 +87,8 @@ class Local extends Component
                 && $f->CFNUMDOC === $CFNUMDOC;
         });
 
-        if ($factura->total_kg <= 0 && $factura->total_volumen <= 0){
-            session()->flash('error', 'El peso o el volumen no puede ser menor o igual a 0.');
+        if ($factura->total_kg <= 0 || $factura->total_volumen <= 0){
+            session()->flash('error', 'El peso o el volumen deben ser mayores a 0.');
             return;
         }
         // Agregar la factura seleccionada y actualizar el peso y volumen total
@@ -97,6 +99,8 @@ class Local extends Component
             'total_kg' => $factura->total_kg,
             'total_volumen' => $factura->total_volumen,
             'CNOMCLI' => $factura->CNOMCLI,
+            'CFIMPORTE' => $factura->CFIMPORTE,
+            'CFCODMON' => $factura->CFCODMON,
         ];
         $this->pesoTotal += $factura->total_kg;
         $this->volumenTotal += $factura->total_volumen;

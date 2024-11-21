@@ -21,7 +21,7 @@ class Server extends Model
             // filtrar nombre del cliente, serie, correlativo, pes y volumen
             $result = DB::connection('sqlsrv_external')
                 ->table('FACCAB')
-                ->select('FACCAB.CFTD', 'FACCAB.CFNUMSER', 'FACCAB.CFNUMDOC', 'c.CNOMCLI','c.CCODCLI','c.CDIRCLI', DB::raw('SUM(ad.CAMPO004) as total_volumen') ,DB::raw('SUM(ad.CAMPO005) as total_kg'))
+                ->select('FACCAB.CFTD', 'FACCAB.CFNUMSER', 'FACCAB.CFNUMDOC', 'FACCAB.CFIMPORTE', 'FACCAB.CFCODMON', 'c.CNOMCLI','c.CCODCLI','c.CDIRCLI', DB::raw('SUM(ad.CAMPO004) as total_volumen') ,DB::raw('SUM(ad.CAMPO005) as total_kg'))
                 ->join('FACDET AS cd', function ($join) {
                     $join->on('cd.DFTD', '=', 'FACCAB.CFTD') // Condición 1
                     ->on('cd.DFNUMSER', '=', 'FACCAB.CFNUMSER') // Condición 2
@@ -40,7 +40,7 @@ class Server extends Model
                         ->orWhere('FACCAB.CFNUMDOC', 'like', '%' . $search . '%')
                         ->orWhere('FACCAB.CFNUMSER', 'like', '%' . $search . '%');
                 })
-                ->groupBy('FACCAB.CFTD', 'FACCAB.CFNUMSER', 'FACCAB.CFNUMDOC','c.CNOMCLI','c.CCODCLI','c.CDIRCLI')
+                ->groupBy('FACCAB.CFTD', 'FACCAB.CFNUMSER', 'FACCAB.CFNUMDOC','FACCAB.CFIMPORTE','FACCAB.CFCODMON','c.CNOMCLI','c.CCODCLI','c.CDIRCLI')
                 ->limit(15)->get();
             foreach ($result as $re){
                 $valornew = $re->total_kg / 1000;

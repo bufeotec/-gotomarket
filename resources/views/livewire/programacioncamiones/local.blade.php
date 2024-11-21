@@ -1,4 +1,69 @@
 <div>
+    <!-- MODAL DETALLE DE VEHÍCULO -->
+    <x-modal-general  wire:ignore.self >
+        <x-slot name="tama">modal-lg</x-slot>
+        <x-slot name="id_modal">modalVehiculo</x-slot>
+        <x-slot name="titleModal">Detalles del Vehículo</x-slot>
+        <x-slot name="modalContent">
+            @if($detalle_vehiculo)
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12">
+                            <div class="row">
+                                <div class="col-lg-12 col-md-12 col-sm-12">
+                                    <h6>Información del transportista</h6>
+                                    <hr>
+                                </div>
+                                <div class="col-lg-6 col-md-4 col-sm-12 mb-3">
+                                    <strong style="color: #8c1017">Nombre comercial:</strong>
+                                    <p>{{ $detalle_vehiculo->transportista_nom_comercial }}</p>
+                                </div>
+                                <div class="col-lg-6 col-md-4 col-sm-12 mb-3">
+                                    <strong style="color: #8c1017">RUC:</strong>
+                                    <p>{{ $detalle_vehiculo->transportista_ruc }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-12 col-md-12 col-sm-12">
+                            <div class="row">
+                                <div class="col-lg-12 col-md-12 col-sm-12">
+                                    <h6>Información del vehículo</h6>
+                                    <hr>
+                                </div>
+                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                    <strong style="color: #8c1017">Placa del vehículo:</strong>
+                                    <p>{{ $detalle_vehiculo->vehiculo_placa }}</p>
+                                </div>
+                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                    <strong style="color: #8c1017">Capacidad en peso:</strong>
+                                    <p>{{ (substr(number_format($detalle_vehiculo->vehiculo_capacidad_peso, 2, '.', ','), -3) == '.00') ? number_format($detalle_vehiculo->vehiculo_capacidad_peso, 0, '.', ',') : number_format($detalle_vehiculo->vehiculo_capacidad_peso, 2, '.', ',') }} kg</p>
+                                </div>
+                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                    <strong style="color: #8c1017">Ancho:</strong>
+                                    <p>{{ (substr(number_format($detalle_vehiculo->vehiculo_ancho, 2, '.', ','), -3) == '.00') ? number_format($detalle_vehiculo->vehiculo_ancho, 0, '.', ',') : number_format($detalle_vehiculo->vehiculo_ancho, 2, '.', ',') }} cm</p>
+                                </div>
+                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                    <strong style="color: #8c1017">Largo:</strong>
+                                    <p>{{ (substr(number_format($detalle_vehiculo->vehiculo_largo, 2, '.', ','), -3) == '.00') ? number_format($detalle_vehiculo->vehiculo_largo, 0, '.', ',') : number_format($detalle_vehiculo->vehiculo_largo, 2, '.', ',') }} cm</p>
+                                </div>
+                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                    <strong style="color: #8c1017">Alto:</strong>
+                                    <p>{{ (substr(number_format($detalle_vehiculo->vehiculo_alto, 2, '.', ','), -3) == '.00') ? number_format($detalle_vehiculo->vehiculo_alto, 0, '.', ',') : number_format($detalle_vehiculo->vehiculo_alto, 2, '.', ',') }} cm</p>
+                                </div>
+                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                    <strong style="color: #8c1017">Volumen:</strong>
+                                    <p>{{ (substr(number_format($detalle_vehiculo->vehiculo_capacidad_volumen, 2, '.', ','), -3) == '.00') ? number_format($detalle_vehiculo->vehiculo_capacidad_volumen, 0, '.', ',') : number_format($detalle_vehiculo->vehiculo_capacidad_volumen, 2, '.', ',') }} cm³</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            @endif
+        </x-slot>
+    </x-modal-general>
+
     <div class="row">
         @if (session()->has('success'))
             <div class="col-lg-12 col-md-12 col-sm-12">
@@ -45,7 +110,7 @@
                                             @endphp
                                             @if(!$comprobanteExiste)
                                                 <div class="row factura-item align-items-center mb-2"  wire:click="seleccionarFactura('{{$factura->CFTD}}','{{ $factura->CFNUMSER }}','{{ $factura->CFNUMDOC }}')">
-                                                    <div class="col-lg-12 col-md-12 col-sm-12 mb-2 d-flex align-items-center">
+                                                    <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
                                                         <p class="serie-correlativa">Serie y Correlativo: <b style="font-size: 16px">{{ $factura->CFNUMSER }} - {{ $factura->CFNUMDOC }}</b></p>
                                                     </div>
                                                     <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
@@ -56,6 +121,9 @@
                                                     </div>
                                                     <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
                                                         <p class="peso">Volumen: <b style="font-size: 16px">{{ $factura->total_volumen }} cm³</b></p>
+                                                    </div>
+                                                    <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
+                                                        <p class="peso">Importe: <b style="font-size: 16px">{{ $factura->CFIMPORTE }}</b></p>
                                                     </div>
                                                 </div>
                                             @endif
@@ -80,7 +148,7 @@
         <div class="col-lg-8">
             <div class="row">
                 {{--    TRANSPORTISTA   --}}
-                <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
+                <div class="col-lg-6 col-md-6 col-sm-12">
                     <div class="card">
                         <div class="card-body">
                             <div class="row">
@@ -198,70 +266,7 @@
                 </div>
             </div>
 
-            <!-- MODAL DETALLE DE VEHÍCULO -->
-            <x-modal-general  wire:ignore.self >
-                <x-slot name="tama">modal-lg</x-slot>
-                <x-slot name="id_modal">modalVehiculo</x-slot>
-                <x-slot name="titleModal">Detalles del Vehículo</x-slot>
-                <x-slot name="modalContent">
-                    @if($detalle_vehiculo)
-                        <div class="modal-body">
-                            <div class="row">
-                                <div class="col-lg-12 col-md-12 col-sm-12">
-                                    <div class="row">
-                                        <div class="col-lg-12 col-md-12 col-sm-12">
-                                            <h6>Información del transportista</h6>
-                                            <hr>
-                                        </div>
-                                        <div class="col-lg-6 col-md-4 col-sm-12 mb-3">
-                                            <strong style="color: #8c1017">Nombre comercial:</strong>
-                                            <p>{{ $detalle_vehiculo->transportista_nom_comercial }}</p>
-                                        </div>
-                                        <div class="col-lg-6 col-md-4 col-sm-12 mb-3">
-                                            <strong style="color: #8c1017">RUC:</strong>
-                                            <p>{{ $detalle_vehiculo->transportista_ruc }}</p>
-                                        </div>
-                                    </div>
-                                </div>
 
-                                <div class="col-lg-12 col-md-12 col-sm-12">
-                                    <div class="row">
-                                        <div class="col-lg-12 col-md-12 col-sm-12">
-                                            <h6>Información del vehículo</h6>
-                                            <hr>
-                                        </div>
-                                        <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                                            <strong style="color: #8c1017">Placa del vehículo:</strong>
-                                            <p>{{ $detalle_vehiculo->vehiculo_placa }}</p>
-                                        </div>
-                                        <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                                            <strong style="color: #8c1017">Capacidad en peso:</strong>
-                                            <p>{{ (substr(number_format($detalle_vehiculo->vehiculo_capacidad_peso, 2, '.', ','), -3) == '.00') ? number_format($detalle_vehiculo->vehiculo_capacidad_peso, 0, '.', ',') : number_format($detalle_vehiculo->vehiculo_capacidad_peso, 2, '.', ',') }} kg</p>
-                                        </div>
-                                        <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                                            <strong style="color: #8c1017">Ancho:</strong>
-                                            <p>{{ (substr(number_format($detalle_vehiculo->vehiculo_ancho, 2, '.', ','), -3) == '.00') ? number_format($detalle_vehiculo->vehiculo_ancho, 0, '.', ',') : number_format($detalle_vehiculo->vehiculo_ancho, 2, '.', ',') }} cm</p>
-                                        </div>
-                                        <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                                            <strong style="color: #8c1017">Largo:</strong>
-                                            <p>{{ (substr(number_format($detalle_vehiculo->vehiculo_largo, 2, '.', ','), -3) == '.00') ? number_format($detalle_vehiculo->vehiculo_largo, 0, '.', ',') : number_format($detalle_vehiculo->vehiculo_largo, 2, '.', ',') }} cm</p>
-                                        </div>
-                                        <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                                            <strong style="color: #8c1017">Alto:</strong>
-                                            <p>{{ (substr(number_format($detalle_vehiculo->vehiculo_alto, 2, '.', ','), -3) == '.00') ? number_format($detalle_vehiculo->vehiculo_alto, 0, '.', ',') : number_format($detalle_vehiculo->vehiculo_alto, 2, '.', ',') }} cm</p>
-                                        </div>
-                                        <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                                            <strong style="color: #8c1017">Volumen:</strong>
-                                            <p>{{ (substr(number_format($detalle_vehiculo->vehiculo_capacidad_volumen, 2, '.', ','), -3) == '.00') ? number_format($detalle_vehiculo->vehiculo_capacidad_volumen, 0, '.', ',') : number_format($detalle_vehiculo->vehiculo_capacidad_volumen, 2, '.', ',') }} cm³</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                    @endif
-                </x-slot>
-            </x-modal-general>
 
             {{-- OTROS - MANO DE OBRA --}}
             <div class="row">
@@ -319,18 +324,20 @@
                                     @if(count($selectedFacturas) > 0)
                                         <table class="table">
                                             <thead>
-                                            <tr>
-                                                <th>Serie</th>
-                                                <th>Nombre Cliente</th>
-                                                <th>Peso</th>
-                                                <th>Volumen</th>
-                                                <th>Acciones</th>
-                                            </tr>
+                                                <tr>
+                                                    <th>Serie</th>
+                                                    <th>Importe</th>
+                                                    <th>Nombre Cliente</th>
+                                                    <th>Peso</th>
+                                                    <th>Volumen</th>
+                                                    <th>Acciones</th>
+                                                </tr>
                                             </thead>
                                             <tbody>
                                             @foreach($selectedFacturas as $factura)
                                                 <tr>
                                                     <td>{{ $factura['CFNUMSER'] }} - {{ $factura['CFNUMDOC'] }}</td>
+                                                    <td>{{ $factura['CFIMPORTE'] }}</td>
                                                     <td>{{ $factura['CNOMCLI'] }}</td>
                                                     <td>{{ $factura['total_kg'] }} kg</td>
                                                     <td>{{ $factura['total_volumen'] }} cm³</td>
@@ -375,6 +382,10 @@
 
 
     <style>
+        .card {
+            margin-bottom: 1rem;
+            border: none;
+        }
         /* COMPROBANTES */
         .custom-checkbox input {
             display: none;
