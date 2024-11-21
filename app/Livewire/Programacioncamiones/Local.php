@@ -29,6 +29,7 @@ class Local extends Component
     public $pesoTotal = 0;
     public $volumenTotal = 0;
     public $selectedFacturas = [];
+    public $detalle_vehiculo = [];
     public function mount(){
         $this->id_transportistas = null;
         $this->selectedVehiculo = null;
@@ -138,6 +139,10 @@ class Local extends Component
 //            }
             $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_new($this->pesoTotal, $this->volumenTotal,1,$this->id_transportistas);
         }
+    }
+
+    public function modal_por_vehiculo($id_ve){
+        $this->detalle_vehiculo =  $this->vehiculo->listar_informacion_vehiculo($id_ve);
     }
 
 //    public function compararPesoConVehiculos($listar_vehiculos)

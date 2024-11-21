@@ -135,5 +135,20 @@ class Vehiculo extends Model
         }
         return $result;
     }
+    public function listar_informacion_vehiculo($id){
+        try {
+            $result = DB::table('vehiculos as v')
+                ->join('tipo_vehiculos as tv', 'v.id_tipo_vehiculo', '=', 'tv.id_tipo_vehiculo')
+                ->join('transportistas as t', 'v.id_transportistas', '=', 't.id_transportistas')
+                ->where('v.id_vehiculo','=', $id)
+                ->first();
+
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
 
 }
