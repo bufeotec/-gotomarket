@@ -50,29 +50,43 @@ class Local extends Component
     }
 
     public function seleccionarFactura($CFTD, $CFNUMSER, $CFNUMDOC){
-        $factura = $this->server->listar_comprobantes_listos_local($this->searchFactura)
-            ->firstWhere('CFNUMDOC', $CFNUMDOC);
+        // Validar que la factura no exista en el array selectedFacturas
+        $comprobanteExiste = collect($this->selectedFacturas)->first(function ($factura) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
+            return $factura['CFTD'] === $CFTD
+                && $factura['CFNUMSER'] === $CFNUMSER
+                && $factura['CFNUMDOC'] === $CFNUMDOC;
+        });
 
-        if ($factura) {
-            // Agregar la factura seleccionada y actualizar el peso y volumen total
-            $this->selectedFacturas[] = [
-                'CFTD' => $CFTD,
-                'CFNUMSER' => $CFNUMSER,
-                'CFNUMDOC' => $CFNUMDOC,
-                'total_kg' => $factura->total_kg,
-                'total_volumen' => $factura->total_volumen,
-                'CNOMCLI' => $factura->CNOMCLI,
-            ];
-            $this->pesoTotal += $factura->total_kg;
-            $this->volumenTotal += $factura->total_volumen;
-
-            // Eliminar la factura de la lista de facturas filtradas
-            $this->filteredFacturas = $this->filteredFacturas->filter(function ($f) use ($CFNUMDOC) {
-                return $f->CFNUMDOC !== $CFNUMDOC;
-            });
-            $listar_vehiculos = $this->vehiculo->obtener_vehiculos_con_tarifarios();
-            $this->compararPesoConVehiculos($listar_vehiculos);
+        if ($comprobanteExiste) {
+            // Mostrar un mensaje de error si la factura ya fue agregada
+            session()->flash('error', 'Este comprobante ya fue agregado.');
+            return;
         }
+
+        // Buscar la factura en el array filteredFacturas
+        $factura = $this->filteredFacturas->first(function ($f) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
+            return $f->CFTD === $CFTD
+                && $f->CFNUMSER === $CFNUMSER
+                && $f->CFNUMDOC === $CFNUMDOC;
+        });
+
+        // Agregar la factura seleccionada y actualizar el peso y volumen total
+        $this->selectedFacturas[] = [
+            'CFTD' => $CFTD,
+            'CFNUMSER' => $CFNUMSER,
+            'CFNUMDOC' => $CFNUMDOC,
+            'total_kg' => $factura->total_kg,
+            'total_volumen' => $factura->total_volumen,
+            'CNOMCLI' => $factura->CNOMCLI,
+        ];
+        $this->pesoTotal += $factura->total_kg;
+        $this->volumenTotal += $factura->total_volumen;
+        // Eliminar la factura de la lista de facturas filtradas
+        $this->filteredFacturas = $this->filteredFacturas->filter(function ($f) use ($CFNUMDOC) {
+            return $f->CFNUMDOC !== $CFNUMDOC;
+        });
+        $listar_vehiculos = $this->vehiculo->obtener_vehiculos_con_tarifarios();
+        $this->compararPesoConVehiculos($listar_vehiculos);
     }
 
     public function eliminarFacturaSeleccionada($CFTD, $CFNUMSER, $CFNUMDOC)

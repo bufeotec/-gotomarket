@@ -1,53 +1,82 @@
 <div>
     <div class="row">
-        <div class="col-lg-5">
-            {{--    BUSCADOR DE COMPROBANTES    --}}
-            <div class="col-lg-12 col-md-6">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h4>COMPROBANTES</h4>
-                    </div>
-                    <div class="card-body">
-                        <div class="position-relative mb-3">
-                            <input type="text" class="form-control bg-dark text-white rounded-pill ps-5 custom-placeholder"
-                                   placeholder="Buscar comprobante" wire:model="searchFactura" wire:input="buscar_comprobantes"
-                                   style="border: none; outline: none;" />
-                            <i class="fas fa-search position-absolute"
-                               style="left: 15px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
-                        </div>
-
-                        <!-- Mostrar los resultados solo si hay texto en el campo de búsqueda -->
-                        @if($searchFactura !== '')
-                            <div class="factura-list">
-                                @if(count($filteredFacturas) == 0)
-                                    <p>No se encontró el comprobante.</p>
-                                @else
-                                    @foreach($filteredFacturas as $factura)
-                                        <label class="custom-checkbox factura-item d-flex align-items-center mb-2" for="factura_{{ $factura->CFNUMDOC }}">
-                                            <input type="checkbox" id="factura_{{ $factura->CFNUMDOC }}" value="{{ $factura->CFNUMDOC }}"
-                                                   wire:click="seleccionarFactura('{{$factura->CFTD}}','{{ $factura->CFNUMSER }}','{{ $factura->CFNUMDOC }}')" class="form-check-input">
-                                            <div class="checkmark"></div>
-                                            <span class="serie-correlativa">{{ $factura->CFNUMSER }} - {{ $factura->CFNUMDOC }}</span>
-                                            <span class="nombre-cliente mx-2">{{ $factura->CNOMCLI }}</span>
-                                            <span class="peso">Peso: {{ $factura->total_kg }} kg</span>
-                                            <span class="peso">Volumen: {{ $factura->total_volumen }} cm³</span>
-                                        </label>
-                                    @endforeach
-                                @endif
-                            </div>
-                        @endif
-                    </div>
+        @if (session()->has('success'))
+            <div class="col-lg-12 col-md-12 col-sm-12">
+                <div class="alert alert-success alert-dismissible show fade mt-2">
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
+            </div>
+        @endif
+        @if (session()->has('error'))
+            <div class="col-lg-12 col-md-12 col-sm-12">
+                <div class="alert alert-danger alert-dismissible show fade mt-2">
+                    {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+        @endif
+        <div class="col-lg-4">
+            {{--    BUSCADOR DE COMPROBANTES    --}}
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                            <h6>COMPROBANTES</h6>
+                        </div>
+                        <div class="col-lg-12 col-md-12 col-sm-12">
+                            <div class="position-relative mb-3">
+                                <input type="text" class="form-control bg-dark text-white rounded-pill ps-5 custom-placeholder" placeholder="Buscar comprobante" wire:model="searchFactura" wire:input="buscar_comprobantes" style="border: none; outline: none;" />
+                                <i class="fas fa-search position-absolute" style="left: 15px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
+                            </div>
+                            @if($searchFactura !== '')
+                                <div class="factura-list">
+                                    @if(count($filteredFacturas) > 0 )
+                                        @foreach($filteredFacturas as $factura)
+                                            @php
+                                                $CFTD = $factura->CFTD;
+                                                $CFNUMSER = $factura->CFNUMSER;
+                                                $CFNUMDOC = $factura->CFNUMDOC;
+                                                $comprobanteExiste = collect($this->selectedFacturas)->first(function ($facturaVa) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
+                                                    return $facturaVa['CFTD'] === $CFTD
+                                                        && $facturaVa['CFNUMSER'] === $CFNUMSER
+                                                        && $facturaVa['CFNUMDOC'] === $CFNUMDOC;
+                                                });
+                                            @endphp
+                                            @if(!$comprobanteExiste)
+                                                <div class="row factura-item align-items-center mb-2"  wire:click="seleccionarFactura('{{$factura->CFTD}}','{{ $factura->CFNUMSER }}','{{ $factura->CFNUMDOC }}')">
+                                                    <div class="col-lg-12 col-md-12 col-sm-12 mb-2 d-flex align-items-center">
+                                                        <p class="serie-correlativa">Serie y Correlativo: <b style="font-size: 16px">{{ $factura->CFNUMSER }} - {{ $factura->CFNUMDOC }}</b></p>
+                                                    </div>
+                                                    <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                                                        <p class="nombre-cliente mx-2"><b style="font-size: 14px">{{ $factura->CNOMCLI }}</b></p>
+                                                    </div>
+                                                    <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
+                                                        <p class="peso">Peso: <b style="font-size: 16px">{{ $factura->total_kg }} kg</b></p>
+                                                    </div>
+                                                    <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
+                                                        <p class="peso">Volumen: <b style="font-size: 16px">{{ $factura->total_volumen }} cm³</b></p>
+                                                    </div>
+                                                </div>
+                                            @endif
 
-                <!-- Overlay y Spinner solo al seleccionar una factura -->
-                <div wire:loading wire:target="seleccionarFactura" class="overlay__factura">
-                    <div class="spinner__container__factura">
-                        <div class="spinner__factura"></div>
+                                        @endforeach
+                                    @else
+                                        <p>No se encontró el comprobante.</p>
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
+            <!-- Overlay y Spinner solo al seleccionar una factura -->
+            <div wire:loading wire:target="seleccionarFactura" class="overlay__eliminar">
+                <div class="spinner__container__eliminar">
+                    <div class="spinner__eliminar"></div>
+                </div>
+            </div>
         </div>
-
         <div class="col-lg-7">
             {{--    TRANSPORTISTA   --}}
             <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
@@ -189,7 +218,7 @@
                         </div>
                     </div>
 
-                    <div class="card-body">
+                    <div class="card-body table-responsive">
                         @if(count($selectedFacturas) > 0)
                             <table class="table">
                                 <thead>
@@ -222,12 +251,13 @@
                         @endif
                     </div>
                 </div>
-                <!-- Loading solo al eliminar una factura -->
+
                 <div wire:loading wire:target="eliminarFacturaSeleccionada" class="overlay__eliminar">
                     <div class="spinner__container__eliminar">
                         <div class="spinner__eliminar"></div>
                     </div>
                 </div>
+
 
                 @if($tarifaMontoSeleccionado > 0)
                     <div class="col-lg-12 d-none">
@@ -317,6 +347,40 @@
             color: #333;
             margin: 0px 10px;
         }
+        .overlay__eliminar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: transparent;
+            z-index: 9998;
+            display: none;
+        }
+        .spinner__container__eliminar {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+        }
+        .spinner__eliminar {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #c3121a;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
     </style>
 
 </div>
