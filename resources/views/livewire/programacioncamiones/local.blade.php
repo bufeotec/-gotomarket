@@ -124,10 +124,17 @@
             <div class="col-lg-12">
                 <div class="card">
                     <div class="card-body">
-                        <div class="row">
-                            <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                        <div class="row mb-3">
+                            <div class="col-lg-4 col-md-4 col-sm-12 mb-2">
                                 <h6>Vehículos Sugeridos</h6>
                             </div>
+                            @if($tarifaMontoSeleccionado > 0)
+                                <div class="col-lg-8 col-md-8 col-sm-12 mb-2">
+                                    <p class="text-end mb-0">Monto de la tarifa del vehículo seleccionado: S/ <strong>{{ $tarifaMontoSeleccionado }}</strong></p>
+                                </div>
+                            @endif
+                        </div>
+                        <div class="row">
                             <div class="col-lg-12">
                                 <div class="vehiculos-scroll-container-horizontal">
                                     @foreach($vehiculosSugeridos as $vehiculo)
@@ -285,15 +292,7 @@
                         <div class="spinner__eliminar"></div>
                     </div>
                 </div>
-                @if($tarifaMontoSeleccionado > 0)
-                    <div class="col-lg-12 d-none">
-                        <div class="card">
-                            <div class="card-body">
-                                <p class="text-center">Monto de la tarifa del vehículo seleccionado: S/ <strong>{{ $tarifaMontoSeleccionado }}</strong></p>
-                            </div>
-                        </div>
-                    </div>
-                @endif
+
                 <div class="col-lg-12">
                     <div class="row">
                         @if(count($selectedFacturas) > 0)

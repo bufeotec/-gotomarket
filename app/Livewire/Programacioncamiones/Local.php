@@ -23,12 +23,16 @@ class Local extends Component
     }
     public $searchFactura = "";
     public $filteredFacturas = [];
-    public $id_transportistas = '';
+    public $id_transportistas = "";
     public $vehiculosSugeridos = [];
-    public $selectedVehiculo = null;
+    public $selectedVehiculo = "";
     public $pesoTotal = 0;
     public $volumenTotal = 0;
     public $selectedFacturas = [];
+    public function mount(){
+        $this->id_transportistas = null;
+        $this->selectedVehiculo = null;
+    }
     public $tarifaMontoSeleccionado = 0;
 
     public function render(){
@@ -46,6 +50,16 @@ class Local extends Component
             }
         } else {
             $this->filteredFacturas = [];
+        }
+    }
+    public function actualizarVehiculosSugeridos(){
+        $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_new($this->pesoTotal, $this->volumenTotal,1,$this->id_transportistas);
+    }
+    public function seleccionarVehiculo($vehiculoId){
+        $vehiculo = collect($this->vehiculosSugeridos)->firstWhere('id_vehiculo', $vehiculoId);
+        if ($vehiculo) {
+            // Actualiza el monto de la tarifa del vehículo seleccionado
+            $this->tarifaMontoSeleccionado = $vehiculo->tarifa_monto;
         }
     }
 
@@ -70,6 +84,10 @@ class Local extends Component
                 && $f->CFNUMDOC === $CFNUMDOC;
         });
 
+        if ($factura->total_kg <= 0 && $factura->total_volumen <= 0){
+            session()->flash('error', 'El peso o el volumen no puede ser menor o igual a 0.');
+            return;
+        }
         // Agregar la factura seleccionada y actualizar el peso y volumen total
         $this->selectedFacturas[] = [
             'CFTD' => $CFTD,
@@ -87,7 +105,8 @@ class Local extends Component
             return $f->CFNUMDOC !== $CFNUMDOC;
         });
         // Actualizar lista de vehículos sugeridos
-        $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_new($this->pesoTotal, $this->volumenTotal);
+        $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_new($this->pesoTotal, $this->volumenTotal,1,$this->id_transportistas);
+//        $this->buscar_comprobantes();
     }
 
     public function eliminarFacturaSeleccionada($CFTD, $CFNUMSER, $CFNUMDOC)
@@ -107,15 +126,17 @@ class Local extends Component
             // Actualiza los totales
             $this->pesoTotal -= $factura['total_kg'];
             $this->volumenTotal -= $factura['total_volumen'];
-            // Añade la factura eliminada a las sugerencias si coincide con la búsqueda actual
-            if (
-                str_contains(strtolower($factura['CFNUMSER']), strtolower($this->searchFactura)) ||
-                str_contains(strtolower($factura['CNOMCLI']), strtolower($this->searchFactura)) ||
-                str_contains((string) $factura['total_kg'], $this->searchFactura) ||
-                str_contains((string) $factura['total_volumen'], $this->searchFactura)
-            ) {
-                $this->filteredFacturas[] = $factura;
-            }
+//            // Añade la factura eliminada a las sugerencias si coincide con la búsqueda actual
+//            if (
+//                str_contains(strtolower($factura['CFTD']), strtolower($this->searchFactura)) ||
+//                str_contains(strtolower($factura['CFNUMSER']), strtolower($this->searchFactura)) ||
+//                str_contains(strtolower($factura['CNOMCLI']), strtolower($this->searchFactura)) ||
+//                str_contains((string) $factura['total_kg'], $this->searchFactura) ||
+//                str_contains((string) $factura['total_volumen'], $this->searchFactura)
+//            ) {
+//                $this->filteredFacturas[] = $factura;
+//            }
+            $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_new($this->pesoTotal, $this->volumenTotal,1,$this->id_transportistas);
         }
     }
 

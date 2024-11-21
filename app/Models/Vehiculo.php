@@ -96,51 +96,39 @@ class Vehiculo extends Model
         return $result;
     }
 
-    public function obtener_vehiculos_con_tarifarios_new($pesot, $volument, $idt = null){
+    public function obtener_vehiculos_con_tarifarios_new($pesot, $volument,$type, $idt = null){
         try {
             $query = DB::table('vehiculos as v')
-                ->join('tarifarios as t', 'v.id_transportistas', '=', 't.id_transportistas')
-                ->join('transportistas as tr', 'v.id_transportistas', '=', 'tr.id_transportistas')
-                ->select(
-                    'v.id_vehiculo', 'v.vehiculo_capacidad_peso','v.vehiculo_capacidad_volumen', 'v.vehiculo_placa', 't.tarifa_cap_min', 't.tarifa_cap_max', 't.tarifa_estado_aprobacion',  'tr.*', 'v.*', DB::raw('MAX(t.tarifa_monto) as tarifa_monto'), 't.id_departamento', 't.id_provincia', 'v.id_transportistas','tr.id_transportistas', 't.id_distrito'
-                )
-                ->distinct()
-                ->where('t.tarifa_estado', 1)
-                ->where('v.vehiculo_estado', 1)
-                ->where('v.vehiculo_capacidad_peso', '>=', $pesot);
+                ->join('tipo_vehiculos as tv', 'tv.id_tipo_vehiculo', '=', 'v.id_tipo_vehiculo')
+                ->join('tarifarios as t', 't.id_tipo_vehiculo', '=', 'tv.id_tipo_vehiculo')
+                ->select('v.id_vehiculo','v.vehiculo_placa','v.vehiculo_capacidad_peso','v.vehiculo_capacidad_volumen','t.tarifa_cap_min','t.tarifa_cap_max','t.tarifa_monto','t.tarifa_estado_aprobacion')
+                ->where('t.tarifa_estado','=', 1)
+                ->where('v.vehiculo_estado','=', 1)
+                ->where('t.id_tipo_servicio','=', $type)
+                ->where('v.vehiculo_capacidad_peso', '>=', $pesot)
+                ->where('t.tarifa_cap_min', '<=', $pesot)
+                ->where('t.tarifa_cap_max', '>=', $pesot)
+            ;
 
             if ($volument) {
-                $query->where('v.vehiculo_capacidad_volumen','<=',$volument);
+                $query->where('v.vehiculo_capacidad_volumen','>=',$volument);
             }
 
             if ($idt) {
                 $query->where('v.id_transportistas', $idt);
             }
 
-            if ($this->id_departamento) {
-                $query->where('t.id_departamento', $this->id_departamento);
-            }
-            if ($this->id_provincia) {
-                $query->where('t.id_provincia', $this->id_provincia);
-            }
-            if ($this->id_distrito !== null) {
-                $query->where(function ($query) {
-                    $query->where('t.id_distrito', $this->id_distrito)
-                        ->orWhereNull('t.id_distrito');
-                });
-            }
-
             // Verificar rango de tarifa
-            $query->where(function ($query) use ($pesot) {
-                $query->whereNull('t.tarifa_cap_min')
-                    ->orWhere('t.tarifa_cap_min', '<=', $pesot)
-                    ->where('t.tarifa_cap_max', '>=', $pesot);
-            });
 
-            $query->groupBy(
-                'v.id_vehiculo', 'v.vehiculo_capacidad_peso','v.vehiculo_capacidad_volumen', 'v.vehiculo_placa', 't.tarifa_cap_min', 't.tarifa_cap_max', 't.tarifa_estado_aprobacion', 't.id_departamento', 't.id_provincia', 't.id_distrito'
-            );
+            $query->groupBy('v.id_vehiculo','v.vehiculo_placa','v.vehiculo_capacidad_peso','v.vehiculo_capacidad_volumen','t.tarifa_cap_min','t.tarifa_cap_max','t.tarifa_monto','t.tarifa_estado_aprobacion');
             $result = $query->get();
+
+            foreach ($result as $r){
+                $r->vehiculo_capacidad_usada =  ($pesot / $r->vehiculo_capacidad_peso) * 100;
+            }
+            // Ordenar los resultados por vehiculo_capacidad_usada de mayor a menor
+            $result = $result->sortByDesc('vehiculo_capacidad_usada');
+
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);
             $result = [];
