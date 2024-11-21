@@ -102,7 +102,7 @@ class Vehiculo extends Model
                 ->join('tarifarios as t', 'v.id_transportistas', '=', 't.id_transportistas')
                 ->join('transportistas as tr', 'v.id_transportistas', '=', 'tr.id_transportistas')
                 ->select(
-                    'v.id_vehiculo', 'v.vehiculo_capacidad_peso', 'v.vehiculo_placa', 't.tarifa_cap_min', 't.tarifa_cap_max', 't.tarifa_estado_aprobacion',  'tr.*', 'v.*', DB::raw('MAX(t.tarifa_monto) as tarifa_monto'), 't.id_departamento', 't.id_provincia', 'v.id_transportistas','tr.id_transportistas', 't.id_distrito'
+                    'v.id_vehiculo', 'v.vehiculo_capacidad_peso','v.vehiculo_capacidad_volumen', 'v.vehiculo_placa', 't.tarifa_cap_min', 't.tarifa_cap_max', 't.tarifa_estado_aprobacion',  'tr.*', 'v.*', DB::raw('MAX(t.tarifa_monto) as tarifa_monto'), 't.id_departamento', 't.id_provincia', 'v.id_transportistas','tr.id_transportistas', 't.id_distrito'
                 )
                 ->distinct()
                 ->where('t.tarifa_estado', 1)
@@ -110,7 +110,7 @@ class Vehiculo extends Model
                 ->where('v.vehiculo_capacidad_peso', '>=', $pesot);
 
             if ($volument) {
-                $query->where("v.vehiculo_capacidad_volumen <= $volument");
+                $query->where('v.vehiculo_capacidad_volumen','<=',$volument);
             }
 
             if ($idt) {
@@ -138,7 +138,7 @@ class Vehiculo extends Model
             });
 
             $query->groupBy(
-                'v.id_vehiculo', 'v.vehiculo_capacidad_peso', 'v.vehiculo_placa', 't.tarifa_cap_min', 't.tarifa_cap_max', 't.tarifa_estado_aprobacion', 't.id_departamento', 't.id_provincia', 't.id_distrito'
+                'v.id_vehiculo', 'v.vehiculo_capacidad_peso','v.vehiculo_capacidad_volumen', 'v.vehiculo_placa', 't.tarifa_cap_min', 't.tarifa_cap_max', 't.tarifa_estado_aprobacion', 't.id_departamento', 't.id_provincia', 't.id_distrito'
             );
             $result = $query->get();
         } catch (\Exception $e) {
