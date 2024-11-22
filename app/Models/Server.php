@@ -123,12 +123,12 @@ class Server extends Model
                 $serie = substr($code, 0, 4);
                 // Extraer el resto de la cadena
                 $resto = substr($code, 4);
-                $re->guia =  DB::connection('sqlsrv_external')
-                        ->table('GREMISION_CAB')
-                        ->select('GREFECEMISION','LLEGADAUBIGEO','LLEGADADIRECCION')
-                        ->where('GRENUMSER','=',$serie)
-                        ->where('GRENUMDOC','=',$resto)
-                        ->first();
+//                $re->guia =  DB::connection('sqlsrv_external')
+//                        ->table('GREMISION_CAB')
+//                        ->select('GREFECEMISION','LLEGADAUBIGEO','LLEGADADIRECCION')
+//                        ->where('GRENUMSER','=',$serie)
+//                        ->where('GRENUMDOC','=',$resto)
+//                        ->first();
             }
         }catch (\Exception $e){
             $this->logs->insertarLog($e);

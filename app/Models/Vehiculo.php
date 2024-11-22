@@ -151,7 +151,7 @@ class Vehiculo extends Model
         return $result;
     }
 
-    public function obtener_vehiculos_con_tarifarios_provincial($pesot, $volument,$type, $idt = null, $iddepartamento = null, $idprovincia = null, $iddistrito = null){
+    public function obtener_vehiculos_con_tarifarios_provincial($pesot,$type, $idt = null,$iddepartamento,$idprovincia,$iddistrito = null){
         try {
             $query = DB::table('vehiculos as v')
                 ->join('tipo_vehiculos as tv', 'tv.id_tipo_vehiculo', '=', 'v.id_tipo_vehiculo')
@@ -164,9 +164,9 @@ class Vehiculo extends Model
                 ->where('t.tarifa_cap_min', '<=', $pesot)
                 ->where('t.tarifa_cap_max', '>=', $pesot)
             ;
-            if ($volument) {
-                $query->where('v.vehiculo_capacidad_volumen','>=',$volument);
-            }
+//            if ($volument) {
+//                $query->where('v.vehiculo_capacidad_volumen','>=',$volument);
+//            }
             if ($idt) {
                 $query->where('v.id_transportistas', $idt);
             }
@@ -176,7 +176,7 @@ class Vehiculo extends Model
             if ($idprovincia) {
                 $query->where('t.id_provincia', $idprovincia);
             }
-            if ($iddistrito !== null) {
+            if ($iddistrito) {
                 $query->where('t.id_distrito', $iddistrito);
             }
 

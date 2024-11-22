@@ -134,7 +134,7 @@ class Provincial extends Component
         $this->searchCliente = "";
         $this->searchComprobante = "";
         $this->filteredComprobantes = [];
-        $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_provincial($this->pesoTotal, $this->volumenTotal,2,$this->id_transportistas, $this->id_departamento, $this->id_provincia, $this->id_distrito);
+        $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_provincial($this->pesoTotal,2,$this->id_transportistas, $this->id_departamento, $this->id_provincia, $this->id_distrito);
     }
 
 
@@ -179,7 +179,7 @@ class Provincial extends Component
             return $f->CFNUMDOC !== $CFNUMDOC;
         });
         // Actualizar lista de vehículos sugeridos
-        $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_provincial($this->pesoTotal, $this->volumenTotal,2,$this->id_transportistas, $this->id_departamento, $this->id_provincia, $this->id_distrito);
+        $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_provincial($this->pesoTotal,2,$this->id_transportistas,$this->id_departamento ,$this->id_provincia ,$this->id_distrito);
 //        $this->buscar_comprobantes();
     }
 
@@ -209,7 +209,7 @@ class Provincial extends Component
 //            ) {
 //                $this->filteredFacturas[] = $factura;
 //            }
-            $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_provincial($this->pesoTotal, $this->volumenTotal,2,$this->id_transportistas, $this->id_departamento, $this->id_provincia, $this->id_distrito);
+            $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_provincial($this->pesoTotal,2,$this->id_transportistas,$this->id_departamento ,$this->id_provincia ,$this->id_distrito);
         }
     }
 
@@ -218,7 +218,7 @@ class Provincial extends Component
     }
 
     public function actualizarVehiculosSugeridos(){
-        $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_provincial($this->pesoTotal, $this->volumenTotal,2,$this->id_transportistas, $this->id_departamento, $this->id_provincia, $this->id_distrito);
+        $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_provincial($this->pesoTotal,2,$this->id_transportistas,$this->id_departamento ,$this->id_provincia ,$this->id_distrito);
         $this->tarifaMontoSeleccionado = null;
         $this->selectedVehiculo = null;
     }
