@@ -103,6 +103,20 @@ class Provincial extends Component
             $this->resetear_cliente();
         }
     }
+    public function limpiar_cliente($clienteId){
+        $this->selectedCliente = '';
+        $this->select_nombre_cliente = '';
+        $this->searchCliente = "";
+        $this->filteredClientes = [];
+        $this->filteredComprobantes = [];
+        $this->id_transportistas  = "";
+        $this->id_departamento  = "";
+        $this->id_provincia  = "";
+        $this->id_distrito  = "";
+        $this->pesoTotal  = "";
+        $this->volumenTotal  = "";
+
+    }
 
     public function buscar_comprobante() {
         if ($this->selectedCliente && $this->searchComprobante !== "") {
@@ -120,6 +134,7 @@ class Provincial extends Component
         $this->searchCliente = "";
         $this->searchComprobante = "";
         $this->filteredComprobantes = [];
+        $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_provincial($this->pesoTotal, $this->volumenTotal,2,$this->id_transportistas, $this->id_departamento, $this->id_provincia, $this->id_distrito);
     }
 
 

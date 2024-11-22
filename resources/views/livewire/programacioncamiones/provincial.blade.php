@@ -21,11 +21,16 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-lg-4 col-md-4 col-sm-12 mb-2">
-                                <h6>Clientes</h6>
+                            <div class="col-lg-12 col-md-12 col-sm-12 mb-2 d-flex align-items-center justify-content-between">
+                                <h6 class="mb-0">Clientes</h6>
+                                @if($select_nombre_cliente)
+                                    <button class="btn btn-sm" wire:click="limpiar_cliente({{ $selectedCliente }})">
+                                        <i class="fa-solid fa-rotate text-warning"></i>
+                                    </button>
+                                @endif
                             </div>
                             @if($select_nombre_cliente)
-                                <div class="col-lg-8 col-md-8 col-sm-12 mb-2">
+                                <div class="col-lg-12 col-md-8 col-sm-12 mb-3">
                                     <p class="text-end mb-0"><b>{{ $select_nombre_cliente }}</b></p>
                                 </div>
                             @endif
@@ -55,22 +60,19 @@
                                                 <p>No se encontró el cliente.</p>
                                             @else
                                                 @foreach($filteredClientes as $cl)
-                                                    <div class="cliente-option">
-                                                        <input
-                                                            type="radio"
-                                                            id="{{ $cl->CCODCLI }}"
-                                                            name="selected_cliente"
-                                                            value="{{ $cl->CCODCLI }}"
-                                                            wire:model="selectedCliente"
-                                                            wire:change="seleccionar_cliente({{ $cl->CCODCLI }})"
-                                                            class="d-none"
-                                                            @if($selectedCliente == $cl->CCODCLI) checked @endif
-                                                        />
-                                                        <label class="cliente-label cursor-pointer" for="{{ $cl->CCODCLI }}">
-                                                            <span class="nombre-cliente"><strong>{{ $cl->CNOMCLI }}</strong></span>
-                                                            <span class="codigo-cliente mx-2">({{ $cl->CCODCLI }})</span>
-                                                            <span class="direccion-cliente d-block">{{ $cl->CDIRCLI }}</span>
-                                                        </label>
+                                                    <div class="row factura-item align-items-center mb-2" wire:click="seleccionar_cliente({{ $cl->CCODCLI }})">
+                                                        <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                                                            <p class="nombre-cliente ms-0">Razón social:</p>
+                                                            <b style="font-size: 16px;color: black">{{ $cl->CNOMCLI }}</b>
+                                                        </div>
+                                                        <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                                                            <p class="peso ms-0">RUC O DNI:</p>
+                                                            <b style="font-size: 16px;color: black">{{ $cl->CCODCLI }}</b>
+                                                        </div>
+                                                        <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                                                            <p class="peso ms-0">Dirección Fiscal:</p>
+                                                            <b style="font-size: 16px;color: black">{{ $cl->CDIRCLI }}</b>
+                                                        </div>
                                                     </div>
                                                 @endforeach
                                             @endif
