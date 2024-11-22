@@ -30,16 +30,15 @@ class Local extends Component
     public $volumenTotal = 0;
     public $selectedFacturas = [];
     public $detalle_vehiculo = [];
+    public $tarifaMontoSeleccionado = 0;
     public function mount(){
         $this->id_transportistas = null;
         $this->selectedVehiculo = null;
     }
-    public $tarifaMontoSeleccionado = 0;
 
     public function render(){
         $listar_transportistas = $this->transportista->listar_transportista_sin_id();
         $listar_vehiculos = $this->vehiculo->obtener_vehiculos_con_tarifarios();
-
         return view('livewire.programacioncamiones.local', compact('listar_transportistas', 'listar_vehiculos'));
     }
 
@@ -54,7 +53,7 @@ class Local extends Component
         }
     }
     public function actualizarVehiculosSugeridos(){
-        $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_new($this->pesoTotal, $this->volumenTotal,1,$this->id_transportistas);
+        $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_local($this->pesoTotal, $this->volumenTotal,1,$this->id_transportistas);
         $this->tarifaMontoSeleccionado = null;
         $this->selectedVehiculo = null;
     }
@@ -110,12 +109,11 @@ class Local extends Component
             return $f->CFNUMDOC !== $CFNUMDOC;
         });
         // Actualizar lista de vehículos sugeridos
-        $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_new($this->pesoTotal, $this->volumenTotal,1,$this->id_transportistas);
+        $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_local($this->pesoTotal, $this->volumenTotal,1,$this->id_transportistas);
 //        $this->buscar_comprobantes();
     }
 
-    public function eliminarFacturaSeleccionada($CFTD, $CFNUMSER, $CFNUMDOC)
-    {
+    public function eliminarFacturaSeleccionada($CFTD, $CFNUMSER, $CFNUMDOC){
         // Encuentra la factura en las seleccionadas
         $factura = collect($this->selectedFacturas)->first(function ($f) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
             return $f['CFTD'] === $CFTD && $f['CFNUMSER'] === $CFNUMSER && $f['CFNUMDOC'] === $CFNUMDOC;
@@ -141,7 +139,7 @@ class Local extends Component
 //            ) {
 //                $this->filteredFacturas[] = $factura;
 //            }
-            $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_new($this->pesoTotal, $this->volumenTotal,1,$this->id_transportistas);
+            $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_local($this->pesoTotal, $this->volumenTotal,1,$this->id_transportistas);
         }
     }
 

@@ -91,10 +91,7 @@ class Server extends Model
                 ->where('FACCAB.CFESTADO','=','V')
                 ->where('FACCAB.CFCODCLI','=',$codigo_cliente)
                 ->where(function ($q) use ($search) {
-                    $q->where('c.CNOMCLI', 'like', '%' . $search . '%')
-                        ->orWhere('c.CCODCLI', 'like', '%' . $search . '%')
-                        ->orWhere('c.CDIRCLI', 'like', '%' . $search . '%')
-                        ->orWhere('FACCAB.CFTD', 'like', '%' . $search . '%')
+                    $q->Where('FACCAB.CFTD', 'like', '%' . $search . '%')
                         ->orWhere('FACCAB.CFNUMDOC', 'like', '%' . $search . '%')
                         ->orWhere('FACCAB.CFNUMSER', 'like', '%' . $search . '%');
                 })

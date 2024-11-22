@@ -266,8 +266,6 @@
                 </div>
             </div>
 
-
-
             {{-- OTROS - MANO DE OBRA --}}
             <div class="row">
                 <div class="col-lg-6">
