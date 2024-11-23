@@ -110,21 +110,39 @@
                                             @endphp
                                             @if(!$comprobanteExiste)
                                                 <div class="row factura-item align-items-center mb-2"  wire:click="seleccionarFactura('{{$factura->CFTD}}','{{ $factura->CFNUMSER }}','{{ $factura->CFNUMDOC }}')">
-                                                    <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
-                                                        <p class="serie-correlativa">Serie y Correlativo: <b style="font-size: 16px">{{ $factura->CFNUMSER }} - {{ $factura->CFNUMDOC }}</b></p>
+                                                    <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
+                                                        <p class="serie-correlativa ms-0">Serie y Correlativo:</p>
+                                                        <b style="font-size: 16px;color: black">{{ $factura->CFNUMSER }} - {{ $factura->CFNUMDOC }}</b>
+                                                    </div>
+                                                    <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
+                                                        <p class="serie-correlativa ms-0">N° de Guía:</p>
+                                                        <b style="font-size: 16px;color: black">{{ $factura->CFTEXGUIA }}</b>
+                                                    </div>
+                                                    <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
+                                                        <p class="peso ms-0">Importe: </p>
+                                                        <b style="font-size: 16px;color: black">{{ $factura->CFIMPORTE }}</b>
+                                                    </div>
+                                                    <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
+                                                        <p class="peso ms-0">Fecha de Emisión: </p>
+                                                        <b style="font-size: 16px;color: black">{{ $factura->guia ? date('d-m-Y',strtotime($factura->guia->GREFECEMISION))  : '-' }}</b>
                                                     </div>
                                                     <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                                                        <p class="nombre-cliente mx-2"><b style="font-size: 14px">{{ $factura->CNOMCLI }}</b></p>
+                                                        <p class="nombre-cliente ms-0">Cliente:</p>
+                                                        <b style="font-size: 15px;color: black">{{ $factura->CNOMCLI }}</b>
                                                     </div>
                                                     <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
-                                                        <p class="peso">Peso: <b style="font-size: 16px">{{ $factura->total_kg }} kg</b></p>
+                                                        <p class="peso ms-0">Peso: </p>
+                                                        <b style="font-size: 16px;color: black">{{ $factura->total_kg }} kg</b>
                                                     </div>
                                                     <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
-                                                        <p class="peso">Volumen: <b style="font-size: 16px">{{ $factura->total_volumen }} cm³</b></p>
+                                                        <p class="peso ms-0">Volumen: </p>
+                                                        <b style="font-size: 16px;color: black">{{ $factura->total_volumen }} cm³</b>
                                                     </div>
-                                                    <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
-                                                        <p class="peso">Importe: <b style="font-size: 16px">{{ $factura->CFIMPORTE }}</b></p>
+                                                    <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                                                        <p class="peso ms-0">Dirección: </p>
+                                                        <b style="font-size: 16px;color: black">{{$factura->guia ? $factura->guia->LLEGADADIRECCION : '-' }}</b>
                                                     </div>
+
                                                 </div>
                                             @endif
 

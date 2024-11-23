@@ -41,15 +41,14 @@ class Server extends Model
                         ->orWhere('FACCAB.CFNUMSER', 'like', '%' . $search . '%');
                 })
                 ->groupBy('FACCAB.CFTD', 'FACCAB.CFNUMSER', 'FACCAB.CFNUMDOC','FACCAB.CFIMPORTE','FACCAB.CFCODMON','FACCAB.CFTEXGUIA','c.CNOMCLI','c.CCODCLI','c.CDIRCLI')
-                ->limit(15)->get();
+                ->limit(10)->get();
+
             foreach ($result as $re){
                 $valornew = $re->total_kg / 1000;
                 $re->total_kg = $valornew;
-                /* -------------------------------------- */
                 $re->show = 1;
-                // validar comprobante existe
                 $validar =  DB::table('despacho_ventas')->where([['despacho_venta_cftd','=',$re->CFTD], ['despacho_venta_cfnumser','=',$re->CFNUMSER], ['despacho_venta_cfnumdoc','=',$re->CFNUMDOC],])->first();
-                if ($validar){ // si es que el comprobante ya hay en la tabla despacho_ventas significa que ya fue usado.
+                if ($validar){
                     $re->show = 0;
                 }
                 $code = $re->CFTEXGUIA;
@@ -57,12 +56,7 @@ class Server extends Model
                 $serie = substr($code, 0, 4);
                 // Extraer el resto de la cadena
                 $resto = substr($code, 4);
-                $re->guia =  DB::connection('sqlsrv_external')
-                    ->table('GREMISION_CAB')
-                    ->select('GREFECEMISION','LLEGADAUBIGEO','LLEGADADIRECCION')
-                    ->where('GRENUMSER','=',$serie)
-                    ->where('GRENUMDOC','=',$resto)
-                    ->first();
+                $re->guia =  DB::connection('sqlsrv_external')->table('GREMISION_CAB')->select('GREFECEMISION','LLEGADAUBIGEO','LLEGADADIRECCION')->where('GRENUMSER','=',$serie)->where('GRENUMDOC','=',$resto)->first();
             }
             }catch (\Exception $e){
             $this->logs->insertarLog($e);
@@ -91,7 +85,7 @@ class Server extends Model
             // FACCAB - COMPROBANTES | FACDET - COMPROBANTES DETALLE | MAEART - ARTICULOS | MAEART_ADICIONALES - detalles del articulos
             $result = DB::connection('sqlsrv_external')
                 ->table('FACCAB')
-                ->select('FACCAB.CFTD', 'FACCAB.CFNUMSER', 'FACCAB.CFNUMDOC', 'FACCAB.CFTEXGUIA', DB::raw('SUM(ad.CAMPO004) as total_volumen') ,DB::raw('SUM(ad.CAMPO005) as total_kg'))
+                ->select('FACCAB.CFTD', 'FACCAB.CFNUMSER', 'FACCAB.CFNUMDOC', 'FACCAB.CFIMPORTE', 'FACCAB.CFTEXGUIA', DB::raw('SUM(ad.CAMPO004) as total_volumen') ,DB::raw('SUM(ad.CAMPO005) as total_kg'))
                 ->join('FACDET AS cd', function ($join) {
                     $join->on('cd.DFTD', '=', 'FACCAB.CFTD') // Condición 1
                     ->on('cd.DFNUMSER', '=', 'FACCAB.CFNUMSER') // Condición 2
@@ -106,8 +100,8 @@ class Server extends Model
                         ->orWhere('FACCAB.CFNUMDOC', 'like', '%' . $search . '%')
                         ->orWhere('FACCAB.CFNUMSER', 'like', '%' . $search . '%');
                 })
-                ->groupBy('FACCAB.CFTD', 'FACCAB.CFNUMSER', 'FACCAB.CFNUMDOC', 'FACCAB.CFTEXGUIA')
-                ->limit(15)->get();
+                ->groupBy('FACCAB.CFTD', 'FACCAB.CFNUMSER', 'FACCAB.CFNUMDOC', 'FACCAB.CFIMPORTE', 'FACCAB.CFTEXGUIA')
+                ->limit(10)->get();
 
             foreach ($result as $re){
                 $valornew = $re->total_kg / 1000;
@@ -123,12 +117,13 @@ class Server extends Model
                 $serie = substr($code, 0, 4);
                 // Extraer el resto de la cadena
                 $resto = substr($code, 4);
-//                $re->guia =  DB::connection('sqlsrv_external')
-//                        ->table('GREMISION_CAB')
-//                        ->select('GREFECEMISION','LLEGADAUBIGEO','LLEGADADIRECCION')
-//                        ->where('GRENUMSER','=',$serie)
-//                        ->where('GRENUMDOC','=',$resto)
-//                        ->first();
+                $re->guia =  DB::connection('sqlsrv_external')
+                    ->table('GREMISION_CAB')
+                    ->select('GREFECEMISION','LLEGADAUBIGEO','LLEGADADIRECCION')
+                    ->where('GRENUMSER','=',$serie)
+                    ->where('GRENUMDOC','=',$resto)
+                    ->first();
+
             }
         }catch (\Exception $e){
             $this->logs->insertarLog($e);
@@ -163,7 +158,7 @@ class Server extends Model
                         ->orWhere('FACCAB.CFNUMSER', 'like', '%' . $search . '%');
                 })
                 ->groupBy('FACCAB.CFTD', 'FACCAB.CFNUMSER', 'FACCAB.CFNUMDOC','FACCAB.CFIMPORTE','FACCAB.CFCODMON','FACCAB.CFTEXGUIA','c.CNOMCLI','c.CCODCLI','c.CDIRCLI')
-                ->limit(15)->get();
+                ->limit(10)->get();
             foreach ($result as $re){
                 $valornew = $re->total_kg / 1000;
                 $re->total_kg = $valornew;

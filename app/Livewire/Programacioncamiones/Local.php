@@ -53,7 +53,7 @@ class Local extends Component
         }
     }
     public function actualizarVehiculosSugeridos(){
-        $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_local($this->pesoTotal, $this->volumenTotal,1,$this->id_transportistas);
+        $this->listar_vehiculos_lo();
         $this->tarifaMontoSeleccionado = null;
         $this->selectedVehiculo = null;
     }
@@ -109,7 +109,7 @@ class Local extends Component
             return $f->CFNUMDOC !== $CFNUMDOC;
         });
         // Actualizar lista de vehículos sugeridos
-        $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_local($this->pesoTotal, $this->volumenTotal,1,$this->id_transportistas);
+        $this->listar_vehiculos_lo();
 //        $this->buscar_comprobantes();
     }
 
@@ -139,7 +139,7 @@ class Local extends Component
 //            ) {
 //                $this->filteredFacturas[] = $factura;
 //            }
-            $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_local($this->pesoTotal, $this->volumenTotal,1,$this->id_transportistas);
+            $this->listar_vehiculos_lo();
         }
     }
 
@@ -202,7 +202,14 @@ class Local extends Component
 //        }
 //    }
 
+    public function listar_vehiculos_lo(){
 
+        $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_local($this->pesoTotal, $this->volumenTotal,1,$this->id_transportistas);
+        if (count($this->vehiculosSugeridos) <= 0){
+            $this->tarifaMontoSeleccionado = null;
+            $this->selectedVehiculo = null;
+        }
+    }
 
 
 

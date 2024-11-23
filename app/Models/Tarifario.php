@@ -84,4 +84,17 @@ class Tarifario extends Model
         }
         return $result;
     }
+    public function listar_informacion_tarifa($id)
+    {
+        try {
+            $result = DB::table('tarifarios as t')->join('transportistas as tr','tr.id_transportistas','=','t.id_transportistas')
+                ->where('t.id_tarifario', '=',$id)->first();
+
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
 }

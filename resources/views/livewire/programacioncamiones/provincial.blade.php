@@ -1,4 +1,88 @@
 <div>
+    <x-modal-general  wire:ignore.self >
+        <x-slot name="tama">modal-lg</x-slot>
+        <x-slot name="id_modal">modalVehiculo</x-slot>
+        <x-slot name="titleModal">Detalles de la Tarifa</x-slot>
+        <x-slot name="modalContent">
+            @if($detalle_tarifario)
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12">
+                            <div class="row">
+                                <div class="col-lg-12 col-md-12 col-sm-12">
+                                    <h6>Información del transportista</h6>
+                                    <hr>
+                                </div>
+                                <div class="col-lg-6 col-md-4 col-sm-12 mb-3">
+                                    <strong style="color: #8c1017">Nombre comercial:</strong>
+                                    <p>{{ $detalle_tarifario->transportista_nom_comercial }}</p>
+                                </div>
+                                <div class="col-lg-6 col-md-4 col-sm-12 mb-3">
+                                    <strong style="color: #8c1017">RUC:</strong>
+                                    <p>{{ $detalle_tarifario->transportista_ruc }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-12 col-md-12 col-sm-12">
+                            <div class="row">
+                                <div class="col-lg-12 col-md-12 col-sm-12">
+                                    <h6>Información de la tarifa</h6>
+                                    <hr>
+                                </div>
+                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                    <strong style="color: #8c1017">Precio:</strong>
+                                    <p>S/ {{ $detalle_tarifario->tarifa_monto }}</p>
+                                </div>
+                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                    <strong style="color: #8c1017">Capacidad en minima:</strong>
+                                    <p>{{ (substr(number_format($detalle_tarifario->tarifa_cap_min, 2, '.', ','), -3) == '.00') ? number_format($detalle_tarifario->tarifa_cap_min, 0, '.', ',') : number_format($detalle_tarifario->tarifa_cap_min, 2, '.', ',') }} {{$detalle_tarifario->id_medida == 9 ? 'cm³' : 'kg' }}</p>
+                                </div>
+                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                    <strong style="color: #8c1017">Capacidad maxima:</strong>
+                                    <p>{{ (substr(number_format($detalle_tarifario->tarifa_cap_max, 2, '.', ','), -3) == '.00') ? number_format($detalle_tarifario->tarifa_cap_max, 0, '.', ',') : number_format($detalle_tarifario->tarifa_cap_max, 2, '.', ',') }} {{$detalle_tarifario->id_medida == 9 ? 'cm³' : 'kg' }}</p>
+                                </div>
+
+                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                    <strong style="color: #8c1017">Departamento de llegada:</strong>
+                                    @php
+                                        $depar = "";
+                                        if ($detalle_tarifario->id_departamento){
+                                            $depar = \Illuminate\Support\Facades\DB::table('departamentos')->where('id_departamento','=',$detalle_tarifario->id_departamento)->first();
+                                        }
+                                    @endphp
+                                    <p>{{ $depar ? $depar->departamento_nombre : '-' }} </p>
+                                </div>
+                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                    <strong style="color: #8c1017">Provincia de llegada:</strong>
+                                    @php
+                                        $provi = "";
+                                        if ($detalle_tarifario->id_provincia){
+                                            $provi = \Illuminate\Support\Facades\DB::table('provincias')->where('id_provincia','=',$detalle_tarifario->id_provincia)->first();
+                                        }
+                                    @endphp
+                                    <p>{{ $provi ? $provi->provincia_nombre : '-' }} </p>
+                                </div>
+                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                    <strong style="color: #8c1017">Distrito de llegada:</strong>
+                                    @php
+                                        $distri = "";
+                                        if ($detalle_tarifario->id_distrito){
+                                            $distri = \Illuminate\Support\Facades\DB::table('distritos')->where('id_distrito','=',$detalle_tarifario->id_distrito)->first();
+                                        }
+                                    @endphp
+                                    <p>{{ $distri ? $distri->distrito_nombre : 'TODOS LOS DISTRITOS' }} </p>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        </x-slot>
+    </x-modal-general>
+
+
     <div class="row">
         @if (session()->has('success'))
             <div class="col-lg-12 col-md-12 col-sm-12">
@@ -87,14 +171,33 @@
                                             @else
                                                 @foreach($filteredComprobantes as $comprobante)
                                                     <div class="row factura-item align-items-center mb-2" wire:click="seleccionar_factura_cliente('{{ $comprobante->CFTD }}', '{{ $comprobante->CFNUMSER }}', '{{ $comprobante->CFNUMDOC }}')">
-                                                        <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
-                                                            <p class="serie-correlativa">Serie y Correlativo: <b style="font-size: 16px">{{ $comprobante->CFNUMSER }} - {{ $comprobante->CFNUMDOC }}</b></p>
+                                                        <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
+                                                            <p class="serie-correlativa ms-0">Serie y Correlativo:</p>
+                                                            <b style="font-size: 16px;color: black">{{ $comprobante->CFNUMSER }} - {{ $comprobante->CFNUMDOC }}</b>
+                                                        </div>
+                                                        <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
+                                                            <p class="serie-correlativa ms-0">N° de Guía:</p>
+                                                            <b style="font-size: 16px;color: black">{{ $comprobante->CFTEXGUIA }}</b>
                                                         </div>
                                                         <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
-                                                            <p class="peso">Peso: <b style="font-size: 16px">{{ $comprobante->total_kg }} kg</b></p>
+                                                            <p class="peso ms-0">Importe: </p>
+                                                            <b style="font-size: 16px;color: black">{{ $comprobante->CFIMPORTE }}</b>
                                                         </div>
                                                         <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
-                                                            <p class="peso">Volumen: <b style="font-size: 16px">{{ $comprobante->total_volumen }} cm³</b></p>
+                                                            <p class="peso ms-0">Fecha de Emisión: </p>
+                                                            <b style="font-size: 16px;color: black">{{ $comprobante->guia ? date('d-m-Y',strtotime($comprobante->guia->GREFECEMISION))  : '-' }}</b>
+                                                        </div>
+                                                        <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
+                                                            <p class="peso ms-0">Peso: </p>
+                                                            <b style="font-size: 16px;color: black">{{ $comprobante->total_kg }} kg</b>
+                                                        </div>
+                                                        <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
+                                                            <p class="peso ms-0">Volumen: </p>
+                                                            <b style="font-size: 16px;color: black">{{ $comprobante->total_volumen }} cm³</b>
+                                                        </div>
+                                                        <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                                                            <p class="peso ms-0">Dirección: </p>
+                                                            <b style="font-size: 16px;color: black">{{$comprobante->guia ? $comprobante->guia->LLEGADADIRECCION : '-' }}</b>
                                                         </div>
                                                     </div>
                                                 @endforeach
@@ -106,6 +209,17 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <div wire:loading wire:target="seleccionar_factura_cliente" class="overlay__eliminar">
+            <div class="spinner__container__eliminar">
+                <div class="spinner__eliminar"></div>
+            </div>
+        </div>
+        <div wire:loading wire:target="seleccionar_cliente" class="overlay__eliminar">
+            <div class="spinner__container__eliminar">
+                <div class="spinner__eliminar"></div>
             </div>
         </div>
 
@@ -159,58 +273,60 @@
                         <div class="card-body">
                             <div class="row mb-3">
                                 <div class="col-lg-4 col-md-4 col-sm-12 mb-2">
-                                    <h6>Vehículos Sugeridos</h6>
+                                    <h6>Tarifarios Sugeridos</h6>
                                 </div>
                                 @if($tarifaMontoSeleccionado > 0)
                                     <div class="col-lg-8 col-md-8 col-sm-12 mb-2">
-                                        <p class="text-end mb-0">Monto de la tarifa del vehículo seleccionado: S/ <strong>{{ $tarifaMontoSeleccionado }}</strong></p>
+                                        <p class="text-end mb-0">Monto de la tarifa seleccionado: S/ <strong>{{ $tarifaMontoSeleccionado }}</strong></p>
                                     </div>
                                 @endif
                             </div>
                             <div class="row">
                                 <div class="col-lg-12">
                                     <div class="vehiculos-scroll-container-horizontal">
-                                        @foreach($vehiculosSugeridos as $vehiculo)
-                                            <label class="circulo-vehiculo-container m-2 {{ $vehiculo->tarifa_estado_aprobacion == 0 ? 'no-aprobado' : '' }}">
-                                                @if($vehiculo->tarifa_estado_aprobacion == 1)
-                                                    <input type="radio" name="vehiculo" class="vehiculo-radio d-none" value="{{ $vehiculo->id_vehiculo }}" wire:model="selectedVehiculo" wire:click="seleccionarVehiculo({{ $vehiculo->id_vehiculo }})" />
+                                        @foreach($tarifariosSugeridos as $tari) {{-- ESTO ES DE TARIFARIO.--}}
+                                            <label class="circulo-vehiculo-container m-2 {{ $tari->tarifa_estado_aprobacion == 0 ? 'no-aprobado' : '' }}">
+                                                @if($tari->tarifa_estado_aprobacion == 1)
+                                                    <input type="radio" name="vehiculo" class="vehiculo-radio d-none" value="{{ $tari->id_tarifario }}" wire:model="selectedTarifario" wire:click="seleccionarTarifario({{ $tari->id_tarifario }})" />
                                                 @endif
 
                                                 <!-- Progreso Circular usando SVG -->
                                                 <svg class="progreso-circular" viewBox="0 0 36 36">
                                                     <path class="progreso-circular-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                                                     <path class="progreso-circular-fg"
-                                                          stroke-dasharray="{{ $vehiculo->vehiculo_capacidad_usada }}, 100"
+                                                          stroke-dasharray="{{ $tari->capacidad_usada }}, 100"
                                                           d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                                          style="stroke: {{$vehiculo->vehiculo_capacidad_usada <= 25 ? 'red' :
-                                                                    ($vehiculo->vehiculo_capacidad_usada <= 50 ? 'orange' :
-                                                                    ($vehiculo->vehiculo_capacidad_usada <= 75 ? 'yellow' : 'green'))
+                                                          style="stroke: {{$tari->capacidad_usada <= 25 ? 'red' :
+                                                                    ($tari->capacidad_usada <= 50 ? 'orange' :
+                                                                    ($tari->capacidad_usada <= 75 ? 'yellow' : 'green'))
                                                                 }};" />
                                                 </svg>
                                                 <div class="circulo-vehiculo">
-                                                    <div class="placa-container">
-                                                        <span class="vehiculo-placa">{{ $vehiculo->vehiculo_placa }}</span>
-                                                    </div>
-                                                    <div class="tarifa-container">
-                                                    <span class="tarifa-monto">
-                                                        @php
-                                                            $tarifa = number_format($vehiculo->tarifa_monto, 2, '.', ',');
-                                                            $tarifa = strpos($tarifa, '.00') !== false ? number_format($vehiculo->tarifa_monto, 0, '.', ',') : $tarifa;
-                                                        @endphp
-                                                        S/ {{ $tarifa }}
-                                                    </span>
+{{--                                                    <div class="placa-container">--}}
+{{--                                                        <span class="vehiculo-placa">{{ $tari->vehiculo_placa }}</span>--}}
+{{--                                                    </div>--}}
+                                                    <div class="tarifa-container" style="margin-top: 20%;">
+                                                        <span class="tarifa-monto">
+                                                            @php
+                                                                $tarifa = number_format($tari->tarifa_monto, 2, '.', ',');
+                                                                $tarifa = strpos($tarifa, '.00') !== false ? number_format($tari->tarifa_monto, 0, '.', ',') : $tarifa;
+                                                            @endphp
+                                                            S/ {{ $tarifa }}
+                                                        </span>
                                                     </div>
                                                     <div class="peso-container">
-                                                    <span class="capacidad-peso">
-                                                        @php
-                                                            $pesovehiculo = number_format($vehiculo->vehiculo_capacidad_peso, 2, '.', ',');
-                                                            $pesovehiculo = strpos($pesovehiculo, '.00') !== false ? number_format($vehiculo->vehiculo_capacidad_peso, 0, '.', ',') : $pesovehiculo;
-                                                        @endphp
-                                                        {{ $pesovehiculo }} kg
-                                                    </span>
+                                                        <span class="capacidad-peso">
+                                                            @php
+                                                                $pesovehiculoMin = number_format($tari->tarifa_cap_min, 2, '.', ',');
+                                                                $pesovehiculoMin = strpos($pesovehiculoMin, '.00') !== false ? number_format($tari->tarifa_cap_min, 0, '.', ',') : $pesovehiculoMin;
+                                                                $pesovehiculo = number_format($tari->tarifa_cap_max, 2, '.', ',');
+                                                                $pesovehiculo = strpos($pesovehiculo, '.00') !== false ? number_format($tari->tarifa_cap_max, 0, '.', ',') : $pesovehiculo;
+                                                            @endphp
+                                                            {{$pesovehiculoMin}} {{$tari->id_medida == 9 ? 'cm³' : 'kg' }} - {{ $pesovehiculo }} {{$tari->id_medida == 9 ? 'cm³' : 'kg' }}
+                                                        </span>
                                                     </div>
                                                     <div class="boton-container">
-                                                        <a href="#" class="btn-ver" data-bs-toggle="modal" data-bs-target="#modalVehiculo" wire:click="modal_por_vehiculo({{ $vehiculo->id_vehiculo }})">
+                                                        <a href="#" class="btn-ver" data-bs-toggle="modal" data-bs-target="#modalVehiculo" wire:click="modal_detalle_tarifario({{ $tari->id_tarifario }})">
                                                             <i class="fas fa-eye"></i>
                                                         </a>
                                                     </div>
@@ -222,8 +338,10 @@
                                             </label>
                                         @endforeach
                                     </div>
-                                    @error('selectedVehiculo')
-                                    <span class="message-error">{{ $message }}</span>
+                                </div>
+                                <div class="col-lg-12 col-md-12 col-sm-12">
+                                    @error('selectedTarifario')
+                                        <span class="message-error">{{ $message }}</span>
                                     @enderror
                                 </div>
                             </div>
@@ -276,7 +394,7 @@
                                             <h6>Departamento (*)</h6>
                                         </div>
                                         <div class="col-lg-12">
-                                            <select class="form-select" name="id_departamento" id="id_departamento" wire:model="id_departamento" wire:change="listar_provincias">
+                                            <select class="form-select" name="id_departamento" id="id_departamento" wire:change="deparTari" wire:model="id_departamento">
                                                 <option value="">Seleccionar...</option>
                                                 @foreach($listar_departamento as $de)
                                                     <option value="{{ $de->id_departamento }}">{{ $de->departamento_nombre }}</option>
@@ -298,7 +416,7 @@
                                             <h6>Provincia (*)</h6>
                                         </div>
                                         <div class="col-lg-12">
-                                            <select class="form-select" name="id_provincia" id="id_provincia" wire:model="id_provincia" wire:change="listar_distritos" {{ empty($provincias) ? 'disabled' : '' }}>
+                                            <select class="form-select" name="id_provincia" id="id_provincia" wire:model="id_provincia" wire:change="proviTari" {{ empty($provincias) ? 'disabled' : '' }}>
                                                 <option value="">Seleccionar...</option>
                                                 @foreach($provincias as $pr)
                                                     <option value="{{ $pr->id_provincia }}" {{ $pr->id_provincia == $id_provincia ? 'selected' : '' }}>{{ $pr->provincia_nombre }}</option>
@@ -320,7 +438,7 @@
                                             <h6>Distrito</h6>
                                         </div>
                                         <div class="col-lg-12">
-                                            <select class="form-select" name="id_distrito" id="id_distrito" wire:model="id_distrito" {{ empty($distritos) ? 'disabled' : '' }}>
+                                            <select class="form-select" name="id_distrito" id="id_distrito"  wire:change="distriTari" wire:model="id_distrito" {{ empty($distritos) ? 'disabled' : '' }}>
                                                 <option value="">Todos los distritos</option>
                                                 @foreach($distritos as $di)
                                                     <option value="{{ $di->id_distrito }}" {{ $di->id_distrito == $id_distrito ? 'selected' : '' }}>{{ $di->distrito_nombre }}</option>
@@ -336,7 +454,7 @@
             </div>
 
             {{--    TABLA DE COMPROBANTES SELECCIONADOS --}}
-            <div class="col-lg-12">
+            <div class="col-lg-12 ">
                 <div class="card">
                     <div class="card-body table-responsive">
                         <div class="row">
@@ -361,7 +479,7 @@
                                             <thead>
                                             <tr>
                                                 <th>Serie</th>
-{{--                                                <th>Nombre Cliente</th>--}}
+                                                <th>Guía</th>
                                                 <th>Peso</th>
                                                 <th>Volumen</th>
                                                 <th>Acciones</th>
@@ -371,7 +489,7 @@
                                             @foreach($selectedFacturas as $factura)
                                                 <tr>
                                                     <td>{{ $factura['CFNUMSER'] }} - {{ $factura['CFNUMDOC'] }}</td>
-{{--                                                    <td>{{ $factura['CNOMCLI'] }}</td>--}}
+                                                    <td>{{ $factura['guia'] }}</td>
                                                     <td>{{ $factura['total_kg'] }} kg</td>
                                                     <td>{{ $factura['total_volumen'] }} cm³</td>
                                                     <td>
@@ -415,6 +533,10 @@
 
 
     <style>
+        .card {
+            margin-bottom: 1rem;
+            border: none;
+        }
         /*ESTILOS PARA CLIENTES*/
         .cliente-option {
             margin-bottom: 10px;
