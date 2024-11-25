@@ -23,7 +23,7 @@ class Mixto extends Component
         $this->transportista = new Transportista();
         $this->vehiculo = new Vehiculo();
     }
-    public $tipoServicioSeleccionado = '';
+    public $tipoServicioSeleccionado = 1;
     public $searchFacturaCliente = '';
     public $filteredFacturasYClientes = [];
     public $selectedFacturas = [];
@@ -66,13 +66,17 @@ class Mixto extends Component
         if (!$factura) {
             return; // Si no se encuentra, no hace nada
         }
-
+        if ($factura->total_kg <= 0 || $factura->total_volumen <= 0){
+            session()->flash('error', 'El peso o el volumen deben ser mayores a 0.');
+            return;
+        }
         // Sumar peso y volumen al seleccionar
         $this->pesoTotal += $factura->total_kg;
         $this->volumenTotal += $factura->total_volumen;
 
         // Agregar factura a la selección según el tipo de servicio
         if ($this->tipoServicioSeleccionado == 1) { // Local
+
             $this->selectedFacturasLocal[$comprobanteId] = [
                 'CFTD' => $factura->CFTD,
                 'CFNUMSER' => $factura->CFNUMSER,
@@ -81,6 +85,7 @@ class Mixto extends Component
                 'total_kg' => $factura->total_kg,
                 'total_volumen' => $factura->total_volumen,
             ];
+
         } elseif ($this->tipoServicioSeleccionado == 2) { // Provincial
             $cliente = $factura->CNOMCLI;
 

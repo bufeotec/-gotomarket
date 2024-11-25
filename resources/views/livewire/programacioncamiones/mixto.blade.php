@@ -25,14 +25,15 @@
                         <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
                             <h6>COMPROBANTES Y COMPROBANTES DE CLIENTE</h6>
                         </div>
-                        <div class="col-lg-12">
-                            <div class="mb-3">
-                                <select class="form-select" wire:model="tipoServicioSeleccionado">
-                                    <option value="" disabled>Seleccionar...</option>
-                                    @foreach($tipo_servicio_local_provincial as $tipo)
-                                        <option value="{{ $tipo->id_tipo_servicios }}">{{ $tipo->tipo_servicio_concepto }}</option>
-                                    @endforeach
-                                </select>
+                        <div class="col-lg-12 mb-3">
+                            <div class="row justify-content-end">
+                                <div class="col-lg-8 col-md-8 col-sm-12">
+                                    <select class="form-select" wire:model="tipoServicioSeleccionado">
+                                        @foreach($tipo_servicio_local_provincial as $tipo)
+                                            <option value="{{ $tipo->id_tipo_servicios }}">{{ $tipo->tipo_servicio_concepto }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
                         </div>
                         <div class="col-lg-12 col-md-12 col-sm-12">
