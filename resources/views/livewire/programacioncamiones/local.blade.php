@@ -91,7 +91,7 @@
                         </div>
                         <div class="col-lg-12 col-md-12 col-sm-12">
                             <div class="position-relative mb-3">
-                                <input type="text" class="form-control bg-dark text-white rounded-pill ps-5 custom-placeholder" placeholder="Buscar comprobante" wire:model="searchFactura" wire:input="buscar_comprobantes" style="border: none; outline: none;" />
+                                <input type="text" class="form-control bg-dark text-white rounded-pill ps-5 custom-placeholder" placeholder="Buscar comprobante" wire:model="searchFactura" wire:change="buscar_comprobantes" style="border: none; outline: none;" />
                                 <i class="fas fa-search position-absolute" style="left: 15px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
                             </div>
                             @if($searchFactura !== '')
