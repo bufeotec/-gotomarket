@@ -7,6 +7,9 @@ use App\Models\Logs;
 use App\Models\Server;
 use App\Models\Transportista;
 use App\Models\Vehiculo;
+use App\Models\Programacion;
+use App\Models\Despacho;
+use App\Models\DespachoVenta;
 
 
 class Local extends Component
@@ -15,11 +18,17 @@ class Local extends Component
     private $server;
     private $transportista;
     private $vehiculo;
+    private $programacion;
+    private $despacho;
+    private $despachoventa;
     public function __construct(){
         $this->logs = new Logs();
         $this->server = new Server();
         $this->transportista = new Transportista();
         $this->vehiculo = new Vehiculo();
+        $this->programacion = new Programacion();
+        $this->despacho = new Despacho();
+        $this->despachoventa = new DespachoVenta();
     }
     public $searchFactura = "";
     public $filteredFacturas = [];
@@ -31,9 +40,13 @@ class Local extends Component
     public $selectedFacturas = [];
     public $detalle_vehiculo = [];
     public $tarifaMontoSeleccionado = 0;
+    public $programacion_fecha = '';
+    public $despacho_ayudante = '';
+    public $despacho_gasto_otros = '';
     public function mount(){
         $this->id_transportistas = null;
         $this->selectedVehiculo = null;
+        $this->programacion_fecha = now()->format('Y-m-d');
     }
 
     public function render(){
@@ -147,61 +160,6 @@ class Local extends Component
         $this->detalle_vehiculo =  $this->vehiculo->listar_informacion_vehiculo($id_ve);
     }
 
-//    public function compararPesoConVehiculos($listar_vehiculos)
-//    {
-//        $this->vehiculosSugeridos = [];
-//
-//        // Si no hay transportista seleccionado, no aplicar filtro
-//        if (!empty($this->id_transportistas)) {
-//            // Filtrar vehículos según el transportista seleccionado
-//            $listar_vehiculos = $listar_vehiculos->filter(function ($vehiculo) {
-//                return $vehiculo->id_transportistas == $this->id_transportistas;
-//            });
-//        }
-//
-//        foreach ($listar_vehiculos as $vehiculo) {
-//            // Verificar que el peso del vehículo esté dentro del rango permitido
-//            $pesoEnRango = $vehiculo->vehiculo_capacidad_peso >= $this->pesoTotal;
-//
-//            if (!empty($vehiculo->tarifa_cap_min) && !empty($vehiculo->tarifa_cap_max)) {
-//                $pesoEnRango = $pesoEnRango &&
-//                    $this->pesoTotal >= $vehiculo->tarifa_cap_min &&
-//                    $this->pesoTotal <= $vehiculo->tarifa_cap_max;
-//            }
-//
-//            if ($pesoEnRango) {
-//                // Calcular el porcentaje de capacidad utilizada
-//                $vehiculo->vehiculo_capacidad_usada = ($this->pesoTotal / $vehiculo->vehiculo_capacidad_peso) * 100;
-//
-//                // Evitar duplicados en la lista de sugerencias
-//                if (!in_array($vehiculo->id_vehiculo, array_column($this->vehiculosSugeridos, 'id_vehiculo'))) {
-//                    $this->vehiculosSugeridos[] = $vehiculo;
-//                }
-//            }
-//        }
-//
-//        // Ordenar vehículos sugeridos por estado de aprobación y porcentaje de capacidad usada
-//        usort($this->vehiculosSugeridos, function ($a, $b) {
-//            return [$b->tarifa_estado_aprobacion, $b->vehiculo_capacidad_usada] <=> [$a->tarifa_estado_aprobacion, $a->vehiculo_capacidad_usada];
-//        });
-//    }
-
-
-
-
-//    public function actualizarVehiculosSugeridos()
-//    {
-//        // Verificar si hay transportista seleccionado
-//        if ($this->id_transportistas) {
-//            // Obtener vehículos relacionados con sus tarifarios
-//            $listar_vehiculos = $this->vehiculo->obtener_vehiculos_con_tarifarios();
-//            $this->compararPesoConVehiculos($listar_vehiculos);
-//        } else {
-//            // Si no hay transportista seleccionado, limpiar sugerencias
-//            $this->vehiculosSugeridos = [];
-//        }
-//    }
-
     public function listar_vehiculos_lo(){
 
         $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_local($this->pesoTotal, $this->volumenTotal,1,$this->id_transportistas);
@@ -211,7 +169,91 @@ class Local extends Component
         }
     }
 
+    public function guardarDespachos(){
+        try {
+            $this->validate([
+                'id_tipo_servicios' => 'nullable|integer',
+                'id_transportistas' => 'required|integer',
+                'selectedVehiculo' => 'required|integer',
+                'despacho_peso' => 'nullable|numeric',
+                'despacho_volumen' => 'nullable|numeric',
+                'despacho_flete' => 'nullable|numeric',
+                'despacho_ayudante' => 'nullable|numeric',
+                'despacho_gasto_otros' => 'nullable|numeric',
+            ], [
+                'selectedVehiculo.required' => 'Debes seleccionar un vehículo.',
+                'selectedVehiculo.integer' => 'El vehículo debe ser un número entero.',
 
+                'id_transportistas.required' => 'Debes seleccionar un transportista.',
+                'id_transportistas.integer' => 'El transportista debe ser un número entero.',
+            ]);
+            DB::beginTransaction();
+            // Guardar en la tabla Programaciones
+            $programacion = new Programacion();
+            $programacion->id_users = Auth::id();
+            $programacion->programacion_fecha = $this->despacho_fecha;
+            $programacion->programacion_estado = 1;
+            $programacion->programacion_microtime = microtime(true);
+            if (!$programacion->save()) {
+                DB::rollBack();
+                session()->flash('error', 'Ocurrió un error al guardar la programación.');
+                return;
+            }
+            // Tipo de servicio 1
+            $despacho = new Despacho();
+            $despacho->id_users = Auth::id();
+            $despacho->id_programacion = $programacion->id_programacion;
+            $despacho->id_transportistas = $this->id_transportistas;
+            $despacho->id_tipo_servicios = 1;
+            $despacho->id_vehiculo = $this->selectedVehiculo;
+            $despacho->despacho_peso = $this->pesoTotal;
+            $despacho->despacho_volumen = $this->volumenTotal;
+            $despacho->despacho_flete = $this->tarifaMontoSeleccionado;
+            $despacho->despacho_ayudante = $this->despacho_ayudante ?: null;
+            $despacho->despacho_gasto_otros = $this->despacho_gasto_otros ?: null;
+            // Calcular despacho_costo_total
+            $despacho_costo_total = $this->tarifaMontoSeleccionado;
+            if (!empty($this->despacho_ayudante)) {
+                $despacho_costo_total += $this->despacho_ayudante;
+            }
+            if (!empty($this->despacho_gasto_otros)) {
+                $despacho_costo_total += $this->despacho_gasto_otros;
+            }
+            $despacho->despacho_costo_total = $despacho_costo_total;
+            // Otros datos
+            $despacho->despacho_estado = 1;
+            $despacho->despacho_microtime = microtime(true);
+            if (!$despacho->save()) {
+                DB::rollBack();
+                session()->flash('error', 'Ocurrió un error al guardar el registro.');
+            }
+            // Guardar facturas seleccionadas en despacho_ventas
+            foreach ($this->selectedFacturas as $factura) {
+                $despachoVenta = new DespachoVenta();
+                $despachoVenta->id_despacho = $despacho->id_despacho;
+                $despachoVenta->id_venta = null;
+                $despachoVenta->despacho_venta_cftd = $factura['CFTD'];
+                $despachoVenta->despacho_venta_cfnumser = $factura['CFNUMSER'];
+                $despachoVenta->despacho_venta_cfnumdoc = $factura['CFNUMDOC'];
+                $despachoVenta->despacho_venta_factura = $factura['CFNUMSER'] . '-' . $factura['CFNUMDOC'];
+                $despachoVenta->despacho_detalle_estado = 1;
+                $despachoVenta->despacho_detalle_microtime = microtime(true);
+                if (!$despachoVenta->save()) {
+                    DB::rollBack();
+                    session()->flash('error', 'Ocurrió un error al guardar el registro.');
+                }
+            }
+            DB::commit();
+            session()->flash('success', 'Registro guardado correctamente.');
+//            $this->reiniciar_campos();
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->setErrorBag($e->validator->errors());
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error inesperado. Por favor, inténtelo nuevamente.');
+        }
+    }
 
 
 
