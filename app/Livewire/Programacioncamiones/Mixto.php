@@ -26,6 +26,7 @@ class Mixto extends Component
     public $tipoServicioSeleccionado = 1;
     public $searchFacturaCliente = '';
     public $filteredFacturasYClientes = [];
+    public $detalle_vehiculo = [];
     public $selectedFacturas = [];
     public $pesoTotal = 0;
     public $volumenTotal = 0;
@@ -84,6 +85,7 @@ class Mixto extends Component
                 'CNOMCLI' => $factura->CNOMCLI,
                 'total_kg' => $factura->total_kg,
                 'total_volumen' => $factura->total_volumen,
+                'guia' => $factura->CFTEXGUIA,
             ];
 
         } elseif ($this->tipoServicioSeleccionado == 2) { // Provincial
@@ -100,6 +102,7 @@ class Mixto extends Component
                 'CNOMCLI' => $factura->CNOMCLI,
                 'total_kg' => $factura->total_kg,
                 'total_volumen' => $factura->total_volumen,
+                'guia' => $factura->CFTEXGUIA,
             ];
         }
 
@@ -154,5 +157,8 @@ class Mixto extends Component
     }
 
 
+    public function modal_por_vehiculo($id_ve){
+        $this->detalle_vehiculo =  $this->vehiculo->listar_informacion_vehiculo($id_ve);
+    }
 
 }

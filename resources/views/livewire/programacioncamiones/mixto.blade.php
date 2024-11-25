@@ -1,4 +1,68 @@
 <div>
+    <x-modal-general  wire:ignore.self >
+        <x-slot name="tama">modal-lg</x-slot>
+        <x-slot name="id_modal">modalVehiculo</x-slot>
+        <x-slot name="titleModal">Detalles del Vehículo</x-slot>
+        <x-slot name="modalContent">
+            @if($detalle_vehiculo)
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12">
+                            <div class="row">
+                                <div class="col-lg-12 col-md-12 col-sm-12">
+                                    <h6>Información del transportista</h6>
+                                    <hr>
+                                </div>
+                                <div class="col-lg-6 col-md-4 col-sm-12 mb-3">
+                                    <strong style="color: #8c1017">Nombre comercial:</strong>
+                                    <p>{{ $detalle_vehiculo->transportista_nom_comercial }}</p>
+                                </div>
+                                <div class="col-lg-6 col-md-4 col-sm-12 mb-3">
+                                    <strong style="color: #8c1017">RUC:</strong>
+                                    <p>{{ $detalle_vehiculo->transportista_ruc }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-12 col-md-12 col-sm-12">
+                            <div class="row">
+                                <div class="col-lg-12 col-md-12 col-sm-12">
+                                    <h6>Información del vehículo</h6>
+                                    <hr>
+                                </div>
+                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                    <strong style="color: #8c1017">Placa del vehículo:</strong>
+                                    <p>{{ $detalle_vehiculo->vehiculo_placa }}</p>
+                                </div>
+                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                    <strong style="color: #8c1017">Capacidad en peso:</strong>
+                                    <p>{{ (substr(number_format($detalle_vehiculo->vehiculo_capacidad_peso, 2, '.', ','), -3) == '.00') ? number_format($detalle_vehiculo->vehiculo_capacidad_peso, 0, '.', ',') : number_format($detalle_vehiculo->vehiculo_capacidad_peso, 2, '.', ',') }} kg</p>
+                                </div>
+                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                    <strong style="color: #8c1017">Ancho:</strong>
+                                    <p>{{ (substr(number_format($detalle_vehiculo->vehiculo_ancho, 2, '.', ','), -3) == '.00') ? number_format($detalle_vehiculo->vehiculo_ancho, 0, '.', ',') : number_format($detalle_vehiculo->vehiculo_ancho, 2, '.', ',') }} cm</p>
+                                </div>
+                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                    <strong style="color: #8c1017">Largo:</strong>
+                                    <p>{{ (substr(number_format($detalle_vehiculo->vehiculo_largo, 2, '.', ','), -3) == '.00') ? number_format($detalle_vehiculo->vehiculo_largo, 0, '.', ',') : number_format($detalle_vehiculo->vehiculo_largo, 2, '.', ',') }} cm</p>
+                                </div>
+                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                    <strong style="color: #8c1017">Alto:</strong>
+                                    <p>{{ (substr(number_format($detalle_vehiculo->vehiculo_alto, 2, '.', ','), -3) == '.00') ? number_format($detalle_vehiculo->vehiculo_alto, 0, '.', ',') : number_format($detalle_vehiculo->vehiculo_alto, 2, '.', ',') }} cm</p>
+                                </div>
+                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                    <strong style="color: #8c1017">Volumen:</strong>
+                                    <p>{{ (substr(number_format($detalle_vehiculo->vehiculo_capacidad_volumen, 2, '.', ','), -3) == '.00') ? number_format($detalle_vehiculo->vehiculo_capacidad_volumen, 0, '.', ',') : number_format($detalle_vehiculo->vehiculo_capacidad_volumen, 2, '.', ',') }} cm³</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            @endif
+        </x-slot>
+    </x-modal-general>
+
     <div class="row">
         @if (session()->has('success'))
             <div class="col-lg-12 col-md-12 col-sm-12">
@@ -41,7 +105,7 @@
                                 <input type="text" class="form-control bg-dark text-white rounded-pill ps-5 custom-placeholder"
                                        placeholder="Buscar comprobante o cliente"
                                        wire:model="searchFacturaCliente"
-                                       wire:input="buscar_facturas_clientes"
+                                       wire:change="buscar_facturas_clientes"
                                        style="border: none; outline: none;" />
                                 <i class="fas fa-search position-absolute" style="left: 15px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
                             </div>
@@ -61,20 +125,37 @@
                                             @endphp
                                             @if(!$comprobanteExiste)
                                                 <div class="row factura-item align-items-center mb-2"  wire:click="seleccionarFactura('{{$factura->CFTD}}','{{ $factura->CFNUMSER }}','{{ $factura->CFNUMDOC }}')">
-                                                    <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
-                                                        <p class="serie-correlativa">Serie y Correlativo: <b style="font-size: 16px">{{ $factura->CFNUMSER }} - {{ $factura->CFNUMDOC }}</b></p>
+                                                    <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
+                                                        <p class="serie-correlativa ms-0">Serie y Correlativo:</p>
+                                                        <b style="font-size: 16px;color: black">{{ $factura->CFNUMSER }} - {{ $factura->CFNUMDOC }}</b>
+                                                    </div>
+                                                    <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
+                                                        <p class="serie-correlativa ms-0">N° de Guía:</p>
+                                                        <b style="font-size: 16px;color: black">{{ $factura->CFTEXGUIA }}</b>
+                                                    </div>
+                                                    <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
+                                                        <p class="peso ms-0">Importe: </p>
+                                                        <b style="font-size: 16px;color: black">{{ $factura->CFIMPORTE }}</b>
+                                                    </div>
+                                                    <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
+                                                        <p class="peso ms-0">Fecha de Emisión: </p>
+                                                        <b style="font-size: 16px;color: black">{{ $factura->guia ? date('d-m-Y',strtotime($factura->guia->GREFECEMISION))  : '-' }}</b>
                                                     </div>
                                                     <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                                                        <p class="nombre-cliente mx-2"><b style="font-size: 14px">{{ $factura->CNOMCLI }}</b></p>
+                                                        <p class="nombre-cliente ms-0">Cliente:</p>
+                                                        <b style="font-size: 15px;color: black">{{ $factura->CNOMCLI }}</b>
                                                     </div>
                                                     <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
-                                                        <p class="peso">Peso: <b style="font-size: 16px">{{ $factura->total_kg }} kg</b></p>
+                                                        <p class="peso ms-0">Peso: </p>
+                                                        <b style="font-size: 16px;color: black">{{ $factura->total_kg }} kg</b>
                                                     </div>
                                                     <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
-                                                        <p class="peso">Volumen: <b style="font-size: 16px">{{ $factura->total_volumen }} cm³</b></p>
+                                                        <p class="peso ms-0">Volumen: </p>
+                                                        <b style="font-size: 16px;color: black">{{ $factura->total_volumen }} cm³</b>
                                                     </div>
-                                                    <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
-                                                        <p class="peso">Importe: <b style="font-size: 16px">{{ $factura->CFIMPORTE }}</b></p>
+                                                    <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                                                        <p class="peso ms-0">Dirección: </p>
+                                                        <b style="font-size: 16px;color: black">{{$factura->guia ? $factura->guia->LLEGADADIRECCION : '-' }}</b>
                                                     </div>
                                                 </div>
                                             @endif
@@ -279,6 +360,7 @@
                                             <thead>
                                             <tr>
                                                 <th>Serie</th>
+                                                <th>Guía</th>
                                                 <th>Nombre Cliente</th>
                                                 <th>Peso</th>
                                                 <th>Volumen</th>
@@ -289,11 +371,12 @@
                                             @foreach($selectedFacturasLocal as $factura)
                                                 <tr>
                                                     <td>{{ $factura['CFNUMSER'] }} - {{ $factura['CFNUMDOC'] }}</td>
+                                                    <td>{{ $factura['guia'] }}</td>
                                                     <td>{{ $factura['CNOMCLI'] }}</td>
                                                     <td>{{ $factura['total_kg'] }} kg</td>
                                                     <td>{{ $factura['total_volumen'] }} cm³</td>
                                                     <td>
-                                                        <a href="#" wire:click="eliminarFacturaSeleccionada('{{ $factura['CFTD'] }}', '{{ $factura['CFNUMSER'] }}', '{{ $factura['CFNUMDOC'] }}')" class="btn btn-danger btn-sm text-white">
+                                                        <a  wire:click="eliminarFacturaSeleccionada('{{ $factura['CFTD'] }}', '{{ $factura['CFNUMSER'] }}', '{{ $factura['CFNUMDOC'] }}')" class="btn btn-danger btn-sm text-white">
                                                             <i class="fas fa-trash-alt"></i>
                                                         </a>
                                                     </td>
@@ -319,6 +402,7 @@
                                             <thead>
                                             <tr>
                                                 <th>Serie</th>
+                                                <th>Guía</th>
                                                 <th>Nombre Cliente</th>
                                                 <th>Peso</th>
                                                 <th>Volumen</th>
@@ -327,34 +411,35 @@
                                             </thead>
                                             <tbody>
                                             @foreach($selectedFacturasProvincial as $cliente => $facturas) <!-- Itera sobre cada cliente -->
-                                            <tr>
-                                                <td colspan="2">
-                                                    <h6 class="mb-0">{{ $cliente }}</h6> <!-- Nombre del cliente -->
-                                                </td>
-                                                <td colspan="5">
-                                                    <label for="transportista_{{ $cliente }}" class="form-label mb-1">Transportista</label>
-                                                    <select class="form-select"
-                                                            id="transportista_{{ $cliente }}"
-                                                            wire:model="transportistasPorCliente.{{ $cliente }}">
-                                                        @foreach($listar_transportistas as $lt)
-                                                            <option value="{{ $lt->id_transportistas }}">{{ $lt->transportista_nom_comercial }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                </td>
-                                            </tr>
-                                            @foreach($facturas as $factura) <!-- Ahora itera sobre las facturas de cada cliente -->
-                                            <tr>
-                                                <td>{{ $factura['CFNUMSER'] }} - {{ $factura['CFNUMDOC'] }}</td>
-                                                <td>{{ $factura['CNOMCLI'] }}</td>
-                                                <td>{{ $factura['total_kg'] }} kg</td>
-                                                <td>{{ $factura['total_volumen'] }} cm³</td>
-                                                <td>
-                                                    <a href="#" wire:click="eliminarFacturaSeleccionada('{{ $factura['CFTD'] }}', '{{ $factura['CFNUMSER'] }}', '{{ $factura['CFNUMDOC'] }}')" class="btn btn-danger btn-sm text-white">
-                                                        <i class="fas fa-trash-alt"></i>
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                            @endforeach
+                                                <tr>
+                                                    <td colspan="2">
+                                                        <h6 class="mb-0">{{ $cliente }}</h6> <!-- Nombre del cliente -->
+                                                    </td>
+                                                    <td colspan="5">
+                                                        <label for="transportista_{{ $cliente }}" class="form-label mb-1">Transportista</label>
+                                                        <select class="form-select"
+                                                                id="transportista_{{ $cliente }}"
+                                                                wire:model="transportistasPorCliente.{{ $cliente }}">
+                                                            @foreach($listar_transportistas as $lt)
+                                                                <option value="{{ $lt->id_transportistas }}">{{ $lt->transportista_nom_comercial }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </td>
+                                                </tr>
+                                                @foreach($facturas as $factura) <!-- Ahora itera sobre las facturas de cada cliente -->
+                                                    <tr>
+                                                        <td>{{ $factura['CFNUMSER'] }} - {{ $factura['CFNUMDOC'] }}</td>
+                                                        <td>{{ $factura['guia'] }}</td>
+                                                        <td>{{ $factura['CNOMCLI'] }}</td>
+                                                        <td>{{ $factura['total_kg'] }} kg</td>
+                                                        <td>{{ $factura['total_volumen'] }} cm³</td>
+                                                        <td>
+                                                            <a  wire:click="eliminarFacturaSeleccionada('{{ $factura['CFTD'] }}', '{{ $factura['CFNUMSER'] }}', '{{ $factura['CFNUMDOC'] }}')" class="btn btn-danger btn-sm text-white">
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
                                             @endforeach
                                             </tbody>
                                         </table>

@@ -100,6 +100,7 @@ class Local extends Component
             'CNOMCLI' => $factura->CNOMCLI,
             'CFIMPORTE' => $factura->CFIMPORTE,
             'CFCODMON' => $factura->CFCODMON,
+            'guia' => $factura->CFTEXGUIA,
         ];
         $this->pesoTotal += $factura->total_kg;
         $this->volumenTotal += $factura->total_volumen;

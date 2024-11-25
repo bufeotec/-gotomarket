@@ -128,7 +128,7 @@
                                         class="form-control bg-dark text-white rounded-pill ps-5 custom-placeholder"
                                         placeholder="{{ $selectedCliente ? 'Buscar comprobante' : 'Buscar cliente' }}"
                                         wire:model="{{ $selectedCliente ? 'searchComprobante' : 'searchCliente' }}"
-                                        wire:input="{{ $selectedCliente ? 'buscar_comprobante' : 'buscar_cliente' }}"
+                                        wire:change="{{ $selectedCliente ? 'buscar_comprobante' : 'buscar_cliente' }}"
                                         value="{{ $selectedCliente ? $searchComprobante : $searchCliente }}"
                                         style="border: none; outline: none;"
                                     />
