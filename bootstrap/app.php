@@ -5,6 +5,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\VerifyUserStatus;
 use App\Http\Middleware\CheckPermissionAndStatus;
+use App\Http\Middleware\CheckMenuPermission;
 use Illuminate\Auth\Middleware\Authorize;
 use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use Illuminate\Auth\Middleware\RequirePassword;
@@ -26,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'verifyUserStatus' => VerifyUserStatus::class,
             'ten' => CheckPermissionAndStatus::class,
             'can' => Authorize::class,
+            'canMenu' => CheckMenuPermission::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

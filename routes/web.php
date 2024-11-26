@@ -26,7 +26,7 @@ route::get('login',[LoginController::class ,'login'])->name('login');
 /* ----------------------------- FIN RUTAS DEL LOGIN ------------------------------*/
 
 /* ----------------------------- RUTAS DE CONFIGURACIÓN ---------------------------------*/
-Route::prefix('configuracion')->middleware('auth')->group(function () {
+Route::prefix('configuracion')->middleware(['auth', 'canMenu:configuracion'])->group(function () {
     /* MENÚ */
     route::get('/menus',[ConfigurationController::class ,'menus'])->name('configuracion.menus')->middleware('verifyUserStatus')->middleware('can:menus');
     route::get('/submenu',[ConfigurationController::class ,'submenu'])->name('configuracion.submenu')->middleware('verifyUserStatus')->middleware('can:submenu');
@@ -38,13 +38,13 @@ Route::prefix('configuracion')->middleware('auth')->group(function () {
 
 /* ----------------------------- RUTAS FINALES DE CONFIGURACIÓN ---------------------------------*/
 
-Route::prefix('Gestiontransporte')->middleware('auth')->group(function () {
+Route::prefix('Gestiontransporte')->middleware(['auth', 'canMenu:Gestiontransporte'])->group(function () {
     /* TRANSPORTISTAS */
     route::get('/transportistas',[GestiontransporteController::class ,'transportistas'])->name('Gestiontransporte.transportistas')->middleware('verifyUserStatus')->middleware('can:transportistas');
     route::get('/vehiculos',[GestiontransporteController::class ,'vehiculos'])->name('Gestiontransporte.vehiculos')->middleware('verifyUserStatus')->middleware('can:vehiculos');
 });
 
-Route::prefix('Tarifario')->middleware('auth')->group(function () {
+Route::prefix('Tarifario')->middleware(['auth', 'canMenu:Tarifario'])->group(function () {
     /* FLETES - TARIFARIOS */
     route::get('/fletes',[TarifarioController::class ,'fletes'])->name('Tarifario.fletes')->middleware('verifyUserStatus')->middleware('can:fletes');
     route::get('/tarifas',[TarifarioController::class ,'tarifas'])->name('Tarifario.tarifas')->middleware('verifyUserStatus')->middleware('can:tarifas');
@@ -52,7 +52,8 @@ Route::prefix('Tarifario')->middleware('auth')->group(function () {
 });
 
 
-Route::prefix('Programacioncamion')->middleware('auth')->group(function () {
+Route::prefix('Programacioncamion')->middleware(['auth', 'canMenu:Programacioncamion'])->group(function () {
     /* FLETES - TARIFARIOS */
     route::get('/programar_camion',[ProgramacioncamionController::class ,'programar_camion'])->name('Programacioncamion.programar_camion')->middleware('verifyUserStatus')->middleware('can:programar_camion');
+    route::get('/historial_programación',[ProgramacioncamionController::class ,'historial_programación'])->name('Programacioncamion.historial_programación')->middleware('verifyUserStatus')->middleware('can:historial_programación');
 });
