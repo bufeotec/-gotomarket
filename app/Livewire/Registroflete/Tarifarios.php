@@ -279,7 +279,8 @@ class Tarifarios extends Component
                     session()->flash('error', 'El rango de capacidad se cruza con un registro existente.');
                     return;
                 }
-            } else {
+            }
+            else {
                 if (!Gate::allows('update_tarifario')) {
                     session()->flash('error', 'No tiene permisos para actualizar este registro.');
                     return;

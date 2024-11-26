@@ -101,7 +101,7 @@ class Vehiculo extends Model
             $query = DB::table('vehiculos as v')
                 ->join('tipo_vehiculos as tv', 'tv.id_tipo_vehiculo', '=', 'v.id_tipo_vehiculo')
                 ->join('tarifarios as t', 't.id_tipo_vehiculo', '=', 'tv.id_tipo_vehiculo')
-                ->select('v.id_vehiculo','v.vehiculo_placa','v.vehiculo_capacidad_peso','v.vehiculo_capacidad_volumen','t.tarifa_cap_min','t.tarifa_cap_max','t.tarifa_monto','t.tarifa_estado_aprobacion')
+                ->select('v.id_vehiculo','v.vehiculo_placa','v.vehiculo_capacidad_peso','v.vehiculo_capacidad_volumen','t.tarifa_cap_min','t.tarifa_cap_max','t.tarifa_monto','t.tarifa_estado_aprobacion','t.id_tarifario')
                 ->where('t.tarifa_estado','=', 1)
                 ->where('v.vehiculo_estado','=', 1)
                 ->where('t.id_tipo_servicio','=', $type)
@@ -120,7 +120,7 @@ class Vehiculo extends Model
 
             // Verificar rango de tarifa
 
-            $query->groupBy('v.id_vehiculo','v.vehiculo_placa','v.vehiculo_capacidad_peso','v.vehiculo_capacidad_volumen','t.tarifa_cap_min','t.tarifa_cap_max','t.tarifa_monto','t.tarifa_estado_aprobacion');
+            $query->groupBy('v.id_vehiculo','v.vehiculo_placa','v.vehiculo_capacidad_peso','v.vehiculo_capacidad_volumen','t.tarifa_cap_min','t.tarifa_cap_max','t.tarifa_monto','t.tarifa_estado_aprobacion','t.id_tarifario');
             $result = $query->get();
 
             foreach ($result as $r){
@@ -192,7 +192,7 @@ class Vehiculo extends Model
             $query = DB::table('vehiculos as v')
                 ->join('tipo_vehiculos as tv', 'tv.id_tipo_vehiculo', '=', 'v.id_tipo_vehiculo')
                 ->join('tarifarios as t', 't.id_tipo_vehiculo', '=', 'tv.id_tipo_vehiculo')
-                ->select('v.id_vehiculo','v.vehiculo_placa','v.vehiculo_capacidad_peso','v.vehiculo_capacidad_volumen','t.tarifa_cap_min','t.tarifa_cap_max','t.tarifa_monto','t.tarifa_estado_aprobacion')
+                ->select('v.id_vehiculo','v.vehiculo_placa','v.vehiculo_capacidad_peso','v.vehiculo_capacidad_volumen','t.tarifa_cap_min','t.tarifa_cap_max','t.tarifa_monto','t.tarifa_estado_aprobacion','t.id_tarifario')
                 ->where('t.tarifa_estado','=', 1)
                 ->where('v.vehiculo_estado','=', 1)
                 ->where('t.id_tipo_servicio','=', $type)
@@ -209,7 +209,7 @@ class Vehiculo extends Model
 
             // Verificar rango de tarifa
 
-            $query->groupBy('v.id_vehiculo','v.vehiculo_placa','v.vehiculo_capacidad_peso','v.vehiculo_capacidad_volumen','t.tarifa_cap_min','t.tarifa_cap_max','t.tarifa_monto','t.tarifa_estado_aprobacion');
+            $query->groupBy('v.id_vehiculo','v.vehiculo_placa','v.vehiculo_capacidad_peso','v.vehiculo_capacidad_volumen','t.tarifa_cap_min','t.tarifa_cap_max','t.tarifa_monto','t.tarifa_estado_aprobacion','t.id_tarifario');
             $result = $query->get();
 
             foreach ($result as $r){

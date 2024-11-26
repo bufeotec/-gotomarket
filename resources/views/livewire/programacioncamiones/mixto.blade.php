@@ -212,7 +212,7 @@
                                     <h6>Fecha de entrega</h6>
                                 </div>
                                 <div class="col-lg-12">
-                                    <input type="date" class="form-control" id="despacho_fecha" name="despacho_fecha" wire:model="despacho_fecha" />
+                                    <input type="date" class="form-control" id="programacion_fecha" name="programacion_fecha" wire:model="programacion_fecha" />
                                 </div>
                             </div>
                         </div>

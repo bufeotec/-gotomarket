@@ -258,7 +258,7 @@
                                     <h6>Fecha de entrega</h6>
                                 </div>
                                 <div class="col-lg-12">
-                                    <input type="date" class="form-control" id="despacho_fecha" name="despacho_fecha" wire:model="despacho_fecha" />
+                                    <input type="date" class="form-control" id="programacion_fecha" name="programacion_fecha" wire:model="programacion_fecha" />
                                 </div>
                             </div>
                         </div>
@@ -360,7 +360,7 @@
                                     <h6>Otros S/</h6>
                                 </div>
                                 <div class="col-lg-12">
-                                    <input type="text" class="form-control" id="despacho_otros" name="despacho_otros" wire:model="despacho_otros" onkeyup="validar_numeros(this.id)" />
+                                    <input type="text" class="form-control" id="despacho_gasto_otros" name="despacho_gasto_otros" wire:model="despacho_gasto_otros" onkeyup="validar_numeros(this.id)" />
                                 </div>
                             </div>
                         </div>
@@ -374,7 +374,7 @@
                                     <h6>Mano de obra S/</h6>
                                 </div>
                                 <div class="col-lg-12">
-                                    <input type="text" class="form-control" id="despacho_mano_obra" name="despacho_mano_obra" wire:model="despacho_mano_obra" onkeyup="validar_numeros(this.id)" />
+                                    <input type="text" class="form-control" id="despacho_ayudante" name="despacho_ayudante" wire:model="despacho_ayudante" onkeyup="validar_numeros(this.id)" />
                                 </div>
                             </div>
                         </div>

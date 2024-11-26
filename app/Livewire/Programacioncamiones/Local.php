@@ -3,6 +3,8 @@
 namespace App\Livewire\Programacioncamiones;
 
 use Livewire\Component;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Logs;
 use App\Models\Server;
 use App\Models\Transportista;
@@ -43,6 +45,12 @@ class Local extends Component
     public $programacion_fecha = '';
     public $despacho_ayudante = '';
     public $despacho_gasto_otros = '';
+    public $id_tipo_servicios;
+    public $despacho_peso;
+    public $despacho_volumen;
+    public $despacho_flete;
+    public $id_tarifario;
+    public $id_tarifario_seleccionado = '';
     public function mount(){
         $this->id_transportistas = null;
         $this->selectedVehiculo = null;
@@ -65,16 +73,20 @@ class Local extends Component
             $this->filteredFacturas = [];
         }
     }
+
     public function actualizarVehiculosSugeridos(){
         $this->listar_vehiculos_lo();
         $this->tarifaMontoSeleccionado = null;
+        $this->id_tarifario_seleccionado = null;
         $this->selectedVehiculo = null;
     }
+
     public function seleccionarVehiculo($vehiculoId){
         $vehiculo = collect($this->vehiculosSugeridos)->firstWhere('id_vehiculo', $vehiculoId);
         if ($vehiculo) {
             // Actualiza el monto de la tarifa del vehículo seleccionado
             $this->tarifaMontoSeleccionado = $vehiculo->tarifa_monto;
+            $this->id_tarifario_seleccionado = $vehiculo->id_tarifario;
         }
     }
 
@@ -167,6 +179,7 @@ class Local extends Component
         if (count($this->vehiculosSugeridos) <= 0){
             $this->tarifaMontoSeleccionado = null;
             $this->selectedVehiculo = null;
+            $this->id_tarifario_seleccionado = null;
         }
     }
 
@@ -176,23 +189,48 @@ class Local extends Component
                 'id_tipo_servicios' => 'nullable|integer',
                 'id_transportistas' => 'required|integer',
                 'selectedVehiculo' => 'required|integer',
+                'selectedFacturas' => 'required|array|min:1',
                 'despacho_peso' => 'nullable|numeric',
                 'despacho_volumen' => 'nullable|numeric',
                 'despacho_flete' => 'nullable|numeric',
-                'despacho_ayudante' => 'nullable|numeric',
-                'despacho_gasto_otros' => 'nullable|numeric',
+                'despacho_ayudante' => 'nullable|regex:/^[0-9]+(\.[0-9]+)?$/',
+                'despacho_gasto_otros' => 'nullable|regex:/^[0-9]+(\.[0-9]+)?$/',
             ], [
                 'selectedVehiculo.required' => 'Debes seleccionar un vehículo.',
                 'selectedVehiculo.integer' => 'El vehículo debe ser un número entero.',
 
                 'id_transportistas.required' => 'Debes seleccionar un transportista.',
                 'id_transportistas.integer' => 'El transportista debe ser un número entero.',
+
+                'selectedFacturas.required' => 'Debes seleccionar al menos un comprobante.',
+                'selectedFacturas.array' => 'Los comprobantes deben ser un arreglo.',
+                'selectedFacturas.min' => 'Debes seleccionar al menos un comprobante.',
+
+                'despacho_ayudante.regex' => 'El ayudante debe ser un número válido.',
+                'despacho_gasto_otros.regex' => 'El gasto en otros debe ser un número válido.',
             ]);
+            $contadorError = 0;
             DB::beginTransaction();
+            // Validar duplicidad para las facturas seleccionadas
+            foreach ($this->selectedFacturas as $factura) {
+                $existe = DB::table('despacho_ventas')
+                    ->where('despacho_venta_cftd', $factura['CFTD'])
+                    ->where('despacho_venta_cfnumser', $factura['CFNUMSER'])
+                    ->where('despacho_venta_cfnumdoc', $factura['CFNUMDOC'])
+                    ->exists();
+                if ($existe) {
+                    $contadorError++;
+                }
+            }
+            if ($contadorError > 0) {
+                session()->flash('error', "Se encontraron comprobantes duplicadas. Por favor, verifica.");
+                DB::rollBack();
+                return;
+            }
             // Guardar en la tabla Programaciones
             $programacion = new Programacion();
             $programacion->id_users = Auth::id();
-            $programacion->programacion_fecha = $this->despacho_fecha;
+            $programacion->programacion_fecha = $this->programacion_fecha;
             $programacion->programacion_estado = 1;
             $programacion->programacion_microtime = microtime(true);
             if (!$programacion->save()) {
@@ -200,33 +238,27 @@ class Local extends Component
                 session()->flash('error', 'Ocurrió un error al guardar la programación.');
                 return;
             }
-            // Tipo de servicio 1
+            // Guardar el despacho
             $despacho = new Despacho();
             $despacho->id_users = Auth::id();
             $despacho->id_programacion = $programacion->id_programacion;
             $despacho->id_transportistas = $this->id_transportistas;
             $despacho->id_tipo_servicios = 1;
             $despacho->id_vehiculo = $this->selectedVehiculo;
+            $despacho->id_tarifario = $this->id_tarifario_seleccionado;
             $despacho->despacho_peso = $this->pesoTotal;
             $despacho->despacho_volumen = $this->volumenTotal;
             $despacho->despacho_flete = $this->tarifaMontoSeleccionado;
             $despacho->despacho_ayudante = $this->despacho_ayudante ?: null;
             $despacho->despacho_gasto_otros = $this->despacho_gasto_otros ?: null;
-            // Calcular despacho_costo_total
-            $despacho_costo_total = $this->tarifaMontoSeleccionado;
-            if (!empty($this->despacho_ayudante)) {
-                $despacho_costo_total += $this->despacho_ayudante;
-            }
-            if (!empty($this->despacho_gasto_otros)) {
-                $despacho_costo_total += $this->despacho_gasto_otros;
-            }
-            $despacho->despacho_costo_total = $despacho_costo_total;
-            // Otros datos
+            $despacho->despacho_costo_total = $this->tarifaMontoSeleccionado +
+                ($this->despacho_ayudante ?: 0) + ($this->despacho_gasto_otros ?: 0);
             $despacho->despacho_estado = 1;
             $despacho->despacho_microtime = microtime(true);
             if (!$despacho->save()) {
                 DB::rollBack();
-                session()->flash('error', 'Ocurrió un error al guardar el registro.');
+                session()->flash('error', 'Ocurrió un error al guardar el despacho.');
+                return;
             }
             // Guardar facturas seleccionadas en despacho_ventas
             foreach ($this->selectedFacturas as $factura) {
@@ -241,12 +273,13 @@ class Local extends Component
                 $despachoVenta->despacho_detalle_microtime = microtime(true);
                 if (!$despachoVenta->save()) {
                     DB::rollBack();
-                    session()->flash('error', 'Ocurrió un error al guardar el registro.');
+                    session()->flash('error', 'Ocurrió un error al guardar las facturas.');
+                    return;
                 }
             }
             DB::commit();
             session()->flash('success', 'Registro guardado correctamente.');
-//            $this->reiniciar_campos();
+            $this->reiniciar_campos();
         } catch (\Illuminate\Validation\ValidationException $e) {
             $this->setErrorBag($e->validator->errors());
         } catch (\Exception $e) {
@@ -256,6 +289,25 @@ class Local extends Component
         }
     }
 
-
-
+    public function reiniciar_campos(){
+        $this->searchFactura = "";
+        $this->filteredFacturas = [];
+        $this->id_transportistas = "";
+        $this->vehiculosSugeridos = [];
+        $this->selectedVehiculo = "";
+        $this->pesoTotal = 0;
+        $this->volumenTotal = 0;
+        $this->selectedFacturas = [];
+        $this->detalle_vehiculo = [];
+        $this->tarifaMontoSeleccionado = 0;
+        $this->id_tarifario_seleccionado = '';
+        $this->despacho_ayudante = "";
+        $this->despacho_gasto_otros = "";
+        $this->id_tipo_servicios = null;
+        $this->despacho_peso = null;
+        $this->despacho_volumen = null;
+        $this->despacho_flete = null;
+        $this->id_tarifario = null;
+        $this->programacion_fecha = now()->format('Y-m-d');
+    }
 }
