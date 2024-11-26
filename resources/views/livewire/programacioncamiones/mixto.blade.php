@@ -89,17 +89,6 @@
                         <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
                             <h6>COMPROBANTES Y COMPROBANTES DE CLIENTE</h6>
                         </div>
-                        <div class="col-lg-12 mb-3">
-                            <div class="row justify-content-end">
-                                <div class="col-lg-8 col-md-8 col-sm-12">
-                                    <select class="form-select" wire:model="tipoServicioSeleccionado">
-                                        @foreach($tipo_servicio_local_provincial as $tipo)
-                                            <option value="{{ $tipo->id_tipo_servicios }}">{{ $tipo->tipo_servicio_concepto }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
                         <div class="col-lg-12 col-md-12 col-sm-12">
                             <div class="position-relative mb-3">
                                 <input type="text" class="form-control bg-dark text-white rounded-pill ps-5 custom-placeholder"
@@ -117,7 +106,7 @@
                                                 $CFTD = $factura->CFTD;
                                                 $CFNUMSER = $factura->CFNUMSER;
                                                 $CFNUMDOC = $factura->CFNUMDOC;
-                                                $comprobanteExiste = collect($this->selectedFacturas)->first(function ($facturaVa) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
+                                                $comprobanteExiste = collect($this->selectedFacturasLocal)->first(function ($facturaVa) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
                                                     return $facturaVa['CFTD'] === $CFTD
                                                         && $facturaVa['CFNUMSER'] === $CFNUMSER
                                                         && $facturaVa['CFNUMDOC'] === $CFNUMDOC;
@@ -359,6 +348,7 @@
                                         <table class="table">
                                             <thead>
                                             <tr>
+                                                <th>Check</th>
                                                 <th>Serie</th>
                                                 <th>Guía</th>
                                                 <th>Nombre Cliente</th>
@@ -370,6 +360,12 @@
                                             <tbody>
                                             @foreach($selectedFacturasLocal as $factura)
                                                 <tr>
+                                                    <td>
+                                                        <input type="checkbox"
+                                                               class="form-check-input"
+                                                               wire:model.defer="selectedFacturasLocal.{{ $loop->index }}.isChecked"
+                                                               wire:click="actualizarFactura('{{ $factura['CFTD'] }}', '{{ $factura['CFNUMSER'] }}', '{{ $factura['CFNUMDOC'] }}', $event.target.checked)" />
+                                                    </td>
                                                     <td>{{ $factura['CFNUMSER'] }} - {{ $factura['CFNUMDOC'] }}</td>
                                                     <td>{{ $factura['guia'] }}</td>
                                                     <td>{{ $factura['CNOMCLI'] }}</td>
@@ -410,10 +406,10 @@
                                             </tr>
                                             </thead>
                                             <tbody>
-                                            @foreach($selectedFacturasProvincial as $cliente => $facturas) <!-- Itera sobre cada cliente -->
+                                            @foreach($selectedFacturasProvincial as $cliente => $facturas)
                                                 <tr>
                                                     <td colspan="2">
-                                                        <h6 class="mb-0">{{ $cliente }}</h6> <!-- Nombre del cliente -->
+                                                        <h6 class="mb-0">{{ $cliente }}</h6>
                                                     </td>
                                                     <td colspan="5">
                                                         <label for="transportista_{{ $cliente }}" class="form-label mb-1">Transportista</label>
@@ -426,7 +422,7 @@
                                                         </select>
                                                     </td>
                                                 </tr>
-                                                @foreach($facturas as $factura) <!-- Ahora itera sobre las facturas de cada cliente -->
+                                                @foreach($facturas as $factura)
                                                     <tr>
                                                         <td>{{ $factura['CFNUMSER'] }} - {{ $factura['CFNUMDOC'] }}</td>
                                                         <td>{{ $factura['guia'] }}</td>
@@ -434,7 +430,8 @@
                                                         <td>{{ $factura['total_kg'] }} kg</td>
                                                         <td>{{ $factura['total_volumen'] }} cm³</td>
                                                         <td>
-                                                            <a  wire:click="eliminarFacturaSeleccionada('{{ $factura['CFTD'] }}', '{{ $factura['CFNUMSER'] }}', '{{ $factura['CFNUMDOC'] }}')" class="btn btn-danger btn-sm text-white">
+                                                            <a wire:click="eliminarFacturaProvincial('{{ $factura['CFTD'] }}', '{{ $factura['CFNUMSER'] }}', '{{ $factura['CFNUMDOC'] }}')"
+                                                               class="btn btn-danger btn-sm text-white">
                                                                 <i class="fas fa-trash-alt"></i>
                                                             </a>
                                                         </td>

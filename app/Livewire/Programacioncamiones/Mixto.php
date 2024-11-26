@@ -82,62 +82,122 @@ class Mixto extends Component
     }
 
     public function seleccionarFactura($CFTD, $CFNUMSER, $CFNUMDOC){
-        $comprobanteId = "$CFTD-$CFNUMSER-$CFNUMDOC";
-
-        // Busca la factura seleccionada en la lista filtrada
-        $factura = collect($this->filteredFacturasYClientes)->first(function ($f) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
-            return $f->CFTD === $CFTD && $f->CFNUMSER === $CFNUMSER && $f->CFNUMDOC === $CFNUMDOC;
+        // Validar que la factura no exista en el array selectedFacturas
+        $comprobanteExiste = collect($this->selectedFacturasLocal)->first(function ($factura) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
+            return $factura['CFTD'] === $CFTD
+                && $factura['CFNUMSER'] === $CFNUMSER
+                && $factura['CFNUMDOC'] === $CFNUMDOC;
         });
 
-        if (!$factura) {
-            return; // Si no se encuentra, no hace nada
+        if ($comprobanteExiste) {
+            // Mostrar un mensaje de error si la factura ya fue agregada
+            session()->flash('error', 'Este comprobante ya fue agregado.');
+            return;
         }
+
+        // Buscar la factura en el array filteredFacturas
+        $factura = $this->filteredFacturasYClientes->first(function ($f) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
+            return $f->CFTD === $CFTD
+                && $f->CFNUMSER === $CFNUMSER
+                && $f->CFNUMDOC === $CFNUMDOC;
+        });
+
         if ($factura->total_kg <= 0 || $factura->total_volumen <= 0){
             session()->flash('error', 'El peso o el volumen deben ser mayores a 0.');
             return;
         }
-        // Sumar peso y volumen al seleccionar
+        // Agregar la factura seleccionada y actualizar el peso y volumen total
+        $this->selectedFacturasLocal[] = [
+            'CFTD' => $CFTD,
+            'CFNUMSER' => $CFNUMSER,
+            'CFNUMDOC' => $CFNUMDOC,
+            'total_kg' => $factura->total_kg,
+            'total_volumen' => $factura->total_volumen,
+            'CNOMCLI' => $factura->CNOMCLI,
+            'CFIMPORTE' => $factura->CFIMPORTE,
+            'CFCODMON' => $factura->CFCODMON,
+            'guia' => $factura->CFTEXGUIA,
+            'isChecked' => false,
+        ];
         $this->pesoTotal += $factura->total_kg;
         $this->volumenTotal += $factura->total_volumen;
 
-        // Agregar factura a la selección según el tipo de servicio
-        if ($this->tipoServicioSeleccionado == 1) { // Local
-
-            $this->selectedFacturasLocal[$comprobanteId] = [
-                'CFTD' => $factura->CFTD,
-                'CFNUMSER' => $factura->CFNUMSER,
-                'CFNUMDOC' => $factura->CFNUMDOC,
-                'CNOMCLI' => $factura->CNOMCLI,
-                'total_kg' => $factura->total_kg,
-                'total_volumen' => $factura->total_volumen,
-                'guia' => $factura->CFTEXGUIA,
-            ];
-
-        } elseif ($this->tipoServicioSeleccionado == 2) { // Provincial
-            $cliente = $factura->CNOMCLI;
-
-            if (!isset($this->selectedFacturasProvincial[$cliente])) {
-                $this->selectedFacturasProvincial[$cliente] = [];
-            }
-
-            $this->selectedFacturasProvincial[$cliente][$comprobanteId] = [
-                'CFTD' => $factura->CFTD,
-                'CFNUMSER' => $factura->CFNUMSER,
-                'CFNUMDOC' => $factura->CFNUMDOC,
-                'CNOMCLI' => $factura->CNOMCLI,
-                'total_kg' => $factura->total_kg,
-                'total_volumen' => $factura->total_volumen,
-                'guia' => $factura->CFTEXGUIA,
-            ];
-        }
-
-        // Eliminar factura de las facturas filtradas
-        $this->filteredFacturasYClientes = $this->filteredFacturasYClientes->filter(function ($f) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
-            return !($f->CFTD === $CFTD && $f->CFNUMSER === $CFNUMSER && $f->CFNUMDOC === $CFNUMDOC);
+        // Eliminar la factura de la lista de facturas filtradas
+        $this->filteredFacturasYClientes = $this->filteredFacturasYClientes->filter(function ($f) use ($CFNUMDOC) {
+            return $f->CFNUMDOC !== $CFNUMDOC;
         });
-
-        // Actualizar vehículos sugeridos
+        // Actualizar lista de vehículos sugeridos
         $this->listar_vehiculos_lo();
+    }
+
+
+    public function actualizarFactura($CFTD, $CFNUMSER, $CFNUMDOC, $isChecked){
+        if ($isChecked) {
+            $this->duplicar_comprobante($CFTD, $CFNUMSER, $CFNUMDOC);
+        } else {
+            $this->eliminarFacturaProvincial($CFTD, $CFNUMSER, $CFNUMDOC);
+        }
+    }
+
+    public function duplicar_comprobante($CFTD, $CFNUMSER, $CFNUMDOC){
+        // Buscar la factura en la tabla Local
+        $factura = collect($this->selectedFacturasLocal)->first(function ($f) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
+            return $f['CFTD'] === $CFTD &&
+                $f['CFNUMSER'] === $CFNUMSER &&
+                $f['CFNUMDOC'] === $CFNUMDOC;
+        });
+        if (!$factura) {
+            session()->flash('error', 'Comprobante no encontrado en la tabla Local.');
+            return;
+        }
+        // Verificar si ya existe en la tabla Provincial
+        $existeEnProvincial = collect($this->selectedFacturasProvincial[$factura['CNOMCLI']] ?? [])->contains(function ($f) use ($factura) {
+            return $f['CFTD'] === $factura['CFTD'] &&
+                $f['CFNUMSER'] === $factura['CFNUMSER'] &&
+                $f['CFNUMDOC'] === $factura['CFNUMDOC'];
+        });
+        if ($existeEnProvincial) {
+            session()->flash('error', 'El comprobante ya está duplicado en la tabla Provincial.');
+            return;
+        }
+        // Agregar la factura a la tabla Provincial agrupada por cliente
+        $this->selectedFacturasProvincial[$factura['CNOMCLI']][] = [
+            'CFTD' => $factura['CFTD'],
+            'CFNUMSER' => $factura['CFNUMSER'],
+            'CFNUMDOC' => $factura['CFNUMDOC'],
+            'total_kg' => $factura['total_kg'],
+            'total_volumen' => $factura['total_volumen'],
+            'CNOMCLI' => $factura['CNOMCLI'],
+            'CFIMPORTE' => $factura['CFIMPORTE'],
+            'CFCODMON' => $factura['CFCODMON'],
+            'guia' => $factura['guia'],
+        ];
+    }
+
+    public function eliminarFacturaProvincial($CFTD, $CFNUMSER, $CFNUMDOC){
+        foreach ($this->selectedFacturasProvincial as $cliente => $facturas) {
+            $this->selectedFacturasProvincial[$cliente] = collect($facturas)
+                ->filter(function ($factura) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
+                    return !($factura['CFTD'] === $CFTD &&
+                        $factura['CFNUMSER'] === $CFNUMSER &&
+                        $factura['CFNUMDOC'] === $CFNUMDOC);
+                })
+                ->values()
+                ->toArray();
+            // Elimina el cliente si ya no tiene facturas
+            if (empty($this->selectedFacturasProvincial[$cliente])) {
+                unset($this->selectedFacturasProvincial[$cliente]);
+            }
+        }
+        // Actualizar el estado del checkbox en la tabla Local
+        foreach ($this->selectedFacturasLocal as &$factura) {
+            if ($factura['CFTD'] === $CFTD &&
+                $factura['CFNUMSER'] === $CFNUMSER &&
+                $factura['CFNUMDOC'] === $CFNUMDOC) {
+                $factura['isChecked'] = false;
+                break;
+            }
+        }
     }
 
     public function eliminarFacturaSeleccionada($CFTD, $CFNUMSER, $CFNUMDOC){
@@ -150,7 +210,6 @@ class Mixto extends Component
             $this->volumenTotal -= $factura['total_volumen'];
             unset($this->selectedFacturasLocal[$comprobanteId]);
         }
-
         // Eliminar de la sección Provincial
         foreach ($this->selectedFacturasProvincial as $cliente => $facturas) {
             if (isset($facturas[$comprobanteId])) {
@@ -301,7 +360,7 @@ class Mixto extends Component
                 $despacho = new Despacho();
                 $despacho->id_users = Auth::id();
                 $despacho->id_programacion = $programacion->id_programacion;
-                $despacho->id_transportistas = $this->transportistasPorCliente[$cliente]; // Transportista seleccionado
+                $despacho->id_transportistas = $this->transportistasPorCliente[$cliente];
                 $despacho->id_tipo_servicios = 3;
                 $despacho->id_vehiculo = $this->selectedVehiculo;
                 $despacho->id_tarifario = $this->id_tarifario_seleccionado;
@@ -347,7 +406,7 @@ class Mixto extends Component
             $despacho = new Despacho();
             $despacho->id_users = Auth::id();
             $despacho->id_programacion = $programacion->id_programacion;
-            $despacho->id_transportistas = $this->id_transportistas; // Transportista seleccionado
+            $despacho->id_transportistas = $this->id_transportistas;
             $despacho->id_tipo_servicios = 3;
             $despacho->id_vehiculo = $this->selectedVehiculo;
             $despacho->id_tarifario = $this->id_tarifario_seleccionado;
