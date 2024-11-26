@@ -57,6 +57,8 @@ class Mixto extends Component
     public $despacho_flete;
     public $id_tarifario;
     public $id_tarifario_seleccionado = '';
+    public $comprobantesSeleccionados = [];
+
 
     public function mount(){
         $this->id_transportistas = null;
@@ -201,27 +203,11 @@ class Mixto extends Component
     }
 
     public function eliminarFacturaSeleccionada($CFTD, $CFNUMSER, $CFNUMDOC){
-        $comprobanteId = "$CFTD-$CFNUMSER-$CFNUMDOC";
-
-        // Eliminar factura de la selección según el tipo de servicio
-        if (isset($this->selectedFacturasLocal[$comprobanteId])) {
-            $factura = $this->selectedFacturasLocal[$comprobanteId];
-            $this->pesoTotal -= $factura['total_kg'];
-            $this->volumenTotal -= $factura['total_volumen'];
-            unset($this->selectedFacturasLocal[$comprobanteId]);
-        }
-        // Eliminar de la sección Provincial
-        foreach ($this->selectedFacturasProvincial as $cliente => $facturas) {
-            if (isset($facturas[$comprobanteId])) {
-                $factura = $facturas[$comprobanteId];
+        foreach ($this->selectedFacturasLocal as $index => $factura) {
+            if ($factura['CFTD'] == $CFTD && $factura['CFNUMSER'] == $CFNUMSER && $factura['CFNUMDOC'] == $CFNUMDOC) {
                 $this->pesoTotal -= $factura['total_kg'];
                 $this->volumenTotal -= $factura['total_volumen'];
-                unset($this->selectedFacturasProvincial[$cliente][$comprobanteId]);
-
-                // Eliminar cliente si no tiene más facturas seleccionadas
-                if (empty($this->selectedFacturasProvincial[$cliente])) {
-                    unset($this->selectedFacturasProvincial[$cliente]);
-                }
+                unset($this->selectedFacturasLocal[$index]);
                 break;
             }
         }
@@ -245,17 +231,27 @@ class Mixto extends Component
         $this->id_tarifario_seleccionado = null;
     }
 
-    public function seleccionarVehiculo($vehiculoId){
-        $vehiculo = collect($this->vehiculosSugeridos)->firstWhere('id_vehiculo', $vehiculoId);
+    public function seleccionarVehiculo($vehiculoId,$id_tarifa){
+        $vehiculo = collect($this->vehiculosSugeridos)->first(function ($vehiculo) use ($vehiculoId, $id_tarifa) {
+            return $vehiculo->id_vehiculo == $vehiculoId && $vehiculo->id_tarifario == $id_tarifa;
+        });
+//        $vehiculo = collect($this->vehiculosSugeridos)->firstWhere('id_vehiculo', $vehiculoId);
         if ($vehiculo) {
             // Actualiza el monto de la tarifa del vehículo seleccionado
             $this->tarifaMontoSeleccionado = $vehiculo->tarifa_monto;
-            $this->id_tarifario_seleccionado = $vehiculo->id_tarifario;
+            $this->id_tarifario_seleccionado = $id_tarifa;
+            $this->selectedVehiculo = $vehiculoId;
         }
     }
 
     public function modal_por_vehiculo($id_ve){
         $this->detalle_vehiculo =  $this->vehiculo->listar_informacion_vehiculo($id_ve);
+    }
+
+    public function abrirModalComprobantes($cliente){
+        if (isset($this->selectedFacturasProvincial[$cliente])) {
+            $this->comprobantesSeleccionados = $this->selectedFacturasProvincial[$cliente];
+        }
     }
 
     public function guardarDespachos(){
@@ -291,18 +287,8 @@ class Mixto extends Component
                         DB::rollBack();
                         return;
                     }
-
-                    $existe = DB::table('despacho_ventas')
-                        ->where('despacho_venta_cftd', $factura['CFTD'])
-                        ->where('despacho_venta_cfnumser', $factura['CFNUMSER'])
-                        ->where('despacho_venta_cfnumdoc', $factura['CFNUMDOC'])
-                        ->exists();
-                    if ($existe) {
-                        $duplicados++;
-                    }
                 }
             }
-
             // Validar facturas locales
             foreach ($this->selectedFacturasLocal ?? [] as $comprobanteId => $factura) {
                 if (!isset($factura['CFTD'], $factura['CFNUMSER'], $factura['CFNUMDOC'])) {
@@ -310,7 +296,6 @@ class Mixto extends Component
                     DB::rollBack();
                     return;
                 }
-
                 $existe = DB::table('despacho_ventas')
                     ->where('despacho_venta_cftd', $factura['CFTD'])
                     ->where('despacho_venta_cfnumser', $factura['CFNUMSER'])
@@ -320,13 +305,18 @@ class Mixto extends Component
                     $duplicados++;
                 }
             }
-
             if ($duplicados > 0) {
                 session()->flash('error', "Se encontraron comprobantes duplicados.");
                 DB::rollBack();
                 return;
             }
+            // Verificar si hay al menos un comprobante provincial seleccionado
+            $comprobantesProvinciales = $this->selectedFacturasProvincial;
 
+            if (empty($comprobantesProvinciales)) {
+                session()->flash('error', 'Debe seleccionar al menos un comprobante provincial.');
+                return;
+            }
             // Guardar en la tabla Programaciones
             $programacion = new Programacion();
             $programacion->id_users = Auth::id();
@@ -336,13 +326,6 @@ class Mixto extends Component
             if (!$programacion->save()) {
                 DB::rollBack();
                 session()->flash('error', 'Ocurrió un error al guardar la programación.');
-                return;
-            }
-            // Verificar si hay al menos un comprobante provincial seleccionado
-            $comprobantesProvinciales = $this->selectedFacturasProvincial;
-
-            if (empty($comprobantesProvinciales)) {
-                session()->flash('error', 'Debe seleccionar al menos un comprobante provincial.');
                 return;
             }
             // Crear despachos para comprobantes provinciales agrupados por cliente
@@ -361,7 +344,7 @@ class Mixto extends Component
                 $despacho->id_users = Auth::id();
                 $despacho->id_programacion = $programacion->id_programacion;
                 $despacho->id_transportistas = $this->transportistasPorCliente[$cliente];
-                $despacho->id_tipo_servicios = 3;
+                $despacho->id_tipo_servicios = 2;
                 $despacho->id_vehiculo = $this->selectedVehiculo;
                 $despacho->id_tarifario = $this->id_tarifario_seleccionado;
                 $despacho->despacho_peso = array_sum(array_column($facturasCliente, 'total_kg'));
@@ -407,7 +390,7 @@ class Mixto extends Component
             $despacho->id_users = Auth::id();
             $despacho->id_programacion = $programacion->id_programacion;
             $despacho->id_transportistas = $this->id_transportistas;
-            $despacho->id_tipo_servicios = 3;
+            $despacho->id_tipo_servicios = 1;
             $despacho->id_vehiculo = $this->selectedVehiculo;
             $despacho->id_tarifario = $this->id_tarifario_seleccionado;
             $despacho->despacho_peso = array_sum(array_column($comprobantesLocales, 'total_kg'));

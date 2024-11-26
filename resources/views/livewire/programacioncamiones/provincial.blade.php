@@ -284,28 +284,45 @@
                             <div class="row">
                                 <div class="col-lg-12">
                                     <div class="vehiculos-scroll-container-horizontal">
-                                        @foreach($tarifariosSugeridos as $tari) {{-- ESTO ES DE TARIFARIO.--}}
-                                            <label class="circulo-vehiculo-container m-2 {{ $tari->tarifa_estado_aprobacion == 0 ? 'no-aprobado' : '' }}">
+                                        @php $conteoGen = 1; @endphp
+                                        @foreach($tarifariosSugeridos as $index => $tari)
+                                            <div class="position-relative">
                                                 @if($tari->tarifa_estado_aprobacion == 1)
-                                                    <input type="radio" name="vehiculo" class="vehiculo-radio d-none" value="{{ $tari->id_tarifario }}" wire:model="selectedTarifario" wire:click="seleccionarTarifario({{ $tari->id_tarifario }})" />
+                                                    <input type="radio" name="vehiculo" id="id_check_vehiculo_{{ $tari->id_tarifario}}_{{$conteoGen}}" class="inputCheckRadio" value="{{ $tari->id_tarifario }}"  wire:click="seleccionarTarifario({{ $tari->id_tarifario }})" />
+                                                    <label for="id_check_vehiculo_{{ $tari->id_tarifario}}_{{$conteoGen}}" class="labelCheckRadios">
+                                                        <div class="container_check_radios" >
+                                                            <div class="cRadioBtn">
+                                                                <div class="overlay"></div>
+                                                                <div class="drops xsDrop"></div>
+                                                                <div class="drops mdDrop"></div>
+                                                                <div class="drops lgDrop"></div>
+                                                            </div>
+                                                        </div>
+                                                    </label>
+                                                @else
+                                                    <label class="labelCheckRadios">
+                                                        <div class="container_check_radios" >
+                                                            <div class="cRadioBtnNo">
+                                                                <i class="fa-solid fa-exclamation"></i>
+                                                            </div>
+                                                        </div>
+                                                    </label>
                                                 @endif
 
-                                                <!-- Progreso Circular usando SVG -->
-                                                <svg class="progreso-circular" viewBox="0 0 36 36">
-                                                    <path class="progreso-circular-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                                    <path class="progreso-circular-fg"
-                                                          stroke-dasharray="{{ $tari->capacidad_usada }}, 100"
-                                                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                                          style="stroke: {{$tari->capacidad_usada <= 25 ? 'red' :
+                                                    <label class="circulo-vehiculo-container m-2 {{ $tari->tarifa_estado_aprobacion == 0 ? 'no-aprobado' : '' }}" for="id_check_vehiculo_{{ $tari->id_tarifario}}_{{$conteoGen}}">
+                                                        <!-- Progreso Circular usando SVG -->
+                                                        <svg class="progreso-circular" viewBox="0 0 36 36">
+                                                            <path class="progreso-circular-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                                            <path class="progreso-circular-fg"
+                                                                  stroke-dasharray="{{ $tari->capacidad_usada }}, 100"
+                                                                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                                                  style="stroke: {{$tari->capacidad_usada <= 25 ? 'red' :
                                                                     ($tari->capacidad_usada <= 50 ? 'orange' :
                                                                     ($tari->capacidad_usada <= 75 ? 'yellow' : 'green'))
                                                                 }};" />
-                                                </svg>
-                                                <div class="circulo-vehiculo">
-{{--                                                    <div class="placa-container">--}}
-{{--                                                        <span class="vehiculo-placa">{{ $tari->vehiculo_placa }}</span>--}}
-{{--                                                    </div>--}}
-                                                    <div class="tarifa-container" style="margin-top: 20%;">
+                                                        </svg>
+                                                        <div class="circulo-vehiculo">
+                                                            <div class="tarifa-container" style="margin-top: 20%;">
                                                         <span class="tarifa-monto">
                                                             @php
                                                                 $tarifa = number_format($tari->tarifa_monto, 2, '.', ',');
@@ -313,8 +330,8 @@
                                                             @endphp
                                                             S/ {{ $tarifa }}
                                                         </span>
-                                                    </div>
-                                                    <div class="peso-container">
+                                                            </div>
+                                                            <div class="peso-container">
                                                         <span class="capacidad-peso">
                                                             @php
                                                                 $pesovehiculoMin = number_format($tari->tarifa_cap_min, 2, '.', ',');
@@ -324,26 +341,22 @@
                                                             @endphp
                                                             {{$pesovehiculoMin}} {{$tari->id_medida == 9 ? 'cm³' : 'kg' }} - {{ $pesovehiculo }} {{$tari->id_medida == 9 ? 'cm³' : 'kg' }}
                                                         </span>
-                                                    </div>
-                                                    <div class="boton-container">
-                                                        <a href="#" class="btn-ver" data-bs-toggle="modal" data-bs-target="#modalVehiculo" wire:click="modal_detalle_tarifario({{ $tari->id_tarifario }})">
-                                                            <i class="fas fa-eye"></i>
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                                <div class="estado-circulo">
-                                                    <i class="fa-solid fa-circle-check check-icon"></i>
-                                                    <i class="fas fa-exclamation-circle warning-icon"></i>
-                                                </div>
-                                            </label>
+                                                            </div>
+                                                            <div class="boton-container">
+                                                                <a href="#" class="btn-ver" data-bs-toggle="modal" data-bs-target="#modalVehiculo" wire:click="modal_detalle_tarifario({{ $tari->id_tarifario }})">
+                                                                    <i class="fas fa-eye"></i>
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    </label>
+                                            </div>
+                                            @php $conteoGen++; @endphp
                                         @endforeach
                                     </div>
                                 </div>
-                                <div class="col-lg-12 col-md-12 col-sm-12">
-                                    @error('selectedTarifario')
-                                        <span class="message-error">{{ $message }}</span>
-                                    @enderror
-                                </div>
+                                @error('selectedTarifario')
+                                <span class="message-error">{{ $message }}</span>
+                                @enderror
                             </div>
                         </div>
                     </div>
@@ -672,8 +685,8 @@
         }
         .circulo-vehiculo-container {
             position: relative;
-            width: 140px;
-            height: 140px;
+            width: 170px;
+            height: 170px;
             display: flex;
             align-items: center;
             justify-content: center;

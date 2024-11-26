@@ -137,7 +137,7 @@ class Provincial extends Component
         $this->id_distrito  = "";
         $this->pesoTotal  = "";
         $this->volumenTotal  = "";
-
+        $this->tarifariosSugeridos = [];
     }
 
     public function buscar_comprobante() {
@@ -256,10 +256,13 @@ class Provincial extends Component
     }
 
     public function seleccionarTarifario($id){
-        $vehiculo = collect($this->tarifariosSugeridos)->firstWhere('id_tarifario', $id);
+        $vehiculo = collect($this->tarifariosSugeridos)->first(function ($vehiculo) use ($id){
+            return $vehiculo->id_tarifario == $id;
+        });
         if ($vehiculo) {
             // Actualiza el monto de la tarifa del vehículo seleccionado
             $this->tarifaMontoSeleccionado = $vehiculo->tarifa_monto;
+            $this->selectedTarifario = $id;
         }
     }
     public function listar_tarifarios_su(){
