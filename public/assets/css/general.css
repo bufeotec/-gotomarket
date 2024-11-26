@@ -339,3 +339,137 @@
 .span_vehiculo {
     font-size: 1rem;
 }
+
+/* CÓDIGO NUEVO PARA LOS CHECK RADIOS EN PROGRAMACIÓN DE CAMIONES*/
+
+.inputCheckRadio {
+    display: none;
+}
+
+.labelCheckRadios {
+    /*display : flex;*/
+    /*padding :10px;*/
+    gap :2em;
+    align-items : center
+}
+
+.container_check_radios {
+    width :30px;
+    aspect-ratio : 1;
+    overflow : hidden;
+    border-radius : 50%;
+    /*box-shadow : 2px 5px 5px rgba(0,0,0,0.2);*/
+}
+
+.cRadioBtn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: #fff;
+    position: relative;
+    border: solid 5px #d4d7eb;
+    box-sizing: border-box;
+    transition: all 0.1s ease-in;
+    cursor: pointer;
+}
+
+.cRadioBtn:hover {
+    border: solid 8px var(--primary-color-goto);
+}
+
+.overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--secondary);
+}
+
+.inputCheckRadio:checked + .labelCheckRadios > .container_check_radios > .cRadioBtn > .overlay {
+    background: #fff;
+    animation: shrink 0.3s ease-in-out forwards;
+}
+
+.inputCheckRadio:checked + .labelCheckRadios > .container_check_radios  > .cRadioBtn {
+    background: var(--primary-color-goto);
+    border-color: var(--primary-color-goto);
+}
+
+.drops {
+    position: absolute;
+    background: #fff;
+    top: -100%;
+    left: 50%;
+    transform: translate(-50%);
+    border-radius: 50%;
+    aspect-ratio: 1;
+}
+
+.lgDrop {
+    width: 50%;
+}
+
+.xsDrop {
+    width: 20%;
+}
+
+.mdDrop {
+    width: 30%;
+}
+
+.inputCheckRadio:checked + .labelCheckRadios > .container_check_radios  > .cRadioBtn > .lgDrop {
+    animation: drop 0.5s ease-in-out forwards;
+}
+
+.inputCheckRadio:checked + .labelCheckRadios > .container_check_radios  > .cRadioBtn > .mdDrop {
+    animation: drop 0.8s ease-in forwards;
+}
+
+.inputCheckRadio:checked + .labelCheckRadios > .container_check_radios  > .cRadioBtn > .xsDrop {
+    animation: drop 0.9s linear forwards;
+}
+
+@keyframes drop {
+    0% {
+        top: -100%;
+    }
+    50% {
+        top: -100%;
+    }
+    75% {
+        top: 10%;
+    }
+    100% {
+        top: 25%;
+    }
+}
+
+@keyframes shrink {
+    0% {
+        width: 100%;
+    }
+    100% {
+        width: 0px;
+    }
+}
+
+.cRadioBtnNo{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: #fff;
+    position: relative;
+    border: solid 5px red;
+    box-sizing: border-box;
+    transition: all 0.1s ease-in;
+    cursor: not-allowed;
+}

@@ -223,60 +223,86 @@
                         <div class="row">
                             <div class="col-lg-12">
                                 <div class="vehiculos-scroll-container-horizontal">
-                                    @foreach($vehiculosSugeridos as $vehiculo)
-                                        <label class="circulo-vehiculo-container m-2 {{ $vehiculo->tarifa_estado_aprobacion == 0 ? 'no-aprobado' : '' }}">
+                                    @php $conteoGen = 1; @endphp
+                                    @foreach($vehiculosSugeridos as $index => $vehiculo)
+                                        <div class="position-relative">
                                             @if($vehiculo->tarifa_estado_aprobacion == 1)
-                                                <input type="radio" name="vehiculo" class="vehiculo-radio d-none" value="{{ $vehiculo->id_vehiculo }}" wire:model="selectedVehiculo" wire:click="seleccionarVehiculo({{ $vehiculo->id_vehiculo }})" />
+                                                <input type="radio"  name="vehiculo" id="id_check_vehiculo_{{ $vehiculo->id_vehiculo }}_{{ $vehiculo->id_tarifario}}_{{$conteoGen}}" class="inputCheckRadio" value="{{ $vehiculo->id_vehiculo }}-{{ $vehiculo->id_tarifario }}"  wire:click="seleccionarVehiculo({{ $vehiculo->id_vehiculo }},{{ $vehiculo->id_tarifario }})" />
+                                                <label for="id_check_vehiculo_{{ $vehiculo->id_vehiculo }}_{{ $vehiculo->id_tarifario}}_{{$conteoGen}}" class="labelCheckRadios">
+                                                    <div class="container_check_radios" >
+                                                        <div class="cRadioBtn">
+                                                            <div class="overlay"></div>
+                                                            <div class="drops xsDrop"></div>
+                                                            <div class="drops mdDrop"></div>
+                                                            <div class="drops lgDrop"></div>
+                                                        </div>
+                                                    </div>
+                                                </label>
+                                            @else
+                                                <label class="labelCheckRadios">
+                                                    <div class="container_check_radios" >
+                                                        <div class="cRadioBtnNo">
+                                                            <i class="fa-solid fa-exclamation"></i>
+                                                        </div>
+                                                    </div>
+                                                </label>
                                             @endif
 
-                                            <!-- Progreso Circular usando SVG -->
-                                            <svg class="progreso-circular" viewBox="0 0 36 36">
-                                                <path class="progreso-circular-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                                <path class="progreso-circular-fg"
-                                                      stroke-dasharray="{{ $vehiculo->vehiculo_capacidad_usada }}, 100"
-                                                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                                      style="stroke: {{$vehiculo->vehiculo_capacidad_usada <= 25 ? 'red' :
+                                            <label class="circulo-vehiculo-container m-2 {{ $vehiculo->tarifa_estado_aprobacion == 0 ? 'no-aprobado' : '' }}" for="id_check_vehiculo_{{ $vehiculo->id_vehiculo }}_{{ $vehiculo->id_tarifario}}_{{$conteoGen}}">
+                                                <svg class="progreso-circular" viewBox="0 0 36 36">
+                                                    <path class="progreso-circular-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                                    <path class="progreso-circular-fg"
+                                                          stroke-dasharray="{{ $vehiculo->vehiculo_capacidad_usada }}, 100"
+                                                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                                          style="stroke: {{$vehiculo->vehiculo_capacidad_usada <= 25 ? 'red' :
                                                                     ($vehiculo->vehiculo_capacidad_usada <= 50 ? 'orange' :
                                                                     ($vehiculo->vehiculo_capacidad_usada <= 75 ? 'yellow' : 'green'))
                                                                 }};" />
-                                            </svg>
-                                            <div class="circulo-vehiculo">
-                                                <div class="placa-container">
-                                                    <span class="vehiculo-placa">{{ $vehiculo->vehiculo_placa }}</span>
+                                                </svg>
+                                                <div class="circulo-vehiculo">
+                                                    <div class="placa-container">
+                                                        <span class="vehiculo-placa">{{ $vehiculo->vehiculo_placa }}</span>
+                                                    </div>
+                                                    <div class="tarifa-container">
+                                                        <span class="tarifa-monto">
+                                                            @php
+                                                                $tarifa = number_format($vehiculo->tarifa_monto, 2, '.', ',');
+                                                                $tarifa = strpos($tarifa, '.00') !== false ? number_format($vehiculo->tarifa_monto, 0, '.', ',') : $tarifa;
+                                                            @endphp
+                                                            S/ {{ $tarifa }}
+                                                        </span>
+                                                    </div>
+                                                    <div class="peso-container">
+                                                        <span class="capacidad-peso">
+                                                            @php
+                                                                $pesovehiculo = number_format($vehiculo->vehiculo_capacidad_peso, 2, '.', ',');
+                                                                $pesovehiculo = strpos($pesovehiculo, '.00') !== false ? number_format($vehiculo->vehiculo_capacidad_peso, 0, '.', ',') : $pesovehiculo;
+                                                            @endphp
+                                                            {{ $pesovehiculo }} kg
+                                                        </span>
+                                                    </div>
+                                                    <div class="peso-container">
+                                                        <span class="capacidad-peso">
+                                                            @php
+                                                                $pesovolumen = number_format($vehiculo->vehiculo_capacidad_volumen, 2, '.', ',');
+                                                                $pesovolumen = strpos($pesovolumen, '.00') !== false ? number_format($vehiculo->vehiculo_capacidad_volumen, 0, '.', ',') : $pesovolumen;
+                                                            @endphp
+                                                            {{ $pesovolumen }} cm³
+                                                        </span>
+                                                    </div>
+                                                    <div class="boton-container">
+                                                        <a href="#" class="btn-ver" data-bs-toggle="modal" data-bs-target="#modalVehiculo" wire:click="modal_por_vehiculo({{ $vehiculo->id_vehiculo }})">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+                                                    </div>
                                                 </div>
-                                                <div class="tarifa-container">
-                                                    <span class="tarifa-monto">
-                                                        @php
-                                                            $tarifa = number_format($vehiculo->tarifa_monto, 2, '.', ',');
-                                                            $tarifa = strpos($tarifa, '.00') !== false ? number_format($vehiculo->tarifa_monto, 0, '.', ',') : $tarifa;
-                                                        @endphp
-                                                        S/ {{ $tarifa }}
-                                                    </span>
-                                                </div>
-                                                <div class="peso-container">
-                                                    <span class="capacidad-peso">
-                                                        @php
-                                                            $pesovehiculo = number_format($vehiculo->vehiculo_capacidad_peso, 2, '.', ',');
-                                                            $pesovehiculo = strpos($pesovehiculo, '.00') !== false ? number_format($vehiculo->vehiculo_capacidad_peso, 0, '.', ',') : $pesovehiculo;
-                                                        @endphp
-                                                        {{ $pesovehiculo }} kg
-                                                    </span>
-                                                </div>
-                                                <div class="boton-container">
-                                                    <a href="#" class="btn-ver" data-bs-toggle="modal" data-bs-target="#modalVehiculo" wire:click="modal_por_vehiculo({{ $vehiculo->id_vehiculo }})">
-                                                        <i class="fas fa-eye"></i>
-                                                    </a>
-                                                </div>
-                                            </div>
-                                            <div class="estado-circulo">
-                                                <i class="fa-solid fa-circle-check check-icon"></i>
-                                                <i class="fas fa-exclamation-circle warning-icon"></i>
-                                            </div>
-                                        </label>
+                                            </label>
+                                        </div>
+                                        @php $conteoGen++; @endphp
                                     @endforeach
                                 </div>
                                 @error('selectedVehiculo')
-                                <span class="message-error">{{ $message }}</span>
+                                    <span class="message-error">{{ $message }}</span>
                                 @enderror
                             </div>
                         </div>
@@ -505,8 +531,8 @@
         }
         .circulo-vehiculo-container {
             position: relative;
-            width: 140px;
-            height: 140px;
+            width: 170px;
+            height: 170px;
             display: flex;
             align-items: center;
             justify-content: center;

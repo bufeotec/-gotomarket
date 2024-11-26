@@ -81,12 +81,16 @@ class Local extends Component
         $this->selectedVehiculo = null;
     }
 
-    public function seleccionarVehiculo($vehiculoId){
-        $vehiculo = collect($this->vehiculosSugeridos)->firstWhere('id_vehiculo', $vehiculoId);
+    public function seleccionarVehiculo($vehiculoId,$id_tarifa){
+        $vehiculo = collect($this->vehiculosSugeridos)->first(function ($vehiculo) use ($vehiculoId, $id_tarifa) {
+            return $vehiculo->id_vehiculo == $vehiculoId && $vehiculo->id_tarifario == $id_tarifa;
+        });
+//        $vehiculo = collect($this->vehiculosSugeridos)->firstWhere('id_vehiculo', $vehiculoId);
         if ($vehiculo) {
             // Actualiza el monto de la tarifa del vehículo seleccionado
             $this->tarifaMontoSeleccionado = $vehiculo->tarifa_monto;
-            $this->id_tarifario_seleccionado = $vehiculo->id_tarifario;
+            $this->id_tarifario_seleccionado = $id_tarifa;
+            $this->selectedVehiculo = $vehiculoId;
         }
     }
 
