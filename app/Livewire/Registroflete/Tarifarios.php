@@ -294,7 +294,7 @@ class Tarifarios extends Component
                     'id_departamento' => 'required_if:id_tipo_servicio,2|nullable|integer',
                     'id_provincia' => 'required_if:id_tipo_servicio,2|nullable|integer',
                     'id_distrito' => 'nullable|integer',
-                    'id_medida' => 'required|integer',
+                    'id_medida' => 'required_if:id_tipo_servicio,2|nullable|integer|in:23,9',
                     'tarifa_cap_min' => 'required|numeric',
                     'tarifa_cap_max' => 'required|numeric',
                     'tarifa_monto' => 'required|numeric',
@@ -321,7 +321,7 @@ class Tarifarios extends Component
 
                     'id_distrito.integer' => 'El distrito debe ser un número entero.',
 
-                    'id_medida.required' => 'Debes seleccionar un tipo de unidad.',
+                    'id_medida.required_if' => 'Debes seleccionar un tipo de unidad.',
                     'id_medida.integer' => 'El tipo de unidad debe ser un número entero.',
 
                     'tarifa_cap_min.required' => 'La capacidad mínima es obligatoria.',
@@ -358,7 +358,7 @@ class Tarifarios extends Component
                     $tarifario_update->id_departamento = $this->id_tipo_servicio == 2 ? $this->id_departamento : null;
                     $tarifario_update->id_provincia = $this->id_tipo_servicio == 2 ? $this->id_provincia : null;
                     $tarifario_update->id_distrito = $this->id_tipo_servicio == 2 ? (!empty($this->id_distrito) ? $this->id_distrito : null) : null;
-                    $tarifario_update->id_medida = $this->id_medida;
+                    $tarifario_update->id_medida = $this->id_tipo_servicio == 2 ? $this->id_medida : null;
                     $tarifario_update->tarifa_cap_min = $this->tarifa_cap_min;
                     $tarifario_update->tarifa_cap_max = $this->tarifa_cap_max;
                     $tarifario_update->tarifa_monto = $this->tarifa_monto;
@@ -376,7 +376,7 @@ class Tarifarios extends Component
                         $originalValues['id_departamento'] !== ($this->id_tipo_servicio == 2 ? $this->id_departamento : null) ||
                         $originalValues['id_provincia'] !== ($this->id_tipo_servicio == 2 ? $this->id_provincia : null) ||
                         $originalValues['id_distrito'] !== ($this->id_tipo_servicio == 2 ? (!empty($this->id_distrito) ? $this->id_distrito : null) : null) ||
-                        $originalValues['id_medida'] !== $this->id_medida ||
+                        $originalValues['id_medida'] !== ($this->id_tipo_servicio == 2 ? $this->id_medida : null) ||
                         $originalValues['tarifa_cap_min'] !== $this->tarifa_cap_min ||
                         $originalValues['tarifa_cap_max'] !== $this->tarifa_cap_max ||
                         $originalValues['tarifa_monto'] !== $this->tarifa_monto
@@ -427,7 +427,7 @@ class Tarifarios extends Component
                             $registro_concepto[] = "Distrito de '{$distritoNombreAnterior}' por '{$distritoNombreNuevo}'";
                         }
 
-                        if ($originalValues['id_medida'] !== $this->id_medida) {
+                        if ($originalValues['id_medida'] !== ($this->id_tipo_servicio == 2 ? $this->id_medida : null)) {
                             $medidaNombreAnterior = DB::table('medida')->where('id_medida', $originalValues['id_medida'])->value('medida_nombre') ?? 'Desconocido';
                             $medidaNombreNuevo = DB::table('medida')->where('id_medida', $this->id_medida)->value('medida_nombre') ?? 'Desconocido';
                             $registro_concepto[] = "Tipo de unidad de '{$medidaNombreAnterior}' por '{$medidaNombreNuevo}'";
