@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Livewire\Programacioncamiones;
+use App\Models\Tarifario;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Logs;
@@ -26,7 +27,10 @@ class Mixto extends Component
     private $despacho;
     private $despachoventa;
     private $departamento;
-    public function __construct(){
+    private $tarifario;
+
+    public function __construct()
+    {
         $this->logs = new Logs();
         $this->tiposervicio = new TipoServicio();
         $this->server = new Server();
@@ -36,7 +40,9 @@ class Mixto extends Component
         $this->despacho = new Despacho();
         $this->despachoventa = new DespachoVenta();
         $this->departamento = new Departamento();
+        $this->tarifario = new Tarifario();
     }
+
     public $tipoServicioSeleccionado = 1;
     public $searchFacturaCliente = '';
     public $filteredFacturasYClientes = [];
@@ -67,14 +73,19 @@ class Mixto extends Component
     public $id_provincia = '';
     public $id_distrito = '';
     public $id_departamento = "";
+    public $showBotonListo = "";
 
-    public function mount(){
+
+    public function mount()
+    {
         $this->id_transportistas = null;
         $this->selectedVehiculo = null;
+        $this->showBotonListo = null;
         $this->programacion_fecha = now()->format('Y-m-d');
     }
 
-    public function render(){
+    public function render()
+    {
         $tipo_servicio_local_provincial = $this->tiposervicio->listar_tipo_servicio_local_provincial();
         $listar_transportistas = $this->transportista->listar_transportista_sin_id();
         $listar_departamento = $this->departamento->lista_departamento();
@@ -83,38 +94,105 @@ class Mixto extends Component
 
 //    PARA EL MODAL DE PROVINCIA
     public $clienteSeleccionado;
+    public $clienteindex;
     public $datosSeleccionadosPorCliente = [];
     public $selectedTarifario = "";
+    /* CÓDIGO EDER */
+    public $clientes_provinciales = [];
 
-    public function abrirModalComprobantes($cliente){
+    // VALORES PARA EL MODAL DE PROVINCIAL
+    public $id_trans = "";
+    public $id_tari = "";
+    public $otros_gastos = "";
+    public $mano_obra = "";
+    public $depar = "";
+    public $provin = "";
+    public $distri = "";
+    public $toKg = "";
+    public $toVol = "";
+    public $arrayDepartamentoPronvicial = [];
+    public $arrayProvinciaPronvicial = [];
+    public $arrayDistritoPronvicial = [];
+    public $detalle_tarifario = "";
+
+    public function abrirModalComprobantes($cliente,$index){ // en $cliente llega el código del cliente, DNI o RUC
+        /* limpiamos primero el array */
+        $this->clienteSeleccionado = "";
+        $this->clienteindex = "";
+        /* Añadimos valor */
         $this->clienteSeleccionado = $cliente;
-
-        // Cargar datos existentes del cliente seleccionado
-        $datosCliente = $this->datosSeleccionadosPorCliente[$cliente] ?? null;
-
-        $this->id_transportistas = $datosCliente['id_transportista'] ?? null;
-        $this->despacho_gasto_otros = $datosCliente['despacho_gasto_otros'] ?? null;
-        $this->despacho_ayudante = $datosCliente['despacho_ayudante'] ?? null;
-        $this->id_departamento = $datosCliente['id_departamento'] ?? null;
-        $this->id_provincia = $datosCliente['id_provincia'] ?? null;
-        $this->id_distrito = $datosCliente['id_distrito'] ?? null;
-
-        if (!$this->id_departamento) {
-            $this->provincias = [];
-            $this->id_provincia = null;
-            $this->distritos = [];
-            $this->id_distrito = null;
+        $this->clienteindex = $index;
+        $datosCliente = $this->clientes_provinciales[$index] ?? null;
+        $this->id_trans = $datosCliente['id_transportista'] ?? null;
+        $this->id_tari =  null;
+        $this->otros_gastos = $datosCliente['otros'] ?? null;
+        $this->mano_obra = $datosCliente['mano_obra'] ?? null;
+        $this->depar = $datosCliente['departamento'] ?? null;
+        $this->provin = $datosCliente['provincia'] ?? null;
+        $this->distri = $datosCliente['distrito'] ?? null;
+        $this->toKg = 0;
+        $this->toVol = 0;
+        if (!$this->depar) {
+            $this->arrayProvinciaPronvicial = [];
+            $this->provin = null;
+            $this->arrayDistritoPronvicial = [];
+            $this->distri = null;
         } else {
             $this->listar_provincias();
-            if (!$this->id_provincia) {
-                $this->distritos = [];
-                $this->id_distrito = null;
+            if (!$this->provin) {
+                $this->arrayDistritoPronvicial = [];
+                $this->distri = null;
             } else {
                 $this->listar_distritos();
             }
         }
         // Cargar comprobantes seleccionados
-        $this->comprobantesSeleccionados = $this->selectedFacturasProvincial[$cliente] ?? [];
+        $this->comprobantesSeleccionados = $datosCliente['comprobantes'] ?? [];
+        $this->clientes_provinciales[$index]['total_kg'] = 0;
+        $this->clientes_provinciales[$index]['total_volumen'] = 0;
+        $this->clientes_provinciales[$index]['id_tarifario'] = null;
+        foreach ($this->comprobantesSeleccionados as $com){
+            $this->clientes_provinciales[$index]['total_kg'] += $com['total_kg'];
+            $this->clientes_provinciales[$index]['total_volumen'] += $com['total_volumen'];
+            $this->toKg += $com['total_kg'];
+            $this->toVol += $com['total_volumen'];
+        }
+        $this->listar_tarifarios_su($index);
+        $this->activar_botonListo($index);
+    }
+    public function listar_tarifarios_su($index){
+        $datosCliente = $this->clientes_provinciales[$index] ?? null;
+        if ($datosCliente){
+            $this->tarifariosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_provincial($datosCliente['total_kg'],2,$datosCliente['id_transportista'],$datosCliente['departamento'] ,$datosCliente['provincia'] ,$datosCliente['distrito']);
+            if (count($this->tarifariosSugeridos) <= 0){
+                $this->tarifaMontoSeleccionado = null;
+                $this->selectedTarifario = null;
+            }
+        }
+    }
+    public function save_cliente_data($index){
+        $this->clientes_provinciales[$index]['id_transportista'] = $this->id_trans;
+        $this->clientes_provinciales[$index]['id_tarifario'] = $this->id_tari;
+        $this->clientes_provinciales[$index]['otros'] = $this->otros_gastos;
+        $this->clientes_provinciales[$index]['mano_obra'] = $this->mano_obra;
+        $this->clientes_provinciales[$index]['departamento'] = $this->depar;
+        $this->clientes_provinciales[$index]['provincia'] = $this->provin;
+        $this->clientes_provinciales[$index]['distrito'] = $this->distri;
+        $this->listar_tarifarios_su($index);
+        $this->activar_botonListo($index);
+    }
+    function activar_botonListo($index){
+        $informacionCliente = $this->clientes_provinciales[$index];
+        if ($informacionCliente['id_transportista'] && $informacionCliente['id_tarifario'] && $informacionCliente['departamento'] && $informacionCliente['provincia']){
+            $this->showBotonListo = true;
+            $this->clientes_provinciales[$index]['listo'] = true;
+        }else{
+            $this->clientes_provinciales[$index]['listo'] = false;
+            $this->showBotonListo = false;
+        }
+    }
+    public function modal_detalle_tarifario($id){
+        $this->detalle_tarifario =  $this->tarifario->listar_informacion_tarifa($id);
     }
 
     public function seleccionarTarifario($id){
@@ -145,35 +223,39 @@ class Mixto extends Component
     }
 
     public function deparTari(){
-//        $this->listar_tarifarios_su();
+        $this->id_tari = "";
+        $this->save_cliente_data($this->clienteindex);
         $this->listar_provincias();
     }
     public function proviTari(){
-//        $this->listar_tarifarios_su();
+        $this->id_tari = "";
+        $this->save_cliente_data($this->clienteindex);
         $this->listar_distritos();
     }
     public function distriTari(){
-//        $this->listar_tarifarios_su();
+        $this->id_tari = "";
+        $this->save_cliente_data($this->clienteindex);
+
     }
     public function listar_provincias(){
-        $valor = $this->id_departamento;
+        $valor = $this->depar;
         if ($valor) {
-            $this->provincias = DB::table('provincias')->where('id_departamento', '=', $valor)->get();
+            $this->arrayProvinciaPronvicial = DB::table('provincias')->where('id_departamento', '=', $valor)->get();
         } else {
-            $this->provincias = [];
-            $this->id_provincia = '';
-            $this->distritos = [];
-            $this->id_distrito = '';
+            $this->arrayProvinciaPronvicial = [];
+            $this->provin = '';
+            $this->arrayDistritoPronvicial = [];
+            $this->distri = '';
         }
     }
 
     public function listar_distritos(){
-        $valor = $this->id_provincia;
+        $valor = $this->provin;
         if ($valor) {
-            $this->distritos = DB::table('distritos')->where('id_provincia', '=', $valor)->get();
+            $this->arrayDistritoPronvicial = DB::table('distritos')->where('id_provincia', '=', $valor)->get();
         } else {
-            $this->distritos = [];
-            $this->id_distrito = '';
+            $this->arrayDistritoPronvicial = [];
+            $this->distri = '';
         }
     }
 //
@@ -215,15 +297,18 @@ class Mixto extends Component
         }
         // Agregar la factura seleccionada y actualizar el peso y volumen total
         $this->selectedFacturasLocal[] = [
-            'CFTD' => $CFTD,
-            'CFNUMSER' => $CFNUMSER,
-            'CFNUMDOC' => $CFNUMDOC,
+            'CFTD' => $CFTD, // tipo de comprobantes
+            'CFNUMSER' => $CFNUMSER, // serie del comprobante
+            'CFNUMDOC' => $CFNUMDOC, // numero del comprobante
             'total_kg' => $factura->total_kg,
             'total_volumen' => $factura->total_volumen,
-            'CNOMCLI' => $factura->CNOMCLI,
-            'CFIMPORTE' => $factura->CFIMPORTE,
-            'CFCODMON' => $factura->CFCODMON,
-            'guia' => $factura->CFTEXGUIA,
+            'CNOMCLI' => $factura->CNOMCLI, // Nombre cliente
+            'CCODCLI' => $factura->CCODCLI, // Código del cliente
+            'CFIMPORTE' => $factura->CFIMPORTE, // importe
+            'CFCODMON' => $factura->CFCODMON, // código de moneda
+            'guia' => $factura->CFTEXGUIA, // guia
+            'direccion_guia' => $factura->guia ? $factura->guia->LLEGADADIRECCION : '-', // dirección de guía.
+            'fecha_guia' => $factura->guia ? $factura->guia->GREFECEMISION : '-', // fecha de la guía.
             'isChecked' => false,
         ];
         $this->pesoTotal += $factura->total_kg;
@@ -258,47 +343,93 @@ class Mixto extends Component
             session()->flash('error', 'Comprobante no encontrado en la tabla Local.');
             return;
         }
-        // Verificar si ya existe en la tabla Provincial
-        $existeEnProvincial = collect($this->selectedFacturasProvincial[$factura['CNOMCLI']] ?? [])->contains(function ($f) use ($factura) {
-            return $f['CFTD'] === $factura['CFTD'] &&
-                $f['CFNUMSER'] === $factura['CFNUMSER'] &&
-                $f['CFNUMDOC'] === $factura['CFNUMDOC'];
-        });
-        if ($existeEnProvincial) {
-            session()->flash('error', 'El comprobante ya está duplicado en la tabla Provincial.');
-            return;
-        }
-//        $this->clienteseleccionado = $this->selectedFacturasProvincial
-        // Agregar la factura a la tabla Provincial agrupada por cliente
-        $this->selectedFacturasProvincial[$factura['CNOMCLI']][] = [
-            'CFTD' => $factura['CFTD'],
-            'CFNUMSER' => $factura['CFNUMSER'],
-            'CFNUMDOC' => $factura['CFNUMDOC'],
-            'total_kg' => $factura['total_kg'],
-            'total_volumen' => $factura['total_volumen'],
-            'CNOMCLI' => $factura['CNOMCLI'],
-            'CFIMPORTE' => $factura['CFIMPORTE'],
-            'CFCODMON' => $factura['CFCODMON'],
-            'guia' => $factura['guia'],
-        ];
-    }
+        $codiCli = $factura['CCODCLI'];
+        $nombCli = $factura['CNOMCLI'];
 
-    public function eliminarFacturaProvincial($CFTD, $CFNUMSER, $CFNUMDOC){
-        foreach ($this->selectedFacturasProvincial as $cliente => $facturas) {
-            $this->selectedFacturasProvincial[$cliente] = collect($facturas)
-                ->filter(function ($factura) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
-                    return !($factura['CFTD'] === $CFTD &&
-                        $factura['CFNUMSER'] === $CFNUMSER &&
-                        $factura['CFNUMDOC'] === $CFNUMDOC);
+        $validarExisteCliente =  collect($this->clientes_provinciales)->first(function ($cliente) use ($codiCli,$nombCli) {
+            return $cliente['codigoCliente'] === $codiCli
+                && $cliente['nombreCliente'] === $nombCli;
+        });
+        if ($validarExisteCliente){ // si existe el cliente
+            // Verificar si el comprobante ya existe en los comprobantes del cliente
+            $existeComprobante = collect($validarExisteCliente['comprobantes'] ?? [])->contains(function ($comprobante) use ($factura) {
+                return $comprobante['CFTD'] === $factura['CFTD'] &&
+                    $comprobante['CFNUMSER'] === $factura['CFNUMSER'] &&
+                    $comprobante['CFNUMDOC'] === $factura['CFNUMDOC'];
+            });
+            if ($existeComprobante) {
+                session()->flash('error', 'El comprobante ya está duplicado para este cliente.');
+                return;
+            }
+            // Agregar el comprobante al cliente existente
+            foreach ($this->clientes_provinciales as &$cliente) {
+                if ($cliente['codigoCliente'] == $codiCli && $cliente['nombreCliente'] == $nombCli) {
+                    $cliente['comprobantes'][] = [
+                        'CFTD' => $factura['CFTD'],
+                        'CFNUMSER' => $factura['CFNUMSER'],
+                        'CFNUMDOC' => $factura['CFNUMDOC'],
+                        'total_kg' => $factura['total_kg'],
+                        'total_volumen' => $factura['total_volumen'],
+                        'CFIMPORTE' => $factura['CFIMPORTE'],
+                        'CFCODMON' => $factura['CFCODMON'],
+                        'guia' => $factura['guia'],
+                        'direccion_guia' => $factura['direccion_guia'] , // dirección de guía.
+                        'fecha_guia' => $factura['fecha_guia'] , // fecha de la guía.
+                    ];
+                    break;
+                }
+            }
+        }else{ // ingresar cliente nuevo
+            $this->clientes_provinciales[] = [
+                'codigoCliente' =>  $factura['CCODCLI'],
+                'nombreCliente' =>  $factura['CNOMCLI'],
+                'total_kg' =>  0,
+                'total_volumen' =>  0,
+                'id_transportista' =>  null,
+                'id_tarifario' =>  null,
+                'otros' =>  null,
+                'mano_obra' =>  null,
+                'departamento' =>  null,
+                'provincia' =>  null,
+                'distrito' =>  null,
+                'listo' =>  null,
+                'comprobantes' => [
+                    [
+                        'CFTD' => $factura['CFTD'],
+                        'CFNUMSER' => $factura['CFNUMSER'],
+                        'CFNUMDOC' => $factura['CFNUMDOC'],
+                        'total_kg' => $factura['total_kg'],
+                        'total_volumen' => $factura['total_volumen'],
+                        'CFIMPORTE' => $factura['CFIMPORTE'],
+                        'CFCODMON' => $factura['CFCODMON'],
+                        'guia' => $factura['guia'],
+                        'direccion_guia' => $factura['direccion_guia'] , // dirección de guía.
+                        'fecha_guia' => $factura['fecha_guia'] , // fecha de la guía.
+                    ]
+                ]
+            ];
+        }
+    }
+    public function eliminarFacturaProvincial($CFTD, $CFNUMSER, $CFNUMDOC)
+    {
+        foreach ($this->clientes_provinciales as $index => &$cliente) {
+            // Filtrar comprobantes del cliente actual
+            $cliente['comprobantes'] = collect($cliente['comprobantes'])
+                ->filter(function ($comprobante) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
+                    return !($comprobante['CFTD'] === $CFTD &&
+                        $comprobante['CFNUMSER'] === $CFNUMSER &&
+                        $comprobante['CFNUMDOC'] === $CFNUMDOC);
                 })
                 ->values()
                 ->toArray();
-            // Elimina el cliente si ya no tiene facturas
-            if (empty($this->selectedFacturasProvincial[$cliente])) {
-                unset($this->selectedFacturasProvincial[$cliente]);
+
+            // Si el cliente no tiene comprobantes restantes, eliminarlo del array
+            if (empty($cliente['comprobantes'])) {
+                unset($this->clientes_provinciales[$index]);
             }
         }
-        // Actualizar el estado del checkbox en la tabla Local
+
+        // Actualizar el estado del checkbox en la tabla `selectedFacturasLocal`
         foreach ($this->selectedFacturasLocal as &$factura) {
             if ($factura['CFTD'] === $CFTD &&
                 $factura['CFNUMSER'] === $CFNUMSER &&
@@ -307,9 +438,15 @@ class Mixto extends Component
                 break;
             }
         }
+
+        // Reindexar el array `clientes_provinciales` después de eliminar elementos
+        $this->clientes_provinciales = array_values($this->clientes_provinciales);
     }
 
+
     public function eliminarFacturaSeleccionada($CFTD, $CFNUMSER, $CFNUMDOC){
+        $this->eliminarFacturaProvincial($CFTD,$CFNUMSER,$CFNUMDOC);
+
         foreach ($this->selectedFacturasLocal as $index => $factura) {
             if ($factura['CFTD'] == $CFTD && $factura['CFNUMSER'] == $CFNUMSER && $factura['CFNUMDOC'] == $CFNUMDOC) {
                 $this->pesoTotal -= $factura['total_kg'];
@@ -318,6 +455,8 @@ class Mixto extends Component
                 break;
             }
         }
+        // Reindexar el array `selectedFacturasLocal` después de eliminar elementos
+        $this->selectedFacturasLocal = array_values($this->selectedFacturasLocal);
         $this->listar_vehiculos_lo();
     }
 

@@ -151,7 +151,7 @@ class Vehiculo extends Model
         return $result;
     }
 
-    public function obtener_vehiculos_con_tarifarios_provincial($pesot,$type, $idt = null,$iddepartamento,$idprovincia,$iddistrito = null){
+    public function obtener_vehiculos_con_tarifarios_provincial($pesot,$type, $idt = null,$iddepartamento = null,$idprovincia = null,$iddistrito = null){
         try {
             $query = DB::table('tarifarios as t')
                 ->where('t.tarifa_estado','=', 1)
