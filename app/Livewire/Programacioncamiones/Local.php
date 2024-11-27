@@ -50,6 +50,7 @@ class Local extends Component
     public $despacho_volumen;
     public $despacho_flete;
     public $id_tarifario;
+    public $costoTotal = 0;
     public $id_tarifario_seleccionado = '';
     public function mount(){
         $this->id_transportistas = null;
@@ -91,6 +92,7 @@ class Local extends Component
             $this->tarifaMontoSeleccionado = $vehiculo->tarifa_monto;
             $this->id_tarifario_seleccionado = $id_tarifa;
             $this->selectedVehiculo = $vehiculoId;
+            $this->calcularCostoTotal();
         }
     }
 
@@ -185,6 +187,14 @@ class Local extends Component
             $this->selectedVehiculo = null;
             $this->id_tarifario_seleccionado = null;
         }
+    }
+
+    public function calcularCostoTotal(){
+        $montoSeleccionado = floatval($this->tarifaMontoSeleccionado);
+        $ayudante = floatval($this->despacho_ayudante);
+        $otros = floatval($this->despacho_gasto_otros);
+
+        $this->costoTotal = $montoSeleccionado + $ayudante + $otros;
     }
 
     public function guardarDespachos(){
@@ -312,6 +322,7 @@ class Local extends Component
         $this->despacho_volumen = null;
         $this->despacho_flete = null;
         $this->id_tarifario = null;
+        $this->costoTotal = 0;
         $this->programacion_fecha = now()->format('Y-m-d');
     }
 }
