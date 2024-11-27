@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
@@ -189,5 +190,38 @@ class General extends Model
         }
     }
 
+    public function obtenerNombreFecha($fecha, $formatoDado, $formatoRetorno, $idioma = 'es', $incluirAnio = true)
+    {
+        try {
+            // Configuración del idioma para Carbon
+            Carbon::setLocale($idioma);
 
+            // Convertir la fecha a una instancia de Carbon
+            if ($formatoDado === 'DateTime') {
+                $fechaCarbon = Carbon::parse($fecha);
+            } elseif ($formatoDado === 'Date') {
+                $fechaCarbon = Carbon::createFromFormat('Y-m-d', $fecha);
+            } else {
+                throw new \InvalidArgumentException('Formato de fecha no soportado');
+            }
+
+            // Preparar el formato de salida
+            if ($formatoRetorno === 'Date') {
+                $formatoSalida = $incluirAnio ? 'd M Y' : 'd M';
+            } elseif ($formatoRetorno === 'DateTime') {
+                $formatoSalida = 'd M Y, h:i a';
+            } else {
+                throw new \InvalidArgumentException('Formato de retorno no soportado');
+            }
+
+            // Formatear la fecha
+            $fechaFormateada = $fechaCarbon->translatedFormat($formatoSalida);
+
+        }catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $fechaFormateada = "";
+        }
+        return $fechaFormateada;
+
+    }
 }

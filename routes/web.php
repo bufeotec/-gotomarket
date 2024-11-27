@@ -56,4 +56,5 @@ Route::prefix('Programacioncamion')->middleware(['auth', 'canMenu:Programacionca
     /* FLETES - TARIFARIOS */
     route::get('/programar_camion',[ProgramacioncamionController::class ,'programar_camion'])->name('Programacioncamion.programar_camion')->middleware('verifyUserStatus')->middleware('can:programar_camion');
     route::get('/historial_programación',[ProgramacioncamionController::class ,'historial_programación'])->name('Programacioncamion.historial_programación')->middleware('verifyUserStatus')->middleware('can:historial_programación');
+    route::get('/detalle_programacion',[ProgramacioncamionController::class ,'detalle_programacion'])->name('Programacioncamion.detalle_programacion')->middleware('verifyUserStatus')->middleware('can:detalle_programacion');
 });

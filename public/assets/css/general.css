@@ -473,3 +473,8 @@
     transition: all 0.1s ease-in;
     cursor: not-allowed;
 }
+
+.textBlack{
+    color: black;
+    font-weight: 800;
+}
