@@ -496,7 +496,7 @@
 
             {{--    MODAL DE COMPROBANTES PROVINCIALES  --}}
             <x-modal-general wire:ignore.self>
-                <x-slot name="tama">modal-lg</x-slot>
+                <x-slot name="tama">modal-xl</x-slot>
                 <x-slot name="id_modal">modalComprobantes</x-slot>
                 <x-slot name="titleModal">Comprobantes Seleccionados</x-slot>
                 <x-slot name="modalContent">
@@ -514,11 +514,201 @@
                             </ul>
                         </div>
 
-                        <!-- Espacio adicional -->
                         <div class="col-lg-8">
                             <h6>Contenido adicional</h6>
                             <hr>
-                            <p>Aquí puedes agregar cualquier información relevante para este cliente.</p>
+                            <div class="row">
+                                <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
+                                    <div class="row">
+                                        <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                                            <h6>Lista de transportistas</h6>
+                                        </div>
+                                        <div class="col-lg-12">
+                                            <select class="form-select" name="id_transportistas" id="id_transportistas" wire:model="id_transportistas">
+                                                <option value="">Seleccionar...</option>
+                                                @foreach($listar_transportistas as $lt)
+                                                    <option value="{{ $lt->id_transportistas }}" @selected($lt->id_transportistas == $id_transportistas)>
+                                                        {{ $lt->transportista_nom_comercial }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-lg-12 col-md-12 mb-3">
+                                    <div class="row mb-3">
+                                        <div class="col-lg-4 col-md-4 col-sm-12 mb-2">
+                                            <h6>Tarifarios Sugeridos</h6>
+                                        </div>
+                                        @if($tarifaMontoSeleccionado > 0)
+                                            <div class="col-lg-8 col-md-8 col-sm-12 mb-2">
+                                                <p class="text-end mb-0">Monto de la tarifa seleccionado: S/ <strong>{{ $tarifaMontoSeleccionado }}</strong></p>
+                                            </div>
+                                        @endif
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-lg-12">
+                                            <div class="vehiculos-scroll-container-horizontal">
+                                                @php $conteoGen = 1; @endphp
+                                                @foreach($tarifariosSugeridos as $index => $tari)
+                                                    <div class="position-relative">
+                                                        @if($tari->tarifa_estado_aprobacion == 1)
+                                                            <input type="radio" name="vehiculo" id="id_check_vehiculo_{{ $tari->id_tarifario}}_{{$conteoGen}}" class="inputCheckRadio" value="{{ $tari->id_tarifario }}"  wire:click="seleccionarTarifario({{ $tari->id_tarifario }})" />
+                                                            <label for="id_check_vehiculo_{{ $tari->id_tarifario}}_{{$conteoGen}}" class="labelCheckRadios">
+                                                                <div class="container_check_radios" >
+                                                                    <div class="cRadioBtn">
+                                                                        <div class="overlay"></div>
+                                                                        <div class="drops xsDrop"></div>
+                                                                        <div class="drops mdDrop"></div>
+                                                                        <div class="drops lgDrop"></div>
+                                                                    </div>
+                                                                </div>
+                                                            </label>
+                                                        @else
+                                                            <label class="labelCheckRadios">
+                                                                <div class="container_check_radios" >
+                                                                    <div class="cRadioBtnNo">
+                                                                        <i class="fa-solid fa-exclamation"></i>
+                                                                    </div>
+                                                                </div>
+                                                            </label>
+                                                        @endif
+
+                                                        <label class="circulo-vehiculo-container m-2 {{ $tari->tarifa_estado_aprobacion == 0 ? 'no-aprobado' : '' }}" for="id_check_vehiculo_{{ $tari->id_tarifario}}_{{$conteoGen}}">
+                                                            <!-- Progreso Circular usando SVG -->
+                                                            <svg class="progreso-circular" viewBox="0 0 36 36">
+                                                                <path class="progreso-circular-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                                                <path class="progreso-circular-fg"
+                                                                      stroke-dasharray="{{ $tari->capacidad_usada }}, 100"
+                                                                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                                                      style="stroke: {{$tari->capacidad_usada <= 25 ? 'red' :
+                                                                    ($tari->capacidad_usada <= 50 ? 'orange' :
+                                                                    ($tari->capacidad_usada <= 75 ? 'yellow' : 'green'))
+                                                                }};" />
+                                                            </svg>
+                                                            <div class="circulo-vehiculo">
+                                                                <div class="tarifa-container" style="margin-top: 20%;">
+                                                        <span class="tarifa-monto">
+                                                            @php
+                                                                $tarifa = number_format($tari->tarifa_monto, 2, '.', ',');
+                                                                $tarifa = strpos($tarifa, '.00') !== false ? number_format($tari->tarifa_monto, 0, '.', ',') : $tarifa;
+                                                            @endphp
+                                                            S/ {{ $tarifa }}
+                                                        </span>
+                                                                </div>
+                                                                <div class="peso-container">
+                                                        <span class="capacidad-peso">
+                                                            @php
+                                                                $pesovehiculoMin = number_format($tari->tarifa_cap_min, 2, '.', ',');
+                                                                $pesovehiculoMin = strpos($pesovehiculoMin, '.00') !== false ? number_format($tari->tarifa_cap_min, 0, '.', ',') : $pesovehiculoMin;
+                                                                $pesovehiculo = number_format($tari->tarifa_cap_max, 2, '.', ',');
+                                                                $pesovehiculo = strpos($pesovehiculo, '.00') !== false ? number_format($tari->tarifa_cap_max, 0, '.', ',') : $pesovehiculo;
+                                                            @endphp
+                                                            {{$pesovehiculoMin}} {{$tari->id_medida == 9 ? 'cm³' : 'kg' }} - {{ $pesovehiculo }} {{$tari->id_medida == 9 ? 'cm³' : 'kg' }}
+                                                        </span>
+                                                                </div>
+                                                                <div class="boton-container">
+                                                                    <a href="#" class="btn-ver" data-bs-toggle="modal" data-bs-target="#modalVehiculo" wire:click="modal_detalle_tarifario({{ $tari->id_tarifario }})">
+                                                                        <i class="fas fa-eye"></i>
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        </label>
+                                                    </div>
+                                                    @php $conteoGen++; @endphp
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                        @error('selectedTarifario')
+                                        <span class="message-error">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                    <div class="row">
+                                        <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                                            <h6>Otros S/</h6>
+                                        </div>
+                                        <div class="col-lg-12">
+                                            <input type="text" class="form-control" id="despacho_gasto_otros" name="despacho_gasto_otros" wire:model="despacho_gasto_otros" onkeyup="validar_numeros(this.id)" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                    <div class="row">
+                                        <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                                            <h6>Mano de obra S/</h6>
+                                        </div>
+                                        <div class="col-lg-12">
+                                            <input type="text" class="form-control" id="despacho_ayudante" name="despacho_ayudante" wire:model="despacho_ayudante" onkeyup="validar_numeros(this.id)" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                    <div class="row">
+                                        <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                                            <h6>Departamento (*)</h6>
+                                        </div>
+                                        <div class="col-lg-12">
+                                            <select class="form-select" name="id_departamento" id="id_departamento" wire:change="deparTari" wire:model="id_departamento">
+                                                <option value="">Seleccionar...</option>
+                                                @foreach($listar_departamento as $de)
+                                                    <option value="{{ $de->id_departamento }}">{{ $de->departamento_nombre }}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('id_departamento')
+                                            <span class="message-error">{{ $message }}</span>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                    <div class="row">
+                                        <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                                            <h6>Provincia (*)</h6>
+                                        </div>
+                                        <div class="col-lg-12">
+                                            <select class="form-select" name="id_provincia" id="id_provincia" wire:model="id_provincia" wire:change="proviTari" {{ empty($provincias) ? 'disabled' : '' }}>
+                                                <option value="">Seleccionar...</option>
+                                                @foreach($provincias as $pr)
+                                                    <option value="{{ $pr->id_provincia }}" {{ $pr->id_provincia == $id_provincia ? 'selected' : '' }}>{{ $pr->provincia_nombre }}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('id_provincia')
+                                            <span class="message-error">{{ $message }}</span>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                    <div class="row">
+                                        <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                                            <h6>Distrito</h6>
+                                        </div>
+                                        <div class="col-lg-12">
+                                            <select class="form-select" name="id_distrito" id="id_distrito"  wire:change="distriTari" wire:model="id_distrito" {{ empty($distritos) ? 'disabled' : '' }}>
+                                                <option value="">Todos los distritos</option>
+                                                @foreach($distritos as $di)
+                                                    <option value="{{ $di->id_distrito }}" {{ $di->id_distrito == $id_distrito ? 'selected' : '' }}>{{ $di->distrito_nombre }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-12">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                            <button type="button" class="btn btn-primary" wire:click="guardarDatos">Guardar</button>
                         </div>
                     </div>
                 </x-slot>
@@ -722,3 +912,10 @@
     </style>
 
 </div>
+@script
+<script>
+    $wire.on('hideModal', () => {
+        $('#modalComprobantes').modal('hide');
+    });
+</script>
+@endscript

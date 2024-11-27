@@ -11,6 +11,7 @@ use App\Models\Vehiculo;
 use App\Models\Programacion;
 use App\Models\Despacho;
 use App\Models\DespachoVenta;
+use App\Models\Departamento;
 
 use Livewire\Component;
 
@@ -24,6 +25,7 @@ class Mixto extends Component
     private $programacion;
     private $despacho;
     private $despachoventa;
+    private $departamento;
     public function __construct(){
         $this->logs = new Logs();
         $this->tiposervicio = new TipoServicio();
@@ -33,6 +35,7 @@ class Mixto extends Component
         $this->programacion = new Programacion();
         $this->despacho = new Despacho();
         $this->despachoventa = new DespachoVenta();
+        $this->departamento = new Departamento();
     }
     public $tipoServicioSeleccionado = 1;
     public $searchFacturaCliente = '';
@@ -47,7 +50,7 @@ class Mixto extends Component
     public $tarifaMontoSeleccionado = 0;
     public $vehiculosSugeridos = [];
     public $selectedVehiculo = "";
-    public $id_transportistas = "";
+    public $id_transportistas = [];
     public $programacion_fecha = "";
     public $despacho_ayudante = '';
     public $despacho_gasto_otros = '';
@@ -58,7 +61,12 @@ class Mixto extends Component
     public $id_tarifario;
     public $id_tarifario_seleccionado = '';
     public $comprobantesSeleccionados = [];
-
+    public $tarifariosSugeridos = [];
+    public $provincias = [];
+    public $distritos = [];
+    public $id_provincia = '';
+    public $id_distrito = '';
+    public $id_departamento = "";
 
     public function mount(){
         $this->id_transportistas = null;
@@ -69,9 +77,106 @@ class Mixto extends Component
     public function render(){
         $tipo_servicio_local_provincial = $this->tiposervicio->listar_tipo_servicio_local_provincial();
         $listar_transportistas = $this->transportista->listar_transportista_sin_id();
-        return view('livewire.programacioncamiones.mixto', compact('tipo_servicio_local_provincial', 'listar_transportistas', 'listar_transportistas'));
+        $listar_departamento = $this->departamento->lista_departamento();
+        return view('livewire.programacioncamiones.mixto', compact('tipo_servicio_local_provincial', 'listar_transportistas', 'listar_transportistas', 'listar_departamento'));
     }
 
+//    PARA EL MODAL DE PROVINCIA
+    public $clienteSeleccionado;
+    public $datosSeleccionadosPorCliente = [];
+    public $selectedTarifario = "";
+
+    public function abrirModalComprobantes($cliente){
+        $this->clienteSeleccionado = $cliente;
+
+        // Cargar datos existentes del cliente seleccionado
+        $datosCliente = $this->datosSeleccionadosPorCliente[$cliente] ?? null;
+
+        $this->id_transportistas = $datosCliente['id_transportista'] ?? null;
+        $this->despacho_gasto_otros = $datosCliente['despacho_gasto_otros'] ?? null;
+        $this->despacho_ayudante = $datosCliente['despacho_ayudante'] ?? null;
+        $this->id_departamento = $datosCliente['id_departamento'] ?? null;
+        $this->id_provincia = $datosCliente['id_provincia'] ?? null;
+        $this->id_distrito = $datosCliente['id_distrito'] ?? null;
+
+        if (!$this->id_departamento) {
+            $this->provincias = [];
+            $this->id_provincia = null;
+            $this->distritos = [];
+            $this->id_distrito = null;
+        } else {
+            $this->listar_provincias();
+            if (!$this->id_provincia) {
+                $this->distritos = [];
+                $this->id_distrito = null;
+            } else {
+                $this->listar_distritos();
+            }
+        }
+        // Cargar comprobantes seleccionados
+        $this->comprobantesSeleccionados = $this->selectedFacturasProvincial[$cliente] ?? [];
+    }
+
+    public function seleccionarTarifario($id){
+        $tarifario = collect($this->tarifariosSugeridos)->first(function ($tarifario) use ($id){
+            return $tarifario->id_tarifario == $id;
+        });
+        if ($tarifario) {
+            // Actualiza el monto de la tarifa del vehículo seleccionado
+            $this->tarifaMontoSeleccionado = $tarifario->tarifa_monto;
+            $this->selectedTarifario = $id;
+        }
+    }
+
+    public function guardarDatos(){
+        if ($this->clienteSeleccionado) {
+            $this->datosSeleccionadosPorCliente[$this->clienteSeleccionado] = [
+                'id_transportista' => $this->id_transportistas,
+                'despacho_gasto_otros' => $this->despacho_gasto_otros,
+                'despacho_ayudante' => $this->despacho_ayudante,
+                'id_departamento' => $this->id_departamento,
+                'id_provincia' => $this->id_provincia,
+                'id_distrito' => $this->id_distrito,
+                'selectedTarifario' => $this->selectedTarifario,
+                'tarifaMontoSeleccionado' => $this->tarifaMontoSeleccionado,
+            ];
+        }
+        $this->dispatch('hideModal');
+    }
+
+    public function deparTari(){
+//        $this->listar_tarifarios_su();
+        $this->listar_provincias();
+    }
+    public function proviTari(){
+//        $this->listar_tarifarios_su();
+        $this->listar_distritos();
+    }
+    public function distriTari(){
+//        $this->listar_tarifarios_su();
+    }
+    public function listar_provincias(){
+        $valor = $this->id_departamento;
+        if ($valor) {
+            $this->provincias = DB::table('provincias')->where('id_departamento', '=', $valor)->get();
+        } else {
+            $this->provincias = [];
+            $this->id_provincia = '';
+            $this->distritos = [];
+            $this->id_distrito = '';
+        }
+    }
+
+    public function listar_distritos(){
+        $valor = $this->id_provincia;
+        if ($valor) {
+            $this->distritos = DB::table('distritos')->where('id_provincia', '=', $valor)->get();
+        } else {
+            $this->distritos = [];
+            $this->id_distrito = '';
+        }
+    }
+//
     public function buscar_facturas_clientes(){
         if ($this->searchFacturaCliente !== "") {
             $this->filteredFacturasYClientes = $this->server->listar_comprobantes_listos_mixto($this->searchFacturaCliente);
@@ -141,6 +246,7 @@ class Mixto extends Component
         }
     }
 
+    public $clienteseleccionado = [];
     public function duplicar_comprobante($CFTD, $CFNUMSER, $CFNUMDOC){
         // Buscar la factura en la tabla Local
         $factura = collect($this->selectedFacturasLocal)->first(function ($f) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
@@ -162,6 +268,7 @@ class Mixto extends Component
             session()->flash('error', 'El comprobante ya está duplicado en la tabla Provincial.');
             return;
         }
+//        $this->clienteseleccionado = $this->selectedFacturasProvincial
         // Agregar la factura a la tabla Provincial agrupada por cliente
         $this->selectedFacturasProvincial[$factura['CNOMCLI']][] = [
             'CFTD' => $factura['CFTD'],
@@ -246,12 +353,6 @@ class Mixto extends Component
 
     public function modal_por_vehiculo($id_ve){
         $this->detalle_vehiculo =  $this->vehiculo->listar_informacion_vehiculo($id_ve);
-    }
-
-    public function abrirModalComprobantes($cliente){
-        if (isset($this->selectedFacturasProvincial[$cliente])) {
-            $this->comprobantesSeleccionados = $this->selectedFacturasProvincial[$cliente];
-        }
     }
 
     public function guardarDespachos(){
