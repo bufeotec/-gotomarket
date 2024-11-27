@@ -64,6 +64,7 @@ class Provincial extends Component
     public $despacho_volumen;
     public $despacho_flete;
     public $id_tarifario;
+    public $costoTotal = 0;
     public function mount(){
         $this->selectedCliente = null;
         $this->selectedTarifario = null;
@@ -263,6 +264,7 @@ class Provincial extends Component
             // Actualiza el monto de la tarifa del vehículo seleccionado
             $this->tarifaMontoSeleccionado = $vehiculo->tarifa_monto;
             $this->selectedTarifario = $id;
+            $this->calcularCostoTotal();
         }
     }
     public function listar_tarifarios_su(){
@@ -271,6 +273,15 @@ class Provincial extends Component
             $this->tarifaMontoSeleccionado = null;
             $this->selectedTarifario = null;
         }
+    }
+
+    public function calcularCostoTotal(){
+        $montoSeleccionado = floatval($this->tarifaMontoSeleccionado);
+        $ayudante = floatval($this->despacho_ayudante);
+        $otros = floatval($this->despacho_gasto_otros);
+        $peso = floatval($this->pesoTotal);
+
+        $this->costoTotal = ($montoSeleccionado * $peso) + $ayudante + $otros;
     }
 
     public function guardarDespachos(){
@@ -427,6 +438,7 @@ class Provincial extends Component
         $this->despacho_volumen = null;
         $this->despacho_flete = null;
         $this->id_tarifario = null;
+        $this->costoTotal = 0;
     }
 
 

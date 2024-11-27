@@ -365,7 +365,7 @@
 
             {{-- OTROS - MANO DE OBRA --}}
             <div class="row">
-                <div class="col-lg-6">
+                <div class="col-lg-4">
                     <div class="card">
                         <div class="card-body">
                             <div class="row">
@@ -373,13 +373,13 @@
                                     <h6>Otros S/</h6>
                                 </div>
                                 <div class="col-lg-12">
-                                    <input type="text" class="form-control" id="despacho_gasto_otros" name="despacho_gasto_otros" wire:model="despacho_gasto_otros" onkeyup="validar_numeros(this.id)" />
+                                    <input type="text" class="form-control" id="despacho_gasto_otros" name="despacho_gasto_otros" wire:input="calcularCostoTotal" wire:model="despacho_gasto_otros" onkeyup="validar_numeros(this.id)" />
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-lg-6">
+                <div class="col-lg-4">
                     <div class="card">
                         <div class="card-body">
                             <div class="row">
@@ -387,7 +387,21 @@
                                     <h6>Mano de obra S/</h6>
                                 </div>
                                 <div class="col-lg-12">
-                                    <input type="text" class="form-control" id="despacho_ayudante" name="despacho_ayudante" wire:model="despacho_ayudante" onkeyup="validar_numeros(this.id)" />
+                                    <input type="text" class="form-control" id="despacho_ayudante" name="despacho_ayudante" wire:input="calcularCostoTotal" wire:model="despacho_ayudante" onkeyup="validar_numeros(this.id)" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                                    <h6>Costo total</h6>
+                                </div>
+                                <div class="col-lg-12">
+                                    <h5 class="text-end mb-0">s/ {{ number_format($costoTotal, 2, '.', ',') }}</h5>
                                 </div>
                             </div>
                         </div>
