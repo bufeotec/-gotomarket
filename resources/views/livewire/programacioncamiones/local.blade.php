@@ -124,7 +124,7 @@
                                                     </div>
                                                     <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
                                                         <p class="peso ms-0">Fecha de Emisión: </p>
-                                                        <b style="font-size: 16px;color: black">{{ $factura->guia ? date('d-m-Y',strtotime($factura->guia->GREFECEMISION))  : '-' }}</b>
+                                                        <b style="font-size: 16px;color: black">{{ $factura->GREFECEMISION ? date('d-m-Y',strtotime($factura->GREFECEMISION))  : '-' }}</b>
                                                     </div>
                                                     <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
                                                         <p class="nombre-cliente ms-0">Cliente:</p>
@@ -140,9 +140,8 @@
                                                     </div>
                                                     <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
                                                         <p class="peso ms-0">Dirección: </p>
-                                                        <b style="font-size: 16px;color: black">{{$factura->guia ? $factura->guia->LLEGADADIRECCION : '-' }}</b>
+                                                        <b style="font-size: 16px;color: black">{{$factura->LLEGADADIRECCION}}</b>
                                                     </div>
-
                                                 </div>
                                             @endif
 
