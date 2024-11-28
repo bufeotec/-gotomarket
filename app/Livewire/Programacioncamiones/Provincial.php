@@ -65,6 +65,9 @@ class Provincial extends Component
     public $despacho_flete;
     public $id_tarifario;
     public $costoTotal = 0;
+    public $despacho_descripcion_otros = '';
+    public $desde;
+    public $hasta;
     public function mount(){
         $this->selectedCliente = null;
         $this->selectedTarifario = null;
@@ -73,6 +76,8 @@ class Provincial extends Component
         $this->id_provincia = null;
         $this->id_distrito = null;
         $this->programacion_fecha = now()->format('Y-m-d');
+        $this->desde = date('Y-m-d', strtotime('-1 month'));
+        $this->hasta = date('Y-m-d');
     }
     public function render(){
         $listar_transportistas = $this->transportista->listar_transportista_sin_id();
@@ -277,11 +282,10 @@ class Provincial extends Component
 
     public function calcularCostoTotal(){
         $montoSeleccionado = floatval($this->tarifaMontoSeleccionado);
-        $ayudante = floatval($this->despacho_ayudante);
         $otros = floatval($this->despacho_gasto_otros);
         $peso = floatval($this->pesoTotal);
 
-        $this->costoTotal = ($montoSeleccionado * $peso) + $ayudante + $otros;
+        $this->costoTotal = ($montoSeleccionado * $peso) + $otros;
     }
 
     public function guardarDespachos(){
@@ -299,6 +303,7 @@ class Provincial extends Component
                 'despacho_flete' => 'nullable|numeric',
                 'despacho_ayudante' => 'nullable|regex:/^[0-9]+(\.[0-9]+)?$/',
                 'despacho_gasto_otros' => 'nullable|regex:/^[0-9]+(\.[0-9]+)?$/',
+                'despacho_descripcion_otros' => 'required_if:despacho_gasto_otros,>,0|nullable|string',
             ], [
                 'selectedTarifario.required' => 'Debes seleccionar una tarifa.',
                 'selectedTarifario.integer' => 'La tarifa debe ser un número entero.',
@@ -318,6 +323,9 @@ class Provincial extends Component
 
                 'despacho_ayudante.regex' => 'El ayudante debe ser un número válido.',
                 'despacho_gasto_otros.regex' => 'El gasto en otros debe ser un número válido.',
+
+                'despacho_descripcion_otros.required_if' => 'La descripción de gastos adicionales es requerida cuando se ingresa un monto.',
+                'despacho_descripcion_otros.string' => 'La descripción debe ser una cadena de texto.',
             ]);
             $contadorError = 0;
             DB::beginTransaction();
