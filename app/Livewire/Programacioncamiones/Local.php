@@ -42,6 +42,7 @@ class Local extends Component
     public $selectedFacturas = [];
     public $detalle_vehiculo = [];
     public $tarifaMontoSeleccionado = 0;
+    public $montoOriginal = 0;
     public $programacion_fecha = '';
     public $despacho_ayudante = '';
     public $despacho_gasto_otros = '';
@@ -52,10 +53,14 @@ class Local extends Component
     public $id_tarifario;
     public $costoTotal = 0;
     public $id_tarifario_seleccionado = '';
+    public $desde;
+    public $hasta;
     public function mount(){
         $this->id_transportistas = null;
         $this->selectedVehiculo = null;
         $this->programacion_fecha = now()->format('Y-m-d');
+        $this->desde = date('Y-m-d', strtotime('-1 month'));
+        $this->hasta = date('Y-m-d');
     }
 
     public function render(){

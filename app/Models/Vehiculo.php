@@ -123,11 +123,14 @@ class Vehiculo extends Model
             $query->groupBy('v.id_vehiculo','v.vehiculo_placa','v.vehiculo_capacidad_peso','v.vehiculo_capacidad_volumen','t.tarifa_cap_min','t.tarifa_cap_max','t.tarifa_monto','t.tarifa_estado_aprobacion','t.id_tarifario');
             $result = $query->get();
 
-            foreach ($result as $r){
-                $r->vehiculo_capacidad_usada =  ($pesot / $r->vehiculo_capacidad_peso) * 100;
+            foreach ($result as $r) {
+                $r->vehiculo_capacidad_usada = ($pesot / $r->vehiculo_capacidad_peso) * 100;
+                $r->vehiculo_volumen_usado = ($volument / $r->vehiculo_capacidad_volumen) * 100;
             }
             // Ordenar los resultados por vehiculo_capacidad_usada de mayor a menor
-            $result = $result->sortByDesc('vehiculo_capacidad_usada');
+            $result = $result->sortByDesc(function ($vehiculo) {
+                return max($vehiculo->vehiculo_capacidad_usada, $vehiculo->vehiculo_volumen_usado);
+            });
 
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);

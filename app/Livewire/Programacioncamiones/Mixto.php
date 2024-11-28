@@ -74,7 +74,8 @@ class Mixto extends Component
     public $id_distrito = '';
     public $id_departamento = "";
     public $showBotonListo = "";
-
+    public $desde;
+    public $hasta;
 
     public function mount()
     {
@@ -82,6 +83,8 @@ class Mixto extends Component
         $this->selectedVehiculo = null;
         $this->showBotonListo = null;
         $this->programacion_fecha = now()->format('Y-m-d');
+        $this->desde = date('Y-m-d', strtotime('-1 month'));
+        $this->hasta = date('Y-m-d');
     }
 
     public function render()

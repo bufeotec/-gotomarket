@@ -139,7 +139,7 @@
                         @endphp
 
                         <div class="col-lg-4 col-md-12 col-sm-12 mb-4">
-                            <label for="tarifa_monto" class="form-label">Monto de la tarifa (*) {{ $cobroViaje }}</label>
+                            <label for="tarifa_monto" class="form-label">Monto de la tarifa sin IGV (*) {{ $cobroViaje }}</label>
                             <x-input-general type="text" id="tarifa_monto" wire:model="tarifa_monto" onkeyup="validar_numeros(this.id)" />
                             @error('tarifa_monto')
                             <span class="message-error">{{ $message }}</span>
@@ -318,7 +318,7 @@
                                     </p>
                                 </div>
                                 <div class="col-lg-4 mb-3">
-                                    <strong style="color: #8c1017">Monto de Tarifa:</strong>
+                                    <strong style="color: #8c1017">Monto de Tarifa sin IGV:</strong>
                                     <p>
                                         {{ isset($detalles->tarifa_monto) ? 'S/ ' . (fmod($detalles->tarifa_monto, 1) != 0 ? number_format($detalles->tarifa_monto, 2, '.', ',') : number_format($detalles->tarifa_monto, 0, '.', ',')) : 'No disponible' }}
                                     </p>
@@ -443,7 +443,7 @@
                                 <th>Unidad de medida</th>
                                 <th>Capacidad mínima</th>
                                 <th>Capacidad máxima</th>
-                                <th>Monto de la tarifa</th>
+                                <th>Monto de la tarifa sin IGV</th>
                                 <th>Estado de aprobación</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>

@@ -159,7 +159,7 @@
                                     </p>
                                 </div>
                                 <div class="col-lg-4 mb-3">
-                                    <strong style="color: #8c1017">Monto de Tarifa:</strong>
+                                    <strong style="color: #8c1017">Monto de Tarifa sin IGV:</strong>
                                     <p>
                                         {{ isset($detalles->tarifa_monto) ? 'S/ ' . (fmod($detalles->tarifa_monto, 1) != 0 ? number_format($detalles->tarifa_monto, 2, '.', ',') : number_format($detalles->tarifa_monto, 0, '.', ',')) : 'No disponible' }}
                                     </p>
@@ -304,7 +304,7 @@
                                 <th>Tipo de servicio</th>
                                 <th>Capacidad mínima</th>
                                 <th>Capacidad máxima</th>
-                                <th>Monto de la tarifa</th>
+                                <th>Monto de la tarifa sin IGV</th>
                                 <th>Acciones</th>
                             </tr>
                         </x-slot>

@@ -224,4 +224,26 @@ class General extends Model
         return $fechaFormateada;
 
     }
+
+    public function formatoDecimal($valor)
+    {
+        try {
+            // Truncamos el número a dos decimales sin redondear
+            $formattedValue = floor($valor * 100) / 100;
+
+            // Si el valor truncado no tiene decimales, mostramos sin decimales
+            if ($formattedValue == floor($formattedValue)) {
+                return number_format($formattedValue, 0, '.', ',');
+            }
+
+            // Si tiene decimales, mostramos dos decimales
+            return number_format($formattedValue, 2, '.', ',');
+
+        } catch (\Exception $e) {
+            // En caso de error, insertamos el log y retornamos un array vacío
+            $this->logs->insertarLog($e);
+            return [];
+        }
+    }
+
 }

@@ -119,6 +119,16 @@
                                 </div>
                             @endif
                         </div>
+                        <div class="row align-items-center mb-3">
+                            <div class="col-lg-6 col-md-2 col-sm-12 mb-2">
+                                <label for="fecha_desde" class="form-label">Desde</label>
+                                <input type="date" name="fecha_desde" id="fecha_desde" wire:model.live="desde" class="form-control">
+                            </div>
+                            <div class="col-lg-6 col-md-2 col-sm-12 mb-2">
+                                <label for="fecha_hasta" class="form-label">Hasta</label>
+                                <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model.live="hasta" class="form-control">
+                            </div>
+                        </div>
                         <div class="row">
                             <div class="col-lg-12">
                                 {{-- Buscador --}}
@@ -255,7 +265,7 @@
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                                    <h6>Fecha de entrega</h6>
+                                    <h6>Fecha de despacho</h6>
                                 </div>
                                 <div class="col-lg-12">
                                     <input type="date" class="form-control" id="programacion_fecha" name="programacion_fecha" wire:model="programacion_fecha" />
@@ -286,7 +296,7 @@
                                     <div class="vehiculos-scroll-container-horizontal">
                                         @php $conteoGen = 1; @endphp
                                         @foreach($tarifariosSugeridos as $index => $tari)
-                                            <div class="position-relative">
+                                            <div class="position-relative mx-2">
                                                 @if($tari->tarifa_estado_aprobacion == 1)
                                                     <input type="radio" name="vehiculo" id="id_check_vehiculo_{{ $tari->id_tarifario}}_{{$conteoGen}}" class="inputCheckRadio" value="{{ $tari->id_tarifario }}"  wire:click="seleccionarTarifario({{ $tari->id_tarifario }})" />
                                                     <label for="id_check_vehiculo_{{ $tari->id_tarifario}}_{{$conteoGen}}" class="labelCheckRadios">
@@ -349,6 +359,21 @@
                                                             </div>
                                                         </div>
                                                     </label>
+                                                    @php
+                                                        $me = new \App\Models\General();
+                                                        $capacidadPorcentaje = "0";
+                                                        if ($tari->capacidad_usada){
+                                                            $capacidadPorcentaje = $me->formatoDecimal($tari->capacidad_usada);
+                                                        }
+                                                    @endphp
+                                                    <div class="row">
+                                                        <div class="col-lg-12 text-center">
+                                                            <span class="d-block text-black"><b>Peso:</b></span>
+                                                            <div style="color: {{ $capacidadPorcentaje <= 25 ? 'red' : ($capacidadPorcentaje <= 50 ? 'orange' : ($capacidadPorcentaje <= 75 ? 'yellow' : 'green')) }};">
+                                                                <span>{{ $capacidadPorcentaje }}%</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                             </div>
                                             @php $conteoGen++; @endphp
                                         @endforeach
@@ -379,20 +404,25 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-lg-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                                    <h6>Mano de obra S/</h6>
-                                </div>
-                                <div class="col-lg-12">
-                                    <input type="text" class="form-control" id="despacho_ayudante" name="despacho_ayudante" wire:input="calcularCostoTotal" wire:model="despacho_ayudante" onkeyup="validar_numeros(this.id)" />
+                @if($despacho_gasto_otros > 0)
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                                        <h6>Descripción otros</h6>
+                                    </div>
+                                    <div class="col-lg-12">
+                                        <textarea class="form-control" id="despacho_descripcion_otros" name="despacho_descripcion_otros" wire:model="despacho_descripcion_otros"></textarea>
+                                        @error('despacho_descripcion_otros')
+                                        <span class="message-error">{{ $message }}</span>
+                                        @enderror
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                @endif
                 <div class="col-lg-4">
                     <div class="card">
                         <div class="card-body">
@@ -490,12 +520,26 @@
                                     <h6 class="mb-0">COMPROBANTES SELECCIONADAS</h6>
                                     <div class="d-flex flex-column align-items-end ml-auto">
                                         <div class="d-flex justify-content-center text-center py-1">
+                                            @php
+                                                $me = new \App\Models\General();
+                                                $peso = "0";
+                                                if ($pesoTotal){
+                                                    $peso = $me->formatoDecimal($pesoTotal);
+                                                }
+                                            @endphp
                                             <p class="mb-0 me-2">Peso total: </p>
-                                            <h4 class="mb-0 text-dark">{{ $pesoTotal }} kg</h4>
+                                            <h4 class="mb-0 text-dark">{{ $peso }} kg</h4>
                                         </div>
                                         <div class="d-flex justify-content-center text-center py-1">
+                                            @php
+                                                $me = new \App\Models\General();
+                                                $volumen = "0";
+                                                if ($volumenTotal){
+                                                    $volumen = $me->formatoDecimal($volumenTotal);
+                                                }
+                                            @endphp
                                             <p class="mb-0 me-2">Volumen total: </p>
-                                            <h4 class="mb-0 text-dark">{{ $volumenTotal }} cm³</h4>
+                                            <h4 class="mb-0 text-dark">{{ $volumen }} cm³</h4>
                                         </div>
                                     </div>
                                 </div>
@@ -517,8 +561,22 @@
                                                 <tr>
                                                     <td>{{ $factura['CFNUMSER'] }} - {{ $factura['CFNUMDOC'] }}</td>
                                                     <td>{{ $factura['guia'] }}</td>
-                                                    <td>{{ $factura['total_kg'] }} kg</td>
-                                                    <td>{{ $factura['total_volumen'] }} cm³</td>
+                                                    @php
+                                                        $me = new \App\Models\General();
+                                                        $pesoTabla = "0";
+                                                        if ($factura['total_kg']){
+                                                            $pesoTabla = $me->formatoDecimal($factura['total_kg']);
+                                                        }
+                                                    @endphp
+                                                    <td>{{ $pesoTabla }} kg</td>
+                                                    @php
+                                                        $me = new \App\Models\General();
+                                                        $volumenTabla = "0";
+                                                        if ($factura['total_volumen']){
+                                                            $volumenTabla = $me->formatoDecimal($factura['total_volumen']);
+                                                        }
+                                                    @endphp
+                                                    <td>{{ $volumenTabla }} cm³</td>
                                                     <td>
                                                         <a href="#" wire:click.prevent="eliminarFacturaSeleccionada('{{$factura['CFTD']}}','{{ $factura['CFNUMSER'] }}','{{ $factura['CFNUMDOC'] }}')" class="btn btn-danger btn-sm text-white">
                                                             <i class="fas fa-trash-alt"></i>
