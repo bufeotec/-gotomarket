@@ -119,14 +119,12 @@
                                 </div>
                             @endif
                         </div>
-                        <div class="row align-items-center mb-3">
+                        <div class="row">
                             <div class="col-lg-6 col-md-2 col-sm-12 mb-2">
-                                <label for="fecha_desde" class="form-label">Desde</label>
-                                <input type="date" name="fecha_desde" id="fecha_desde" wire:model.live="desde" class="form-control">
+                                <input type="date" name="fecha_desde" id="fecha_desde" wire:model.live="desde" wire:change="buscar_comprobante" class="form-control">
                             </div>
                             <div class="col-lg-6 col-md-2 col-sm-12 mb-2">
-                                <label for="fecha_hasta" class="form-label">Hasta</label>
-                                <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model.live="hasta" class="form-control">
+                                <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model.live="hasta" wire:change="buscar_comprobante" class="form-control">
                             </div>
                         </div>
                         <div class="row">
@@ -149,71 +147,231 @@
                                 @if(!$selectedCliente)
                                     {{-- Mostrar clientes cuando no hay cliente seleccionado --}}
                                     @if(!empty($searchCliente))
-                                        <div class="cliente-lista">
-                                            @if(count($filteredClientes) == 0)
-                                                <p>No se encontró el cliente.</p>
-                                            @else
-                                                @foreach($filteredClientes as $cl)
-                                                    <div class="row factura-item align-items-center mb-2" wire:click="seleccionar_cliente({{ $cl->CCODCLI }})">
-                                                        <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                                                            <p class="nombre-cliente ms-0">Razón social:</p>
-                                                            <b style="font-size: 16px;color: black">{{ $cl->CNOMCLI }}</b>
-                                                        </div>
-                                                        <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                                                            <p class="peso ms-0">RUC O DNI:</p>
-                                                            <b style="font-size: 16px;color: black">{{ $cl->CCODCLI }}</b>
-                                                        </div>
-                                                        <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                                                            <p class="peso ms-0">Dirección Fiscal:</p>
-                                                            <b style="font-size: 16px;color: black">{{ $cl->CDIRCLI }}</b>
-                                                        </div>
-                                                    </div>
-                                                @endforeach
-                                            @endif
+
+                                        <div class="row">
+                                            <div class="col-lg-12">
+                                                <x-table-general>
+                                                    <x-slot name="thead">
+                                                        <tr>
+                                                            <th style="font-size: 12px">Nombre del Cliente</th>
+                                                            <th style="font-size: 12px">RUC O DNI</th>
+                                                            <th style="font-size: 12px">Dirección Fiscal</th>
+                                                        </tr>
+                                                    </x-slot>
+                                                    <x-slot name="tbody">
+                                                        {{--                        <ul class="factura-list list-group list-group-flush containerSearchComprobantes">--}}
+                                                        @if(count($filteredClientes) == 0 )
+                                                            @foreach($filteredClientes as $factura)
+                                                                <tr style="cursor: pointer" wire:click="seleccionar_cliente('{{$factura->CFTD}}','{{ $factura->CFNUMSER }}','{{ $factura->CFNUMDOC }}')">
+                                                                    <td colspan="3" style="padding: 0px">
+                                                                        <table class="table">
+                                                                            <tbody>
+                                                                            <tr>
+                                                                                <td style="width: 39.6%">
+                                                                                        <span class="d-block tamanhoTablaComprobantes">
+                                                                                            {{ $factura->CNOMCLI }}
+                                                                                        </span>
+                                                                                </td>
+                                                                                <td style="width: 32.2%">
+                                                                                        <span class="d-block tamanhoTablaComprobantes">
+                                                                                            {{ $factura->CCODCLI }}
+                                                                                        </span>
+                                                                                </td>
+                                                                                <td>
+                                                                                        <span class="d-block tamanhoTablaComprobantes">
+                                                                                            {{ $factura->CDIRCLI }} kg
+                                                                                        </span>
+                                                                                </td>
+                                                                            </tr>
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </td>
+                                                                </tr>
+
+                                                            @endforeach
+                                                        @else
+                                                            <p>No se encontró el comprobante.</p>
+                                                        @endif
+                                                        {{--                        </ul>--}}
+                                                    </x-slot>
+                                                </x-table-general>
+                                            </div>
                                         </div>
+
+
+
+
+
+
+
+{{--                                        <div class="cliente-lista">--}}
+{{--                                            @if(count($filteredClientes) == 0)--}}
+{{--                                                <p>No se encontró el cliente.</p>--}}
+{{--                                            @else--}}
+{{--                                                @foreach($filteredClientes as $cl)--}}
+{{--                                                    <div class="row factura-item align-items-center mb-2" wire:click="seleccionar_cliente({{ $cl->CCODCLI }})">--}}
+{{--                                                        <div class="col-lg-12 col-md-12 col-sm-12 mb-2">--}}
+{{--                                                            <p class="nombre-cliente ms-0">Razón social:</p>--}}
+{{--                                                            <b style="font-size: 16px;color: black">{{ $cl->CNOMCLI }}</b>--}}
+{{--                                                        </div>--}}
+{{--                                                        <div class="col-lg-12 col-md-12 col-sm-12 mb-2">--}}
+{{--                                                            <p class="peso ms-0">RUC O DNI:</p>--}}
+{{--                                                            <b style="font-size: 16px;color: black">{{ $cl->CCODCLI }}</b>--}}
+{{--                                                        </div>--}}
+{{--                                                        <div class="col-lg-12 col-md-12 col-sm-12 mb-2">--}}
+{{--                                                            <p class="peso ms-0">Dirección Fiscal:</p>--}}
+{{--                                                            <b style="font-size: 16px;color: black">{{ $cl->CDIRCLI }}</b>--}}
+{{--                                                        </div>--}}
+{{--                                                    </div>--}}
+{{--                                                @endforeach--}}
+{{--                                            @endif--}}
+{{--                                        </div>--}}
                                     @endif
                                 @else
                                     {{-- Mostrar comprobantes cuando un cliente está seleccionado --}}
                                     @if(!empty($searchComprobante))
-                                        <div class="comprobante-lista">
-                                            @if(count($filteredComprobantes) == 0)
-                                                <p>No se encontraron comprobantes.</p>
-                                            @else
-                                                @foreach($filteredComprobantes as $comprobante)
-                                                    <div class="row factura-item align-items-center mb-2" wire:click="seleccionar_factura_cliente('{{ $comprobante->CFTD }}', '{{ $comprobante->CFNUMSER }}', '{{ $comprobante->CFNUMDOC }}')">
-                                                        <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
-                                                            <p class="serie-correlativa ms-0">Serie y Correlativo:</p>
-                                                            <b style="font-size: 16px;color: black">{{ $comprobante->CFNUMSER }} - {{ $comprobante->CFNUMDOC }}</b>
-                                                        </div>
-                                                        <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
-                                                            <p class="serie-correlativa ms-0">N° de Guía:</p>
-                                                            <b style="font-size: 16px;color: black">{{ $comprobante->CFTEXGUIA }}</b>
-                                                        </div>
-                                                        <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
-                                                            <p class="peso ms-0">Importe: </p>
-                                                            <b style="font-size: 16px;color: black">{{ $comprobante->CFIMPORTE }}</b>
-                                                        </div>
-                                                        <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
-                                                            <p class="peso ms-0">Fecha de Emisión: </p>
-                                                            <b style="font-size: 16px;color: black">{{ $comprobante->guia ? date('d-m-Y',strtotime($comprobante->guia->GREFECEMISION))  : '-' }}</b>
-                                                        </div>
-                                                        <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
-                                                            <p class="peso ms-0">Peso: </p>
-                                                            <b style="font-size: 16px;color: black">{{ $comprobante->total_kg }} kg</b>
-                                                        </div>
-                                                        <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
-                                                            <p class="peso ms-0">Volumen: </p>
-                                                            <b style="font-size: 16px;color: black">{{ $comprobante->total_volumen }} cm³</b>
-                                                        </div>
-                                                        <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                                                            <p class="peso ms-0">Dirección: </p>
-                                                            <b style="font-size: 16px;color: black">{{$comprobante->guia ? $comprobante->guia->LLEGADADIRECCION : '-' }}</b>
-                                                        </div>
-                                                    </div>
-                                                @endforeach
-                                            @endif
+
+                                        <div class="row mt-3">
+                                            <div class="col-lg-12 col-md-12 col-sm-12">
+                                                <x-table-general>
+                                                    <x-slot name="thead">
+                                                        <tr>
+                                                            <th style="font-size: 12px">Serie y Correlativo / Guía</th>
+                                                            <th style="font-size: 12px">Nombre del Cliente</th>
+                                                            <th style="font-size: 12px">Peso y Volumen</th>
+                                                        </tr>
+                                                    </x-slot>
+                                                    <x-slot name="tbody">
+                                                        {{--                        <ul class="factura-list list-group list-group-flush containerSearchComprobantes">--}}
+                                                        @if(count($filteredComprobantes) > 0 )
+                                                            @foreach($filteredComprobantes as $factura)
+                                                                @php
+                                                                    $CFTD = $factura->CFTD;
+                                                                    $CFNUMSER = $factura->CFNUMSER;
+                                                                    $CFNUMDOC = $factura->CFNUMDOC;
+                                                                    $comprobanteExiste = collect($this->selectedFacturas)->first(function ($facturaVa) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
+                                                                        return $facturaVa['CFTD'] === $CFTD
+                                                                            && $facturaVa['CFNUMSER'] === $CFNUMSER
+                                                                            && $facturaVa['CFNUMDOC'] === $CFNUMDOC;
+                                                                    });
+                                                                @endphp
+                                                                @if(!$comprobanteExiste)
+                                                                    <tr style="cursor: pointer" wire:click="seleccionar_factura_cliente('{{$factura->CFTD}}','{{ $factura->CFNUMSER }}','{{ $factura->CFNUMDOC }}')">
+                                                                        <td colspan="3" style="padding: 0px">
+                                                                            <table class="table">
+                                                                                <tbody>
+                                                                                <tr>
+                                                                                    <td style="width: 39.6%">
+                                                                        <span class="d-block tamanhoTablaComprobantes">
+                                                                            {{ $factura->CFNUMSER }} - {{ $factura->CFNUMDOC }}
+                                                                        </span>
+                                                                                        <span class="d-block tamanhoTablaComprobantes">
+                                                                            {{ $factura->CFTEXGUIA }}
+                                                                        </span>
+                                                                                    </td>
+                                                                                    <td>
+                                                                        <span class="d-block tamanhoTablaComprobantes">
+                                                                            {{ $factura->total_kg }} kg
+                                                                        </span>
+                                                                                        <span class="d-block tamanhoTablaComprobantes">
+                                                                            {{ $factura->total_volumen }} cm³
+                                                                        </span>
+                                                                                    </td>
+                                                                                </tr>
+                                                                                <tr style="border-top: 2px solid transparent;">
+                                                                                    <td colspan="3">
+                                                                         <span class="d-block tamanhoTablaComprobantes">
+                                                                                {{ $factura->LLEGADADIRECCION }} <br> UBIGEO: <b style="color: black">{{ $factura->DEPARTAMENTO }} - {{ $factura->PROVINCIA }} - {{ $factura->DISTRITO }}</b>
+                                                                         </span>
+                                                                                    </td>
+                                                                                </tr>
+                                                                                </tbody>
+                                                                            </table>
+                                                                        </td>
+                                                                    </tr>
+                                                                    {{--                                        <li class="list-group-item list-group-item-action factura-item" wire:click="seleccionarFactura('{{$factura->CFTD}}','{{ $factura->CFNUMSER }}','{{ $factura->CFNUMDOC }}')">--}}
+                                                                    {{--                                            <div class="row">--}}
+                                                                    {{--                                                <div class="col-lg-4 col-md-4 col-sm-12">--}}
+                                                                    {{--                                                    <small class="textListarComprobantes me-2">Serie y Correlativo: <span>{{ $factura->CFNUMSER }} - {{ $factura->CFNUMDOC }}</span></small>--}}
+                                                                    {{--                                                    <small class="textListarComprobantes">N° Guía: <span>{{ $factura->CFTEXGUIA }}</span></small>--}}
+                                                                    {{--                                                </div>--}}
+                                                                    {{--                                                <div class="col-lg-3 col-md-3 col-sm-12">--}}
+                                                                    {{--                                                    <small class="textListarComprobantes">Cliente: <span>{{ $factura->CNOMCLI }}</span></small>--}}
+                                                                    {{--                                                </div>--}}
+                                                                    {{--                                                <div class="col-lg-4 col-md-4 col-sm-12">--}}
+                                                                    {{--                                                    <small class="textListarComprobantes me-2">Peso: <span>{{ $factura->total_kg }} kg</span></small>--}}
+                                                                    {{--                                                    <small class="textListarComprobantes">Volumen: <span>{{ $factura->total_volumen }} cm³</span></small>--}}
+                                                                    {{--                                                </div>--}}
+                                                                    {{--                                                <div class="col-lg-12 col-md-12 col-sm-12">--}}
+                                                                    {{--                                                    <small class="textListarComprobantes">Dirección: <span>{{ $factura->LLEGADADIRECCION }}</span></small>--}}
+                                                                    {{--                                                </div>--}}
+                                                                    {{--                                            </div>--}}
+
+                                                                    {{--                                            --}}{{--                                                    <div class="col-lg-6 col-md-6 col-sm-12 mb-2">--}}
+                                                                    {{--                                            --}}{{--                                                        <p class="peso ms-0">Importe: </p>--}}
+                                                                    {{--                                            --}}{{--                                                        <b style="font-size: 16px;color: black">{{ $factura->CFIMPORTE }}</b>--}}
+                                                                    {{--                                            --}}{{--                                                    </div>--}}
+                                                                    {{--                                            --}}{{--                                                    <div class="col-lg-6 col-md-6 col-sm-12 mb-2">--}}
+                                                                    {{--                                            --}}{{--                                                        <p class="peso ms-0">Fecha de Emisión: </p>--}}
+                                                                    {{--                                            --}}{{--                                                        <b style="font-size: 16px;color: black">{{ $factura->GREFECEMISION ? date('d-m-Y',strtotime($factura->GREFECEMISION))  : '-' }}</b>--}}
+                                                                    {{--                                            --}}{{--                                                    </div>--}}
+                                                                    {{--                                        </li>--}}
+                                                                @endif
+                                                            @endforeach
+                                                        @else
+                                                            <tr>
+                                                                <td colspan="3">
+                                                                    <p class="text-center mb-0" style="font-size: 12px">No se encontró comprobantes.</p>
+                                                                </td>
+                                                            </tr>
+                                                            {{--                                <p>No se encontró el comprobante.</p>--}}
+                                                        @endif
+                                                        {{--                        </ul>--}}
+                                                    </x-slot>
+                                                </x-table-general>
+                                            </div>
                                         </div>
+
+{{--                                        <div class="comprobante-lista">--}}
+{{--                                            @if(count($filteredComprobantes) == 0)--}}
+{{--                                                <p>No se encontraron comprobantes.</p>--}}
+{{--                                            @else--}}
+{{--                                                @foreach($filteredComprobantes as $comprobante)--}}
+{{--                                                    <div class="row factura-item align-items-center mb-2" wire:click="seleccionar_factura_cliente('{{ $comprobante->CFTD }}', '{{ $comprobante->CFNUMSER }}', '{{ $comprobante->CFNUMDOC }}')">--}}
+{{--                                                        <div class="col-lg-6 col-md-6 col-sm-12 mb-3">--}}
+{{--                                                            <p class="serie-correlativa ms-0">Serie y Correlativo:</p>--}}
+{{--                                                            <b style="font-size: 16px;color: black">{{ $comprobante->CFNUMSER }} - {{ $comprobante->CFNUMDOC }}</b>--}}
+{{--                                                        </div>--}}
+{{--                                                        <div class="col-lg-6 col-md-6 col-sm-12 mb-3">--}}
+{{--                                                            <p class="serie-correlativa ms-0">N° de Guía:</p>--}}
+{{--                                                            <b style="font-size: 16px;color: black">{{ $comprobante->CFTEXGUIA }}</b>--}}
+{{--                                                        </div>--}}
+{{--                                                        <div class="col-lg-6 col-md-6 col-sm-12 mb-2">--}}
+{{--                                                            <p class="peso ms-0">Importe: </p>--}}
+{{--                                                            <b style="font-size: 16px;color: black">{{ $comprobante->CFIMPORTE }}</b>--}}
+{{--                                                        </div>--}}
+{{--                                                        <div class="col-lg-6 col-md-6 col-sm-12 mb-2">--}}
+{{--                                                            <p class="peso ms-0">Fecha de Emisión: </p>--}}
+{{--                                                            <b style="font-size: 16px;color: black">{{ $comprobante->guia ? date('d-m-Y',strtotime($comprobante->guia->GREFECEMISION))  : '-' }}</b>--}}
+{{--                                                        </div>--}}
+{{--                                                        <div class="col-lg-6 col-md-6 col-sm-12 mb-2">--}}
+{{--                                                            <p class="peso ms-0">Peso: </p>--}}
+{{--                                                            <b style="font-size: 16px;color: black">{{ $comprobante->total_kg }} kg</b>--}}
+{{--                                                        </div>--}}
+{{--                                                        <div class="col-lg-6 col-md-6 col-sm-12 mb-2">--}}
+{{--                                                            <p class="peso ms-0">Volumen: </p>--}}
+{{--                                                            <b style="font-size: 16px;color: black">{{ $comprobante->total_volumen }} cm³</b>--}}
+{{--                                                        </div>--}}
+{{--                                                        <div class="col-lg-12 col-md-12 col-sm-12 mb-2">--}}
+{{--                                                            <p class="peso ms-0">Dirección: </p>--}}
+{{--                                                            <b style="font-size: 16px;color: black">{{$comprobante->guia ? $comprobante->guia->LLEGADADIRECCION : '-' }}</b>--}}
+{{--                                                        </div>--}}
+{{--                                                    </div>--}}
+{{--                                                @endforeach--}}
+{{--                                            @endif--}}
+{{--                                        </div>--}}
                                     @endif
+
                                 @endif
                             </div>
                         </div>
@@ -621,225 +779,6 @@
         .card {
             margin-bottom: 1rem;
             border: none;
-        }
-        /*ESTILOS PARA CLIENTES*/
-        .cliente-option {
-            margin-bottom: 10px;
-        }
-        .cliente-label {
-            display: flex;
-            align-items: center;
-            padding: 10px 15px;
-            background-color: #f0f0f0;
-            border-radius: 8px;
-            cursor: pointer;
-            color: #333;
-            font-weight: bold;
-            transition: background-color 0.3s, color 0.3s;
-        }
-        .cliente-label .nombre-cliente {
-            font-size: 16px;
-        }
-        .cliente-label .ruc-cliente {
-            font-size: 14px;
-            color: #777;
-        }
-        /* Estilo cuando está seleccionado */
-        input[type="radio"]:checked + .cliente-label {
-            background-color: #e30613;
-            color: #fff;
-        }
-        input[type="radio"]:checked + .cliente-label .nombre-cliente,
-        input[type="radio"]:checked + .cliente-label .ruc-cliente {
-            color: #fff;
-        }
-
-        /* COMPROBANTES */
-        .custom-checkbox input {
-            display: none;
-        }
-        .custom-checkbox {
-            display: block;
-            position: relative;
-            cursor: pointer;
-            font-size: 20px;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .checkmark {
-            position: relative;
-            top: 0;
-            left: 0;
-            height: 1.3em;
-            width: 1.3em;
-            background-color: #2196F300;
-            border-radius: 0.25em;
-            transition: all 0.25s;
-        }
-        .custom-checkbox input:checked ~ .checkmark {
-            background-color: #e51821;
-        }
-        .checkmark:after {
-            content: "";
-            position: absolute;
-            transform: rotate(0deg);
-            border: 0.1em solid black;
-            left: 0;
-            top: 0;
-            width: 1.05em;
-            height: 1.05em;
-            border-radius: 0.25em;
-            transition: all 0.25s, border-width 0.1s;
-        }
-        .custom-checkbox input:checked ~ .checkmark:after {
-            left: 0.50em;
-            top: 0.30em;
-            width: 0.30em;
-            height: 0.5em;
-            border-color: #fff0 white white #fff0;
-            border-width: 0 0.15em 0.15em 0;
-            border-radius: 0em;
-            transform: rotate(45deg);
-        }
-        .factura-item {
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
-            background-color: #f8f9fa;
-            cursor: pointer;
-        }
-        .serie-correlativa,
-        .nombre-cliente,
-        .peso,
-        .volumen{
-            font-size: 13px;
-            color: #333;
-            margin: 0px 10px;
-        }
-        .overlay__eliminar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: transparent;
-            z-index: 9998;
-            display: none;
-        }
-        .spinner__container__eliminar {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 9999;
-        }
-        .spinner__eliminar {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #c3121a;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            from {
-                transform: rotate(0deg);
-            }
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* VEHICULOS */
-        .vehiculos-scroll-container-horizontal {
-            display: flex;
-            overflow-x: auto;
-            padding-bottom: 10px;
-        }
-        .circulo-vehiculo-container {
-            position: relative;
-            width: 170px;
-            height: 170px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .circulo-vehiculo-container.no-aprobado {
-            cursor: not-allowed;
-        }
-        .circulo-vehiculo {
-            position: relative;
-            text-align: center;
-            width: 110px;
-            height: 110px;
-        }
-        .vehiculo-placa {
-            font-size: 13px;
-            font-weight: bold;
-            color: #333;
-        }
-        .tarifa-monto,
-        .capacidad-peso {
-            font-size: 14px;
-            font-weight: bold;
-            color: #333;
-        }
-        .boton-container {
-            margin-top: 5px;
-        }
-        .circulo-vehiculo-container.no-aprobado .estado-circulo {
-            border: 2px solid red;
-        }
-        .circulo-vehiculo-container:not(.no-aprobado) .estado-circulo {
-            border: 2px solid green;
-        }
-        .estado-circulo {
-            position: absolute;
-            top: -5px;
-            left: -5px;
-            width: 20px;
-            height: 20px;
-            background-color: #f8f9fa;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
-        }
-        .check-icon,
-        .warning-icon {
-            font-size: 14px;
-            display: none;
-        }
-        /* Muestra el icono de check cuando está seleccionado */
-        .vehiculo-radio:checked + .progreso-circular + .circulo-vehiculo + .estado-circulo .check-icon {
-            display: inline;
-            color: green;
-        }
-        /* Muestra el icono de advertencia cuando no está aprobado */
-        .no-aprobado .estado-circulo .warning-icon {
-            display: inline;
-            color: red;
-        }
-        /* Progreso Circular */
-        .progreso-circular {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-        }
-        .progreso-circular-bg,
-        .progreso-circular-fg {
-            fill: none;
-            stroke-width: 2.8;
-        }
-        .progreso-circular-bg {
-            stroke: #e6e6e6;
-        }
-        .progreso-circular-fg {
-            stroke-linecap: round;
-            transition: stroke-dasharray 0.3s;
         }
     </style>
 </div>

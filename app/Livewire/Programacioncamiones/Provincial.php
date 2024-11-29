@@ -198,6 +198,9 @@ class Provincial extends Component
             'total_kg' => $factura->total_kg,
             'total_volumen' => $factura->total_volumen,
             'guia' => $factura->CFTEXGUIA,
+            'GREFECEMISION' => $factura->GREFECEMISION, // fecha de emision de la guía
+            'LLEGADADIRECCION' => $factura->LLEGADADIRECCION,// Dirección de destino
+            'LLEGADAUBIGEO' => $factura->LLEGADAUBIGEO,// Código del ubigeo
         ];
         $this->pesoTotal += $factura->total_kg;
         $this->volumenTotal += $factura->total_volumen;
