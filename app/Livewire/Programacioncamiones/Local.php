@@ -55,6 +55,11 @@ class Local extends Component
     public $id_tarifario_seleccionado = '';
     public $desde;
     public $hasta;
+    public $despacho_monto_modificado = '';
+    public $despacho_descripcion_modificado = '';
+    public $importeTotal = 0;
+    public $ratioCostoVenta = 0;
+    public $ratioCostoPeso = 0;
     public function mount(){
         $this->id_transportistas = null;
         $this->selectedVehiculo = null;
@@ -95,6 +100,7 @@ class Local extends Component
         if ($vehiculo) {
             // Actualiza el monto de la tarifa del vehículo seleccionado
             $this->tarifaMontoSeleccionado = $vehiculo->tarifa_monto;
+            $this->montoOriginal = $vehiculo->tarifa_monto;
             $this->id_tarifario_seleccionado = $id_tarifa;
             $this->selectedVehiculo = $vehiculoId;
             $this->calcularCostoTotal();
@@ -140,6 +146,10 @@ class Local extends Component
         ];
         $this->pesoTotal += $factura->total_kg;
         $this->volumenTotal += $factura->total_volumen;
+        $this->importeTotal += $factura->CFIMPORTE;
+
+        $this->calcularRatioCostoPeso();
+        $this->calcularRatioCostoVenta();
 
         // Eliminar la factura de la lista de facturas filtradas
         $this->filteredFacturas = $this->filteredFacturas->filter(function ($f) use ($CFNUMDOC) {
@@ -148,6 +158,22 @@ class Local extends Component
         // Actualizar lista de vehículos sugeridos
         $this->listar_vehiculos_lo();
 //        $this->buscar_comprobantes();
+    }
+
+    public function calcularRatioCostoPeso(){
+        if ($this->pesoTotal > 0) {
+            $this->ratioCostoPeso = $this->costoTotal / $this->pesoTotal;
+        } else {
+            $this->ratioCostoPeso = 0;
+        }
+    }
+
+    public function calcularRatioCostoVenta(){
+        if ($this->importeTotal > 0) {
+            $this->ratioCostoVenta = $this->costoTotal / $this->importeTotal;
+        } else {
+            $this->ratioCostoVenta = 0;
+        }
     }
 
     public function eliminarFacturaSeleccionada($CFTD, $CFNUMSER, $CFNUMDOC){
@@ -166,6 +192,9 @@ class Local extends Component
             // Actualiza los totales
             $this->pesoTotal -= $factura['total_kg'];
             $this->volumenTotal -= $factura['total_volumen'];
+            $this->calcularRatioCostoPeso();
+            $this->calcularRatioCostoVenta();
+//            $this->importeTotal += $factura['CFIMPORTE'];
 //            // Añade la factura eliminada a las sugerencias si coincide con la búsqueda actual
 //            if (
 //                str_contains(strtolower($factura['CFTD']), strtolower($this->searchFactura)) ||
@@ -200,7 +229,26 @@ class Local extends Component
         $otros = floatval($this->despacho_gasto_otros);
 
         $this->costoTotal = $montoSeleccionado + $ayudante + $otros;
+        $this->calcularRatioCostoPeso();
     }
+
+    public function abrirModalMontoModificado(){
+        // Asignar el monto seleccionado al campo modificado
+        $this->despacho_monto_modificado = $this->tarifaMontoSeleccionado;
+    }
+
+    public function guardarMontoModificado(){
+        $this->validate([
+            'despacho_descripcion_modificado' => 'required|string',
+        ],[
+            'despacho_descripcion_modificado.required' => 'La descripción de cambio de tarifa es requerida.',
+            'despacho_descripcion_modificado.integer' => 'La descripción debe ser una cadena de texto.',
+        ]);
+        $this->tarifaMontoSeleccionado = $this->despacho_monto_modificado;
+        $this->calcularCostoTotal();
+        $this->dispatch('hideModal');
+    }
+
 
     public function guardarDespachos(){
         try {
@@ -267,11 +315,14 @@ class Local extends Component
             $despacho->id_tarifario = $this->id_tarifario_seleccionado;
             $despacho->despacho_peso = $this->pesoTotal;
             $despacho->despacho_volumen = $this->volumenTotal;
-            $despacho->despacho_flete = $this->tarifaMontoSeleccionado;
+            $despacho->despacho_flete = $this->montoOriginal;
             $despacho->despacho_ayudante = $this->despacho_ayudante ?: null;
             $despacho->despacho_gasto_otros = $this->despacho_gasto_otros ?: null;
             $despacho->despacho_costo_total = $this->tarifaMontoSeleccionado +
                 ($this->despacho_ayudante ?: 0) + ($this->despacho_gasto_otros ?: 0);
+            $despacho->despacho_monto_modificado = $this->tarifaMontoSeleccionado ?: null;
+            $despacho->despacho_estado_modificado = $this->tarifaMontoSeleccionado !== $this->montoOriginal ? 1 : 0;
+            $despacho->despacho_descripcion_modificado = $this->despacho_descripcion_modificado ?: null;
             $despacho->despacho_estado = 1;
             $despacho->despacho_microtime = microtime(true);
             if (!$despacho->save()) {

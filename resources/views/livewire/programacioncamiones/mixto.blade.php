@@ -358,16 +358,25 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                            <div class="row">
-                                <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                                    <h6>Mano de obra S/</h6>
-                                </div>
-                                <div class="col-lg-12">
-                                    <input type="text" class="form-control" id="mano_obra" name="mano_obra" wire:model="mano_obra" wire:change="save_cliente_data({{$clienteindex}})" onkeyup="validar_numeros(this.id)" />
+                        @if($despacho_gasto_otros > 0)
+                            <div class="col-lg-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                                                <h6>Descripción otros</h6>
+                                            </div>
+                                            <div class="col-lg-12">
+                                                <textarea class="form-control" id="despacho_descripcion_otros" name="despacho_descripcion_otros" wire:model="despacho_descripcion_otros"></textarea>
+                                                @error('despacho_descripcion_otros')
+                                                <span class="message-error">{{ $message }}</span>
+                                                @enderror
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        @endif4
                     </div>
 
                     <div class="row">

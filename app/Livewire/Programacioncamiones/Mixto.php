@@ -76,6 +76,7 @@ class Mixto extends Component
     public $showBotonListo = "";
     public $desde;
     public $hasta;
+    public $despacho_descripcion_otros = '';
 
     public function mount()
     {
