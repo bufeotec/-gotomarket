@@ -70,11 +70,11 @@
         <x-slot name="modalContent">
             <div class="row">
                 <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                    <label for="despacho_gasto_otros">Otros S/</label>
+                    <label for="despacho_gasto_otros" class="form-label">Otros S/</label>
                     <input type="text" class="form-control" id="despacho_gasto_otros" name="despacho_gasto_otros" wire:input="calcularCostoTotal" wire:model="despacho_gasto_otros" onkeyup="validar_numeros(this.id)" />
                 </div>
                 <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                    <label for="despacho_ayudante">Mano de obra S/</label>
+                    <label for="despacho_ayudante" class="form-label">Mano de obra S/</label>
                     <input type="text" class="form-control" id="despacho_ayudante" name="despacho_ayudante" wire:input="calcularCostoTotal" wire:model="despacho_ayudante" onkeyup="validar_numeros(this.id)" />
                 </div>
             </div>
@@ -273,7 +273,11 @@
                             </div>
                             @if($tarifaMontoSeleccionado > 0)
                                 <div class="col-lg-8 col-md-8 col-sm-12 mb-2">
-                                    <p class="text-end mb-0">Monto de la tarifa del vehículo seleccionado: S/ <strong>{{ $tarifaMontoSeleccionado }}</strong></p>
+                                    <p class="text-end mb-0">Monto de la tarifa del vehículo seleccionado:
+                                        <span class="font-bold badge bg-label-success curso-pointer" data-bs-toggle="modal" data-bs-target="#modalRegistrarGastos" >
+                                            S/ {{ $tarifaMontoSeleccionado }}
+                                        </span>
+                                    </p>
                                 </div>
                             @endif
                         </div>
@@ -406,7 +410,7 @@
                             </div>
                             <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
                                 <div class="row">
-                                    <div class="col-lg-6 col-md-6 col-sm-12">
+                                    <div class="col-lg-5 col-md-5 col-sm-12 text-start">
                                         @php
                                             $me = new \App\Models\General();
                                             $peso = "0";
@@ -428,15 +432,35 @@
                                             Cm³: <span>{{ $volumen }}</span>
                                         </small>
                                     </div>
-                                    <div class="col-lg-3 col-md-3 col-sm-12">
-                                        @if($tarifaMontoSeleccionado && $importeTotalVenta)
-                                            <small class="textTotalComprobantesSeleccionados">
-                                                {{$tarifaMontoSeleccionado}} / {{$importeTotalVenta}} =  <span>{{ $tarifaMontoSeleccionado / $importeTotalVenta }}</span>
+                                    <div class="col-lg-7 col-md-7 col-sm-12 text-end">
+                                        @if($costoTotal && $importeTotalVenta)
+                                            <small class="textTotalComprobantesSeleccionados me-2">
+                                                @php
+                                                    $me = new \App\Models\General();
+                                                    $ra1 = 0;
+                                                    if ($volumenTotal){
+                                                        $to = $costoTotal / $importeTotalVenta;
+                                                        $ra1 = $me->formatoDecimal($to);
+                                                    }
+                                                @endphp
+
+                                                F.V: {{$costoTotal}} / {{$importeTotalVenta}} =  <span>{{ $ra1 }}</span>
                                             </small>
                                         @endif
-                                    </div>
-                                    <div class="col-lg-3 col-md-3 col-sm-12">
+                                        @if($costoTotal && $peso)
+                                            <small class="textTotalComprobantesSeleccionados">
+                                                @php
+                                                    $me = new \App\Models\General();
+                                                    $ra2 = 0;
+                                                    if ($volumenTotal){
+                                                        $to = $costoTotal / $peso;
+                                                        $ra2 = $me->formatoDecimal($to);
+                                                    }
+                                                @endphp
 
+                                                F.P: {{$costoTotal}} / {{$peso}} =  <span>{{ $ra2 }}</span>
+                                            </small>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
