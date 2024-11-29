@@ -303,7 +303,7 @@ class Provincial extends Component
                 'despacho_flete' => 'nullable|numeric',
                 'despacho_ayudante' => 'nullable|regex:/^[0-9]+(\.[0-9]+)?$/',
                 'despacho_gasto_otros' => 'nullable|regex:/^[0-9]+(\.[0-9]+)?$/',
-                'despacho_descripcion_otros' => 'required_if:despacho_gasto_otros,>,0|nullable|string',
+                'despacho_descripcion_otros' => $this->despacho_gasto_otros > 0 ? 'required|string' : 'nullable|string',
             ], [
                 'selectedTarifario.required' => 'Debes seleccionar una tarifa.',
                 'selectedTarifario.integer' => 'La tarifa debe ser un número entero.',
@@ -324,7 +324,7 @@ class Provincial extends Component
                 'despacho_ayudante.regex' => 'El ayudante debe ser un número válido.',
                 'despacho_gasto_otros.regex' => 'El gasto en otros debe ser un número válido.',
 
-                'despacho_descripcion_otros.required_if' => 'La descripción de gastos adicionales es requerida cuando se ingresa un monto.',
+                'despacho_descripcion_otros.required' => 'La descripción de gastos adicionales es requerida cuando se ingresa un monto.',
                 'despacho_descripcion_otros.string' => 'La descripción debe ser una cadena de texto.',
             ]);
             $contadorError = 0;
@@ -373,13 +373,11 @@ class Provincial extends Component
             $despacho->despacho_gasto_otros = $this->despacho_gasto_otros ?: null;
             // Calcular despacho_costo_total
             $despacho_costo_total = $despacho->despacho_flete;
-            if (!empty($this->despacho_ayudante)) {
-                $despacho_costo_total += $this->despacho_ayudante;
-            }
             if (!empty($this->despacho_gasto_otros)) {
                 $despacho_costo_total += $this->despacho_gasto_otros;
             }
             $despacho->despacho_costo_total = $despacho_costo_total;
+            $despacho->despacho_descripcion_otros = $this->despacho_gasto_otros > 0 ? $this->despacho_descripcion_otros : null;
             $despacho->despacho_estado = 1;
             $despacho->despacho_microtime = microtime(true);
             if (!$despacho->save()) {
@@ -447,6 +445,7 @@ class Provincial extends Component
         $this->despacho_flete = null;
         $this->id_tarifario = null;
         $this->costoTotal = 0;
+        $this->despacho_descripcion_otros = '';
     }
 
 

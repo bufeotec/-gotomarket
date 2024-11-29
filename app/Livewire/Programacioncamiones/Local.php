@@ -59,6 +59,11 @@ class Local extends Component
     public $id_tarifario_seleccionado = '';
     public $desde;
     public $hasta;
+    public $despacho_monto_modificado = '';
+    public $despacho_descripcion_modificado = '';
+    public $importeTotal = 0;
+    public $ratioCostoVenta = 0;
+    public $ratioCostoPeso = 0;
     public function mount(){
         $this->id_transportistas = null;
         $this->selectedVehiculo = null;
@@ -99,6 +104,7 @@ class Local extends Component
         if ($vehiculo) {
             // Actualiza el monto de la tarifa del vehículo seleccionado
             $this->tarifaMontoSeleccionado = $vehiculo->tarifa_monto;
+            $this->montoOriginal = $vehiculo->tarifa_monto;
             $this->id_tarifario_seleccionado = $id_tarifa;
             $this->selectedVehiculo = $vehiculoId;
             $this->calcularCostoTotal();
@@ -279,11 +285,14 @@ class Local extends Component
             $despacho->id_tarifario = $this->id_tarifario_seleccionado;
             $despacho->despacho_peso = $this->pesoTotal;
             $despacho->despacho_volumen = $this->volumenTotal;
-            $despacho->despacho_flete = $this->tarifaMontoSeleccionado;
+            $despacho->despacho_flete = $this->montoOriginal;
             $despacho->despacho_ayudante = $this->despacho_ayudante ?: null;
             $despacho->despacho_gasto_otros = $this->despacho_gasto_otros ?: null;
             $despacho->despacho_costo_total = $this->tarifaMontoSeleccionado +
                 ($this->despacho_ayudante ?: 0) + ($this->despacho_gasto_otros ?: 0);
+            $despacho->despacho_monto_modificado = $this->tarifaMontoSeleccionado ?: null;
+            $despacho->despacho_estado_modificado = $this->tarifaMontoSeleccionado !== $this->montoOriginal ? 1 : 0;
+            $despacho->despacho_descripcion_modificado = $this->despacho_descripcion_modificado ?: null;
             $despacho->despacho_estado = 1;
             $despacho->despacho_microtime = microtime(true);
             if (!$despacho->save()) {
