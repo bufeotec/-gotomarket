@@ -63,8 +63,8 @@
             @endif
         </x-slot>
     </x-modal-general>
+
     <x-modal-general  wire:ignore.self >
-{{--        <x-slot name="tama">modal-lg</x-slot>--}}
         <x-slot name="id_modal">modalRegistrarGastos</x-slot>
         <x-slot name="titleModal">Registrar Gastos Operativos</x-slot>
         <x-slot name="modalContent">
@@ -73,9 +73,41 @@
                     <label for="despacho_gasto_otros" class="form-label">Otros S/</label>
                     <input type="text" class="form-control" id="despacho_gasto_otros" name="despacho_gasto_otros" wire:input="calcularCostoTotal" wire:model="despacho_gasto_otros" onkeyup="validar_numeros(this.id)" />
                 </div>
+                @if($despacho_gasto_otros > 0)
+                    <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                        <label for="despacho_descripcion_otros" class="form-label">Descripción otros</label>
+                        <textarea class="form-control" id="despacho_descripcion_otros" name="despacho_descripcion_otros" wire:model="despacho_descripcion_otros"></textarea>
+                        @error('despacho_descripcion_otros')
+                        <span class="message-error">{{ $message }}</span>
+                        @enderror
+                    </div>
+                @endif
                 <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
                     <label for="despacho_ayudante" class="form-label">Mano de obra S/</label>
                     <input type="text" class="form-control" id="despacho_ayudante" name="despacho_ayudante" wire:input="calcularCostoTotal" wire:model="despacho_ayudante" onkeyup="validar_numeros(this.id)" />
+                </div>
+            </div>
+        </x-slot>
+    </x-modal-general>
+
+    <!-- MODAL MONTO MODIFICADO -->
+    <x-modal-general wire:ignore.self>
+        <x-slot name="id_modal">modalMontoModificado</x-slot>
+        <x-slot name="titleModal">Modificar monto</x-slot>
+        <x-slot name="modalContent">
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <label for="despacho_monto_modificado" class="form-label">Nuevo monto</label>
+                        <input type="text" class="form-control" id="despacho_monto_modificado" name="despacho_monto_modificado" wire:input="calcularCostoTotal" wire:model="tarifaMontoSeleccionado">
+                    </div>
+                    <div class="col-lg-6">
+                        <label for="despacho_descripcion_modificado" class="form-label">Descripción</label>
+                        <textarea id="despacho_descripcion_modificado" class="form-control" name="despacho_descripcion_modificado" wire:model="despacho_descripcion_modificado"></textarea>
+                        @error('despacho_descripcion_modificado')
+                        <span class="message-error">{{ $message }}</span>
+                        @enderror
+                    </div>
                 </div>
             </div>
         </x-slot>
@@ -274,7 +306,7 @@
                             @if($tarifaMontoSeleccionado > 0)
                                 <div class="col-lg-8 col-md-8 col-sm-12 mb-2">
                                     <p class="text-end mb-0">Monto de la tarifa del vehículo seleccionado:
-                                        <span class="font-bold badge bg-label-success curso-pointer" data-bs-toggle="modal" data-bs-target="#modalRegistrarGastos" >
+                                        <span class="font-bold badge bg-label-success curso-pointer" data-bs-toggle="modal" data-bs-target="#modalMontoModificado" >
                                             S/ {{ $tarifaMontoSeleccionado }}
                                         </span>
                                     </p>

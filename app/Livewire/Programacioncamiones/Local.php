@@ -64,6 +64,7 @@ class Local extends Component
     public $importeTotal = 0;
     public $ratioCostoVenta = 0;
     public $ratioCostoPeso = 0;
+    public $despacho_descripcion_otros = '';
     public function mount(){
         $this->id_transportistas = null;
         $this->selectedVehiculo = null;
@@ -232,6 +233,7 @@ class Local extends Component
                 'despacho_flete' => 'nullable|numeric',
                 'despacho_ayudante' => 'nullable|regex:/^[0-9]+(\.[0-9]+)?$/',
                 'despacho_gasto_otros' => 'nullable|regex:/^[0-9]+(\.[0-9]+)?$/',
+                'despacho_descripcion_otros' => $this->despacho_gasto_otros > 0 ? 'required|string' : 'nullable|string',
             ], [
                 'selectedVehiculo.required' => 'Debes seleccionar un vehículo.',
                 'selectedVehiculo.integer' => 'El vehículo debe ser un número entero.',
@@ -245,6 +247,9 @@ class Local extends Component
 
                 'despacho_ayudante.regex' => 'El ayudante debe ser un número válido.',
                 'despacho_gasto_otros.regex' => 'El gasto en otros debe ser un número válido.',
+
+                'despacho_descripcion_otros.required' => 'La descripción de gastos adicionales es requerida cuando se ingresa un monto.',
+                'despacho_descripcion_otros.string' => 'La descripción debe ser una cadena de texto.',
             ]);
             $contadorError = 0;
             DB::beginTransaction();
@@ -290,6 +295,7 @@ class Local extends Component
             $despacho->despacho_gasto_otros = $this->despacho_gasto_otros ?: null;
             $despacho->despacho_costo_total = $this->tarifaMontoSeleccionado +
                 ($this->despacho_ayudante ?: 0) + ($this->despacho_gasto_otros ?: 0);
+            $despacho->despacho_descripcion_otros = $this->despacho_gasto_otros > 0 ? $this->despacho_descripcion_otros : null;
             $despacho->despacho_monto_modificado = $this->tarifaMontoSeleccionado ?: null;
             $despacho->despacho_estado_modificado = $this->tarifaMontoSeleccionado !== $this->montoOriginal ? 1 : 0;
             $despacho->despacho_descripcion_modificado = $this->despacho_descripcion_modificado ?: null;
@@ -349,6 +355,9 @@ class Local extends Component
         $this->despacho_flete = null;
         $this->id_tarifario = null;
         $this->costoTotal = 0;
+        $this->despacho_descripcion_otros = '';
         $this->programacion_fecha = now()->format('Y-m-d');
+        $this->desde = date('Y-m-d', strtotime('-1 month'));
+        $this->hasta = date('Y-m-d');
     }
 }
