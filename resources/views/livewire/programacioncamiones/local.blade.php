@@ -91,27 +91,33 @@
     </x-modal-general>
 
     <!-- MODAL MONTO MODIFICADO -->
-    <x-modal-general wire:ignore.self>
-        <x-slot name="id_modal">modalMontoModificado</x-slot>
-        <x-slot name="titleModal">Modificar monto</x-slot>
-        <x-slot name="modalContent">
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-lg-6">
-                        <label for="despacho_monto_modificado" class="form-label">Nuevo monto</label>
-                        <input type="text" class="form-control" id="despacho_monto_modificado" name="despacho_monto_modificado" wire:input="calcularCostoTotal" wire:model="tarifaMontoSeleccionado">
-                    </div>
-                    <div class="col-lg-6">
-                        <label for="despacho_descripcion_modificado" class="form-label">Descripción</label>
-                        <textarea id="despacho_descripcion_modificado" class="form-control" name="despacho_descripcion_modificado" wire:model="despacho_descripcion_modificado"></textarea>
-                        @error('despacho_descripcion_modificado')
-                        <span class="message-error">{{ $message }}</span>
-                        @enderror
+    <div class="modal fade " wire:ignore.self id="modalMontoModificado" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true" >
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="staticBackdropLabel">Modificar monto</h1>
+{{--                    @if($tarifaMontoSeleccionado == $montoOriginal)--}}
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+{{--                    @endif--}}
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                            <label for="despacho_monto_modificado" class="form-label">Nuevo monto</label>
+                            <input type="text" class="form-control" id="despacho_monto_modificado" name="despacho_monto_modificado" wire:input="calcularCostoTotal" wire:model.live="tarifaMontoSeleccionado">
+                        </div>
+                        <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                            <label for="despacho_descripcion_modificado" class="form-label">Descripción</label>
+                            <textarea id="despacho_descripcion_modificado" class="form-control" name="despacho_descripcion_modificado" wire:model.live="despacho_descripcion_modificado"></textarea>
+                            @error('despacho_descripcion_modificado')
+                            <span class="message-error">{{ $message }}</span>
+                            @enderror
+                        </div>
                     </div>
                 </div>
             </div>
-        </x-slot>
-    </x-modal-general>
+        </div>
+    </div>
 
     <div class="row">
         @if (session()->has('success'))

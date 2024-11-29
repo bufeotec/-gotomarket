@@ -636,7 +636,7 @@
     cursor: pointer!important;
 }
 .textTotalComprobantesSeleccionados{
-    font-size: 15px !important;
+    font-size: 14px !important;
 }
 .textTotalComprobantesSeleccionados span{
     color: var(--primary-color-goto)!important;
