@@ -15,28 +15,13 @@ class Server extends Model
         parent::__construct();
         $this->logs  = new Logs();
     }
-    public function listar_comprobantes_listos_local($search){
+    public function listar_comprobantes_listos_local($search,$desde,$hasta){
         try {
             // FACCAB - COMPROBANTES | MAECLI - CLIENTES | FACDET - COMPROBANTES DETALLE | MAEART - ARTICULOS | MAEART_ADICIONALES - detalles del articulos
             // filtrar nombre del cliente, serie, correlativo, pes y volumen
             $result = DB::connection('sqlsrv_external')
                 ->table('FACCAB')
-                ->select(
-                    'FACCAB.CFTD',
-                    'FACCAB.CFNUMSER',
-                    'FACCAB.CFNUMDOC',
-                    'FACCAB.CFIMPORTE',
-                    'FACCAB.CFCODMON',
-                    'FACCAB.CFTEXGUIA',
-                    'c.CNOMCLI',
-                    'c.CCODCLI',
-                    'c.CDIRCLI',
-                    DB::raw('SUM(ad.CAMPO004) as total_volumen'),
-                    DB::raw('SUM(ad.CAMPO005) as total_kg'),
-                    'GREMISION_CAB.GREFECEMISION',
-                    'GREMISION_CAB.LLEGADAUBIGEO',
-                    'GREMISION_CAB.LLEGADADIRECCION'
-                )
+                ->select('FACCAB.CFTD', 'FACCAB.CFNUMSER', 'FACCAB.CFNUMDOC', 'FACCAB.CFIMPORTE', 'FACCAB.CFCODMON', 'FACCAB.CFTEXGUIA', 'c.CNOMCLI', 'c.CCODCLI', 'c.CDIRCLI', DB::raw('SUM(ad.CAMPO004) as total_volumen'), DB::raw('SUM(ad.CAMPO005) as total_kg'), DB::raw('MAX(GREMISION_CAB.GREFECEMISION) as GREFECEMISION'),DB::raw('MAX(GREMISION_CAB.LLEGADAUBIGEO) as LLEGADAUBIGEO'),DB::raw('MAX(GREMISION_CAB.LLEGADADIRECCION) as LLEGADADIRECCION'),DB::raw('MAX(CATALOGO_13_UBIGEO.CODIGO) as CODIGO'),DB::raw('MAX(CATALOGO_13_UBIGEO.DEPARTAMENTO) as DEPARTAMENTO'),DB::raw('MAX(CATALOGO_13_UBIGEO.PROVINCIA) as PROVINCIA'),DB::raw('MAX(CATALOGO_13_UBIGEO.DISTRITO) as DISTRITO'))
                 ->join('FACDET AS cd', function ($join) {
                     $join->on('cd.DFTD', '=', 'FACCAB.CFTD') // Condición 1
                     ->on('cd.DFNUMSER', '=', 'FACCAB.CFNUMSER') // Condición 2
@@ -48,6 +33,9 @@ class Server extends Model
                 ->leftJoin('GREMISION_CAB', function ($join) {
                     $join->on('GREMISION_CAB.GRENUMSER', '=', DB::raw('CASE WHEN LEN(FACCAB.CFTEXGUIA) >= 5 THEN SUBSTRING(FACCAB.CFTEXGUIA, 1, 4) ELSE NULL END'))
                         ->on('GREMISION_CAB.GRENUMDOC', '=', DB::raw('CASE WHEN LEN(FACCAB.CFTEXGUIA) >= 5 THEN SUBSTRING(FACCAB.CFTEXGUIA, 5, LEN(FACCAB.CFTEXGUIA) - 4) ELSE NULL END'));
+                })->join('CATALOGO_13_UBIGEO', function ($join) {
+                    $join->on('CATALOGO_13_UBIGEO.CODIGO', '=', 'GREMISION_CAB.LLEGADAUBIGEO')
+                        ->whereNotNull('GREMISION_CAB.LLEGADAUBIGEO'); // Solo aplica el INNER JOIN si hay relación en GREMISION_CAB
                 })
                 ->where('FACCAB.CFESTADO','=','V')
                 ->where('c.CESTADO','=','V')
@@ -59,20 +47,9 @@ class Server extends Model
                         ->orWhere('FACCAB.CFNUMDOC', 'like', '%' . $search . '%')
                         ->orWhere('FACCAB.CFNUMSER', 'like', '%' . $search . '%');
                 })
-                ->groupBy(
-                    'FACCAB.CFTD',
-                    'FACCAB.CFNUMSER',
-                    'FACCAB.CFNUMDOC',
-                    'FACCAB.CFIMPORTE',
-                    'FACCAB.CFCODMON',
-                    'FACCAB.CFTEXGUIA',
-                    'c.CNOMCLI',
-                    'c.CCODCLI',
-                    'c.CDIRCLI',
-                    'GREMISION_CAB.GREFECEMISION',
-                    'GREMISION_CAB.LLEGADAUBIGEO',
-                    'GREMISION_CAB.LLEGADADIRECCION')
-                ->limit(25)->get();
+                ->whereBetween(DB::raw("ISNULL(TRY_CONVERT(DATE, GREMISION_CAB.GREFECEMISION), '1900-01-01')"), [$desde, $hasta])
+                ->groupBy('FACCAB.CFTD', 'FACCAB.CFNUMSER', 'FACCAB.CFNUMDOC', 'FACCAB.CFIMPORTE', 'FACCAB.CFCODMON', 'FACCAB.CFTEXGUIA', 'c.CNOMCLI', 'c.CCODCLI', 'c.CDIRCLI')
+                ->limit(20)->get();
             // Extraer los comprobantes en un formato fácil de consultar
             $comprobantes = $result->map(function ($item) {
                 return [

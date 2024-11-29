@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Programacioncamiones;
 
+use App\Models\General;
 use Livewire\Component;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -23,6 +24,7 @@ class Local extends Component
     private $programacion;
     private $despacho;
     private $despachoventa;
+    private $general;
     public function __construct(){
         $this->logs = new Logs();
         $this->server = new Server();
@@ -31,6 +33,7 @@ class Local extends Component
         $this->programacion = new Programacion();
         $this->despacho = new Despacho();
         $this->despachoventa = new DespachoVenta();
+        $this->general = new General();
     }
     public $searchFactura = "";
     public $filteredFacturas = [];
@@ -39,6 +42,7 @@ class Local extends Component
     public $selectedVehiculo = "";
     public $pesoTotal = 0;
     public $volumenTotal = 0;
+    public $importeTotalVenta = 0;
     public $selectedFacturas = [];
     public $detalle_vehiculo = [];
     public $tarifaMontoSeleccionado = 0;
@@ -71,7 +75,7 @@ class Local extends Component
 
     public function buscar_comprobantes(){
         if ($this->searchFactura !== "") {
-            $this->filteredFacturas = $this->server->listar_comprobantes_listos_local($this->searchFactura);
+            $this->filteredFacturas = $this->server->listar_comprobantes_listos_local($this->searchFactura,$this->desde,$this->hasta);
             if (!$this->filteredFacturas || count($this->filteredFacturas) == 0) {
                 $this->filteredFacturas = [];
             }
@@ -137,9 +141,17 @@ class Local extends Component
             'CFIMPORTE' => $factura->CFIMPORTE,
             'CFCODMON' => $factura->CFCODMON,
             'guia' => $factura->CFTEXGUIA,
+            'GREFECEMISION' => $factura->GREFECEMISION, // fecha de emision de la guía
+            'LLEGADADIRECCION' => $factura->LLEGADADIRECCION,// Dirección de destino
+            'LLEGADAUBIGEO' => $factura->LLEGADAUBIGEO,// Código del ubigeo
+            'DEPARTAMENTO' => $factura->DEPARTAMENTO,// Departamento
+            'PROVINCIA' => $factura->PROVINCIA,// Provincia
+            'DISTRITO' => $factura->DISTRITO,// Distrito
         ];
         $this->pesoTotal += $factura->total_kg;
         $this->volumenTotal += $factura->total_volumen;
+        $importe = $this->general->formatoDecimal($factura->CFIMPORTE);
+        $this->importeTotalVenta += floatval($importe);
 
         // Eliminar la factura de la lista de facturas filtradas
         $this->filteredFacturas = $this->filteredFacturas->filter(function ($f) use ($CFNUMDOC) {

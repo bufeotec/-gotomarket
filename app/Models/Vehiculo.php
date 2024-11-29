@@ -115,7 +115,7 @@ class Vehiculo extends Model
             }
 
             if ($idt) {
-                $query->where('v.id_transportistas', $idt);
+                $query->where('t.id_transportistas', $idt);
             }
 
             // Verificar rango de tarifa
@@ -128,9 +128,11 @@ class Vehiculo extends Model
                 $r->vehiculo_volumen_usado = ($volument / $r->vehiculo_capacidad_volumen) * 100;
             }
             // Ordenar los resultados por vehiculo_capacidad_usada de mayor a menor
-            $result = $result->sortByDesc(function ($vehiculo) {
-                return max($vehiculo->vehiculo_capacidad_usada, $vehiculo->vehiculo_volumen_usado);
-            });
+            $result = $result->sortByDesc('vehiculo_capacidad_usada');
+//            // Ordenar los resultados por vehiculo_capacidad_usada de mayor a menor
+//            $result = $result->sortByDesc(function ($vehiculo) {
+//                return max($vehiculo->vehiculo_capacidad_usada, $vehiculo->vehiculo_volumen_usado);
+//            });
 
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);
