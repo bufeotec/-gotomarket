@@ -201,6 +201,10 @@ class Provincial extends Component
             'GREFECEMISION' => $factura->GREFECEMISION, // fecha de emision de la guía
             'LLEGADADIRECCION' => $factura->LLEGADADIRECCION,// Dirección de destino
             'LLEGADAUBIGEO' => $factura->LLEGADAUBIGEO,// Código del ubigeo
+            'DEPARTAMENTO' => $factura->DEPARTAMENTO,// Departamento
+            'PROVINCIA' => $factura->PROVINCIA,// Provincia
+            'DISTRITO' => $factura->DISTRITO,// Distrito
+            'CFIMPORTE' => $factura->CFIMPORTE,
         ];
         $this->pesoTotal += $factura->total_kg;
         $this->volumenTotal += $factura->total_volumen;
