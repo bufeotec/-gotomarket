@@ -64,6 +64,7 @@
         </x-slot>
     </x-modal-general>
 
+{{--    MODAL AGREGAR OTROS GASTOS--}}
     <x-modal-general  wire:ignore.self >
         <x-slot name="id_modal">modalRegistrarGastos</x-slot>
         <x-slot name="titleModal">Registrar Gastos Operativos</x-slot>
@@ -91,33 +92,25 @@
     </x-modal-general>
 
     <!-- MODAL MONTO MODIFICADO -->
-    <div class="modal fade " wire:ignore.self id="modalMontoModificado" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true" >
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="staticBackdropLabel">Modificar monto</h1>
-{{--                    @if($tarifaMontoSeleccionado == $montoOriginal)--}}
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-{{--                    @endif--}}
+    <x-modal-general  wire:ignore.self >
+        <x-slot name="id_modal">modalMontoModificado</x-slot>
+        <x-slot name="titleModal">Modificar monto</x-slot>
+        <x-slot name="modalContent">
+            <div class="row">
+                <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                    <label for="despacho_monto_modificado" class="form-label">Nuevo monto</label>
+                    <input type="text" class="form-control" id="despacho_monto_modificado" name="despacho_monto_modificado" wire:input="calcularCostoTotal" wire:model.live="tarifaMontoSeleccionado">
                 </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                            <label for="despacho_monto_modificado" class="form-label">Nuevo monto</label>
-                            <input type="text" class="form-control" id="despacho_monto_modificado" name="despacho_monto_modificado" wire:input="calcularCostoTotal" wire:model.live="tarifaMontoSeleccionado">
-                        </div>
-                        <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                            <label for="despacho_descripcion_modificado" class="form-label">Descripción</label>
-                            <textarea id="despacho_descripcion_modificado" class="form-control" name="despacho_descripcion_modificado" wire:model.live="despacho_descripcion_modificado"></textarea>
-                            @error('despacho_descripcion_modificado')
-                            <span class="message-error">{{ $message }}</span>
-                            @enderror
-                        </div>
-                    </div>
+                <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                    <label for="despacho_descripcion_modificado" class="form-label">Descripción</label>
+                    <textarea id="despacho_descripcion_modificado" class="form-control" name="despacho_descripcion_modificado" wire:model.live="despacho_descripcion_modificado"></textarea>
+                    @error('despacho_descripcion_modificado')
+                    <span class="message-error">{{ $message }}</span>
+                    @enderror
                 </div>
             </div>
-        </div>
-    </div>
+        </x-slot>
+    </x-modal-general>
 
     <div class="row">
         @if (session()->has('success'))
@@ -159,107 +152,109 @@
                     @if($searchFactura !== '')
                         <div class="row mt-3">
                             <div class="col-lg-12 col-md-12 col-sm-12">
-                                <x-table-general>
-                                    <x-slot name="thead">
-                                        <tr>
-                                            <th style="font-size: 12px">Serie y Correlativo / Guía</th>
-                                            <th style="font-size: 12px">Nombre del Cliente</th>
-                                            <th style="font-size: 12px">Peso y Volumen</th>
-                                        </tr>
-                                    </x-slot>
-                                    <x-slot name="tbody">
-{{--                        <ul class="factura-list list-group list-group-flush containerSearchComprobantes">--}}
-                                    @if(count($filteredFacturas) > 0 )
-                                        @foreach($filteredFacturas as $factura)
-                                            @php
-                                                $CFTD = $factura->CFTD;
-                                                $CFNUMSER = $factura->CFNUMSER;
-                                                $CFNUMDOC = $factura->CFNUMDOC;
-                                                $comprobanteExiste = collect($this->selectedFacturas)->first(function ($facturaVa) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
-                                                    return $facturaVa['CFTD'] === $CFTD
-                                                        && $facturaVa['CFNUMSER'] === $CFNUMSER
-                                                        && $facturaVa['CFNUMDOC'] === $CFNUMDOC;
-                                                });
-                                            @endphp
-                                            @if(!$comprobanteExiste)
-                                                <tr style="cursor: pointer" wire:click="seleccionarFactura('{{$factura->CFTD}}','{{ $factura->CFNUMSER }}','{{ $factura->CFNUMDOC }}')">
-                                                    <td colspan="3" style="padding: 0px">
-                                                        <table class="table">
-                                                            <tbody>
-                                                                <tr>
-                                                                    <td style="width: 39.6%">
+                                <div class="contenedor-camprobante" style="max-height: 600px; overflow: auto">
+                                    <x-table-general>
+                                        <x-slot name="thead">
+                                            <tr>
+                                                <th style="font-size: 12px">Serie y Correlativo / Guía</th>
+                                                <th style="font-size: 12px">Nombre del Cliente</th>
+                                                <th style="font-size: 12px">Peso y Volumen</th>
+                                            </tr>
+                                        </x-slot>
+                                        <x-slot name="tbody">
+                                            {{--                        <ul class="factura-list list-group list-group-flush containerSearchComprobantes">--}}
+                                            @if(count($filteredFacturas) > 0 )
+                                                @foreach($filteredFacturas as $factura)
+                                                    @php
+                                                        $CFTD = $factura->CFTD;
+                                                        $CFNUMSER = $factura->CFNUMSER;
+                                                        $CFNUMDOC = $factura->CFNUMDOC;
+                                                        $comprobanteExiste = collect($this->selectedFacturas)->first(function ($facturaVa) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
+                                                            return $facturaVa['CFTD'] === $CFTD
+                                                                && $facturaVa['CFNUMSER'] === $CFNUMSER
+                                                                && $facturaVa['CFNUMDOC'] === $CFNUMDOC;
+                                                        });
+                                                    @endphp
+                                                    @if(!$comprobanteExiste)
+                                                        <tr style="cursor: pointer" wire:click="seleccionarFactura('{{$factura->CFTD}}','{{ $factura->CFNUMSER }}','{{ $factura->CFNUMDOC }}')">
+                                                            <td colspan="3" style="padding: 0px">
+                                                                <table class="table">
+                                                                    <tbody>
+                                                                    <tr>
+                                                                        <td style="width: 39.6%">
                                                                         <span class="d-block tamanhoTablaComprobantes">
                                                                             {{ $factura->CFNUMSER }} - {{ $factura->CFNUMDOC }}
                                                                         </span>
-                                                                        <span class="d-block tamanhoTablaComprobantes">
+                                                                            <span class="d-block tamanhoTablaComprobantes">
                                                                             {{ $factura->CFTEXGUIA }}
                                                                         </span>
-                                                                    </td>
-                                                                    <td style="width: 32.2%">
+                                                                        </td>
+                                                                        <td style="width: 32.2%">
                                                                         <span class="d-block tamanhoTablaComprobantes">
                                                                             {{ $factura->CNOMCLI }}
                                                                         </span>
-                                                                    </td>
-                                                                    <td>
+                                                                        </td>
+                                                                        <td>
                                                                         <span class="d-block tamanhoTablaComprobantes">
                                                                             {{ $factura->total_kg }} kg
                                                                         </span>
-                                                                        <span class="d-block tamanhoTablaComprobantes">
+                                                                            <span class="d-block tamanhoTablaComprobantes">
                                                                             {{ $factura->total_volumen }} cm³
                                                                         </span>
-                                                                    </td>
-                                                                </tr>
-                                                                <tr style="border-top: 2px solid transparent;">
-                                                                    <td colspan="3">
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr style="border-top: 2px solid transparent;">
+                                                                        <td colspan="3">
                                                                          <span class="d-block tamanhoTablaComprobantes">
                                                                                 {{ $factura->LLEGADADIRECCION }} <br> UBIGEO: <b style="color: black">{{ $factura->DEPARTAMENTO }} - {{ $factura->PROVINCIA }} - {{ $factura->DISTRITO }}</b>
                                                                          </span>
-                                                                    </td>
-                                                                </tr>
-                                                            </tbody>
-                                                        </table>
+                                                                        </td>
+                                                                    </tr>
+                                                                    </tbody>
+                                                                </table>
+                                                            </td>
+                                                        </tr>
+                                                        {{--                                        <li class="list-group-item list-group-item-action factura-item" wire:click="seleccionarFactura('{{$factura->CFTD}}','{{ $factura->CFNUMSER }}','{{ $factura->CFNUMDOC }}')">--}}
+                                                        {{--                                            <div class="row">--}}
+                                                        {{--                                                <div class="col-lg-4 col-md-4 col-sm-12">--}}
+                                                        {{--                                                    <small class="textListarComprobantes me-2">Serie y Correlativo: <span>{{ $factura->CFNUMSER }} - {{ $factura->CFNUMDOC }}</span></small>--}}
+                                                        {{--                                                    <small class="textListarComprobantes">N° Guía: <span>{{ $factura->CFTEXGUIA }}</span></small>--}}
+                                                        {{--                                                </div>--}}
+                                                        {{--                                                <div class="col-lg-3 col-md-3 col-sm-12">--}}
+                                                        {{--                                                    <small class="textListarComprobantes">Cliente: <span>{{ $factura->CNOMCLI }}</span></small>--}}
+                                                        {{--                                                </div>--}}
+                                                        {{--                                                <div class="col-lg-4 col-md-4 col-sm-12">--}}
+                                                        {{--                                                    <small class="textListarComprobantes me-2">Peso: <span>{{ $factura->total_kg }} kg</span></small>--}}
+                                                        {{--                                                    <small class="textListarComprobantes">Volumen: <span>{{ $factura->total_volumen }} cm³</span></small>--}}
+                                                        {{--                                                </div>--}}
+                                                        {{--                                                <div class="col-lg-12 col-md-12 col-sm-12">--}}
+                                                        {{--                                                    <small class="textListarComprobantes">Dirección: <span>{{ $factura->LLEGADADIRECCION }}</span></small>--}}
+                                                        {{--                                                </div>--}}
+                                                        {{--                                            </div>--}}
+
+                                                        {{--                                            --}}{{--                                                    <div class="col-lg-6 col-md-6 col-sm-12 mb-2">--}}
+                                                        {{--                                            --}}{{--                                                        <p class="peso ms-0">Importe: </p>--}}
+                                                        {{--                                            --}}{{--                                                        <b style="font-size: 16px;color: black">{{ $factura->CFIMPORTE }}</b>--}}
+                                                        {{--                                            --}}{{--                                                    </div>--}}
+                                                        {{--                                            --}}{{--                                                    <div class="col-lg-6 col-md-6 col-sm-12 mb-2">--}}
+                                                        {{--                                            --}}{{--                                                        <p class="peso ms-0">Fecha de Emisión: </p>--}}
+                                                        {{--                                            --}}{{--                                                        <b style="font-size: 16px;color: black">{{ $factura->GREFECEMISION ? date('d-m-Y',strtotime($factura->GREFECEMISION))  : '-' }}</b>--}}
+                                                        {{--                                            --}}{{--                                                    </div>--}}
+                                                        {{--                                        </li>--}}
+                                                    @endif
+                                                @endforeach
+                                            @else
+                                                <tr>
+                                                    <td colspan="3">
+                                                        <p class="text-center mb-0" style="font-size: 12px">No se encontró comprobantes.</p>
                                                     </td>
                                                 </tr>
-        {{--                                        <li class="list-group-item list-group-item-action factura-item" wire:click="seleccionarFactura('{{$factura->CFTD}}','{{ $factura->CFNUMSER }}','{{ $factura->CFNUMDOC }}')">--}}
-        {{--                                            <div class="row">--}}
-        {{--                                                <div class="col-lg-4 col-md-4 col-sm-12">--}}
-        {{--                                                    <small class="textListarComprobantes me-2">Serie y Correlativo: <span>{{ $factura->CFNUMSER }} - {{ $factura->CFNUMDOC }}</span></small>--}}
-        {{--                                                    <small class="textListarComprobantes">N° Guía: <span>{{ $factura->CFTEXGUIA }}</span></small>--}}
-        {{--                                                </div>--}}
-        {{--                                                <div class="col-lg-3 col-md-3 col-sm-12">--}}
-        {{--                                                    <small class="textListarComprobantes">Cliente: <span>{{ $factura->CNOMCLI }}</span></small>--}}
-        {{--                                                </div>--}}
-        {{--                                                <div class="col-lg-4 col-md-4 col-sm-12">--}}
-        {{--                                                    <small class="textListarComprobantes me-2">Peso: <span>{{ $factura->total_kg }} kg</span></small>--}}
-        {{--                                                    <small class="textListarComprobantes">Volumen: <span>{{ $factura->total_volumen }} cm³</span></small>--}}
-        {{--                                                </div>--}}
-        {{--                                                <div class="col-lg-12 col-md-12 col-sm-12">--}}
-        {{--                                                    <small class="textListarComprobantes">Dirección: <span>{{ $factura->LLEGADADIRECCION }}</span></small>--}}
-        {{--                                                </div>--}}
-        {{--                                            </div>--}}
-
-        {{--                                            --}}{{--                                                    <div class="col-lg-6 col-md-6 col-sm-12 mb-2">--}}
-        {{--                                            --}}{{--                                                        <p class="peso ms-0">Importe: </p>--}}
-        {{--                                            --}}{{--                                                        <b style="font-size: 16px;color: black">{{ $factura->CFIMPORTE }}</b>--}}
-        {{--                                            --}}{{--                                                    </div>--}}
-        {{--                                            --}}{{--                                                    <div class="col-lg-6 col-md-6 col-sm-12 mb-2">--}}
-        {{--                                            --}}{{--                                                        <p class="peso ms-0">Fecha de Emisión: </p>--}}
-        {{--                                            --}}{{--                                                        <b style="font-size: 16px;color: black">{{ $factura->GREFECEMISION ? date('d-m-Y',strtotime($factura->GREFECEMISION))  : '-' }}</b>--}}
-        {{--                                            --}}{{--                                                    </div>--}}
-        {{--                                        </li>--}}
+                                                {{--                                <p>No se encontró el comprobante.</p>--}}
                                             @endif
-                                        @endforeach
-                                    @else
-                                        <tr>
-                                            <td colspan="3">
-                                                <p class="text-center mb-0" style="font-size: 12px">No se encontró comprobantes.</p>
-                                            </td>
-                                        </tr>
-        {{--                                <p>No se encontró el comprobante.</p>--}}
-                                    @endif
-{{--                        </ul>--}}
-                                    </x-slot>
-                                </x-table-general>
+                                            {{--                        </ul>--}}
+                                        </x-slot>
+                                    </x-table-general>
+                                </div>
                             </div>
                         </div>
                     @endif

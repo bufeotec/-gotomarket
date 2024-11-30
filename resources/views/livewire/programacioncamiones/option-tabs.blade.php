@@ -34,7 +34,7 @@
     </div>
     <style>
         .tamaIm{
-            width: 90px;
+            width: 60px;
         }
         .activeType{
             background: #e51821!important;

@@ -49,7 +49,7 @@ class Server extends Model
                 })
                 ->whereBetween(DB::raw("ISNULL(TRY_CONVERT(DATE, GREMISION_CAB.GREFECEMISION), '1900-01-01')"), [$desde, $hasta])
                 ->groupBy('FACCAB.CFTD', 'FACCAB.CFNUMSER', 'FACCAB.CFNUMDOC', 'FACCAB.CFIMPORTE', 'FACCAB.CFCODMON', 'FACCAB.CFTEXGUIA', 'c.CNOMCLI', 'c.CCODCLI', 'c.CDIRCLI')
-                ->limit(20)->get();
+                ->get();
             // Extraer los comprobantes en un formato fácil de consultar
             $comprobantes = $result->map(function ($item) {
                 return [
