@@ -82,6 +82,53 @@
         </x-slot>
     </x-modal-general>
 
+    {{--    MODAL AGREGAR OTROS GASTOS --}}
+    <x-modal-general  wire:ignore.self >
+        <x-slot name="id_modal">modalRegistrarGastos</x-slot>
+        <x-slot name="titleModal">Registrar Gastos Operativos</x-slot>
+        <x-slot name="modalContent">
+            <div class="row">
+                <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                    <label for="despacho_gasto_otros" class="form-label">Otros S/</label>
+                    <input type="text" class="form-control" id="despacho_gasto_otros" name="despacho_gasto_otros" wire:input="calcularCostoTotal" wire:model="despacho_gasto_otros" onkeyup="validar_numeros(this.id)" />
+                </div>
+                @if($despacho_gasto_otros > 0)
+                    <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                        <label for="despacho_descripcion_otros" class="form-label">Descripción otros</label>
+                        <textarea class="form-control" id="despacho_descripcion_otros" name="despacho_descripcion_otros" wire:model="despacho_descripcion_otros"></textarea>
+                        @error('despacho_descripcion_otros')
+                        <span class="message-error">{{ $message }}</span>
+                        @enderror
+                    </div>
+                @endif
+{{--                <div class="col-lg-12 col-md-12 col-sm-12 mb-2">--}}
+{{--                    <label for="despacho_ayudante" class="form-label">Mano de obra S/</label>--}}
+{{--                    <input type="text" class="form-control" id="despacho_ayudante" name="despacho_ayudante" wire:input="calcularCostoTotal" wire:model="despacho_ayudante" onkeyup="validar_numeros(this.id)" />--}}
+{{--                </div>--}}
+            </div>
+        </x-slot>
+    </x-modal-general>
+
+    <!-- MODAL MONTO MODIFICADO -->
+    <x-modal-general  wire:ignore.self >
+        <x-slot name="id_modal">modalMontoModificado</x-slot>
+        <x-slot name="titleModal">Modificar monto</x-slot>
+        <x-slot name="modalContent">
+            <div class="row">
+                <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                    <label for="despacho_monto_modificado" class="form-label">Nuevo monto</label>
+                    <input type="text" class="form-control" id="despacho_monto_modificado" name="despacho_monto_modificado" wire:input="calcularCostoTotal" wire:model.live="tarifaMontoSeleccionado">
+                </div>
+                <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                    <label for="despacho_descripcion_modificado" class="form-label">Descripción</label>
+                    <textarea id="despacho_descripcion_modificado" class="form-control" name="despacho_descripcion_modificado" wire:model.live="despacho_descripcion_modificado"></textarea>
+                    @error('despacho_descripcion_modificado')
+                    <span class="message-error">{{ $message }}</span>
+                    @enderror
+                </div>
+            </div>
+        </x-slot>
+    </x-modal-general>
 
     <div class="row">
         @if (session()->has('success'))
@@ -100,7 +147,7 @@
                 </div>
             </div>
         @endif
-        <div class="col-lg-4">
+        <div class="col-lg-5">
             <div class="col-lg-12 col-md-6">
                 <div class="card">
                     <div class="card-body">
@@ -149,41 +196,43 @@
                                     @if(!empty($searchCliente))
                                         <div class="row">
                                             <div class="col-lg-12">
-                                                <x-table-general>
-                                                    <x-slot name="thead">
-                                                        <tr>
-                                                            <th style="font-size: 12px">Nombre del Cliente</th>
-                                                            <th style="font-size: 12px">RUC O DNI</th>
-                                                            <th style="font-size: 12px">Dirección Fiscal</th>
-                                                        </tr>
-                                                    </x-slot>
-                                                    <x-slot name="tbody">
-                                                        @if(count($filteredClientes) == 0 )
-                                                            <p>No se encontró el cliente.</p>
-                                                        @else
-                                                            @foreach($filteredClientes as $factura)
-                                                                <tr style="cursor: pointer" wire:click="seleccionar_cliente('{{$factura->CCODCLI}}')">
-                                                                    <td style="width: 39.6%">
+                                                <div class="contenedor-comprobante" style="max-height: 600px; overflow: auto">
+                                                    <x-table-general>
+                                                        <x-slot name="thead">
+                                                            <tr>
+                                                                <th style="font-size: 12px">Nombre del Cliente</th>
+                                                                <th style="font-size: 12px">RUC O DNI</th>
+                                                                <th style="font-size: 12px">Dirección Fiscal</th>
+                                                            </tr>
+                                                        </x-slot>
+                                                        <x-slot name="tbody">
+                                                            @if(count($filteredClientes) == 0 )
+                                                                <p>No se encontró el cliente.</p>
+                                                            @else
+                                                                @foreach($filteredClientes as $factura)
+                                                                    <tr style="cursor: pointer" wire:click="seleccionar_cliente('{{$factura->CCODCLI}}')">
+                                                                        <td style="width: 39.6%">
                                                                         <span class="d-block tamanhoTablaComprobantes">
                                                                             {{ $factura->CNOMCLI }}
                                                                         </span>
-                                                                    </td>
-                                                                    <td style="width: 32.2%">
+                                                                        </td>
+                                                                        <td style="width: 32.2%">
                                                                         <span class="d-block tamanhoTablaComprobantes">
                                                                             {{ $factura->CCODCLI }}
                                                                         </span>
-                                                                    </td>
-                                                                    <td>
+                                                                        </td>
+                                                                        <td>
                                                                         <span class="d-block tamanhoTablaComprobantes">
                                                                             {{ $factura->CDIRCLI }} kg
                                                                         </span>
-                                                                    </td>
-                                                                </tr>
-                                                            @endforeach
+                                                                        </td>
+                                                                    </tr>
+                                                                @endforeach
 
-                                                        @endif
-                                                    </x-slot>
-                                                </x-table-general>
+                                                            @endif
+                                                        </x-slot>
+                                                    </x-table-general>
+                                                </div>
                                             </div>
                                         </div>
                                     @endif
@@ -193,62 +242,64 @@
 
                                         <div class="row mt-3">
                                             <div class="col-lg-12 col-md-12 col-sm-12">
-                                                <x-table-general>
-                                                    <x-slot name="thead">
-                                                        <tr>
-                                                            <th style="font-size: 12px">Serie y Correlativo / Guía</th>
-                                                            <th style="font-size: 12px">Peso y Volumen</th>
-                                                            <th style="font-size: 12px">Dirección</th>
-                                                        </tr>
-                                                    </x-slot>
-                                                    <x-slot name="tbody">
-                                                        @if(count($filteredComprobantes) == 0 )
+                                                <div class="contenedor-comprobante" style="max-height: 600px; overflow: auto">
+                                                    <x-table-general>
+                                                        <x-slot name="thead">
                                                             <tr>
-                                                                <td colspan="3">
-                                                                    <p class="text-center mb-0" style="font-size: 12px">No se encontró comprobantes.</p>
-                                                                </td>
+                                                                <th style="font-size: 12px">Serie y Correlativo / Guía</th>
+                                                                <th style="font-size: 12px">Peso y Volumen</th>
+                                                                <th style="font-size: 12px">Dirección</th>
                                                             </tr>
-                                                        @else
-                                                            @foreach($filteredComprobantes as $factura)
-                                                                @php
-                                                                    $CFTD = $factura->CFTD;
-                                                                    $CFNUMSER = $factura->CFNUMSER;
-                                                                    $CFNUMDOC = $factura->CFNUMDOC;
-                                                                    $comprobanteExiste = collect($this->selectedFacturas)->first(function ($facturaVa) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
-                                                                        return $facturaVa['CFTD'] === $CFTD
-                                                                            && $facturaVa['CFNUMSER'] === $CFNUMSER
-                                                                            && $facturaVa['CFNUMDOC'] === $CFNUMDOC;
-                                                                    });
-                                                                @endphp
-                                                                @if(!$comprobanteExiste)
-                                                                    <tr style="cursor: pointer" wire:click="seleccionar_factura_cliente('{{$factura->CFTD}}','{{ $factura->CFNUMSER }}','{{ $factura->CFNUMDOC }}')">
-                                                                        <td style="width: 39.6%">
+                                                        </x-slot>
+                                                        <x-slot name="tbody">
+                                                            @if(count($filteredComprobantes) == 0 )
+                                                                <tr>
+                                                                    <td colspan="3">
+                                                                        <p class="text-center mb-0" style="font-size: 12px">No se encontró comprobantes.</p>
+                                                                    </td>
+                                                                </tr>
+                                                            @else
+                                                                @foreach($filteredComprobantes as $factura)
+                                                                    @php
+                                                                        $CFTD = $factura->CFTD;
+                                                                        $CFNUMSER = $factura->CFNUMSER;
+                                                                        $CFNUMDOC = $factura->CFNUMDOC;
+                                                                        $comprobanteExiste = collect($this->selectedFacturas)->first(function ($facturaVa) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
+                                                                            return $facturaVa['CFTD'] === $CFTD
+                                                                                && $facturaVa['CFNUMSER'] === $CFNUMSER
+                                                                                && $facturaVa['CFNUMDOC'] === $CFNUMDOC;
+                                                                        });
+                                                                    @endphp
+                                                                    @if(!$comprobanteExiste)
+                                                                        <tr style="cursor: pointer" wire:click="seleccionar_factura_cliente('{{$factura->CFTD}}','{{ $factura->CFNUMSER }}','{{ $factura->CFNUMDOC }}')">
+                                                                            <td style="width: 39.6%">
                                                                             <span class="d-block tamanhoTablaComprobantes">
                                                                                 {{ $factura->CFNUMSER }} - {{ $factura->CFNUMDOC }}
                                                                             </span>
-                                                                            <span class="d-block tamanhoTablaComprobantes">
+                                                                                <span class="d-block tamanhoTablaComprobantes">
                                                                                 {{ $factura->CFTEXGUIA }}
                                                                             </span>
-                                                                        </td>
-                                                                        <td>
+                                                                            </td>
+                                                                            <td>
                                                                             <span class="d-block tamanhoTablaComprobantes">
                                                                                 {{ $factura->total_kg }} kg
                                                                             </span>
-                                                                            <span class="d-block tamanhoTablaComprobantes">
+                                                                                <span class="d-block tamanhoTablaComprobantes">
                                                                                 {{ $factura->total_volumen }} cm³
                                                                             </span>
-                                                                        </td>
-                                                                        <td>
+                                                                            </td>
+                                                                            <td>
                                                                             <span class="d-block tamanhoTablaComprobantes">
                                                                                 {{ $factura->LLEGADADIRECCION }} <br> UBIGEO: <b style="color: black">{{ $factura->DEPARTAMENTO }} - {{ $factura->PROVINCIA }} - {{ $factura->DISTRITO }}</b>
                                                                             </span>
-                                                                        </td>
-                                                                    </tr>
-                                                                @endif
-                                                            @endforeach
-                                                        @endif
-                                                    </x-slot>
-                                                </x-table-general>
+                                                                            </td>
+                                                                        </tr>
+                                                                    @endif
+                                                                @endforeach
+                                                            @endif
+                                                        </x-slot>
+                                                    </x-table-general>
+                                                </div>
                                             </div>
                                         </div>
                                     @endif
@@ -270,7 +321,7 @@
             </div>
         </div>
 
-        <div class="col-lg-8">
+        <div class="col-lg-7">
             <div class="row">
                 {{--    TRANSPORTISTA   --}}
                 <div class="col-lg-6 col-md-6 col-sm-12">
@@ -324,7 +375,11 @@
                                 </div>
                                 @if($tarifaMontoSeleccionado > 0)
                                     <div class="col-lg-8 col-md-8 col-sm-12 mb-2">
-                                        <p class="text-end mb-0">Monto de la tarifa seleccionado: S/ <strong>{{ $tarifaMontoSeleccionado }}</strong></p>
+                                        <p class="text-end mb-0">Monto de la tarifa seleccionado:
+                                            <span class="font-bold badge bg-label-success curso-pointer" data-bs-toggle="modal" data-bs-target="#modalMontoModificado">
+                                                S/ {{ $tarifaMontoSeleccionado }}
+                                            </span>
+                                        </p>
                                     </div>
                                 @endif
                             </div>
@@ -537,34 +592,34 @@
                                         </small>
                                     </div>
                                     <div class="col-lg-7 col-md-7 col-sm-12 text-end">
-{{--                                        @if($costoTotal && $importeTotalVenta)--}}
-{{--                                            <small class="textTotalComprobantesSeleccionados me-2">--}}
-{{--                                                @php--}}
-{{--                                                    $me = new \App\Models\General();--}}
-{{--                                                    $ra1 = 0;--}}
-{{--                                                    if ($volumenTotal){--}}
-{{--                                                        $to = $costoTotal / $importeTotalVenta;--}}
-{{--                                                        $ra1 = $me->formatoDecimal($to);--}}
-{{--                                                    }--}}
-{{--                                                @endphp--}}
+                                        @if($costoTotal && $importeTotalVenta)
+                                            <small class="textTotalComprobantesSeleccionados me-2">
+                                                @php
+                                                    $me = new \App\Models\General();
+                                                    $ra1 = 0;
+                                                    if ($volumenTotal){
+                                                        $to = $costoTotal / $importeTotalVenta;
+                                                        $ra1 = $me->formatoDecimal($to);
+                                                    }
+                                                @endphp
 
-{{--                                                F.V: {{$costoTotal}} / {{$importeTotalVenta}} =  <span>{{ $ra1 }}</span>--}}
-{{--                                            </small>--}}
-{{--                                        @endif--}}
-{{--                                        @if($costoTotal && $peso)--}}
-{{--                                            <small class="textTotalComprobantesSeleccionados">--}}
-{{--                                                @php--}}
-{{--                                                    $me = new \App\Models\General();--}}
-{{--                                                    $ra2 = 0;--}}
-{{--                                                    if ($volumenTotal){--}}
-{{--                                                        $to = $costoTotal / $peso;--}}
-{{--                                                        $ra2 = $me->formatoDecimal($to);--}}
-{{--                                                    }--}}
-{{--                                                @endphp--}}
+                                                F.V: {{$costoTotal}} / {{$importeTotalVenta}} =  <span>{{ $ra1 }}</span>
+                                            </small>
+                                        @endif
+                                        @if($costoTotal && $peso)
+                                            <small class="textTotalComprobantesSeleccionados">
+                                                @php
+                                                    $me = new \App\Models\General();
+                                                    $ra2 = 0;
+                                                    if ($volumenTotal){
+                                                        $to = $costoTotal / $peso;
+                                                        $ra2 = $me->formatoDecimal($to);
+                                                    }
+                                                @endphp
 
-{{--                                                F.P: {{$costoTotal}} / {{$peso}} =  <span>{{ $ra2 }}</span>--}}
-{{--                                            </small>--}}
-{{--                                        @endif--}}
+                                                F.P: {{$costoTotal}} / {{$peso}} =  <span>{{ $ra2 }}</span>
+                                            </small>
+                                        @endif
                                     </div>
                                 </div>
                             </div>

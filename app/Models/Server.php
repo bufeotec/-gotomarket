@@ -103,7 +103,7 @@ class Server extends Model
         }
         return $result;
     }
-    public function listar_comprobantes_por_cliente($codigo_cliente,$search){
+    public function listar_comprobantes_por_cliente($codigo_cliente,$search,$desde, $hasta){
         try {
             // FACCAB - COMPROBANTES | MAECLI - CLIENTES | FACDET - COMPROBANTES DETALLE | MAEART - ARTICULOS | MAEART_ADICIONALES - detalles del articulos
             // filtrar nombre del cliente, serie, correlativo, pes y volumen
@@ -132,6 +132,7 @@ class Server extends Model
                         ->orWhere('FACCAB.CFNUMDOC', 'like', '%' . $search . '%')
                         ->orWhere('FACCAB.CFNUMSER', 'like', '%' . $search . '%');
                 })
+                ->whereBetween(DB::raw("ISNULL(TRY_CONVERT(DATE, GREMISION_CAB.GREFECEMISION), '1900-01-01')"), [$desde, $hasta])
                 ->groupBy('FACCAB.CFTD', 'FACCAB.CFNUMSER', 'FACCAB.CFNUMDOC', 'FACCAB.CFIMPORTE', 'FACCAB.CFCODMON', 'FACCAB.CFTEXGUIA')
                 ->get();
             // Extraer los comprobantes en un formato fácil de consultar

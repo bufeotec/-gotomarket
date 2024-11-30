@@ -12,6 +12,7 @@ use App\Models\Vehiculo;
 use App\Models\Programacion;
 use App\Models\Despacho;
 use App\Models\DespachoVenta;
+use App\Models\General;
 use Livewire\Component;
 
 class Provincial extends Component
@@ -25,6 +26,7 @@ class Provincial extends Component
     private $programacion;
     private $despacho;
     private $despachoventa;
+    private $general;
     public function __construct(){
         $this->logs = new Logs();
         $this->server = new Server();
@@ -35,6 +37,7 @@ class Provincial extends Component
         $this->programacion = new Programacion();
         $this->despacho = new Despacho();
         $this->despachoventa = new DespachoVenta();
+        $this->general = new General();
     }
     public $searchCliente = "";
     public $filteredClientes = [];
@@ -68,6 +71,9 @@ class Provincial extends Component
     public $despacho_descripcion_otros = '';
     public $desde;
     public $hasta;
+    public $montoOriginal = 0;
+    public $importeTotalVenta = 0;
+    public $despacho_descripcion_modificado = '';
     public function mount(){
         $this->selectedCliente = null;
         $this->selectedTarifario = null;
@@ -148,7 +154,7 @@ class Provincial extends Component
 
     public function buscar_comprobante() {
         if ($this->selectedCliente && $this->searchComprobante !== "") {
-            $comprobantes = $this->server->listar_comprobantes_por_cliente($this->selectedCliente, $this->searchComprobante);
+            $comprobantes = $this->server->listar_comprobantes_por_cliente($this->selectedCliente, $this->searchComprobante,$this->desde,$this->hasta);
             $this->filteredComprobantes = $comprobantes;
         } else {
             $this->filteredComprobantes = [];
@@ -208,6 +214,8 @@ class Provincial extends Component
         ];
         $this->pesoTotal += $factura->total_kg;
         $this->volumenTotal += $factura->total_volumen;
+        $importe = $this->general->formatoDecimal($factura->CFIMPORTE);
+        $this->importeTotalVenta += floatval($importe);
 
         // Eliminar la factura de la lista de facturas filtradas
         $this->filteredComprobantes = $this->filteredComprobantes->filter(function ($f) use ($CFNUMDOC) {
@@ -215,6 +223,7 @@ class Provincial extends Component
         });
         // Actualizar lista de vehículos sugeridos
         $this->listar_tarifarios_su();
+        $this->validarTarifaSeleccionada();
     }
 
     public function eliminarFacturaSeleccionada($CFTD, $CFNUMSER, $CFNUMDOC){
@@ -244,6 +253,21 @@ class Provincial extends Component
 //                $this->filteredFacturas[] = $factura;
 //            }
             $this->listar_tarifarios_su();
+            $this->validarTarifaSeleccionada();
+        }
+    }
+
+    public function validarTarifaSeleccionada() {
+        if ($this->selectedTarifario) {
+            $tarifaValida = collect($this->tarifariosSugeridos)->first(function ($tarifa) {
+                return $tarifa->id_tarifario == $this->selectedTarifario;
+            });
+
+            if (!$tarifaValida) {
+                $this->selectedTarifario = null;
+                $this->tarifaMontoSeleccionado = null;
+                $this->costoTotal = null;
+            }
         }
     }
 
@@ -275,24 +299,26 @@ class Provincial extends Component
         if ($vehiculo) {
             // Actualiza el monto de la tarifa del vehículo seleccionado
             $this->tarifaMontoSeleccionado = $vehiculo->tarifa_monto;
+            $this->montoOriginal = $vehiculo->tarifa_monto;
             $this->selectedTarifario = $id;
             $this->calcularCostoTotal();
         }
     }
+
     public function listar_tarifarios_su(){
         $this->tarifariosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_provincial($this->pesoTotal,2,$this->id_transportistas,$this->id_departamento ,$this->id_provincia ,$this->id_distrito);
         if (count($this->tarifariosSugeridos) <= 0){
             $this->tarifaMontoSeleccionado = null;
             $this->selectedTarifario = null;
+            $this->costoTotal = null;
         }
     }
 
     public function calcularCostoTotal(){
         $montoSeleccionado = floatval($this->tarifaMontoSeleccionado);
         $otros = floatval($this->despacho_gasto_otros);
-        $peso = floatval($this->pesoTotal);
 
-        $this->costoTotal = ($montoSeleccionado * $peso) + $otros;
+        $this->costoTotal = $montoSeleccionado + $otros;
     }
 
     public function guardarDespachos(){
@@ -311,7 +337,8 @@ class Provincial extends Component
                 'despacho_ayudante' => 'nullable|regex:/^[0-9]+(\.[0-9]+)?$/',
                 'despacho_gasto_otros' => 'nullable|regex:/^[0-9]+(\.[0-9]+)?$/',
                 'despacho_descripcion_otros' => $this->despacho_gasto_otros > 0 ? 'required|string' : 'nullable|string',
-            ], [
+                'despacho_descripcion_modificado' => $this->tarifaMontoSeleccionado !== $this->montoOriginal ? 'required|string' : 'nullable|string',
+                ], [
                 'selectedTarifario.required' => 'Debes seleccionar una tarifa.',
                 'selectedTarifario.integer' => 'La tarifa debe ser un número entero.',
 
@@ -333,6 +360,8 @@ class Provincial extends Component
 
                 'despacho_descripcion_otros.required' => 'La descripción de gastos adicionales es requerida cuando se ingresa un monto.',
                 'despacho_descripcion_otros.string' => 'La descripción debe ser una cadena de texto.',
+
+                'despacho_descripcion_modificado.required' => 'La descripción por modificar el monto es obligatorio.',
             ]);
             $contadorError = 0;
             DB::beginTransaction();
@@ -375,17 +404,18 @@ class Provincial extends Component
             $despacho->id_distrito = $this->id_distrito ?: null;
             $despacho->despacho_peso = $this->pesoTotal;
             $despacho->despacho_volumen = $this->volumenTotal;
-            $despacho->despacho_flete = $this->tarifaMontoSeleccionado * $this->pesoTotal;
-            $despacho->despacho_ayudante = $this->despacho_ayudante ?: null;
+            $despacho->despacho_flete = $this->montoOriginal;
             $despacho->despacho_gasto_otros = $this->despacho_gasto_otros ?: null;
             // Calcular despacho_costo_total
-            $despacho_costo_total = $despacho->despacho_flete;
+            $despacho_costo_total = $this->tarifaMontoSeleccionado * $this->pesoTotal;;
             if (!empty($this->despacho_gasto_otros)) {
                 $despacho_costo_total += $this->despacho_gasto_otros;
             }
             $despacho->despacho_costo_total = $despacho_costo_total;
             $despacho->despacho_descripcion_otros = $this->despacho_gasto_otros > 0 ? $this->despacho_descripcion_otros : null;
-            $despacho->despacho_estado = 1;
+            $despacho->despacho_monto_modificado = $this->tarifaMontoSeleccionado ?: null;
+            $despacho->despacho_estado_modificado = $this->tarifaMontoSeleccionado !== $this->montoOriginal ? 1 : 0;
+            $despacho->despacho_descripcion_modificado = ($this->tarifaMontoSeleccionado !== $this->montoOriginal) ? $this->despacho_descripcion_modificado : null;            $despacho->despacho_estado = 1;
             $despacho->despacho_microtime = microtime(true);
             if (!$despacho->save()) {
                 DB::rollBack();
@@ -444,6 +474,8 @@ class Provincial extends Component
         $this->searchComprobante = '';
         $this->filteredComprobantes = [];
         $this->programacion_fecha = now()->format('Y-m-d');
+        $this->desde = date('Y-m-d', strtotime('-1 month'));
+        $this->hasta = date('Y-m-d');
         $this->despacho_ayudante = '';
         $this->despacho_gasto_otros = '';
         $this->id_tipo_servicios = null;
@@ -451,8 +483,10 @@ class Provincial extends Component
         $this->despacho_volumen = null;
         $this->despacho_flete = null;
         $this->id_tarifario = null;
-        $this->costoTotal = 0;
         $this->despacho_descripcion_otros = '';
+        $this->despacho_descripcion_modificado = '';
+        $this->costoTotal = 0;
+        $this->montoOriginal = 0;
     }
 
 
