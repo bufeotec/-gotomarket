@@ -13,6 +13,7 @@ use App\Models\Programacion;
 use App\Models\Despacho;
 use App\Models\DespachoVenta;
 use App\Models\Departamento;
+use App\Models\General;
 
 use Livewire\Component;
 
@@ -28,6 +29,7 @@ class Mixto extends Component
     private $despachoventa;
     private $departamento;
     private $tarifario;
+    private $general;
 
     public function __construct()
     {
@@ -41,6 +43,7 @@ class Mixto extends Component
         $this->despachoventa = new DespachoVenta();
         $this->departamento = new Departamento();
         $this->tarifario = new Tarifario();
+        $this->general = new General();
     }
 
     public $tipoServicioSeleccionado = 1;
@@ -77,7 +80,8 @@ class Mixto extends Component
     public $desde;
     public $hasta;
     public $despacho_descripcion_otros = '';
-
+    public $costoTotal = 0;
+    public $importeTotalVenta = 0;
     public function mount()
     {
         $this->id_transportistas = null;
@@ -265,7 +269,7 @@ class Mixto extends Component
 //
     public function buscar_facturas_clientes(){
         if ($this->searchFacturaCliente !== "") {
-            $this->filteredFacturasYClientes = $this->server->listar_comprobantes_listos_mixto($this->searchFacturaCliente);
+            $this->filteredFacturasYClientes = $this->server->listar_comprobantes_listos_mixto($this->searchFacturaCliente, $this->desde, $this->hasta);
             if (!$this->filteredFacturasYClientes || count($this->filteredFacturasYClientes) == 0) {
                 $this->filteredFacturasYClientes = [];
             }
@@ -311,12 +315,21 @@ class Mixto extends Component
             'CFIMPORTE' => $factura->CFIMPORTE, // importe
             'CFCODMON' => $factura->CFCODMON, // código de moneda
             'guia' => $factura->CFTEXGUIA, // guia
-            'direccion_guia' => $factura->guia ? $factura->guia->LLEGADADIRECCION : '-', // dirección de guía.
-            'fecha_guia' => $factura->guia ? $factura->guia->GREFECEMISION : '-', // fecha de la guía.
+            'direccion_guia' => isset($factura->guia) ? $factura->guia->LLEGADADIRECCION : '-', // dirección de guía.
+            'direccion_guia' => isset($factura->guia) ? $factura->guia->LLEGADADIRECCION : '-', // dirección de guía.
+            'fecha_guia' => isset($factura->guia) ? $factura->guia->GREFECEMISION : '-', // fecha de la guía.
             'isChecked' => false,
+            'GREFECEMISION' => $factura->GREFECEMISION, // fecha de emision de la guía
+            'LLEGADADIRECCION' => $factura->LLEGADADIRECCION,// Dirección de destino
+            'LLEGADAUBIGEO' => $factura->LLEGADAUBIGEO,// Código del ubigeo
+            'DEPARTAMENTO' => $factura->DEPARTAMENTO,// Departamento
+            'PROVINCIA' => $factura->PROVINCIA,// Provincia
+            'DISTRITO' => $factura->DISTRITO,// Distrito
         ];
         $this->pesoTotal += $factura->total_kg;
         $this->volumenTotal += $factura->total_volumen;
+        $importe = $this->general->formatoDecimal($factura->CFIMPORTE);
+        $this->importeTotalVenta += floatval($importe);
 
         // Eliminar la factura de la lista de facturas filtradas
         $this->filteredFacturasYClientes = $this->filteredFacturasYClientes->filter(function ($f) use ($CFNUMDOC) {
@@ -324,6 +337,17 @@ class Mixto extends Component
         });
         // Actualizar lista de vehículos sugeridos
         $this->listar_vehiculos_lo();
+        $vehiculoValido = collect($this->vehiculosSugeridos)->contains(function ($vehiculo) {
+            return $vehiculo->id_vehiculo == $this->selectedVehiculo &&
+                $vehiculo->id_tarifario == $this->id_tarifario_seleccionado;
+        });
+
+        if (!$vehiculoValido) {
+            $this->tarifaMontoSeleccionado = null;
+            $this->id_tarifario_seleccionado = null;
+            $this->selectedVehiculo = null;
+            $this->costoTotal = null;
+        }
     }
 
 
@@ -376,9 +400,17 @@ class Mixto extends Component
                         'total_volumen' => $factura['total_volumen'],
                         'CFIMPORTE' => $factura['CFIMPORTE'],
                         'CFCODMON' => $factura['CFCODMON'],
-                        'guia' => $factura['guia'],
-                        'direccion_guia' => $factura['direccion_guia'] , // dirección de guía.
-                        'fecha_guia' => $factura['fecha_guia'] , // fecha de la guía.
+                        'guia' => $factura->CFTEXGUIA, // guia
+                        'direccion_guia' => isset($factura->guia) ? $factura->guia->LLEGADADIRECCION : '-', // dirección de guía.
+                        'direccion_guia' => isset($factura->guia) ? $factura->guia->LLEGADADIRECCION : '-', // dirección de guía.
+                        'fecha_guia' => isset($factura->guia) ? $factura->guia->GREFECEMISION : '-', // fecha de la guía.
+//                        'isChecked' => false,
+                        'GREFECEMISION' => $factura->GREFECEMISION, // fecha de emision de la guía
+                        'LLEGADADIRECCION' => $factura->LLEGADADIRECCION,// Dirección de destino
+                        'LLEGADAUBIGEO' => $factura->LLEGADAUBIGEO,// Código del ubigeo
+                        'DEPARTAMENTO' => $factura->DEPARTAMENTO,// Departamento
+                        'PROVINCIA' => $factura->PROVINCIA,// Provincia
+                        'DISTRITO' => $factura->DISTRITO,// Distrito
                     ];
                     break;
                 }
@@ -409,6 +441,12 @@ class Mixto extends Component
                         'guia' => $factura['guia'],
                         'direccion_guia' => $factura['direccion_guia'] , // dirección de guía.
                         'fecha_guia' => $factura['fecha_guia'] , // fecha de la guía.
+                        'GREFECEMISION' => $factura['GREFECEMISION'],
+                        'LLEGADADIRECCION' => $factura['LLEGADADIRECCION'],
+                        'LLEGADAUBIGEO' => $factura['LLEGADAUBIGEO'],
+                        'DEPARTAMENTO' => $factura['DEPARTAMENTO'],
+                        'PROVINCIA' => $factura['PROVINCIA'],
+                        'DISTRITO' => $factura['DISTRITO'],
                     ]
                 ]
             ];
@@ -462,6 +500,17 @@ class Mixto extends Component
         // Reindexar el array `selectedFacturasLocal` después de eliminar elementos
         $this->selectedFacturasLocal = array_values($this->selectedFacturasLocal);
         $this->listar_vehiculos_lo();
+        $vehiculoValido = collect($this->vehiculosSugeridos)->contains(function ($vehiculo) {
+            return $vehiculo->id_vehiculo == $this->selectedVehiculo &&
+                $vehiculo->id_tarifario == $this->id_tarifario_seleccionado;
+        });
+
+        if (!$vehiculoValido) {
+            $this->tarifaMontoSeleccionado = null;
+            $this->id_tarifario_seleccionado = null;
+            $this->selectedVehiculo = null;
+            $this->costoTotal = null;
+        }
     }
 
     public function listar_vehiculos_lo(){
@@ -471,6 +520,7 @@ class Mixto extends Component
             $this->tarifaMontoSeleccionado = null;
             $this->selectedVehiculo = null;
             $this->id_tarifario_seleccionado = null;
+            $this->costoTotal = null;
         }
     }
 
@@ -491,11 +541,20 @@ class Mixto extends Component
             $this->tarifaMontoSeleccionado = $vehiculo->tarifa_monto;
             $this->id_tarifario_seleccionado = $id_tarifa;
             $this->selectedVehiculo = $vehiculoId;
+            $this->calcularCostoTotal();
         }
     }
 
     public function modal_por_vehiculo($id_ve){
         $this->detalle_vehiculo =  $this->vehiculo->listar_informacion_vehiculo($id_ve);
+    }
+
+    public function calcularCostoTotal(){
+        $montoSeleccionado = floatval($this->tarifaMontoSeleccionado);
+        $ayudante = floatval($this->despacho_ayudante);
+        $otros = floatval($this->despacho_gasto_otros);
+
+        $this->costoTotal = $montoSeleccionado + $ayudante + $otros;
     }
 
     public function guardarDespachos(){
