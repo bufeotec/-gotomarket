@@ -115,7 +115,8 @@ class Vehiculo extends Model
             }
 
             if ($idt) {
-                $query->where('t.id_transportistas', $idt);
+                $query->where('t.id_transportistas', '=', $idt)
+                      ->where('v.id_transportistas', '=', $idt);
             }
 
             // Verificar rango de tarifa
@@ -128,7 +129,11 @@ class Vehiculo extends Model
                 $r->vehiculo_volumen_usado = ($volument / $r->vehiculo_capacidad_volumen) * 100;
             }
             // Ordenar los resultados por vehiculo_capacidad_usada de mayor a menor
-            $result = $result->sortByDesc('vehiculo_capacidad_usada');
+//            $result = $result->sortByDesc('vehiculo_capacidad_usada');
+
+            $result = $result->sortByDesc(function($item) {
+                return [$item->tarifa_estado_aprobacion, $item->vehiculo_capacidad_usada];
+            });
 //            // Ordenar los resultados por vehiculo_capacidad_usada de mayor a menor
 //            $result = $result->sortByDesc(function ($vehiculo) {
 //                return max($vehiculo->vehiculo_capacidad_usada, $vehiculo->vehiculo_volumen_usado);
@@ -140,6 +145,7 @@ class Vehiculo extends Model
         }
         return $result;
     }
+
     public function listar_informacion_vehiculo($id){
         try {
             $result = DB::table('vehiculos as v')
@@ -165,7 +171,7 @@ class Vehiculo extends Model
                 ->where('t.tarifa_cap_max', '>=', $pesot)
             ;
             if ($idt) {
-                $query->where('t.id_transportistas', $idt);
+                $query->where('t.id_transportistas', '=', $idt);
             }
             if ($iddepartamento) {
                 $query->where('t.id_departamento', $iddepartamento);
@@ -183,7 +189,9 @@ class Vehiculo extends Model
                 $r->capacidad_usada =  ($pesot / $r->tarifa_cap_max) * 100;
             }
             // Ordenar los resultados por vehiculo_capacidad_usada de mayor a menor
-            $result = $result->sortByDesc('capacidad_usada');
+            $result = $result->sortByDesc(function($item) {
+                return [$item->tarifa_estado_aprobacion, $item->capacidad_usada];
+            });
 
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);
