@@ -322,7 +322,7 @@
                                     @foreach($vehiculosSugeridos as $index => $vehiculo)
                                         <div class="position-relative mx-2">
                                             @if($vehiculo->tarifa_estado_aprobacion == 1)
-                                                <input type="radio"  name="vehiculo" id="id_check_vehiculo_{{ $vehiculo->id_vehiculo }}_{{ $vehiculo->id_tarifario}}_{{$conteoGen}}" class="inputCheckRadio" value="{{ $vehiculo->id_vehiculo }}-{{ $vehiculo->id_tarifario }}" wire:click="seleccionarVehiculo({{ $vehiculo->id_vehiculo }},{{ $vehiculo->id_tarifario }})" />
+                                                <input type="radio"  name="vehiculo" id="id_check_vehiculo_{{ $vehiculo->id_vehiculo }}_{{ $vehiculo->id_tarifario}}_{{$conteoGen}}" class="inputCheckRadio" value="{{ $vehiculo->id_vehiculo }}-{{ $vehiculo->id_tarifario }}" wire:model="id_tarifario_seleccionado" wire:click="seleccionarVehiculo({{ $vehiculo->id_vehiculo }},{{ $vehiculo->id_tarifario }})" />
                                                 <label for="id_check_vehiculo_{{ $vehiculo->id_vehiculo }}_{{ $vehiculo->id_tarifario}}_{{$conteoGen}}" class="labelCheckRadios">
                                                     <div class="container_check_radios" >
                                                         <div class="cRadioBtn">
@@ -500,7 +500,7 @@
                             </div>
                             <div class="col-lg-12 col-md-12 col-sm-12">
                                 @if(count($selectedFacturas) > 0)
-                                    <x-table-general>
+                                    <x-table-general id="ederTable">
                                         <x-slot name="thead">
                                             <tr>
                                                 <th class="">Serie / Guía</th>
@@ -630,3 +630,10 @@
     </style>
 
 </div>
+{{--@script--}}
+{{--    <script>--}}
+{{--        $(document).ready(function(){--}}
+{{--            $('#ederTable').DataTable();--}}
+{{--        })--}}
+{{--    </script>--}}
+{{--@endscript--}}

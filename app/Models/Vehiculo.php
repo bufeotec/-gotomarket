@@ -101,6 +101,7 @@ class Vehiculo extends Model
             $query = DB::table('vehiculos as v')
                 ->join('tipo_vehiculos as tv', 'tv.id_tipo_vehiculo', '=', 'v.id_tipo_vehiculo')
                 ->join('tarifarios as t', 't.id_tipo_vehiculo', '=', 'tv.id_tipo_vehiculo')
+                ->join('transportistas as tr', 'tr.id_transportistas', '=', 't.id_transportistas')
                 ->select('v.id_vehiculo','v.vehiculo_placa','v.vehiculo_capacidad_peso','v.vehiculo_capacidad_volumen','t.tarifa_cap_min','t.tarifa_cap_max','t.tarifa_monto','t.tarifa_estado_aprobacion','t.id_tarifario')
                 ->where('t.tarifa_estado','=', 1)
                 ->where('v.vehiculo_estado','=', 1)
@@ -116,6 +117,7 @@ class Vehiculo extends Model
 
             if ($idt) {
                 $query->where('t.id_transportistas', '=', $idt)
+                        ->where('tr.id_transportistas', '=', $idt)
                       ->where('v.id_transportistas', '=', $idt);
             }
 

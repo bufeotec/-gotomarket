@@ -91,10 +91,11 @@ class Local extends Component
     }
 
     public function actualizarVehiculosSugeridos(){
-        $this->listar_vehiculos_lo();
         $this->tarifaMontoSeleccionado = null;
+        $this->montoOriginal = null;
         $this->id_tarifario_seleccionado = null;
         $this->selectedVehiculo = null;
+        $this->listar_vehiculos_lo();
     }
 
     public function seleccionarVehiculo($vehiculoId,$id_tarifa){
