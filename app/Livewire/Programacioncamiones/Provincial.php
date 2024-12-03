@@ -132,6 +132,7 @@ class Provincial extends Component
             $this->selectedCliente = $cliente->CCODCLI;
             $this->select_nombre_cliente = $cliente->CNOMCLI;
             $this->searchCliente = "";
+            $this->searchComprobante = "";
             $this->filteredClientes = [];
         } else {
             $this->resetear_cliente();
@@ -140,16 +141,20 @@ class Provincial extends Component
     public function limpiar_cliente($clienteId){
         $this->selectedCliente = '';
         $this->select_nombre_cliente = '';
-        $this->searchCliente = "";
+        $this->searchCliente = '';
+        $this->searchComprobante = '';
         $this->filteredClientes = [];
         $this->filteredComprobantes = [];
         $this->id_transportistas  = "";
         $this->id_departamento  = "";
         $this->id_provincia  = "";
         $this->id_distrito  = "";
-        $this->pesoTotal  = "";
-        $this->volumenTotal  = "";
+        $this->pesoTotal  = 0;
+        $this->volumenTotal  = 0;
         $this->tarifariosSugeridos = [];
+        $this->selectedFacturas = [];
+        $this->desde = date('Y-m-d', strtotime('-1 month'));
+        $this->hasta = date('Y-m-d');
     }
 
     public function buscar_comprobante() {
