@@ -87,7 +87,8 @@ class Tarifario extends Model
     public function listar_informacion_tarifa($id)
     {
         try {
-            $result = DB::table('tarifarios as t')->join('transportistas as tr','tr.id_transportistas','=','t.id_transportistas')
+            $result = DB::table('tarifarios as t')
+                ->join('transportistas as tr','tr.id_transportistas','=','t.id_transportistas')
                 ->where('t.id_tarifario', '=',$id)->first();
 
 

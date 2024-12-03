@@ -1,87 +1,5 @@
 <div>
-    {{----}}
-{{--    <x-modal-general  wire:ignore.self >--}}
-{{--        <x-slot name="tama">modal-lg</x-slot>--}}
-{{--        <x-slot name="id_modal">modalDetalleTarifa</x-slot>--}}
-{{--        <x-slot name="titleModal">Detalles de la Tarifa</x-slot>--}}
-{{--        <x-slot name="modalContent">--}}
-{{--            @if($detalle_tarifario)--}}
-{{--                <div class="modal-body">--}}
-{{--                    <div class="row">--}}
-{{--                        <div class="col-lg-12 col-md-12 col-sm-12">--}}
-{{--                            <div class="row">--}}
-{{--                                <div class="col-lg-12 col-md-12 col-sm-12">--}}
-{{--                                    <h6>Información del transportista</h6>--}}
-{{--                                    <hr>--}}
-{{--                                </div>--}}
-{{--                                <div class="col-lg-6 col-md-4 col-sm-12 mb-3">--}}
-{{--                                    <strong style="color: #8c1017">Nombre comercial:</strong>--}}
-{{--                                    <p>{{ $detalle_tarifario->transportista_nom_comercial }}</p>--}}
-{{--                                </div>--}}
-{{--                                <div class="col-lg-6 col-md-4 col-sm-12 mb-3">--}}
-{{--                                    <strong style="color: #8c1017">RUC:</strong>--}}
-{{--                                    <p>{{ $detalle_tarifario->transportista_ruc }}</p>--}}
-{{--                                </div>--}}
-{{--                            </div>--}}
-{{--                        </div>--}}
 
-{{--                        <div class="col-lg-12 col-md-12 col-sm-12">--}}
-{{--                            <div class="row">--}}
-{{--                                <div class="col-lg-12 col-md-12 col-sm-12">--}}
-{{--                                    <h6>Información de la tarifa</h6>--}}
-{{--                                    <hr>--}}
-{{--                                </div>--}}
-{{--                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">--}}
-{{--                                    <strong style="color: #8c1017">Precio:</strong>--}}
-{{--                                    <p>S/ {{ $detalle_tarifario->tarifa_monto }}</p>--}}
-{{--                                </div>--}}
-{{--                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">--}}
-{{--                                    <strong style="color: #8c1017">Capacidad en minima:</strong>--}}
-{{--                                    <p>{{ (substr(number_format($detalle_tarifario->tarifa_cap_min, 2, '.', ','), -3) == '.00') ? number_format($detalle_tarifario->tarifa_cap_min, 0, '.', ',') : number_format($detalle_tarifario->tarifa_cap_min, 2, '.', ',') }} {{$detalle_tarifario->id_medida == 9 ? 'cm³' : 'kg' }}</p>--}}
-{{--                                </div>--}}
-{{--                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">--}}
-{{--                                    <strong style="color: #8c1017">Capacidad maxima:</strong>--}}
-{{--                                    <p>{{ (substr(number_format($detalle_tarifario->tarifa_cap_max, 2, '.', ','), -3) == '.00') ? number_format($detalle_tarifario->tarifa_cap_max, 0, '.', ',') : number_format($detalle_tarifario->tarifa_cap_max, 2, '.', ',') }} {{$detalle_tarifario->id_medida == 9 ? 'cm³' : 'kg' }}</p>--}}
-{{--                                </div>--}}
-
-{{--                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">--}}
-{{--                                    <strong style="color: #8c1017">Departamento de llegada:</strong>--}}
-{{--                                    @php--}}
-{{--                                        $depar = "";--}}
-{{--                                        if ($detalle_tarifario->id_departamento){--}}
-{{--                                            $depar = \Illuminate\Support\Facades\DB::table('departamentos')->where('id_departamento','=',$detalle_tarifario->id_departamento)->first();--}}
-{{--                                        }--}}
-{{--                                    @endphp--}}
-{{--                                    <p>{{ $depar ? $depar->departamento_nombre : '-' }} </p>--}}
-{{--                                </div>--}}
-{{--                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">--}}
-{{--                                    <strong style="color: #8c1017">Provincia de llegada:</strong>--}}
-{{--                                    @php--}}
-{{--                                        $provi = "";--}}
-{{--                                        if ($detalle_tarifario->id_provincia){--}}
-{{--                                            $provi = \Illuminate\Support\Facades\DB::table('provincias')->where('id_provincia','=',$detalle_tarifario->id_provincia)->first();--}}
-{{--                                        }--}}
-{{--                                    @endphp--}}
-{{--                                    <p>{{ $provi ? $provi->provincia_nombre : '-' }} </p>--}}
-{{--                                </div>--}}
-{{--                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">--}}
-{{--                                    <strong style="color: #8c1017">Distrito de llegada:</strong>--}}
-{{--                                    @php--}}
-{{--                                        $distri = "";--}}
-{{--                                        if ($detalle_tarifario->id_distrito){--}}
-{{--                                            $distri = \Illuminate\Support\Facades\DB::table('distritos')->where('id_distrito','=',$detalle_tarifario->id_distrito)->first();--}}
-{{--                                        }--}}
-{{--                                    @endphp--}}
-{{--                                    <p>{{ $distri ? $distri->distrito_nombre : 'TODOS LOS DISTRITOS' }} </p>--}}
-{{--                                </div>--}}
-
-{{--                            </div>--}}
-{{--                        </div>--}}
-{{--                    </div>--}}
-{{--                </div>--}}
-{{--            @endif--}}
-{{--        </x-slot>--}}
-{{--    </x-modal-general>--}}
     {{-- MODAL DETALLE VEHICULO--}}
     <x-modal-general  wire:ignore.self >
         <x-slot name="tama">modal-lg</x-slot>
@@ -162,47 +80,74 @@
                             <hr>
                         </div>
                         <div class="col-lg-12 col-md-12 col-sm-12">
-                            @if(count($comprobantesSeleccionados) > 0)
-                                @foreach($comprobantesSeleccionados as $com)
-                                    <div class="row">
-                                        <div class="col-lg-4 col-md-4 col-sm-12 mb-2">
-                                            <small>Serie y Correlativo</small>
-                                            <p class="mb-0 textBlack">{{ $com['CFNUMSER'] }} - {{ $com['CFNUMDOC'] }}</p>
-                                        </div>
-                                        <div class="col-lg-4 col-md-4 col-sm-12 mb-2">
-                                            <small>Guía</small>
-                                            <p class="mb-0 textBlack">{{ $com['guia'] }}</p>
-                                        </div>
-                                        <div class="col-lg-4 col-md-4 col-sm-12 mb-2">
-                                            @php
-                                                $me2Pronvicial = new \App\Models\General();
-                                                $fechaFormateAprobacion2 = "-";
-                                                if ($com['fecha_guia']){
-                                                    $fechaFormateAprobacion2 = $me2Pronvicial->obtenerNombreFecha($com['fecha_guia'],'DateTime', 'Date');
-                                                }
-                                            @endphp
-                                            <small>Fecha de Emisión</small>
-                                            <p class="mb-0 textBlack">{{ $fechaFormateAprobacion2 }}</p>
-                                        </div>
-                                        <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                                            <small>Dirección</small>
-                                            <p class="mb-0 textBlack">{{ $com['direccion_guia'] }}</p>
-                                        </div>
-                                        <div class="col-lg-4 col-md-4 col-sm-12 mb-2">
-                                            <small>Peso</small>
-                                            <p class="mb-0 textBlack">{{ $com['total_kg'] }} kg</p>
-                                        </div>
-                                        <div class="col-lg-4 col-md-4 col-sm-12 mb-2">
-                                            <small>Volumen</small>
-                                            <p class="mb-0 textBlack">{{ $com['total_volumen'] }} cm³</p>
-                                        </div>
-                                        <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                                            <hr>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            @endif
-
+                            <div class="contenedor-camprobante" style="max-height: 600px; overflow: auto">
+                                <x-table-general>
+                                    <x-slot name="thead">
+                                        <tr>
+                                            <th style="font-size: 12px">Serie y Correlativo / Guía</th>
+                                            <th style="font-size: 12px">Fecha de Emisión</th>
+                                            <th style="font-size: 12px">Peso y Volumen</th>
+                                        </tr>
+                                    </x-slot>
+                                    <x-slot name="tbody">
+                                        @if(count($comprobantesSeleccionados) > 0 )
+                                            @foreach($comprobantesSeleccionados as $com)
+                                                <tr>
+                                                    <td colspan="3" style="padding: 0px">
+                                                        <table class="table">
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td style="width: 39.6%">
+                                                                        <span class="d-block tamanhoTablaComprobantes">
+                                                                            {{ $com['CFNUMSER'] }} - {{ $com['CFNUMDOC'] }}
+                                                                        </span>
+                                                                        <span class="d-block tamanhoTablaComprobantes">
+                                                                            {{ $com['guia'] }}
+                                                                        </span>
+                                                                    </td>
+                                                                    <td style="width: 32.2%">
+                                                                        @php
+                                                                            $me2Pronvicial = new \App\Models\General();
+                                                                            $fechaFormateAprobacion2 = "-";
+                                                                            if ($com['GREFECEMISION']){
+                                                                                $fechaFormateAprobacion2 = $me2Pronvicial->obtenerNombreFecha($com['GREFECEMISION'],'DateTime', 'Date');
+                                                                            }
+                                                                        @endphp
+                                                                        <span class="d-block tamanhoTablaComprobantes">
+                                                                            {{ $fechaFormateAprobacion2 }}
+                                                                        </span>
+                                                                    </td>
+                                                                    <td>
+                                                                        <span class="d-block tamanhoTablaComprobantes">
+                                                                            {{ $com['total_kg'] }} kg
+                                                                        </span>
+                                                                        <span class="d-block tamanhoTablaComprobantes">
+                                                                            {{ $com['total_volumen'] }} cm³
+                                                                        </span>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr style="border-top: 2px solid transparent;">
+                                                                    <td colspan="3" style="padding-top: 0">
+                                                                         <span class="d-block tamanhoTablaComprobantes">
+                                                                                {{ $com['LLEGADADIRECCION'] }} <br> UBIGEO: <b style="color: black">{{ $com['DEPARTAMENTO'] }} - {{ $com['PROVINCIA'] }} - {{ $com['DISTRITO'] }}</b>
+                                                                         </span>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        @else
+                                            <tr>
+                                                <td colspan="3">
+                                                    <p class="text-center mb-0" style="font-size: 12px">No se encontró comprobantes.</p>
+                                                </td>
+                                            </tr>
+                                        @endif
+                                    </x-slot>
+                                </x-table-general>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -215,112 +160,157 @@
                         </span>
                     </div>
                     <hr>
-                    <div class="row align-items-center">
+                    <div class="row align-items-center mb-1">
                         <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
-                            <div class="row">
-                                <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                                    <h6>Lista de transportistas</h6>
-                                </div>
-                                <div class="col-lg-12">
-                                    <select class="form-select" name="id_trans" id="id_trans" wire:model="id_trans" wire:change="save_cliente_data({{$clienteindex}})">
-                                        <option value="">Seleccionar...</option>
-                                        @foreach($listar_transportistas as $lt)
-                                            <option value="{{ $lt->id_transportistas }}" @selected($lt->id_transportistas == $id_trans) >
-                                                {{ $lt->transportista_nom_comercial }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
+                            <label for="id_trans" class="form-label">Lista de transportistas</label>
+                            <select class="form-select" name="id_trans" id="id_trans" wire:model="id_trans" wire:change="save_cliente_data({{$clienteindex}})">
+                                <option value="">Seleccionar...</option>
+                                @foreach($listar_transportistas as $lt)
+                                    <option value="{{ $lt->id_transportistas }}" @selected($lt->id_transportistas == $id_trans) >
+                                        {{ $lt->transportista_nom_comercial }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
-                            <div class="d-flex justify-content-center text-center py-1">
-                                <p class="mb-0 me-2">Peso total: </p>
-                                <h4 class="mb-0 text-dark">{{ $toKg }} kg</h4>
-                            </div>
+                            <label for="id_trans" class="form-label">Peso total:</label>
+                            <h4 class="mb-0 text-dark">{{ $toKg }} kg</h4>
                         </div>
                     </div>
 
+                    <div class="row mb-2">
+                        <div class="col-lg-12 col-md-12 col-sm-12 text-end">
+                            @php
+                                $precioTotal = 0;
+                                if ($montoSelect > 0){
+                                    $mePrecio = new \App\Models\General();
+                                    $precioTotal = $montoSelect * $toKg ;
+                                    $precioTotal = $mePrecio->formatoDecimal($precioTotal);
+                                }
+                            @endphp
+                            @if($montoSelect && $imporTotalPro)
+                                <small class="textTotalComprobantesSeleccionados me-2">
+                                    @php
+                                        $me = new \App\Models\General();
+                                        $ra1 = 0;
+                                        $to = (floatval($precioTotal) + floatval($otros_gastos)) / $imporTotalPro;
+                                        $ra1 = $me->formatoDecimal($to);
+                                    @endphp
+
+                                    F.V: {{floatval($precioTotal) + floatval($otros_gastos)}} / {{$imporTotalPro}} =  <span>{{ $ra1 }}</span>
+                                </small>
+                            @endif
+                            @if($montoSelect && $toKg)
+                                <small class="textTotalComprobantesSeleccionados">
+                                    @php
+                                        $me = new \App\Models\General();
+                                        $ra2 = 0;
+                                        $to = (floatval($precioTotal) + floatval($otros_gastos)) / $toKg;
+                                        $ra2 = $me->formatoDecimal($to);
+                                    @endphp
+
+                                    F.P: {{floatval($precioTotal) + floatval($otros_gastos)}} / {{$toKg}} =  <span>{{ $ra2 }}</span>
+                                </small>
+                            @endif
+                        </div>
+                    </div>
+
+
                     <div class="row">
                         <div class="col-lg-12 col-md-12 mb-3">
-                            <div class="row mb-3">
+                            <div class="row mb-2">
                                 <div class="col-lg-4 col-md-4 col-sm-12 mb-2">
-                                    <h6>Tarifarios Sugeridos</h6>
+                                    <label class="form-label">Tarifarios Sugeridos</label>
                                 </div>
-{{--                                @if($tarifaMontoSeleccionado > 0)--}}
-{{--                                    <div class="col-lg-8 col-md-8 col-sm-12 mb-2">--}}
-{{--                                        <p class="text-end mb-0">Monto de la tarifa seleccionado: S/ <strong>{{ $tarifaMontoSeleccionado }}</strong></p>--}}
-{{--                                    </div>--}}
-{{--                                @endif--}}
+                                @if($montoSelect > 0)
+                                    <div class="col-lg-8 col-md-8 col-sm-12 mb-2">
+                                        <p class="text-end mb-0">Monto de la tarifa seleccionado:
+                                            <span class="font-bold badge bg-label-success curso-pointer" wire:click="$set('showCambiarPrecio', {{ $showCambiarPrecio ? 'false' : 'true' }})" >
+                                                S/ {{ $montoSelect }} @php echo $showCambiarPrecio ? '<i class="fa-solid fa-arrow-up"></i>' : '<i class="fa-solid fa-arrow-down"></i>' @endphp
+                                            </span>
+                                        </p>
+                                    </div>
+                                @endif
                             </div>
-                            <div class="row">
-                                <div class="col-lg-12">
-                                    <div class="vehiculos-scroll-container-horizontal">
-                                        @php $conteoGen = 1; @endphp
-                                        @foreach($tarifariosSugeridos as $index => $tari)
-                                            <div class="position-relative mx-2">
-                                                @if($tari->tarifa_estado_aprobacion == 1)
-                                                    <input type="radio" name="vehiculo" id="id_check_vehiculo_{{ $tari->id_tarifario}}_{{$conteoGen}}" class="inputCheckRadio" value="{{ $tari->id_tarifario }}"  wire:model="id_tari" wire:change="save_cliente_data({{$clienteindex}})" />
-                                                    <label for="id_check_vehiculo_{{ $tari->id_tarifario}}_{{$conteoGen}}" class="labelCheckRadios">
-                                                        <div class="container_check_radios" >
-                                                            <div class="cRadioBtn">
-                                                                <div class="overlay"></div>
-                                                                <div class="drops xsDrop"></div>
-                                                                <div class="drops mdDrop"></div>
-                                                                <div class="drops lgDrop"></div>
+                            @if($showCambiarPrecio)
+                                <div class="row mb-3">
+                                    <div class="col-lg-4 col-md-4 col-sm-12 mb-1">
+                                        <label for="montoSelect" class="form-label">Cambiar Monto S/</label>
+                                        <input type="text" class="form-control" id="montoSelect" name="montoSelect" wire:model.live="montoSelect" wire:change="save_cliente_data({{$clienteindex}})" onkeyup="validar_numeros(this.id)" />
+                                    </div>
+                                    <div class="col-lg-8 col-md-8 col-sm-12 mb-1">
+                                        <label for="montoSelectDescripcion" class="form-label">Descripción otros</label>
+                                        <textarea class="form-control" id="montoSelectDescripcion" rows="1" name="montoSelectDescripcion" wire:model="montoSelectDescripcion" wire:change="save_cliente_data({{$clienteindex}})"></textarea>
+                                        @error('montoSelectDescripcion')
+                                            <span class="message-error">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                </div>
+                            @endif
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="vehiculos-scroll-container-horizontal">
+                                            @php $conteoGen = 1; @endphp
+                                            @foreach($tarifariosSugeridos as $index => $tari)
+                                                <div class="position-relative mx-2">
+                                                    @if($tari->tarifa_estado_aprobacion == 1)
+                                                        <input type="radio" name="vehiculo" id="id_check_vehiculo_{{ $tari->id_tarifario}}_{{$conteoGen}}" class="inputCheckRadio" value="{{ $tari->id_tarifario }}"  wire:model.live="id_tari" wire:change="save_cliente_data({{$clienteindex}})" />
+                                                        <label for="id_check_vehiculo_{{ $tari->id_tarifario}}_{{$conteoGen}}" class="labelCheckRadios">
+                                                            <div class="container_check_radios" >
+                                                                <div class="cRadioBtn">
+                                                                    <div class="overlay"></div>
+                                                                    <div class="drops xsDrop"></div>
+                                                                    <div class="drops mdDrop"></div>
+                                                                    <div class="drops lgDrop"></div>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    </label>
-                                                @else
-                                                    <label class="labelCheckRadios">
-                                                        <div class="container_check_radios" >
-                                                            <div class="cRadioBtnNo">
-                                                                <i class="fa-solid fa-exclamation"></i>
+                                                        </label>
+                                                    @else
+                                                        <label class="labelCheckRadios">
+                                                            <div class="container_check_radios" >
+                                                                <div class="cRadioBtnNo">
+                                                                    <i class="fa-solid fa-exclamation"></i>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    </label>
-                                                @endif
+                                                        </label>
+                                                    @endif
 
-                                                <label class="circulo-vehiculo-container m-2 {{ $tari->tarifa_estado_aprobacion == 0 ? 'no-aprobado' : '' }}" style="width: 150px!important;height: 150px!important;" for="id_check_vehiculo_{{ $tari->id_tarifario}}_{{$conteoGen}}">
-                                                    <!-- Progreso Circular usando SVG -->
-                                                    <svg class="progreso-circular" viewBox="0 0 36 36">
-                                                        <path class="progreso-circular-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                                        <path class="progreso-circular-fg"
-                                                              stroke-dasharray="{{ $tari->capacidad_usada }}, 100"
-                                                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                                              style="stroke: {{$tari->capacidad_usada <= 25 ? 'red' :
+                                                    <label class="circulo-vehiculo-container m-2 {{ $tari->tarifa_estado_aprobacion == 0 ? 'no-aprobado' : '' }}" for="id_check_vehiculo_{{ $tari->id_tarifario}}_{{$conteoGen}}">
+                                                        <!-- Progreso Circular usando SVG -->
+                                                        <svg class="progreso-circular" viewBox="0 0 36 36">
+                                                            <path class="progreso-circular-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                                            <path class="progreso-circular-fg"
+                                                                  stroke-dasharray="{{ $tari->capacidad_usada }}, 100"
+                                                                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                                                  style="stroke: {{$tari->capacidad_usada <= 25 ? 'red' :
                                                                     ($tari->capacidad_usada <= 50 ? 'orange' :
                                                                     ($tari->capacidad_usada <= 75 ? 'yellow' : 'green'))
                                                                 }};" />
-                                                    </svg>
-                                                    <div class="circulo-vehiculo">
-                                                        <div class="tarifa-container" style="margin-top: 20%;">
-                                                        <span class="tarifa-monto">
-                                                            @php
-                                                                $tarifa = number_format($tari->tarifa_monto, 2, '.', ',');
-                                                                $tarifa = strpos($tarifa, '.00') !== false ? number_format($tari->tarifa_monto, 0, '.', ',') : $tarifa;
-                                                            @endphp
-                                                            S/ {{ $tarifa }}
-                                                        </span>
+                                                        </svg>
+                                                        <div class="circulo-vehiculo">
+                                                            <span class="tarifa-monto d-block" style="margin-top: 20px">
+                                                                @php
+                                                                    $tarifa = number_format($tari->tarifa_monto, 2, '.', ',');
+                                                                    $tarifa = strpos($tarifa, '.00') !== false ? number_format($tari->tarifa_monto, 0, '.', ',') : $tarifa;
+                                                                @endphp
+                                                                S/ {{ $tarifa }}
+                                                            </span>
+                                                            <span class="capacidad-peso d-block">
+                                                                @php
+                                                                    $pesovehiculoMin = number_format($tari->tarifa_cap_min, 2, '.', ',');
+                                                                    $pesovehiculoMin = strpos($pesovehiculoMin, '.00') !== false ? number_format($tari->tarifa_cap_min, 0, '.', ',') : $pesovehiculoMin;
+                                                                    $pesovehiculo = number_format($tari->tarifa_cap_max, 2, '.', ',');
+                                                                    $pesovehiculo = strpos($pesovehiculo, '.00') !== false ? number_format($tari->tarifa_cap_max, 0, '.', ',') : $pesovehiculo;
+                                                                @endphp
+                                                                {{$pesovehiculoMin}} {{$tari->id_medida == 9 ? 'cm³' : 'kg' }} - {{ $pesovehiculo }} {{$tari->id_medida == 9 ? 'cm³' : 'kg' }}
+                                                            </span>
                                                         </div>
-                                                        <div class="peso-container">
-                                                        <span class="capacidad-peso">
-                                                            @php
-                                                                $pesovehiculoMin = number_format($tari->tarifa_cap_min, 2, '.', ',');
-                                                                $pesovehiculoMin = strpos($pesovehiculoMin, '.00') !== false ? number_format($tari->tarifa_cap_min, 0, '.', ',') : $pesovehiculoMin;
-                                                                $pesovehiculo = number_format($tari->tarifa_cap_max, 2, '.', ',');
-                                                                $pesovehiculo = strpos($pesovehiculo, '.00') !== false ? number_format($tari->tarifa_cap_max, 0, '.', ',') : $pesovehiculo;
-                                                            @endphp
-                                                            {{$pesovehiculoMin}} {{$tari->id_medida == 9 ? 'cm³' : 'kg' }} - {{ $pesovehiculo }} {{$tari->id_medida == 9 ? 'cm³' : 'kg' }}
-                                                        </span>
-                                                        </div>
-                                                        <div class="boton-container">
-{{--                                                            <a href="#" class="btn-ver" data-bs-toggle="modal" data-bs-target="#modalDetalleTarifa" wire:click="modal_detalle_tarifario({{ $tari->id_tarifario }})">--}}
-{{--                                                                <i class="fas fa-eye"></i>--}}
-{{--                                                            </a>--}}
-                                                        </div>
+                                                    </label>
+                                                    <div class="boton-container text-center">
+                                                        <a  class="btn-ver curso-pointer" wire:click="modal_detalle_tarifario({{ $tari->id_tarifario }})" wire:loading.attr="disabled" >
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
                                                     </div>
-                                                </label>
                                                     @php
                                                         $me = new \App\Models\General();
                                                         $capacidadPorcentaje = "0";
@@ -336,101 +326,113 @@
                                                             </div>
                                                         </div>
                                                     </div>
+                                                </div>
+                                                @php $conteoGen++; @endphp
+                                            @endforeach
+                                        </div>
+                                        @if($opcionDetalle)
+                                            <div class="row mt-4 mb-2">
+                                                <div class="col-lg-12 col-md-12 col-sm-12">
+                                                    <h6>Información de la tarifa</h6>
+                                                    <hr>
+                                                </div>
+                                                <div class="col-lg-6 col-md-4 col-sm-12">
+                                                    <strong style="color: #8c1017">Nombre comercial:</strong>
+                                                    <p>{{ $detalle_tarifario->transportista_nom_comercial }}</p>
+                                                </div>
+                                                <div class="col-lg-6 col-md-4 col-sm-12">
+                                                    <strong style="color: #8c1017">RUC:</strong>
+                                                    <p>{{ $detalle_tarifario->transportista_ruc }}</p>
+                                                </div>
+                                                <div class="col-lg-4 col-md-4 col-sm-12">
+                                                    <strong style="color: #8c1017">Departamento de llegada:</strong>
+                                                    @php
+                                                        $deparDetakke = "";
+                                                        if ($detalle_tarifario->id_departamento){
+                                                            $deparDetakke = \Illuminate\Support\Facades\DB::table('departamentos')->where('id_departamento','=',$detalle_tarifario->id_departamento)->first();
+                                                        }
+                                                    @endphp
+                                                    <p>{{ $deparDetakke ? $deparDetakke->departamento_nombre : '-' }} </p>
+                                                </div>
+                                                <div class="col-lg-4 col-md-4 col-sm-12">
+                                                    <strong style="color: #8c1017">Provincia de llegada:</strong>
+                                                    @php
+                                                        $proviDetalle = "";
+                                                        if ($detalle_tarifario->id_provincia){
+                                                            $proviDetalle = \Illuminate\Support\Facades\DB::table('provincias')->where('id_provincia','=',$detalle_tarifario->id_provincia)->first();
+                                                        }
+                                                    @endphp
+                                                    <p>{{ $proviDetalle ? $proviDetalle->provincia_nombre : '-' }} </p>
+                                                </div>
+                                                <div class="col-lg-4 col-md-4 col-sm-12">
+                                                    <strong style="color: #8c1017">Distrito de llegada:</strong>
+                                                    @php
+                                                        $distriDetalle = "";
+                                                        if ($detalle_tarifario->id_distrito){
+                                                            $distriDetalle = \Illuminate\Support\Facades\DB::table('distritos')->where('id_distrito','=',$detalle_tarifario->id_distrito)->first();
+                                                        }
+                                                    @endphp
+                                                    <p>{{ $distriDetalle ? $distriDetalle->distrito_nombre : 'TODOS LOS DISTRITOS' }} </p>
+                                                </div>
                                             </div>
-                                            @php $conteoGen++; @endphp
-                                        @endforeach
+                                        @endif
                                     </div>
+                                    @error('selectedTarifario')
+                                    <span class="message-error">{{ $message }}</span>
+                                    @enderror
                                 </div>
-                                @error('selectedTarifario')
-                                <span class="message-error">{{ $message }}</span>
-                                @enderror
-                            </div>
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                            <div class="row">
-                                <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                                    <h6>Otros S/</h6>
-                                </div>
-                                <div class="col-lg-12">
-                                    <input type="text" class="form-control" id="otros_gastos" name="otros_gastos" wire:model="otros_gastos" wire:change="save_cliente_data({{$clienteindex}})" onkeyup="validar_numeros(this.id)" />
-                                </div>
-                            </div>
+                    <div class="row mb-1">
+                        <div class="col-lg-4 col-md-4 col-sm-12 mb-1">
+                            <label for="otros_gastos" class="form-label">Otros S/</label>
+                            <input type="text" class="form-control" id="otros_gastos" name="otros_gastos" wire:model.live="otros_gastos" wire:change="save_cliente_data({{$clienteindex}})" onkeyup="validar_numeros(this.id)" />
                         </div>
-                        @if($despacho_gasto_otros > 0)
-                            <div class="col-lg-4">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <div class="row">
-                                            <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                                                <h6>Descripción otros</h6>
-                                            </div>
-                                            <div class="col-lg-12">
-                                                <textarea class="form-control" id="despacho_descripcion_otros" name="despacho_descripcion_otros" wire:model="despacho_descripcion_otros"></textarea>
-                                                @error('despacho_descripcion_otros')
-                                                <span class="message-error">{{ $message }}</span>
-                                                @enderror
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                        @if($otros_gastos > 0)
+                            <div class="col-lg-8 col-md-8 col-sm-12 mb-1">
+                                <label for="otros_gastos_descripcion_pro" class="form-label">Descripción otros</label>
+                                <textarea class="form-control" id="otros_gastos_descripcion_pro" rows="1" name="otros_gastos_descripcion_pro" wire:model="otros_gastos_descripcion_pro" wire:change="save_cliente_data({{$clienteindex}})"></textarea>
+                                @error('otros_gastos_descripcion_pro')
+                                    <span class="message-error">{{ $message }}</span>
+                                @enderror
                             </div>
                         @endif
                     </div>
 
                     <div class="row">
-                        <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                            <div class="row">
-                                <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                                    <h6>Departamento (*)</h6>
-                                </div>
-                                <div class="col-lg-12">
-                                    <select class="form-select" name="depar" id="depar" wire:change="deparTari" wire:model="depar">
-                                        <option value="">Seleccionar...</option>
-                                        @foreach($listar_departamento as $de)
-                                            <option value="{{ $de->id_departamento }}" {{ $de->id_departamento == $depar ? 'selected' : '' }} >{{ $de->departamento_nombre }}</option>
-                                        @endforeach
-                                    </select>
-                                    @error('depar')
-                                        <span class="message-error">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
+                        <div class="col-lg-4 col-md-4 col-sm-12 mb-1">
+                            <label for="depar" class="form-label">Departamento (*)</label>
+                            <select class="form-select" name="depar" id="depar" wire:change="deparTari" wire:model="depar">
+                                <option value="">Seleccionar...</option>
+                                @foreach($listar_departamento as $de)
+                                    <option value="{{ $de->id_departamento }}" {{ $de->id_departamento == $depar ? 'selected' : '' }} >{{ $de->departamento_nombre }}</option>
+                                @endforeach
+                            </select>
+                            @error('depar')
+                                <span class="message-error">{{ $message }}</span>
+                            @enderror
                         </div>
-                        <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                            <div class="row">
-                                <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                                    <h6>Provincia (*)</h6>
-                                </div>
-                                <div class="col-lg-12">
-                                    <select class="form-select" name="provin" id="provin" wire:model="provin" wire:change="proviTari" {{ empty($arrayProvinciaPronvicial) ? 'disabled' : '' }}>
-                                        <option value="">Seleccionar...</option>
-                                        @foreach($arrayProvinciaPronvicial as $pr)
-                                            <option value="{{ $pr->id_provincia }}" {{ $pr->id_provincia == $provin ? 'selected' : '' }}>{{ $pr->provincia_nombre }}</option>
-                                        @endforeach
-                                    </select>
-                                    @error('provin')
-                                        <span class="message-error">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
+                        <div class="col-lg-4 col-md-4 col-sm-12 mb-1">
+                            <label for="provin" class="form-label">Provincia (*)</label>
+                            <select class="form-select" name="provin" id="provin" wire:model="provin" wire:change="proviTari" {{ empty($arrayProvinciaPronvicial) ? 'disabled' : '' }}>
+                                <option value="">Seleccionar...</option>
+                                @foreach($arrayProvinciaPronvicial as $pr)
+                                    <option value="{{ $pr->id_provincia }}" {{ $pr->id_provincia == $provin ? 'selected' : '' }}>{{ $pr->provincia_nombre }}</option>
+                                @endforeach
+                            </select>
+                            @error('provin')
+                                <span class="message-error">{{ $message }}</span>
+                            @enderror
                         </div>
-                        <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                            <div class="row">
-                                <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                                    <h6>Distrito</h6>
-                                </div>
-                                <div class="col-lg-12">
-                                    <select class="form-select" name="distri" id="distri"  wire:model="distri" wire:change="distriTari" {{ empty($arrayDistritoPronvicial) ? 'disabled' : '' }}>
-                                        <option value="">Todos los distritos</option>
-                                        @foreach($arrayDistritoPronvicial as $di)
-                                            <option value="{{ $di->id_distrito }}" {{ $di->id_distrito == $distri ? 'selected' : '' }}>{{ $di->distrito_nombre }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
+                        <div class="col-lg-4 col-md-4 col-sm-12 mb-1">
+                            <label for="distri" class="form-label">Distrito</label>
+                            <select class="form-select" name="distri" id="distri"  wire:model="distri" wire:change="distriTari" {{ empty($arrayDistritoPronvicial) ? 'disabled' : '' }}>
+                                <option value="">Todos los distritos</option>
+                                @foreach($arrayDistritoPronvicial as $di)
+                                    <option value="{{ $di->id_distrito }}" {{ $di->id_distrito == $distri ? 'selected' : '' }}>{{ $di->distrito_nombre }}</option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -532,6 +534,7 @@
                                            style="border: none; outline: none;" />
                                     <i class="fas fa-search position-absolute" style="left: 15px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
                                 </div>
+                                <div class="loader mt-2" wire:loading wire:target="buscar_facturas_clientes"></div>
                             </div>
                         </div>
 
@@ -565,36 +568,36 @@
                                                                 <td colspan="3" style="padding: 0px">
                                                                     <table class="table">
                                                                         <tbody>
-                                                                        <tr>
-                                                                            <td style="width: 39.6%">
-                                                                        <span class="d-block tamanhoTablaComprobantes">
-                                                                            {{ $factura->CFNUMSER }} - {{ $factura->CFNUMDOC }}
-                                                                        </span>
-                                                                                <span class="d-block tamanhoTablaComprobantes">
-                                                                            {{ $factura->CFTEXGUIA }}
-                                                                        </span>
-                                                                            </td>
-                                                                            <td style="width: 32.2%">
-                                                                        <span class="d-block tamanhoTablaComprobantes">
-                                                                            {{ $factura->CNOMCLI }}
-                                                                        </span>
-                                                                            </td>
-                                                                            <td>
-                                                                        <span class="d-block tamanhoTablaComprobantes">
-                                                                            {{ $factura->total_kg }} kg
-                                                                        </span>
-                                                                                <span class="d-block tamanhoTablaComprobantes">
-                                                                            {{ $factura->total_volumen }} cm³
-                                                                        </span>
-                                                                            </td>
-                                                                        </tr>
-                                                                        <tr style="border-top: 2px solid transparent;">
-                                                                            <td colspan="3">
-                                                                         <span class="d-block tamanhoTablaComprobantes">
-                                                                                {{ $factura->LLEGADADIRECCION }} <br> UBIGEO: <b style="color: black">{{ $factura->DEPARTAMENTO }} - {{ $factura->PROVINCIA }} - {{ $factura->DISTRITO }}</b>
-                                                                         </span>
-                                                                            </td>
-                                                                        </tr>
+                                                                            <tr>
+                                                                                <td style="width: 39.6%">
+                                                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                                                        {{ $factura->CFNUMSER }} - {{ $factura->CFNUMDOC }}
+                                                                                    </span>
+                                                                                            <span class="d-block tamanhoTablaComprobantes">
+                                                                                        {{ $factura->CFTEXGUIA }}
+                                                                                    </span>
+                                                                                </td>
+                                                                                <td style="width: 32.2%">
+                                                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                                                        {{ $factura->CNOMCLI }}
+                                                                                    </span>
+                                                                                </td>
+                                                                                <td>
+                                                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                                                        {{ $factura->total_kg }} kg
+                                                                                    </span>
+                                                                                            <span class="d-block tamanhoTablaComprobantes">
+                                                                                        {{ $factura->total_volumen }} cm³
+                                                                                    </span>
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr style="border-top: 2px solid transparent;">
+                                                                                <td colspan="3" style="padding-top: 0">
+                                                                                     <span class="d-block tamanhoTablaComprobantes">
+                                                                                            {{ $factura->LLEGADADIRECCION }} <br> UBIGEO: <b style="color: black">{{ $factura->DEPARTAMENTO }} - {{ $factura->PROVINCIA }} - {{ $factura->DISTRITO }}</b>
+                                                                                     </span>
+                                                                                </td>
+                                                                            </tr>
                                                                         </tbody>
                                                                     </table>
                                                                 </td>
@@ -726,36 +729,28 @@
                                                                 }};" />
                                                 </svg>
                                                 <div class="circulo-vehiculo">
-                                                    <div class="placa-container">
-                                                        <span class="vehiculo-placa">{{ $vehiculo->vehiculo_placa }}</span>
-                                                    </div>
-                                                    <div class="tarifa-container">
-                                                        <span class="tarifa-monto">
-                                                            @php
-                                                                $tarifa = number_format($vehiculo->tarifa_monto, 2, '.', ',');
-                                                                $tarifa = strpos($tarifa, '.00') !== false ? number_format($vehiculo->tarifa_monto, 0, '.', ',') : $tarifa;
-                                                            @endphp
-                                                            S/ {{ $tarifa }}
-                                                        </span>
-                                                    </div>
-                                                    <div class="peso-container">
-                                                        <span class="capacidad-peso">
-                                                            @php
-                                                                $pesovehiculo = number_format($vehiculo->vehiculo_capacidad_peso, 2, '.', ',');
-                                                                $pesovehiculo = strpos($pesovehiculo, '.00') !== false ? number_format($vehiculo->vehiculo_capacidad_peso, 0, '.', ',') : $pesovehiculo;
-                                                            @endphp
-                                                            {{ $pesovehiculo }} kg
-                                                        </span>
-                                                    </div>
-                                                    <div class="peso-container">
-                                                        <span class="capacidad-peso">
+                                                    <span class="vehiculo-placa d-block">{{ $vehiculo->vehiculo_placa }}</span>
+                                                    <span class="tarifa-monto d-block">
+                                                        @php
+                                                            $tarifa = number_format($vehiculo->tarifa_monto, 2, '.', ',');
+                                                            $tarifa = strpos($tarifa, '.00') !== false ? number_format($vehiculo->tarifa_monto, 0, '.', ',') : $tarifa;
+                                                        @endphp
+                                                        S/ {{ $tarifa }}
+                                                    </span>
+                                                    <span class="capacidad-peso d-block">
+                                                        @php
+                                                            $pesovehiculo = number_format($vehiculo->vehiculo_capacidad_peso, 2, '.', ',');
+                                                            $pesovehiculo = strpos($pesovehiculo, '.00') !== false ? number_format($vehiculo->vehiculo_capacidad_peso, 0, '.', ',') : $pesovehiculo;
+                                                        @endphp
+                                                        {{ $pesovehiculo }} kg
+                                                    </span>
+                                                    <span class="capacidad-peso d-block">
                                                             @php
                                                                 $pesovolumen = number_format($vehiculo->vehiculo_capacidad_volumen, 2, '.', ',');
                                                                 $pesovolumen = strpos($pesovolumen, '.00') !== false ? number_format($vehiculo->vehiculo_capacidad_volumen, 0, '.', ',') : $pesovolumen;
                                                             @endphp
-                                                            {{ $pesovolumen }} cm³
-                                                        </span>
-                                                    </div>
+                                                        {{ $pesovolumen }} cm³
+                                                    </span>
                                                     <div class="boton-container">
                                                         <a href="#" class="btn-ver" data-bs-toggle="modal" data-bs-target="#modalVehiculo" wire:click="modal_por_vehiculo({{ $vehiculo->id_vehiculo }})">
                                                             <i class="fas fa-eye"></i>
@@ -779,14 +774,14 @@
                                                 @endphp
                                                 <div class="row">
                                                     <div class="col-lg-6 text-center">
-                                                        <span class="d-block text-black"><b>Peso:</b></span>
-                                                        <div style="color: {{ $pesoPorcentaje <= 25 ? 'red' : ($pesoPorcentaje <= 50 ? 'orange' : ($pesoPorcentaje <= 75 ? 'yellow' : 'green')) }};">
+                                                        <span class="d-block text-black tamanhoTablaComprobantes"><b>Peso:</b></span>
+                                                        <div class="tamanhoTablaComprobantes" style="color: {{ $pesoPorcentaje <= 25 ? 'red' : ($pesoPorcentaje <= 50 ? 'orange' : ($pesoPorcentaje <= 75 ? 'yellow' : 'green')) }};">
                                                             <span>{{ $pesoPorcentaje }}%</span>
                                                         </div>
                                                     </div>
                                                     <div class="col-lg-6 text-center">
-                                                        <span class="d-block text-black"><b>Volumen:</b></span>
-                                                        <div style="color: {{ $volumenPorcentaje <= 25 ? 'red' : ($volumenPorcentaje <= 50 ? 'orange' : ($volumenPorcentaje <= 75 ? 'yellow' : 'green')) }};">
+                                                        <span class="d-block text-black tamanhoTablaComprobantes"><b>Volumen:</b></span>
+                                                        <div class="tamanhoTablaComprobantes" style="color: {{ $volumenPorcentaje <= 25 ? 'red' : ($volumenPorcentaje <= 50 ? 'orange' : ($volumenPorcentaje <= 75 ? 'yellow' : 'green')) }};">
                                                             <span>{{ $volumenPorcentaje }}%</span>
                                                         </div>
                                                     </div>
@@ -1212,193 +1207,6 @@
         .card {
             margin-bottom: 1rem;
             border: none;
-        }
-        /* COMPROBANTES */
-        .custom-checkbox input {
-            display: none;
-        }
-        .custom-checkbox {
-            display: block;
-            position: relative;
-            cursor: pointer;
-            font-size: 20px;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .checkmark {
-            position: relative;
-            top: 0;
-            left: 0;
-            height: 1.3em;
-            width: 1.3em;
-            background-color: #2196F300;
-            border-radius: 0.25em;
-            transition: all 0.25s;
-        }
-        .custom-checkbox input:checked ~ .checkmark {
-            background-color: #e51821;
-        }
-        .checkmark:after {
-            content: "";
-            position: absolute;
-            transform: rotate(0deg);
-            border: 0.1em solid black;
-            left: 0;
-            top: 0;
-            width: 1.05em;
-            height: 1.05em;
-            border-radius: 0.25em;
-            transition: all 0.25s, border-width 0.1s;
-        }
-        .custom-checkbox input:checked ~ .checkmark:after {
-            left: 0.50em;
-            top: 0.30em;
-            width: 0.30em;
-            height: 0.5em;
-            border-color: #fff0 white white #fff0;
-            border-width: 0 0.15em 0.15em 0;
-            border-radius: 0em;
-            transform: rotate(45deg);
-        }
-        .factura-item {
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
-            background-color: #f8f9fa;
-            cursor: pointer;
-        }
-        .serie-correlativa,
-        .nombre-cliente,
-        .peso,
-        .volumen{
-            font-size: 13px;
-            color: #333;
-            margin: 0px 10px;
-        }
-        .overlay__eliminar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: transparent;
-            z-index: 9998;
-            display: none;
-        }
-        .spinner__container__eliminar {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 9999;
-        }
-        .spinner__eliminar {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #c3121a;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            from {
-                transform: rotate(0deg);
-            }
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* VEHICULOS */
-        .vehiculos-scroll-container-horizontal {
-            display: flex;
-            overflow-x: auto;
-            padding-bottom: 10px;
-        }
-        .circulo-vehiculo-container {
-            position: relative;
-            width: 170px;
-            height: 170px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .circulo-vehiculo-container.no-aprobado {
-            cursor: not-allowed;
-        }
-        .circulo-vehiculo {
-            position: relative;
-            text-align: center;
-            width: 110px;
-            height: 110px;
-        }
-        .vehiculo-placa {
-            font-size: 13px;
-            font-weight: bold;
-            color: #333;
-        }
-        .tarifa-monto,
-        .capacidad-peso {
-            font-size: 14px;
-            font-weight: bold;
-            color: #333;
-        }
-        .boton-container {
-            margin-top: 5px;
-        }
-        .circulo-vehiculo-container.no-aprobado .estado-circulo {
-            border: 2px solid red;
-        }
-        .circulo-vehiculo-container:not(.no-aprobado) .estado-circulo {
-            border: 2px solid green;
-        }
-        .estado-circulo {
-            position: absolute;
-            top: -5px;
-            left: -5px;
-            width: 20px;
-            height: 20px;
-            background-color: #f8f9fa;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
-        }
-        .check-icon,
-        .warning-icon {
-            font-size: 14px;
-            display: none;
-        }
-        /* Muestra el icono de check cuando está seleccionado */
-        .vehiculo-radio:checked + .progreso-circular + .circulo-vehiculo + .estado-circulo .check-icon {
-            display: inline;
-            color: green;
-        }
-        /* Muestra el icono de advertencia cuando no está aprobado */
-        .no-aprobado .estado-circulo .warning-icon {
-            display: inline;
-            color: red;
-        }
-        /* Progreso Circular */
-        .progreso-circular {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-        }
-        .progreso-circular-bg,
-        .progreso-circular-fg {
-            fill: none;
-            stroke-width: 2.8;
-        }
-        .progreso-circular-bg {
-            stroke: #e6e6e6;
-        }
-        .progreso-circular-fg {
-            stroke-linecap: round;
-            transition: stroke-dasharray 0.3s;
         }
     </style>
 

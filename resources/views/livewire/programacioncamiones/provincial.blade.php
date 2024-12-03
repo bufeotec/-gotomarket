@@ -191,6 +191,9 @@
                                        style="left: 15px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
                                 </div>
 
+                                <div class="loader mt-2" wire:loading wire:target="buscar_comprobante"></div>
+                                <div class="loader mt-2" wire:loading wire:target="buscar_cliente"></div>
+
                                 @if(!$selectedCliente)
                                     {{-- Mostrar clientes cuando no hay cliente seleccionado --}}
                                     @if(!empty($searchCliente))
@@ -273,25 +276,25 @@
                                                                     @if(!$comprobanteExiste)
                                                                         <tr style="cursor: pointer" wire:click="seleccionar_factura_cliente('{{$factura->CFTD}}','{{ $factura->CFNUMSER }}','{{ $factura->CFNUMDOC }}')">
                                                                             <td style="width: 39.6%">
-                                                                            <span class="d-block tamanhoTablaComprobantes">
-                                                                                {{ $factura->CFNUMSER }} - {{ $factura->CFNUMDOC }}
-                                                                            </span>
                                                                                 <span class="d-block tamanhoTablaComprobantes">
-                                                                                {{ $factura->CFTEXGUIA }}
-                                                                            </span>
+                                                                                    {{ $factura->CFNUMSER }} - {{ $factura->CFNUMDOC }}
+                                                                                </span>
+                                                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                                                    {{ $factura->CFTEXGUIA }}
+                                                                                </span>
                                                                             </td>
                                                                             <td>
-                                                                            <span class="d-block tamanhoTablaComprobantes">
-                                                                                {{ $factura->total_kg }} kg
-                                                                            </span>
                                                                                 <span class="d-block tamanhoTablaComprobantes">
-                                                                                {{ $factura->total_volumen }} cm³
-                                                                            </span>
+                                                                                    {{ $factura->total_kg }} kg
+                                                                                </span>
+                                                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                                                    {{ $factura->total_volumen }} cm³
+                                                                                </span>
                                                                             </td>
                                                                             <td>
-                                                                            <span class="d-block tamanhoTablaComprobantes">
-                                                                                {{ $factura->LLEGADADIRECCION }} <br> UBIGEO: <b style="color: black">{{ $factura->DEPARTAMENTO }} - {{ $factura->PROVINCIA }} - {{ $factura->DISTRITO }}</b>
-                                                                            </span>
+                                                                                <span class="d-block tamanhoTablaComprobantes">
+                                                                                    {{ $factura->LLEGADADIRECCION }} <br> UBIGEO: <b style="color: black">{{ $factura->DEPARTAMENTO }} - {{ $factura->PROVINCIA }} - {{ $factura->DISTRITO }}</b>
+                                                                                </span>
                                                                             </td>
                                                                         </tr>
                                                                     @endif
@@ -424,26 +427,23 @@
                                                                 }};" />
                                                         </svg>
                                                         <div class="circulo-vehiculo">
-                                                            <div class="tarifa-container" style="margin-top: 20%;">
-                                                        <span class="tarifa-monto">
-                                                            @php
-                                                                $tarifa = number_format($tari->tarifa_monto, 2, '.', ',');
-                                                                $tarifa = strpos($tarifa, '.00') !== false ? number_format($tari->tarifa_monto, 0, '.', ',') : $tarifa;
-                                                            @endphp
-                                                            S/ {{ $tarifa }}
-                                                        </span>
-                                                            </div>
-                                                            <div class="peso-container">
-                                                        <span class="capacidad-peso">
-                                                            @php
-                                                                $pesovehiculoMin = number_format($tari->tarifa_cap_min, 2, '.', ',');
-                                                                $pesovehiculoMin = strpos($pesovehiculoMin, '.00') !== false ? number_format($tari->tarifa_cap_min, 0, '.', ',') : $pesovehiculoMin;
-                                                                $pesovehiculo = number_format($tari->tarifa_cap_max, 2, '.', ',');
-                                                                $pesovehiculo = strpos($pesovehiculo, '.00') !== false ? number_format($tari->tarifa_cap_max, 0, '.', ',') : $pesovehiculo;
-                                                            @endphp
-                                                            {{$pesovehiculoMin}} {{$tari->id_medida == 9 ? 'cm³' : 'kg' }} - {{ $pesovehiculo }} {{$tari->id_medida == 9 ? 'cm³' : 'kg' }}
-                                                        </span>
-                                                            </div>
+                                                            <span class="tarifa-monto d-block" style="margin-top: 20px;">
+                                                                @php
+                                                                    $tarifa = number_format($tari->tarifa_monto, 2, '.', ',');
+                                                                    $tarifa = strpos($tarifa, '.00') !== false ? number_format($tari->tarifa_monto, 0, '.', ',') : $tarifa;
+                                                                @endphp
+                                                                S/ {{ $tarifa }}
+                                                            </span>
+                                                            <span class="capacidad-peso d-block">
+                                                                @php
+                                                                    $pesovehiculoMin = number_format($tari->tarifa_cap_min, 2, '.', ',');
+                                                                    $pesovehiculoMin = strpos($pesovehiculoMin, '.00') !== false ? number_format($tari->tarifa_cap_min, 0, '.', ',') : $pesovehiculoMin;
+                                                                    $pesovehiculo = number_format($tari->tarifa_cap_max, 2, '.', ',');
+                                                                    $pesovehiculo = strpos($pesovehiculo, '.00') !== false ? number_format($tari->tarifa_cap_max, 0, '.', ',') : $pesovehiculo;
+                                                                @endphp
+                                                                {{$pesovehiculoMin}} {{$tari->id_medida == 9 ? 'cm³' : 'kg' }} - {{ $pesovehiculo }} {{$tari->id_medida == 9 ? 'cm³' : 'kg' }}
+                                                            </span>
+
                                                             <div class="boton-container">
                                                                 <a href="#" class="btn-ver" data-bs-toggle="modal" data-bs-target="#modalVehiculo" wire:click="modal_detalle_tarifario({{ $tari->id_tarifario }})">
                                                                     <i class="fas fa-eye"></i>
@@ -460,8 +460,8 @@
                                                     @endphp
                                                     <div class="row">
                                                         <div class="col-lg-12 text-center">
-                                                            <span class="d-block text-black"><b>Peso:</b></span>
-                                                            <div style="color: {{ $capacidadPorcentaje <= 25 ? 'red' : ($capacidadPorcentaje <= 50 ? 'orange' : ($capacidadPorcentaje <= 75 ? 'yellow' : 'green')) }};">
+                                                            <span class="d-block text-black tamanhoTablaComprobantes"><b>Peso:</b></span>
+                                                            <div class="tamanhoTablaComprobantes" style="color: {{ $capacidadPorcentaje <= 25 ? 'red' : ($capacidadPorcentaje <= 50 ? 'orange' : ($capacidadPorcentaje <= 75 ? 'yellow' : 'green')) }};">
                                                                 <span>{{ $capacidadPorcentaje }}%</span>
                                                             </div>
                                                         </div>
@@ -745,8 +745,6 @@
             </div>
         </div>
     </div>
-
-
     <style>
         .card {
             margin-bottom: 1rem;

@@ -147,6 +147,7 @@
                                 <input type="text" class="form-control bg-dark text-white rounded-pill ps-5 custom-placeholder" placeholder="Buscar comprobante" wire:model="searchFactura" wire:change="buscar_comprobantes" style="border: none; outline: none;" />
                                 <i class="fas fa-search position-absolute" style="left: 15px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
                             </div>
+                            <div class="loader mt-2" wire:loading wire:target="buscar_comprobantes"></div>
                         </div>
                     </div>
                     @if($searchFactura !== '')
@@ -204,7 +205,7 @@
                                                                         </td>
                                                                     </tr>
                                                                     <tr style="border-top: 2px solid transparent;">
-                                                                        <td colspan="3">
+                                                                        <td colspan="3" style="padding-top: 0">
                                                                          <span class="d-block tamanhoTablaComprobantes">
                                                                                 {{ $factura->LLEGADADIRECCION }} <br> UBIGEO: <b style="color: black">{{ $factura->DEPARTAMENTO }} - {{ $factura->PROVINCIA }} - {{ $factura->DISTRITO }}</b>
                                                                          </span>

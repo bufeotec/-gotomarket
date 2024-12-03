@@ -112,17 +112,22 @@ class Mixto extends Component
     public $id_trans = "";
     public $id_tari = "";
     public $otros_gastos = "";
+    public $otros_gastos_descripcion_pro = "";
+    public $montoSelect = "";
+    public $montoSelectDescripcion = "";
     public $mano_obra = "";
     public $depar = "";
     public $provin = "";
     public $distri = "";
     public $toKg = "";
+    public $imporTotalPro = "";
     public $toVol = "";
+    public $showCambiarPrecio = false;
     public $arrayDepartamentoPronvicial = [];
     public $arrayProvinciaPronvicial = [];
     public $arrayDistritoPronvicial = [];
-    public $detalle_tarifario = "";
-
+    public $detalle_tarifario = [];
+    public $opcionDetalle = false;
     public function abrirModalComprobantes($cliente,$index){ // en $cliente llega el código del cliente, DNI o RUC
         /* limpiamos primero el array */
         $this->clienteSeleccionado = "";
@@ -133,12 +138,19 @@ class Mixto extends Component
         $datosCliente = $this->clientes_provinciales[$index] ?? null;
         $this->id_trans = $datosCliente['id_transportista'] ?? null;
         $this->id_tari =  null;
+        $this->montoSelect =  null;
+        $this->montoSelectDescripcion =  null;
+        $this->showCambiarPrecio =  null;
+        $this->opcionDetalle =  null;
+        $this->detalle_tarifario =  [];
         $this->otros_gastos = $datosCliente['otros'] ?? null;
+        $this->otros_gastos_descripcion_pro = $datosCliente['otrosDescripcion'] ?? null;
         $this->mano_obra = $datosCliente['mano_obra'] ?? null;
         $this->depar = $datosCliente['departamento'] ?? null;
         $this->provin = $datosCliente['provincia'] ?? null;
         $this->distri = $datosCliente['distrito'] ?? null;
         $this->toKg = 0;
+        $this->imporTotalPro = 0;
         $this->toVol = 0;
         if (!$this->depar) {
             $this->arrayProvinciaPronvicial = [];
@@ -162,6 +174,7 @@ class Mixto extends Component
         foreach ($this->comprobantesSeleccionados as $com){
             $this->clientes_provinciales[$index]['total_kg'] += $com['total_kg'];
             $this->clientes_provinciales[$index]['total_volumen'] += $com['total_volumen'];
+            $this->imporTotalPro += round($com['CFIMPORTE'],2);
             $this->toKg += $com['total_kg'];
             $this->toVol += $com['total_volumen'];
         }
@@ -173,10 +186,16 @@ class Mixto extends Component
         if ($datosCliente){
             $this->tarifariosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_provincial($datosCliente['total_kg'],2,$datosCliente['id_transportista'],$datosCliente['departamento'] ,$datosCliente['provincia'] ,$datosCliente['distrito']);
             if (count($this->tarifariosSugeridos) <= 0){
-                $this->tarifaMontoSeleccionado = null;
-                $this->selectedTarifario = null;
+                $this->limpiarParaPro($index);
             }
         }
+    }
+    function limpiarParaPro($index){
+        $this->clientes_provinciales[$index]['id_tarifario'] = '';
+        $this->montoSelect = '';
+        $this->selectedTarifario = '';
+        $this->clientes_provinciales[$index]['montoSeleccionado'] = "";
+        $this->clientes_provinciales[$index]['montoOriginal'] = "";
     }
     public function save_cliente_data($index){
         $this->clientes_provinciales[$index]['id_transportista'] = $this->id_trans;
@@ -186,8 +205,44 @@ class Mixto extends Component
         $this->clientes_provinciales[$index]['departamento'] = $this->depar;
         $this->clientes_provinciales[$index]['provincia'] = $this->provin;
         $this->clientes_provinciales[$index]['distrito'] = $this->distri;
+        if ($this->otros_gastos > 0){
+            $this->clientes_provinciales[$index]['otrosDescripcion'] = $this->otros_gastos_descripcion_pro;
+        }else{
+            $this->clientes_provinciales[$index]['otrosDescripcion'] = "";
+            $this->otros_gastos_descripcion_pro = '';
+        }
+        if ($this->id_tari){
+            $pre = DB::table('tarifarios')->where('id_tarifario','=',$this->id_tari)->first();
+            if ($pre){
+                if (($this->clientes_provinciales[$index]['montoOriginal'] > 0 && $this->clientes_provinciales[$index]['montoSeleccionado'] > 0) && ($this->clientes_provinciales[$index]['montoOriginal'] != $this->montoSelect)){
+                    $this->clientes_provinciales[$index]['montoSeleccionado'] = $this->montoSelect;
+                }else{
+                    $this->montoSelect = $pre->tarifa_monto;
+                    $this->clientes_provinciales[$index]['montoSeleccionado'] = $pre->tarifa_monto;
+                    $this->clientes_provinciales[$index]['montoOriginal'] = $pre->tarifa_monto;
+                }
+            }
+        }else{
+            $this->clientes_provinciales[$index]['montoSeleccionado'] = null;
+            $this->clientes_provinciales[$index]['montoOriginal'] = null;
+        }
+        $this->clientes_provinciales[$index]['montoSeleccionadoDescripcion'] = $this->montoSelectDescripcion;
         $this->listar_tarifarios_su($index);
         $this->activar_botonListo($index);
+    }
+    public function modal_detalle_tarifario($id){
+        if ($this->detalle_tarifario){
+            if ($this->detalle_tarifario->id_tarifario == $id){
+                $this->opcionDetalle = false;
+                $this->detalle_tarifario = [];
+            }else{
+                $this->detalle_tarifario =  $this->tarifario->listar_informacion_tarifa($id);
+            }
+        }else{
+            $this->opcionDetalle = true;
+            $this->detalle_tarifario =  $this->tarifario->listar_informacion_tarifa($id);
+        }
+
     }
     function activar_botonListo($index){
         $informacionCliente = $this->clientes_provinciales[$index];
@@ -199,9 +254,7 @@ class Mixto extends Component
             $this->showBotonListo = false;
         }
     }
-    public function modal_detalle_tarifario($id){
-        $this->detalle_tarifario =  $this->tarifario->listar_informacion_tarifa($id);
-    }
+
 
     public function seleccionarTarifario($id){
         $tarifario = collect($this->tarifariosSugeridos)->first(function ($tarifario) use ($id){
@@ -231,17 +284,17 @@ class Mixto extends Component
     }
 
     public function deparTari(){
-        $this->id_tari = "";
+//        $this->id_tari = "";
         $this->save_cliente_data($this->clienteindex);
         $this->listar_provincias();
     }
     public function proviTari(){
-        $this->id_tari = "";
+//        $this->id_tari = "";
         $this->save_cliente_data($this->clienteindex);
         $this->listar_distritos();
     }
     public function distriTari(){
-        $this->id_tari = "";
+//        $this->id_tari = "";
         $this->save_cliente_data($this->clienteindex);
 
     }
@@ -315,9 +368,6 @@ class Mixto extends Component
             'CFIMPORTE' => $factura->CFIMPORTE, // importe
             'CFCODMON' => $factura->CFCODMON, // código de moneda
             'guia' => $factura->CFTEXGUIA, // guia
-            'direccion_guia' => isset($factura->guia) ? $factura->guia->LLEGADADIRECCION : '-', // dirección de guía.
-            'direccion_guia' => isset($factura->guia) ? $factura->guia->LLEGADADIRECCION : '-', // dirección de guía.
-            'fecha_guia' => isset($factura->guia) ? $factura->guia->GREFECEMISION : '-', // fecha de la guía.
             'isChecked' => false,
             'GREFECEMISION' => $factura->GREFECEMISION, // fecha de emision de la guía
             'LLEGADADIRECCION' => $factura->LLEGADADIRECCION,// Dirección de destino
@@ -400,17 +450,13 @@ class Mixto extends Component
                         'total_volumen' => $factura['total_volumen'],
                         'CFIMPORTE' => $factura['CFIMPORTE'],
                         'CFCODMON' => $factura['CFCODMON'],
-                        'guia' => $factura->CFTEXGUIA, // guia
-                        'direccion_guia' => isset($factura->guia) ? $factura->guia->LLEGADADIRECCION : '-', // dirección de guía.
-                        'direccion_guia' => isset($factura->guia) ? $factura->guia->LLEGADADIRECCION : '-', // dirección de guía.
-                        'fecha_guia' => isset($factura->guia) ? $factura->guia->GREFECEMISION : '-', // fecha de la guía.
-//                        'isChecked' => false,
-                        'GREFECEMISION' => $factura->GREFECEMISION, // fecha de emision de la guía
-                        'LLEGADADIRECCION' => $factura->LLEGADADIRECCION,// Dirección de destino
-                        'LLEGADAUBIGEO' => $factura->LLEGADAUBIGEO,// Código del ubigeo
-                        'DEPARTAMENTO' => $factura->DEPARTAMENTO,// Departamento
-                        'PROVINCIA' => $factura->PROVINCIA,// Provincia
-                        'DISTRITO' => $factura->DISTRITO,// Distrito
+                        'guia' => $factura['guia'], // guia
+                        'GREFECEMISION' => $factura['GREFECEMISION'], // fecha de emision de la guía
+                        'LLEGADADIRECCION' => $factura['LLEGADADIRECCION'],// Dirección de destino
+                        'LLEGADAUBIGEO' => $factura['LLEGADAUBIGEO'],// Código del ubigeo
+                        'DEPARTAMENTO' => $factura['DEPARTAMENTO'],// Departamento
+                        'PROVINCIA' => $factura['PROVINCIA'],// Provincia
+                        'DISTRITO' => $factura['DISTRITO'],// Distrito
                     ];
                     break;
                 }
@@ -423,8 +469,12 @@ class Mixto extends Component
                 'total_volumen' =>  0,
                 'id_transportista' =>  null,
                 'id_tarifario' =>  null,
+                'montoOriginal' =>  null, // guardar el monto original de la tarifa.
+                'montoSeleccionado' =>  null, // guardar el monto que se puede modificar.
+                'montoSeleccionadoDescripcion' =>  null, // descripción al modificar el precio.
                 'otros' =>  null,
-                'mano_obra' =>  null,
+                'otrosDescripcion' =>  null, // descripción al añadir el precio en el campo otros.
+                'mano_obra' =>  0,
                 'departamento' =>  null,
                 'provincia' =>  null,
                 'distrito' =>  null,
@@ -439,8 +489,6 @@ class Mixto extends Component
                         'CFIMPORTE' => $factura['CFIMPORTE'],
                         'CFCODMON' => $factura['CFCODMON'],
                         'guia' => $factura['guia'],
-                        'direccion_guia' => $factura['direccion_guia'] , // dirección de guía.
-                        'fecha_guia' => $factura['fecha_guia'] , // fecha de la guía.
                         'GREFECEMISION' => $factura['GREFECEMISION'],
                         'LLEGADADIRECCION' => $factura['LLEGADADIRECCION'],
                         'LLEGADAUBIGEO' => $factura['LLEGADAUBIGEO'],
