@@ -71,6 +71,7 @@ class Local extends Component
         $this->programacion_fecha = now()->format('Y-m-d');
         $this->desde = date('Y-m-d', strtotime('-1 month'));
         $this->hasta = date('Y-m-d');
+        $this->buscar_comprobantes();
     }
 
     public function render(){
@@ -80,8 +81,9 @@ class Local extends Component
     }
 
     public function buscar_comprobantes(){
-        if ($this->searchFactura !== "") {
-            $this->filteredFacturas = $this->server->listar_comprobantes_listos_local($this->searchFactura,$this->desde,$this->hasta);
+        if ($this->searchFactura !== "" || $this->desde || $this->hasta) {
+            $this->filteredFacturas = $this->server->listar_comprobantes_listos_local($this->searchFactura, $this->desde, $this->hasta);
+
             if (!$this->filteredFacturas || count($this->filteredFacturas) == 0) {
                 $this->filteredFacturas = [];
             }
