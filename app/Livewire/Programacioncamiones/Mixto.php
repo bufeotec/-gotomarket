@@ -146,26 +146,66 @@ class Mixto extends Component
         $this->otros_gastos = $datosCliente['otros'] ?? null;
         $this->otros_gastos_descripcion_pro = $datosCliente['otrosDescripcion'] ?? null;
         $this->mano_obra = $datosCliente['mano_obra'] ?? null;
-        $this->depar = $datosCliente['departamento'] ?? null;
-        $this->provin = $datosCliente['provincia'] ?? null;
-        $this->distri = $datosCliente['distrito'] ?? null;
+        /* -------------------------------- LIMPIAMOS EL UBIGEO ---------------------------------------*/
+        $this->depar = null;
+        $this->provin = null;
+        $this->distri = null;
+        $this->arrayProvinciaPronvicial = [];
+        $this->arrayDistritoPronvicial = [];
+        /* -------------------------------- LIMPIAMOS EL UBIGEO ---------------------------------------*/
         $this->toKg = 0;
         $this->imporTotalPro = 0;
         $this->toVol = 0;
-        if (!$this->depar) {
-            $this->arrayProvinciaPronvicial = [];
-            $this->provin = null;
-            $this->arrayDistritoPronvicial = [];
-            $this->distri = null;
-        } else {
-            $this->listar_provincias();
-            if (!$this->provin) {
+        if ($datosCliente['ubiDepar']){
+            $deparCl = DB::table('departamentos')->where('departamento_nombre','like','%'.$datosCliente['ubiDepar'].'%')->first();
+            if ($deparCl){
+                $this->depar = $deparCl->id_departamento;
+                $this->clientes_provinciales[$index]['departamento'] = $deparCl->id_departamento;
+                $this->listar_provincias();
+                if ($datosCliente['ubiPro']){
+                    $ta = trim($datosCliente['ubiPro']);
+                    $provinCl = DB::table('provincias')
+                        ->where('id_departamento','=',$deparCl->id_departamento)
+                        ->where('provincia_nombre','like','%'.$ta.'%')->first();
+                    if ($provinCl){
+                        $this->provin = $provinCl->id_provincia;
+                        $this->clientes_provinciales[$index]['provincia'] = $provinCl->id_provincia;
+                        $this->listar_distritos();
+                        if ($datosCliente['ubiDis']){
+                            $ta2 = trim($datosCliente['ubiDis']);
+                            $distriCl = DB::table('distritos')
+                                ->where('id_provincia','=',$provinCl->id_provincia)
+                                ->where('distrito_nombre','like','%'.$ta2.'%')->first();
+                            if ($distriCl){
+                                $this->distri = $distriCl->id_distrito;
+                                $this->clientes_provinciales[$index]['distrito'] = $distriCl->id_distrito;
+                            }
+                        }
+                    }
+                }
+            }
+        }else{
+            $this->depar = null;
+            $this->clientes_provinciales[$index]['departamento'] = null;
+            $this->clientes_provinciales[$index]['provincia'] = null;
+            $this->clientes_provinciales[$index]['distrito'] = null;
+
+            if (!$this->depar) {
+                $this->arrayProvinciaPronvicial = [];
+                $this->provin = null;
                 $this->arrayDistritoPronvicial = [];
                 $this->distri = null;
             } else {
-                $this->listar_distritos();
+                $this->listar_provincias();
+                if (!$this->provin) {
+                    $this->arrayDistritoPronvicial = [];
+                    $this->distri = null;
+                } else {
+                    $this->listar_distritos();
+                }
             }
         }
+
         // Cargar comprobantes seleccionados
         $this->comprobantesSeleccionados = $datosCliente['comprobantes'] ?? [];
         $this->clientes_provinciales[$index]['total_kg'] = 0;
@@ -423,10 +463,18 @@ class Mixto extends Component
         }
         $codiCli = $factura['CCODCLI'];
         $nombCli = $factura['CNOMCLI'];
+        $DEPARTAMENTO = $factura['DEPARTAMENTO'];
+        $PROVINCIA = $factura['PROVINCIA'];
+        $DISTRITO = $factura['DISTRITO'];
+        $direccionLlegada = $factura['LLEGADADIRECCION'];
 
-        $validarExisteCliente =  collect($this->clientes_provinciales)->first(function ($cliente) use ($codiCli,$nombCli) {
+        $validarExisteCliente =  collect($this->clientes_provinciales)->first(function ($cliente) use ($codiCli,$nombCli,$DEPARTAMENTO,$PROVINCIA,$DISTRITO,$direccionLlegada) {
             return $cliente['codigoCliente'] === $codiCli
-                && $cliente['nombreCliente'] === $nombCli;
+                && $cliente['nombreCliente'] === $nombCli
+                && $cliente['ubiDepar'] == $DEPARTAMENTO
+                && $cliente['ubiPro'] == $PROVINCIA
+                && $cliente['ubiDis'] == $DISTRITO
+                && $cliente['ubiDirc'] == $direccionLlegada;
         });
         if ($validarExisteCliente){ // si existe el cliente
             // Verificar si el comprobante ya existe en los comprobantes del cliente
@@ -441,7 +489,7 @@ class Mixto extends Component
             }
             // Agregar el comprobante al cliente existente
             foreach ($this->clientes_provinciales as &$cliente) {
-                if ($cliente['codigoCliente'] == $codiCli && $cliente['nombreCliente'] == $nombCli) {
+                if ($cliente['codigoCliente'] == $codiCli && $cliente['nombreCliente'] == $nombCli && $cliente['ubiDepar'] == $DEPARTAMENTO && $cliente['ubiPro'] == $PROVINCIA && $cliente['ubiDis'] == $DISTRITO && $cliente['ubiDirc'] == $direccionLlegada) {
                     $cliente['comprobantes'][] = [
                         'CFTD' => $factura['CFTD'],
                         'CFNUMSER' => $factura['CFNUMSER'],
@@ -479,6 +527,10 @@ class Mixto extends Component
                 'provincia' =>  null,
                 'distrito' =>  null,
                 'listo' =>  null,
+                'ubiDepar' =>  $DEPARTAMENTO,
+                'ubiPro' =>  $PROVINCIA,
+                'ubiDis' =>  $DISTRITO,
+                'ubiDirc' =>  $direccionLlegada,
                 'comprobantes' => [
                     [
                         'CFTD' => $factura['CFTD'],

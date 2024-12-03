@@ -403,7 +403,7 @@
                     <div class="row">
                         <div class="col-lg-4 col-md-4 col-sm-12 mb-1">
                             <label for="depar" class="form-label">Departamento (*)</label>
-                            <select class="form-select" name="depar" id="depar" wire:change="deparTari" wire:model="depar">
+                            <select class="form-select" name="depar" id="depar" wire:change="deparTari" wire:key="deparTari{{ now() }}" wire:model="depar">
                                 <option value="">Seleccionar...</option>
                                 @foreach($listar_departamento as $de)
                                     <option value="{{ $de->id_departamento }}" {{ $de->id_departamento == $depar ? 'selected' : '' }} >{{ $de->departamento_nombre }}</option>
@@ -415,7 +415,7 @@
                         </div>
                         <div class="col-lg-4 col-md-4 col-sm-12 mb-1">
                             <label for="provin" class="form-label">Provincia (*)</label>
-                            <select class="form-select" name="provin" id="provin" wire:model="provin" wire:change="proviTari" {{ empty($arrayProvinciaPronvicial) ? 'disabled' : '' }}>
+                            <select class="form-select" name="provin" id="provin" wire:model="provin" wire:key="distri{{ now() }}" wire:change="proviTari" {{ empty($arrayProvinciaPronvicial) ? 'disabled' : '' }}>
                                 <option value="">Seleccionar...</option>
                                 @foreach($arrayProvinciaPronvicial as $pr)
                                     <option value="{{ $pr->id_provincia }}" {{ $pr->id_provincia == $provin ? 'selected' : '' }}>{{ $pr->provincia_nombre }}</option>
@@ -427,7 +427,7 @@
                         </div>
                         <div class="col-lg-4 col-md-4 col-sm-12 mb-1">
                             <label for="distri" class="form-label">Distrito</label>
-                            <select class="form-select" name="distri" id="distri"  wire:model="distri" wire:change="distriTari" {{ empty($arrayDistritoPronvicial) ? 'disabled' : '' }}>
+                            <select class="form-select" name="distri" id="distri"  wire:model="distri" wire:key="distri{{ now() }}" wire:change="distriTari" {{ empty($arrayDistritoPronvicial) ? 'disabled' : '' }}>
                                 <option value="">Todos los distritos</option>
                                 @foreach($arrayDistritoPronvicial as $di)
                                     <option value="{{ $di->id_distrito }}" {{ $di->id_distrito == $distri ? 'selected' : '' }}>{{ $di->distrito_nombre }}</option>
