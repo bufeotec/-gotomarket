@@ -84,6 +84,10 @@ class Provincial extends Component
         $this->programacion_fecha = now()->format('Y-m-d');
         $this->desde = date('Y-m-d', strtotime('-1 month'));
         $this->hasta = date('Y-m-d');
+        if ($this->selectedCliente) {
+            $this->buscar_comprobante();
+        }
+
     }
     public function render(){
         $listar_transportistas = $this->transportista->listar_transportista_sin_id();
@@ -97,9 +101,9 @@ class Provincial extends Component
             $this->provincias = DB::table('provincias')->where('id_departamento', '=', $valor)->get();
         } else {
             $this->provincias = [];
-            $this->id_provincia = '';
+            $this->id_provincia = "";
             $this->distritos = [];
-            $this->id_distrito = '';
+            $this->id_distrito = "";
         }
     }
 
@@ -109,7 +113,7 @@ class Provincial extends Component
             $this->distritos = DB::table('distritos')->where('id_provincia', '=', $valor)->get();
         } else {
             $this->distritos = [];
-            $this->id_distrito = '';
+            $this->id_distrito = "";
         }
     }
 
@@ -127,13 +131,14 @@ class Provincial extends Component
     }
 
     public function seleccionar_cliente($clienteId) {
-        $cliente = collect($this->filteredClientes)->firstWhere('CCODCLI',(int) $clienteId);
+        $cliente = collect($this->filteredClientes)->firstWhere('CCODCLI', (int) $clienteId);
         if ($cliente) {
             $this->selectedCliente = $cliente->CCODCLI;
             $this->select_nombre_cliente = $cliente->CNOMCLI;
             $this->searchCliente = "";
             $this->searchComprobante = "";
             $this->filteredClientes = [];
+            $this->buscar_comprobante();
         } else {
             $this->resetear_cliente();
         }
@@ -158,13 +163,20 @@ class Provincial extends Component
     }
 
     public function buscar_comprobante() {
-        if ($this->selectedCliente && $this->searchComprobante !== "") {
-            $comprobantes = $this->server->listar_comprobantes_por_cliente($this->selectedCliente, $this->searchComprobante,$this->desde,$this->hasta);
-            $this->filteredComprobantes = $comprobantes;
+        if ($this->searchComprobante !== "" || $this->desde || $this->hasta || $this->selectedCliente) {
+            $comprobantes = $this->server->listar_comprobantes_por_cliente($this->selectedCliente, $this->searchComprobante, $this->desde, $this->hasta);
+            // Si no hay comprobantes, asignar un array vacío
+            if (!$comprobantes || count($comprobantes) == 0) {
+                $this->filteredComprobantes = [];
+            } else {
+                $this->filteredComprobantes =  $comprobantes;
+            }
         } else {
             $this->filteredComprobantes = [];
         }
     }
+
+
 
     public function resetear_cliente() {
         $this->selectedCliente = null;
@@ -280,6 +292,10 @@ class Provincial extends Component
         $this->detalle_tarifario =  $this->tarifario->listar_informacion_tarifa($id);
     }
     public function deparTari(){
+        $this->id_provincia = "";
+        $this->id_distrito = "";
+        $this->provincias = [];
+        $this->distritos = [];
         $this->listar_tarifarios_su();
         $this->listar_provincias();
     }

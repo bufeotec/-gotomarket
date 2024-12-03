@@ -231,7 +231,6 @@
                                                                         </td>
                                                                     </tr>
                                                                 @endforeach
-
                                                             @endif
                                                         </x-slot>
                                                     </x-table-general>
@@ -241,71 +240,68 @@
                                     @endif
                                 @else
                                     {{-- Mostrar comprobantes cuando un cliente está seleccionado --}}
-                                    @if(!empty($searchComprobante))
-
-                                        <div class="row mt-3">
-                                            <div class="col-lg-12 col-md-12 col-sm-12">
-                                                <div class="contenedor-comprobante" style="max-height: 600px; overflow: auto">
-                                                    <x-table-general>
-                                                        <x-slot name="thead">
-                                                            <tr>
-                                                                <th style="font-size: 12px">Serie y Correlativo / Guía</th>
-                                                                <th style="font-size: 12px">Peso y Volumen</th>
-                                                                <th style="font-size: 12px">Dirección</th>
-                                                            </tr>
-                                                        </x-slot>
-                                                        <x-slot name="tbody">
-                                                            @if(count($filteredComprobantes) == 0 )
-                                                                <tr>
-                                                                    <td colspan="3">
-                                                                        <p class="text-center mb-0" style="font-size: 12px">No se encontró comprobantes.</p>
-                                                                    </td>
-                                                                </tr>
-                                                            @else
-                                                                @foreach($filteredComprobantes as $factura)
-                                                                    @php
-                                                                        $CFTD = $factura->CFTD;
-                                                                        $CFNUMSER = $factura->CFNUMSER;
-                                                                        $CFNUMDOC = $factura->CFNUMDOC;
-                                                                        $comprobanteExiste = collect($this->selectedFacturas)->first(function ($facturaVa) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
-                                                                            return $facturaVa['CFTD'] === $CFTD
-                                                                                && $facturaVa['CFNUMSER'] === $CFNUMSER
-                                                                                && $facturaVa['CFNUMDOC'] === $CFNUMDOC;
-                                                                        });
-                                                                    @endphp
-                                                                    @if(!$comprobanteExiste)
-                                                                        <tr style="cursor: pointer" wire:click="seleccionar_factura_cliente('{{$factura->CFTD}}','{{ $factura->CFNUMSER }}','{{ $factura->CFNUMDOC }}')">
-                                                                            <td style="width: 39.6%">
+                                    <div class="row mt-3">
+                                        <div class="col-lg-12 col-md-12 col-sm-12">
+                                            <div class="contenedor-comprobante" style="max-height: 600px; overflow: auto">
+                                                <x-table-general>
+                                                    <x-slot name="thead">
+                                                        <tr>
+                                                            <th style="font-size: 12px">Serie y Correlativo / Guía</th>
+                                                            <th style="font-size: 12px">Peso y Volumen</th>
+                                                            <th style="font-size: 12px">Dirección</th>
+                                                        </tr>
+                                                    </x-slot>
+                                                    <x-slot name="tbody">
+                                                        @if(!empty($filteredComprobantes))
+                                                            @foreach($filteredComprobantes as $factura)
+                                                                @php
+                                                                    $CFTD = $factura->CFTD;
+                                                                    $CFNUMSER = $factura->CFNUMSER;
+                                                                    $CFNUMDOC = $factura->CFNUMDOC;
+                                                                    $comprobanteExiste = collect($this->selectedFacturas)->first(function ($facturaVa) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
+                                                                        return $facturaVa['CFTD'] === $CFTD
+                                                                            && $facturaVa['CFNUMSER'] === $CFNUMSER
+                                                                            && $facturaVa['CFNUMDOC'] === $CFNUMDOC;
+                                                                    });
+                                                                @endphp
+                                                                @if(!$comprobanteExiste)
+                                                                    <tr style="cursor: pointer" wire:click="seleccionar_factura_cliente('{{$factura->CFTD}}','{{ $factura->CFNUMSER }}','{{ $factura->CFNUMDOC }}')">
+                                                                        <td style="width: 39.6%">
                                                                                 <span class="d-block tamanhoTablaComprobantes">
                                                                                     {{ $factura->CFNUMSER }} - {{ $factura->CFNUMDOC }}
                                                                                 </span>
-                                                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                                            <span class="d-block tamanhoTablaComprobantes">
                                                                                     {{ $factura->CFTEXGUIA }}
                                                                                 </span>
-                                                                            </td>
-                                                                            <td>
+                                                                        </td>
+                                                                        <td>
                                                                                 <span class="d-block tamanhoTablaComprobantes">
                                                                                     {{ $factura->total_kg }} kg
                                                                                 </span>
-                                                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                                            <span class="d-block tamanhoTablaComprobantes">
                                                                                     {{ $factura->total_volumen }} cm³
                                                                                 </span>
-                                                                            </td>
-                                                                            <td>
+                                                                        </td>
+                                                                        <td>
                                                                                 <span class="d-block tamanhoTablaComprobantes">
                                                                                     {{ $factura->LLEGADADIRECCION }} <br> UBIGEO: <b style="color: black">{{ $factura->DEPARTAMENTO }} - {{ $factura->PROVINCIA }} - {{ $factura->DISTRITO }}</b>
                                                                                 </span>
-                                                                            </td>
-                                                                        </tr>
-                                                                    @endif
-                                                                @endforeach
-                                                            @endif
-                                                        </x-slot>
-                                                    </x-table-general>
-                                                </div>
+                                                                        </td>
+                                                                    </tr>
+                                                                @endif
+                                                            @endforeach
+                                                        @else
+                                                            <tr>
+                                                                <td colspan="3">
+                                                                    <p class="text-center mb-0" style="font-size: 12px">No se encontró comprobantes.</p>
+                                                                </td>
+                                                            </tr>
+                                                        @endif
+                                                    </x-slot>
+                                                </x-table-general>
                                             </div>
                                         </div>
-                                    @endif
+                                    </div>
                                 @endif
                             </div>
                         </div>
