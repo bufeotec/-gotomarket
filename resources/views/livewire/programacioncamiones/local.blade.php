@@ -244,7 +244,7 @@
                     <div class="card">
                         <div class="card-body">
                             <h6>Lista de transportistas</h6>
-                            <select class="form-select" name="id_transportistas" id="id_transportistas" wire:model="id_transportistas" wire:change="actualizarVehiculosSugeridos">
+                            <select class="form-select" name="id_transportistas" id="id_transportistas" wire:model="id_transportistas" wire:change="listar_vehiculos_lo">
                                 <option value="">Seleccionar...</option>
                                 @foreach($listar_transportistas as $lt)
                                     <option value="{{ $lt->id_transportistas }}">{{ $lt->transportista_nom_comercial }}</option>
@@ -292,7 +292,7 @@
                                     @foreach($vehiculosSugeridos as $index => $vehiculo)
                                         <div class="position-relative mx-2">
                                             @if($vehiculo->tarifa_estado_aprobacion == 1)
-                                                <input type="radio"  name="vehiculo" id="id_check_vehiculo_{{ $vehiculo->id_vehiculo }}_{{ $vehiculo->id_tarifario}}_{{$conteoGen}}" class="inputCheckRadio" value="{{ $vehiculo->id_vehiculo }}-{{ $vehiculo->id_tarifario }}" wire:model="id_tarifario_seleccionado" wire:click="seleccionarVehiculo({{ $vehiculo->id_vehiculo }},{{ $vehiculo->id_tarifario }})" />
+                                                <input type="radio"  name="vehiculo" id="id_check_vehiculo_{{ $vehiculo->id_vehiculo }}_{{ $vehiculo->id_tarifario}}_{{$conteoGen}}" class="inputCheckRadio" value="{{ $vehiculo->id_vehiculo }}-{{ $vehiculo->id_tarifario }}" wire:click="seleccionarVehiculo({{ $vehiculo->id_vehiculo }},{{ $vehiculo->id_tarifario }})" />
                                                 <label for="id_check_vehiculo_{{ $vehiculo->id_vehiculo }}_{{ $vehiculo->id_tarifario}}_{{$conteoGen}}" class="labelCheckRadios">
                                                     <div class="container_check_radios" >
                                                         <div class="cRadioBtn">

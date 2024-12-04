@@ -339,7 +339,7 @@ class Provincial extends Component
         $montoSeleccionado = floatval($this->tarifaMontoSeleccionado);
         $otros = floatval($this->despacho_gasto_otros);
 
-        $this->costoTotal = $montoSeleccionado + $otros;
+        $this->costoTotal = ($montoSeleccionado * $this->pesoTotal) + $otros;
     }
 
     public function guardarDespachos(){

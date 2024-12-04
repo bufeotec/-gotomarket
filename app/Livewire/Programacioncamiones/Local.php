@@ -91,14 +91,13 @@ class Local extends Component
             $this->filteredFacturas = [];
         }
     }
-
-    public function actualizarVehiculosSugeridos(){
+    /*  public function actualizarVehiculosSugeridos(){
         $this->tarifaMontoSeleccionado = null;
         $this->montoOriginal = null;
         $this->id_tarifario_seleccionado = null;
         $this->selectedVehiculo = null;
         $this->listar_vehiculos_lo();
-    }
+    }*/
 
     public function seleccionarVehiculo($vehiculoId,$id_tarifa){
         $vehiculo = collect($this->vehiculosSugeridos)->first(function ($vehiculo) use ($vehiculoId, $id_tarifa) {
