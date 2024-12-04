@@ -47,8 +47,7 @@ class Tarifario extends Model
         return $result;
     }
 
-    public function lista_tarifas_pendientes($search, $pagination, $order = 'desc')
-    {
+    public function lista_tarifas_pendientes($search, $pagination, $order = 'desc'){
         try {
             // Quitar de la tabla de validar tarifas los ubigeos.
             // buscar por las tablas tarifarios,transportistas,tipo_servicios,users
@@ -74,7 +73,7 @@ class Tarifario extends Model
                         ->orWhereNull('t.tarifa_cap_max')
                         ->orWhereNull('t.tarifa_monto');
                 })
-                ->orderBy('t.id_tarifario', $order);
+                ->orderBy('t.updated_at', $order);
 
             $result = $query->paginate($pagination);
 
@@ -84,6 +83,7 @@ class Tarifario extends Model
         }
         return $result;
     }
+
     public function listar_informacion_tarifa($id)
     {
         try {
