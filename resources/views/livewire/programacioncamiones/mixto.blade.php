@@ -1187,7 +1187,7 @@
 
                 <div class="col-lg-12">
                     <div class="row">
-                        @if(count($selectedFacturasLocal) > 0 && count($selectedFacturasProvincial) > 0)
+                        @if(count($selectedFacturasLocal) > 0 && count($clientes_provinciales) > 0)
                             <div class="text-center d-flex justify-content-end">
                                 <a href="#" wire:click.prevent="guardarDespachos" class="btn text-white" style="background: #e51821">
                                     Guardar Despacho
