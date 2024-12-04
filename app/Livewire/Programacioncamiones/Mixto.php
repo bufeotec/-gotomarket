@@ -121,6 +121,7 @@ class Mixto extends Component
     public $distri = "";
     public $toKg = "";
     public $imporTotalPro = "";
+    public $despacho_descripcion_modificado = "";
     public $toVol = "";
     public $showCambiarPrecio = false;
     public $arrayDepartamentoPronvicial = [];
@@ -680,7 +681,6 @@ class Mixto extends Component
             DB::beginTransaction();
 
             $duplicados = 0;
-
             // Validar facturas locales
             foreach ($this->selectedFacturasLocal ?? [] as $comprobanteId => $factura) {
                 if (!isset($factura['CFTD'], $factura['CFNUMSER'], $factura['CFNUMDOC'])) {
@@ -711,69 +711,82 @@ class Mixto extends Component
                 session()->flash('error', 'Debe seleccionar al menos un comprobante provincial.');
                 return;
             }
+            /* VALIDA QUE TODOS LOS PROVINCIALES ESTA CORRECTAMENTE INGRESADO LA INFORMACIÓN*/
+            $clientes_listos = array_filter($this->clientes_provinciales, function ($cliente) {
+                return $cliente['listo'] == true;
+            });
+            // Contamos los clientes filtrados
+            $total_listos = count($clientes_listos);
+            if(count($this->clientes_provinciales) != $total_listos){
+                session()->flash('error', 'Falta ingresar la información de uno o más despachos a provincia.');
+                return;
+            }
+            /* ------------------------------------------------------------------------ */
+            $microPro = microtime(true);
 
             // Guardar en la tabla Programaciones
             $programacion = new Programacion();
             $programacion->id_users = Auth::id();
             $programacion->programacion_fecha = $this->programacion_fecha;
             $programacion->programacion_estado = 1;
-            $programacion->programacion_microtime = microtime(true);
+            $programacion->programacion_microtime = $microPro;
             if (!$programacion->save()) {
                 DB::rollBack();
                 session()->flash('error', 'Ocurrió un error al guardar la programación.');
                 return;
             }
 
-            // Crear despachos para comprobantes provinciales agrupados por cliente
-            $clientes = [];
-            foreach ($comprobantesProvinciales as $cliente => $facturas) {
-                $clientes[$cliente] = $facturas;
-            }
+            $prograCreado = DB::table('programaciones')
+                ->where('programacion_microtime','=',$microPro)->first();
 
-            foreach ($clientes as $cliente => $facturasCliente) {
+            foreach ($comprobantesProvinciales as $cliente) {
+                $micro = microtime(true);
                 // Verificar si el transportista fue seleccionado para este cliente
-                if (empty($this->id_trans)) {
-                    session()->flash('error', "Debe seleccionar un transportista para el cliente.");
+                if (empty($cliente['id_transportista'])) {
+                    DB::rollBack();
+                    session()->flash('error', "Debe seleccionar un transportista para el cliente: ".$cliente['nombreCliente'].' '.$cliente['ubiDepar'].' - '.$cliente['ubiPro'].' - '.$cliente['ubiDis']);
                     return;
                 }
 
                 // Crear despacho para este cliente
                 $despacho = new Despacho();
                 $despacho->id_users = Auth::id();
-                $despacho->id_programacion = $programacion->id_programacion;
-                $despacho->id_transportistas = $this->id_trans;
+                $despacho->id_programacion = $prograCreado->id_programacion;
+                $despacho->id_transportistas = $cliente['id_transportista'];
                 $despacho->id_tipo_servicios = 2;
-                $despacho->id_departamento = $this->depar;
-                $despacho->id_provincia = $this->provin;
-                $despacho->id_distrito = $this->distri;
-                $despacho->id_tarifario = $this->id_tarifario_seleccionado;
-                $despacho->despacho_peso = array_sum(array_column($facturasCliente, 'total_kg'));
-                $despacho->despacho_volumen = array_sum(array_column($facturasCliente, 'total_volumen'));
-                $despacho->despacho_flete = $this->tarifaMontoSeleccionado;
-                $despacho->despacho_ayudante = $this->despacho_ayudante ?: null;
-                $despacho->despacho_gasto_otros = $this->despacho_gasto_otros ?: null;
-                // Calcular costo total del despacho
-                $despacho->despacho_costo_total = $despacho->despacho_flete
-                    + ($despacho->despacho_ayudante ?: 0)
-                    + ($despacho->despacho_gasto_otros ?: 0);
-
+                $despacho->id_departamento = $cliente['departamento'];
+                $despacho->id_provincia = $cliente['provincia'];
+                $despacho->id_distrito = $cliente['distrito'];
+                $despacho->id_tarifario = $cliente['id_tarifario'];
+                $despacho->despacho_peso = $cliente['total_kg'];
+                $despacho->despacho_volumen = $cliente['total_volumen'];
+                $despacho->despacho_flete = $cliente['montoOriginal'];
+                $despacho->despacho_ayudante = ($cliente['mano_obra'] ?: 0);
+                $despacho->despacho_gasto_otros = ($cliente['otros'] ?: 0);
+                $despacho->despacho_costo_total = ($cliente['total_kg'] * $cliente['montoSeleccionado'] + ($cliente['otros'] ?: 0));
+                $despacho->despacho_descripcion_otros = $cliente['otrosDescripcion'];
+                $despacho->despacho_monto_modificado = ($cliente['montoSeleccionado'] ?: 0);
+                $despacho->despacho_estado_modificado = $cliente['montoOriginal'] != $cliente['montoSeleccionado'] ? 1 : 0;
+                $despacho->despacho_descripcion_modificado = $cliente['montoSeleccionadoDescripcion'];
                 $despacho->despacho_estado = 1;
-                $despacho->despacho_microtime = microtime(true);
+                $despacho->despacho_microtime = $micro;
                 if (!$despacho->save()) {
                     DB::rollBack();
                     session()->flash('error', "Error al guardar el despacho para el cliente.");
                     return;
                 }
 
+                $despachoCreado = DB::table('despachos')
+                    ->where('despacho_microtime','=',$micro)->first();
                 // Guardar las facturas asociadas a este despacho
-                foreach ($facturasCliente as $factura) {
+                foreach ($cliente['comprobantes'] as $comprobantesClien) {
                     $despachoVenta = new DespachoVenta();
-                    $despachoVenta->id_despacho = $despacho->id_despacho;
+                    $despachoVenta->id_despacho = $despachoCreado->id_despacho;
                     $despachoVenta->id_venta = null;
-                    $despachoVenta->despacho_venta_cftd = $factura['CFTD'];
-                    $despachoVenta->despacho_venta_cfnumser = $factura['CFNUMSER'];
-                    $despachoVenta->despacho_venta_cfnumdoc = $factura['CFNUMDOC'];
-                    $despachoVenta->despacho_venta_factura = $factura['CFNUMSER'] . '-' . $factura['CFNUMDOC'];
+                    $despachoVenta->despacho_venta_cftd = $comprobantesClien['CFTD'];
+                    $despachoVenta->despacho_venta_cfnumser = $comprobantesClien['CFNUMSER'];
+                    $despachoVenta->despacho_venta_cfnumdoc = $comprobantesClien['CFNUMDOC'];
+                    $despachoVenta->despacho_venta_factura = $comprobantesClien['CFNUMSER'] . '-' . $comprobantesClien['CFNUMDOC'];
                     $despachoVenta->despacho_detalle_estado = 1;
                     $despachoVenta->despacho_detalle_microtime = microtime(true);
 
@@ -788,39 +801,48 @@ class Mixto extends Component
             // Crear despachos para comprobantes locales (uno por cada comprobante)
             $comprobantesLocales = $this->selectedFacturasLocal;
 
+            $costoOriginalFlete = DB::table('tarifarios')
+                ->where('id_tarifario','=',$this->id_tarifario_seleccionado)->first();
             // Crear un solo despacho para todos los comprobantes locales
+            $microLocal = microtime(true);
             $despachoLocal = new Despacho();
             $despachoLocal->id_users = Auth::id();
-            $despachoLocal->id_programacion = $programacion->id_programacion;
+            $despachoLocal->id_programacion = $prograCreado->id_programacion;
             $despachoLocal->id_transportistas = $this->id_transportistas;
             $despachoLocal->id_tipo_servicios = 1; // Local
             $despachoLocal->id_vehiculo = $this->selectedVehiculo;
             $despachoLocal->id_tarifario = $this->id_tarifario_seleccionado;
             $despachoLocal->despacho_peso = array_sum(array_column($comprobantesLocales, 'total_kg'));
             $despachoLocal->despacho_volumen = array_sum(array_column($comprobantesLocales, 'total_volumen'));
-            $despachoLocal->despacho_flete = $this->tarifaMontoSeleccionado;
-            $despachoLocal->despacho_ayudante = $this->despacho_ayudante ?: null;
-            $despachoLocal->despacho_gasto_otros = $this->despacho_gasto_otros ?: null;
-            $despachoLocal->despacho_costo_total = $despachoLocal->despacho_flete
-                + ($despachoLocal->despacho_ayudante ?: 0)
-                + ($despachoLocal->despacho_gasto_otros ?: 0);
+            $despachoLocal->despacho_flete = $costoOriginalFlete->tarifa_monto;
+            $despachoLocal->despacho_ayudante = ($this->despacho_ayudante ?: 0);
+            $despachoLocal->despacho_gasto_otros =  ($this->despacho_gasto_otros ?: 0);
+            $despachoLocal->despacho_costo_total = $this->tarifaMontoSeleccionado + ($this->despacho_ayudante ?: 0) + ($this->despacho_gasto_otros ?: 0);
+
+            $despachoLocal->despacho_descripcion_otros = $this->despacho_descripcion_otros;
+            $despachoLocal->despacho_monto_modificado = ($this->tarifaMontoSeleccionado ?: 0);
+            $despachoLocal->despacho_estado_modificado = $costoOriginalFlete->tarifa_monto !=  $this->tarifaMontoSeleccionado ? 1 : 0;
+            $despachoLocal->despacho_descripcion_modificado = $this->despacho_descripcion_modificado;
+
             $despachoLocal->despacho_estado = 1;
-            $despachoLocal->despacho_microtime = microtime(true);
+            $despachoLocal->despacho_microtime = $microLocal;
             if (!$despachoLocal->save()) {
                 DB::rollBack();
                 session()->flash('error', 'Error al guardar el despacho local.');
                 return;
             }
 
+            $deslocal = DB::table('despachos')
+                ->where('despacho_microtime','=',$microLocal)->first();
             // Guardar las facturas asociadas al despacho local
             foreach ($comprobantesLocales as $factura) {
                 $despachoVentaLocal = new DespachoVenta();
-                $despachoVentaLocal->id_despacho = $despachoLocal->id_despacho;
+                $despachoVentaLocal->id_despacho = $deslocal->id_despacho;
                 $despachoVentaLocal->id_venta = null;
-                $despachoVentaLocal->despacho_venta_cftd = $factura->CFTD;
-                $despachoVentaLocal->despacho_venta_cfnumser = $factura->CFNUMSER;
-                $despachoVentaLocal->despacho_venta_cfnumdoc = $factura->CFNUMDOC;
-                $despachoVentaLocal->despacho_venta_factura = $factura->CFNUMSER . '-' . $factura->CFNUMDOC;
+                $despachoVentaLocal->despacho_venta_cftd = $factura['CFTD'];
+                $despachoVentaLocal->despacho_venta_cfnumser = $factura['CFNUMSER'];
+                $despachoVentaLocal->despacho_venta_cfnumdoc = $factura['CFNUMDOC'];
+                $despachoVentaLocal->despacho_venta_factura = $factura['CFNUMSER'] . '-' . $factura['CFNUMDOC'];
                 $despachoVentaLocal->despacho_detalle_estado = 1;
                 $despachoVentaLocal->despacho_detalle_microtime = microtime(true);
 
@@ -832,10 +854,13 @@ class Mixto extends Component
             }
 
             DB::commit();
-            session()->flash('message', 'Despachos guardados correctamente.');
+            session()->flash('success', 'Despachos guardados correctamente.');
+            $this->reiniciar_campos();
         } catch (\Exception $e) {
             DB::rollBack();
-            session()->flash('error', 'Error: ' . $e->getMessage());
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error al guardar la programación.');
+            return;
         }
     }
 
@@ -863,6 +888,7 @@ class Mixto extends Component
         $this->despacho_flete = null;
         $this->id_tarifario = null;
         $this->id_tarifario_seleccionado = '';
+        $this->clientes_provinciales = [];
     }
 
 

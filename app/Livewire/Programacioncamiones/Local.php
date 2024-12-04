@@ -71,7 +71,7 @@ class Local extends Component
         $this->programacion_fecha = now()->format('Y-m-d');
         $this->desde = date('Y-m-d', strtotime('-1 month'));
         $this->hasta = date('Y-m-d');
-        $this->buscar_comprobantes();
+        /*$this->buscar_comprobantes();*/
     }
 
     public function render(){

@@ -515,7 +515,7 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                            <h6>COMPROBANTES Y COMPROBANTES DE CLIENTE</h6>
+                            <h6>COMPROBANTES</h6>
                         </div>
 
                         <div class="row">
@@ -791,7 +791,7 @@
                                     @endforeach
                                 </div>
                                 @error('selectedVehiculo')
-                                <span class="message-error">{{ $message }}</span>
+                                    <span class="message-error">{{ $message }}</span>
                                 @enderror
                             </div>
                         </div>
@@ -1096,79 +1096,6 @@
                                                 @endforeach
                                             </x-slot>
                                         </x-table-general>
-
-
-{{--                                        --}}
-{{--                                        <table class="table">--}}
-{{--                                            <thead>--}}
-{{--                                                <tr>--}}
-{{--                                                    <th>Serie</th>--}}
-{{--                                                    <th>Guía</th>--}}
-{{--                                                    <th>Fecha de Emisión</th>--}}
-{{--                                                    <th>Dirección</th>--}}
-{{--                                                    <th>Nombre Cliente</th>--}}
-{{--                                                    <th>Peso</th>--}}
-{{--                                                    <th>Volumen</th>--}}
-{{--                                                    <th>Acciones</th>--}}
-{{--                                                </tr>--}}
-{{--                                            </thead>--}}
-{{--                                            <tbody>--}}
-{{--                                            @foreach($clientes_provinciales as $indexCliete => $cli)--}}
-{{--                                                <tr>--}}
-{{--                                                    <td colspan="4">--}}
-{{--                                                        <h6 class="mb-0">{{ $cli['nombreCliente'] }}</h6>--}}
-{{--                                                    </td>--}}
-{{--                                                    <td colspan="3">--}}
-{{--                                                        <a--}}
-{{--                                                            href="#"--}}
-{{--                                                            class="btn {{$cli['listo'] ? 'btn-success' : 'btn-danger'}} btn-sm text-white w-100"--}}
-{{--                                                            data-bs-toggle="modal" data-bs-target="#modalComprobantes"--}}
-{{--                                                            wire:click="abrirModalComprobantes('{{ $cli['codigoCliente'] }}',{{$indexCliete}})">--}}
-{{--                                                            {{$cli['listo'] ? 'Modificar Programación' : 'Realizar Programación'}}--}}
-{{--                                                        </a>--}}
-{{--                                                    </td>--}}
-{{--                                                </tr>--}}
-{{--                                                @foreach($cli['comprobantes'] as $comprobantes)--}}
-{{--                                                    <tr>--}}
-{{--                                                        <td>{{ $comprobantes['CFNUMSER'] }} - {{ $comprobantes['CFNUMDOC'] }}</td>--}}
-{{--                                                        <td>{{ $comprobantes['guia'] }}</td>--}}
-{{--                                                        @php--}}
-{{--                                                            $me2 = new \App\Models\General();--}}
-{{--                                                            $fechaFormateAprobacion2 = "-";--}}
-{{--                                                            if ($comprobantes['fecha_guia']){--}}
-{{--                                                                $fechaFormateAprobacion2 = $me2->obtenerNombreFecha($comprobantes['fecha_guia'],'DateTime', 'Date');--}}
-{{--                                                            }--}}
-{{--                                                        @endphp--}}
-{{--                                                        <td>{{ $fechaFormateAprobacion2 }}</td>--}}
-{{--                                                        <td>{{ $comprobantes['direccion_guia'] }}</td>--}}
-
-{{--                                                        @php--}}
-{{--                                                            $me = new \App\Models\General();--}}
-{{--                                                            $pesoTablaPro = "0";--}}
-{{--                                                            if ($comprobantes['total_kg']){--}}
-{{--                                                                $pesoTablaPro = $me->formatoDecimal($comprobantes['total_kg']);--}}
-{{--                                                            }--}}
-{{--                                                        @endphp--}}
-{{--                                                        <td>{{ $pesoTablaPro }} kg</td>--}}
-{{--                                                        @php--}}
-{{--                                                            $me = new \App\Models\General();--}}
-{{--                                                            $volumenTablaPro = "0";--}}
-{{--                                                            if ($comprobantes['total_volumen']){--}}
-{{--                                                                $volumenTablaPro = $me->formatoDecimal($comprobantes['total_volumen']);--}}
-{{--                                                            }--}}
-{{--                                                        @endphp--}}
-{{--                                                        <td>{{ $volumenTablaPro }} cm³</td>--}}
-{{--                                                        <td>--}}
-{{--                                                            <a wire:click="eliminarFacturaProvincial('{{ $comprobantes['CFTD'] }}', '{{ $comprobantes['CFNUMSER'] }}', '{{ $comprobantes['CFNUMDOC'] }}')"--}}
-{{--                                                               class="btn btn-danger btn-sm text-white">--}}
-{{--                                                                <i class="fas fa-trash-alt"></i>--}}
-{{--                                                            </a>--}}
-{{--                                                        </td>--}}
-{{--                                                    </tr>--}}
-{{--                                                @endforeach--}}
-{{--                                            @endforeach--}}
-{{--                                            </tbody>--}}
-{{--                                        </table>--}}
                                     @else
                                         <p>No hay comprobantes seleccionados para Provincial.</p>
                                     @endif
@@ -1188,11 +1115,21 @@
                 <div class="col-lg-12">
                     <div class="row">
                         @if(count($selectedFacturasLocal) > 0 && count($clientes_provinciales) > 0)
-                            <div class="text-center d-flex justify-content-end">
-                                <a href="#" wire:click.prevent="guardarDespachos" class="btn text-white" style="background: #e51821">
-                                    Guardar Despacho
-                                </a>
-                            </div>
+                            @php
+                                // Filtramos los clientes donde 'listo' sea true
+                                $clientes_listos = array_filter($clientes_provinciales, function ($cliente) {
+                                    return $cliente['listo'] == true;
+                                });
+                                // Contamos los clientes filtrados
+                                $total_listos = count($clientes_listos);
+                            @endphp
+                            @if(count($clientes_provinciales) == $total_listos)
+                                <div class="text-center d-flex justify-content-end">
+                                    <a  href="#" wire:click.prevent="guardarDespachos"  wire:loading.attr="disabled" class="btn text-white" style="background: #e51821">
+                                        Guardar Despacho
+                                    </a>
+                                </div>
+                            @endif
                         @endif
                     </div>
                 </div>
