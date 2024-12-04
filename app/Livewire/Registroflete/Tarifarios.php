@@ -100,10 +100,26 @@ class Tarifarios extends Component
         $this->dispatch('limpiar_nombre_convenio');
     }
 
+    public function deparTari(){
+        $this->id_provincia = "";
+        $this->id_distrito = "";
+        $this->provincias = [];
+        $this->distritos = [];
+        $this->listar_provincias();
+    }
+    public function proviTari(){
+        $this->listar_distritos();
+    }
+
     public function listar_provincias(){
         $valor = $this->id_departamento;
         if ($valor){
             $this->provincias=DB::table('provincias')->where('id_departamento', '=', $valor)->get();
+        } else {
+            $this->provincias = [];
+            $this->id_provincia = "";
+            $this->distritos = [];
+            $this->id_distrito = "";
         }
     }
 
@@ -111,6 +127,9 @@ class Tarifarios extends Component
         $valor = $this->id_provincia;
         if ($valor){
             $this->distritos=DB::table('distritos')->where('id_provincia', '=', $valor)->get();
+        } else {
+            $this->distritos = [];
+            $this->id_distrito = "";
         }
     }
 

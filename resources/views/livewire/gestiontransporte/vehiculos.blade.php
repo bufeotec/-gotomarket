@@ -81,11 +81,18 @@
                     </div>
 
                     @if($vehiculo_capacidad_volumen > 0)
+                        @php
+                            $me = new \App\Models\General();
+                            $capacidadVolumen = "0";
+                            if ($vehiculo_capacidad_volumen){
+                                $capacidadVolumen = $me->formatoDecimal($vehiculo_capacidad_volumen);
+                            }
+                        @endphp
                         <div class="col-lg-12 col-md-4 col-sm-12 mb-3">
                             <small class="d-flex justify-content-end mt-4">Capacidad de Volumen</small>
                             <div class="d-flex justify-content-end align-items-center">
                                 <h3 class="numero_vehiculo">
-                                    {{ number_format($vehiculo_capacidad_volumen, 2, '.', ',') }} <span class="span_vehiculo">(cm³)</span>
+                                    {{ $capacidadVolumen}} <span class="span_vehiculo">(cm³)</span>
                                 </h3>
                             </div>
                             @error('vehiculo_capacidad_volumen')
@@ -203,23 +210,58 @@
                                         <td>{{$lv->tipo_vehiculo_concepto}}</td>
                                         <td>{{$lv->vehiculo_placa}}</td>
                                         <td>
-                                            {{ fmod($lv->vehiculo_capacidad_peso, 1) != 0 ? number_format($lv->vehiculo_capacidad_peso, 2, '.', ',') : number_format($lv->vehiculo_capacidad_peso, 0, '.', ',') }}
+                                            @php
+                                                $me = new \App\Models\General();
+                                                $peso = "0";
+                                                if ($lv->vehiculo_capacidad_peso){
+                                                    $peso = $me->formatoDecimal($lv->vehiculo_capacidad_peso);
+                                                }
+                                            @endphp
+                                            {{ $peso }}
                                             <b>(kg)</b>
                                         </td>
                                         <td>
-                                            {{ fmod($lv->vehiculo_ancho, 1) != 0 ? number_format($lv->vehiculo_ancho, 2, '.', ',') : number_format($lv->vehiculo_ancho, 0, '.', ',') }}
+                                            @php
+                                                $me = new \App\Models\General();
+                                                $ancho = "0";
+                                                if ($lv->vehiculo_ancho){
+                                                    $ancho = $me->formatoDecimal($lv->vehiculo_ancho);
+                                                }
+                                            @endphp
+                                            {{ $ancho }}
                                             <b>(cm)</b>
                                         </td>
                                         <td>
-                                            {{ fmod($lv->vehiculo_largo, 1) != 0 ? number_format($lv->vehiculo_largo, 2, '.', ',') : number_format($lv->vehiculo_largo, 0, '.', ',') }}
+                                            @php
+                                                $me = new \App\Models\General();
+                                                $largo = "0";
+                                                if ($lv->vehiculo_largo){
+                                                    $largo = $me->formatoDecimal($lv->vehiculo_largo);
+                                                }
+                                            @endphp
+                                            {{ $largo }}
                                             <b>(cm)</b>
                                         </td>
                                         <td>
-                                            {{ fmod($lv->vehiculo_alto, 1) != 0 ? number_format($lv->vehiculo_alto, 2, '.', ',') : number_format($lv->vehiculo_alto, 0, '.', ',') }}
+                                            @php
+                                                $me = new \App\Models\General();
+                                                $alto = "0";
+                                                if ($lv->vehiculo_alto){
+                                                    $alto = $me->formatoDecimal($lv->vehiculo_alto);
+                                                }
+                                            @endphp
+                                            {{ $alto }}
                                             <b>(cm)</b>
                                         </td>
                                         <td>
-                                            {{ fmod($lv->vehiculo_capacidad_volumen, 1) != 0 ? number_format($lv->vehiculo_capacidad_volumen, 2, '.', ',') : number_format($lv->vehiculo_capacidad_volumen, 0, '.', ',') }}
+                                            @php
+                                                $me = new \App\Models\General();
+                                                $capacidadVolumenVehiculo = "0";
+                                                if ($lv->vehiculo_capacidad_volumen){
+                                                    $capacidadVolumenVehiculo = $me->formatoDecimal($lv->vehiculo_capacidad_volumen);
+                                                }
+                                            @endphp
+                                            {{ $capacidadVolumenVehiculo }}
                                             <b>(cm³)</b>
                                         </td>
                                         <td>

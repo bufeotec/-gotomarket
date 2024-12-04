@@ -45,9 +45,9 @@
                             $nombre_provincia = $provincia ? $provincia->provincia_nombre : 'Sin provincia';
 
                             if ($detalles->id_distrito) {
-                                $distritos = \App\Models\Distrito::where('id_distrito', $detalles->id_distrito)->get();
+                                $distrito = \App\Models\Distrito::where('id_distrito', $detalles->id_distrito)->first();
                             } else {
-                                $distritos = \App\Models\Distrito::where('id_provincia', $detalles->id_provincia)->get();
+                                $distrito = null;
                             }
 
                             $nombre_medida = "";
@@ -113,18 +113,10 @@
                                             </div>
                                             <div class="col-lg-4">
                                                 <strong style="color: #8c1017">Distrito:</strong>
-                                                @if($detalles->id_distrito)
-                                                    <p>{{ $distritos->first()->distrito_nombre }}</p>
+                                                @if($distrito)
+                                                    <p>{{ $distrito->distrito_nombre }}</p>
                                                 @else
-                                                    @if($distritos->isNotEmpty())
-                                                        <ul>
-                                                            @foreach($distritos as $distrito)
-                                                                <li>{{ $distrito->distrito_nombre }}</li>
-                                                            @endforeach
-                                                        </ul>
-                                                    @else
-                                                        <p>No hay distritos disponibles</p>
-                                                    @endif
+                                                    <p>TODOS LOS DISTRITOS</p>
                                                 @endif
                                             </div>
                                         </div>
@@ -142,7 +134,14 @@
                                 <div class="col-lg-4 mb-3">
                                     <strong style="color: #8c1017">Capacidad Mínima:</strong>
                                     <p>
-                                        {{ isset($detalles->tarifa_cap_min) ? (fmod($detalles->tarifa_cap_min, 1) != 0 ? number_format($detalles->tarifa_cap_min, 2, '.', ',') : number_format($detalles->tarifa_cap_min, 0, '.', ',')) : 'No disponible' }}
+                                        @php
+                                            $me = new \App\Models\General();
+                                            $capacidadMinima = "0";
+                                            if ($detalles->tarifa_cap_min){
+                                                $capacidadMinima = $me->formatoDecimal($detalles->tarifa_cap_min);
+                                            }
+                                        @endphp
+                                        {{ isset($detalles->tarifa_cap_min) ? $capacidadMinima : 'No disponible' }}
                                         <small>
                                             {{ $detalles->id_tipo_servicio == 1 ? 'Kg' : ($detalles->id_tipo_servicio == 2 ? ($detalles->id_medida == 23 ? 'Kg' : ($detalles->id_medida == 9 ? 'cm³' : '')) : '') }}
                                         </small>
@@ -152,7 +151,14 @@
                                 <div class="col-lg-4 mb-3">
                                     <strong style="color: #8c1017">Capacidad Máxima:</strong>
                                     <p>
-                                        {{ isset($detalles->tarifa_cap_max) ? (fmod($detalles->tarifa_cap_max, 1) != 0 ? number_format($detalles->tarifa_cap_max, 2, '.', ',') : number_format($detalles->tarifa_cap_max, 0, '.', ',')) : 'No disponible' }}
+                                        @php
+                                            $me = new \App\Models\General();
+                                            $capacidadMaxima = "0";
+                                            if ($detalles->tarifa_cap_max){
+                                                $capacidadMaxima = $me->formatoDecimal($detalles->tarifa_cap_max);
+                                            }
+                                        @endphp
+                                        {{ isset($detalles->tarifa_cap_max) ? $capacidadMaxima : 'No disponible' }}
                                         <small>
                                             {{ $detalles->id_tipo_servicio == 1 ? 'Kg' : ($detalles->id_tipo_servicio == 2 ? ($detalles->id_medida == 23 ? 'Kg' : ($detalles->id_medida == 9 ? 'cm³' : '')) : '') }}
                                         </small>
@@ -161,7 +167,14 @@
                                 <div class="col-lg-4 mb-3">
                                     <strong style="color: #8c1017">Monto de Tarifa sin IGV:</strong>
                                     <p>
-                                        {{ isset($detalles->tarifa_monto) ? 'S/ ' . (fmod($detalles->tarifa_monto, 1) != 0 ? number_format($detalles->tarifa_monto, 2, '.', ',') : number_format($detalles->tarifa_monto, 0, '.', ',')) : 'No disponible' }}
+                                        @php
+                                            $me = new \App\Models\General();
+                                            $monto = "0";
+                                            if ($detalles->tarifa_monto){
+                                                $monto = $me->formatoDecimal($detalles->tarifa_monto);
+                                            }
+                                        @endphp
+                                        {{ isset($detalles->tarifa_monto) ? 'S/ ' . $monto : 'No disponible' }}
                                     </p>
                                 </div>
                             </div>
@@ -196,7 +209,16 @@
                                 <td>{{ $conteo }}</td>
                                 <td>{{ $registro->name }} {{ $registro->last_name }}</td>
                                 <td>{{ $registro->registro_concepto }}</td>
-                                <td>{{ $registro->registro_hora_fecha }}</td>
+                                <td>
+                                    @php
+                                        $fe = new \App\Models\General();
+                                        $feFor = "";
+                                        if ($registro->registro_hora_fecha){
+                                            $feFor = $fe->obtenerNombreFecha($registro->registro_hora_fecha,'DateTime','DateTime');
+                                        }
+                                    @endphp
+                                    {{ $feFor }}
+                                </td>
                             </tr>
                             @php $conteo++; @endphp
                         @endforeach
@@ -319,20 +341,41 @@
                                         <td>{{$ta->transportista_nom_comercial}}</td>
                                         <td>{{$ta->tipo_servicio_concepto}}</td>
                                         <td>
-                                            {{ fmod($ta->tarifa_cap_min, 1) != 0 ? number_format($ta->tarifa_cap_min, 2, '.', ',') : number_format($ta->tarifa_cap_min, 0, '.', ',') }}
+                                            @php
+                                                $me = new \App\Models\General();
+                                                $capacidadMinima = "0";
+                                                if ($ta->tarifa_cap_min){
+                                                    $capacidadMinima = $me->formatoDecimal($ta->tarifa_cap_min);
+                                                }
+                                            @endphp
+                                            {{ $capacidadMinima }}
                                             <small class="text-dark">
                                                 {{ $ta->id_tipo_servicio == 1 ? '(Kg)' : ($ta->id_tipo_servicio == 2 ? ($ta->id_medida == 9 ? '(cm³)' : ($ta->id_medida == 23 ? '(Kg)' : '')) : '') }}
                                             </small>
                                         </td>
 
                                         <td>
-                                            {{ fmod($ta->tarifa_cap_max, 1) != 0 ? number_format($ta->tarifa_cap_max, 2, '.', ',') : number_format($ta->tarifa_cap_max, 0, '.', ',') }}
+                                            @php
+                                                $me = new \App\Models\General();
+                                                $capacidadMaxima = "0";
+                                                if ($ta->tarifa_cap_max){
+                                                    $capacidadMaxima = $me->formatoDecimal($ta->tarifa_cap_max);
+                                                }
+                                            @endphp
+                                            {{ $capacidadMaxima }}
                                             <small class="text-dark">
                                                 {{ $ta->id_tipo_servicio == 1 ? '(Kg)' : ($ta->id_tipo_servicio == 2 ? ($ta->id_medida == 9 ? '(cm³)' : ($ta->id_medida == 23 ? '(Kg)' : '')) : '') }}
                                             </small>
                                         </td>
                                         <td>
-                                            S/ {{ fmod($ta->tarifa_monto, 1) != 0 ? number_format($ta->tarifa_monto, 2, '.', ',') : number_format($ta->tarifa_monto, 0, '.', ',') }}
+                                            @php
+                                                $me = new \App\Models\General();
+                                                $monto = "0";
+                                                if ($ta->tarifa_monto){
+                                                    $monto = $me->formatoDecimal($ta->tarifa_monto);
+                                                }
+                                            @endphp
+                                            S/ {{ $monto }}
                                             <small class="text-dark">
                                                 {{ $ta->id_tipo_servicio == 1 ? '/ VIAJE' : ($ta->id_tipo_servicio == 2 ? '/ kg' : '') }}
                                             </small>
