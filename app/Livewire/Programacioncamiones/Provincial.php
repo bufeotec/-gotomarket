@@ -413,6 +413,7 @@ class Provincial extends Component
             $programacion = new Programacion();
             $programacion->id_users = Auth::id();
             $programacion->programacion_fecha = $this->programacion_fecha;
+            $programacion->programacion_estado_aprobacion = 0;
             $programacion->programacion_estado = 1;
             $programacion->programacion_microtime = microtime(true);
             if (!$programacion->save()) {
@@ -440,11 +441,20 @@ class Provincial extends Component
                 $despacho_costo_total += $this->despacho_gasto_otros;
             }
             $despacho->despacho_costo_total = $despacho_costo_total;
+            $despacho->despacho_estado_aprobacion = 0;
             $despacho->despacho_descripcion_otros = $this->despacho_gasto_otros > 0 ? $this->despacho_descripcion_otros : null;
             $despacho->despacho_monto_modificado = $this->tarifaMontoSeleccionado ?: null;
             $despacho->despacho_estado_modificado = $this->tarifaMontoSeleccionado !== $this->montoOriginal ? 1 : 0;
             $despacho->despacho_descripcion_modificado = ($this->tarifaMontoSeleccionado !== $this->montoOriginal) ? $this->despacho_descripcion_modificado : null;            $despacho->despacho_estado = 1;
             $despacho->despacho_microtime = microtime(true);
+
+            $existecap = DB::table('tarifarios')
+                ->where('id_tarifario', $this->selectedTarifario)
+                ->select('tarifa_cap_min', 'tarifa_cap_max')
+                ->first();
+            $despacho->despacho_cap_min = $existecap->tarifa_cap_min;
+            $despacho->despacho_cap_max = $existecap->tarifa_cap_max;
+
             if (!$despacho->save()) {
                 DB::rollBack();
                 session()->flash('error', 'Ocurrió un error al guardar el registro.');
@@ -459,6 +469,11 @@ class Provincial extends Component
                 $despachoVenta->despacho_venta_cfnumser = $factura['CFNUMSER'];
                 $despachoVenta->despacho_venta_cfnumdoc = $factura['CFNUMDOC'];
                 $despachoVenta->despacho_venta_factura = $factura['CFNUMSER'] . '-' . $factura['CFNUMDOC'];
+                $despachoVenta->despacho_venta_grefecemision = $factura['GREFECEMISION'];
+                $despachoVenta->despacho_venta_cnomcli = $this->select_nombre_cliente;
+                $despachoVenta->despacho_venta_guia = $factura['guia'];
+                $despachoVenta->despacho_venta_cfimporte = $factura['CFIMPORTE'];
+                $despachoVenta->despacho_venta_total_kg = $factura['total_kg'];
                 $despachoVenta->despacho_detalle_estado = 1;
                 $despachoVenta->despacho_detalle_microtime = microtime(true);
                 if (!$despachoVenta->save()) {
