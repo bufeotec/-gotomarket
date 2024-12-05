@@ -294,20 +294,19 @@
                                                 <td>{{$conteoGeneral2}}</td>
                                                 <td>{{$des->tipo_servicio_concepto}}</td>
                                                 <td>{{$des->transportista_nom_comercial}}</td>
-                                                <td>-</td>
+                                                <td>S/ {{$general->formatoDecimal($des->totalVentaDespacho)}}</td>
                                                 <td>{{$des->despacho_peso}} kg</td>
                                                 @php
                                                     $indi = "";
                                                     if ($des->id_vehiculo){
-                                                        $vehi = \Illuminate\Support\Facades\DB::table('vehiculos')
-                                                        ->where('id_vehiculo','=',$des->id_vehiculo)->first();
+                                                        $vehi = \Illuminate\Support\Facades\DB::table('vehiculos')->where('id_vehiculo','=',$des->id_vehiculo)->first();
                                                         $indi = ($des->despacho_peso / $vehi->vehiculo_capacidad_peso) * 100;
                                                         $indi = $general->formatoDecimal($indi);
                                                     }else{
                                                         $indi = "-";
                                                     }
                                                 @endphp
-                                                <td>{{$indi ? $indi.'%': ''}}</td>
+                                                <td style="color: {{$general->obtenerColorPorPorcentaje($indi)}}">{{ $indi > 0 ? $indi.'%' : '-' }}</td>
                                                 @php
                                                     $styleColor = "text-danger";
                                                     if ($des->despacho_estado_modificado == 1){
@@ -321,7 +320,14 @@
                                                         {{$des->despacho_estado_modificado == 1 ? '=> S/ '.$des->despacho_monto_modificado : ''}}
                                                     </b>
                                                 </td>
-                                                <td>-</td>
+                                                @php
+                                                    $ra = 0;
+                                                    if ($des->despacho_costo_total && $des->totalVentaDespacho > 0) {
+                                                        $to = $des->despacho_costo_total / $des->totalVentaDespacho;
+                                                        $ra = $general->formatoDecimal($to);
+                                                    }
+                                                @endphp
+                                                <td>{{$ra}}</td>
                                                 @php
                                                     $ra2 = 0;
                                                     if ($des->despacho_costo_total){

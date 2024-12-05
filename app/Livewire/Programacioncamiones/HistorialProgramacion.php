@@ -3,6 +3,7 @@
 namespace App\Livewire\Programacioncamiones;
 
 use App\Models\Despacho;
+use App\Models\General;
 use App\Models\Logs;
 use App\Models\Programacion;
 use App\Models\Transportista;
@@ -26,11 +27,13 @@ class HistorialProgramacion extends Component
     private $logs;
     private $programacion;
     private $despacho;
+    private $general;
     public function __construct()
     {
         $this->logs = new Logs();
         $this->programacion = new Programacion();
         $this->despacho = new Despacho();
+        $this->general = new General();
     }
     public function mount(){
         $this->desde = date('Y-m-d');
@@ -41,6 +44,7 @@ class HistorialProgramacion extends Component
     {
         $resultado = $this->programacion->listar_programaciones_realizadas_x_fechas_x_estado($this->desde,$this->hasta,0);
         foreach ($resultado as $re){
+            $totalVenta = 0;
             $re->despacho = DB::table('despachos as d')
                 ->join('transportistas as t','t.id_transportistas','=','d.id_transportistas')
                 ->join('tipo_servicios as ts','ts.id_tipo_servicios','=','d.id_tipo_servicios')
@@ -50,6 +54,11 @@ class HistorialProgramacion extends Component
                 $des->comprobantes =  DB::table('despacho_ventas as dv')
                     ->where('id_despacho','=',$des->id_despacho)
                     ->get();
+                foreach ($des->comprobantes as $com){
+                    $precio = floatval($com->despacho_venta_cfimporte);
+                    $totalVenta+= round($precio,2);
+                }
+                $des->totalVentaDespacho = $totalVenta;
             }
         }
         return view('livewire.programacioncamiones.historial-programacion',compact('resultado'));
