@@ -6,7 +6,7 @@
     <script src="{{asset('js/select2/dist/js/select2.min.js')}}"></script>
 
     <div class="page-heading">
-        <x-navegation-view text="Registro detallado de las programaciones realizadas para camiones." />
+        <x-navegation-view text="Registro detallado de las programaciones pendientes de aprobar." />
 
         @livewire('programacioncamiones.historialProgramacion')
 

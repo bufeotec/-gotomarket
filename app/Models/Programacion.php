@@ -18,10 +18,11 @@ class Programacion extends Model
         parent::__construct();
         $this->logs = new Logs();
     }
-    public function listar_programaciones_realizadas_x_fechas($desde,$hasta){
+    public function listar_programaciones_realizadas_x_fechas_x_estado($desde,$hasta,$estado){
         try {
             $result = DB::table('programaciones')
                 ->whereBetween('programacion_fecha',[$desde,$hasta])
+                ->where('programacion_estado_aprobacion','=',$estado)
                 ->orderBy('id_programacion','desc')
                 ->paginate(20);
         }catch (\Exception $e){
@@ -29,6 +30,37 @@ class Programacion extends Model
             $result = [];
         }
         return $result;
+    }
+    public function listar_ultima_aprobacion(){
+        try {
+            $añoActual = date('Y'); // Solo tomamos el año, no toda la fecha
+
+            $result = DB::table('programaciones')->where('programacion_estado_aprobacion','=',1)->orderBy('id_programacion','desc')->first();
+
+            if ($result) {
+                // Extraer el año y el correlativo de la última programación
+                preg_match('/P-(\d+)-(\d+)/', $result->programacion_numero_correlativo, $matches);
+
+                $ultimoAño = $matches[1]; // Año de la última programación
+                $ultimoCorrelativo = (int) $matches[2]; // Correlativo de la última programación
+
+                if ($ultimoAño == $añoActual) {
+                    // Mismo año: incrementar el correlativo
+                    $nuevoCorrelativo = str_pad($ultimoCorrelativo + 1, 5, '0', STR_PAD_LEFT);
+                    $corr = "P-$añoActual-$nuevoCorrelativo";
+                } else {
+                    // Año diferente: reiniciar el correlativo
+                    $corr = "P-$añoActual-00001";
+                }
+            } else {
+                // No hay registros previos: iniciar con el primer correlativo
+                $corr = "P-$añoActual-00001";
+            }
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            $corr = "";
+        }
+        return $corr;
     }
     public function listar_informacion_x_id($id){
         try {
