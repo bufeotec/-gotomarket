@@ -259,16 +259,13 @@ class Provincial extends Component
             // Actualiza los totales
             $this->pesoTotal -= $factura['total_kg'];
             $this->volumenTotal -= $factura['total_volumen'];
-//            // Añade la factura eliminada a las sugerencias si coincide con la búsqueda actual
-//            if (
-//                str_contains(strtolower($factura['CFTD']), strtolower($this->searchFactura)) ||
-//                str_contains(strtolower($factura['CFNUMSER']), strtolower($this->searchFactura)) ||
-//                str_contains(strtolower($factura['CNOMCLI']), strtolower($this->searchFactura)) ||
-//                str_contains((string) $factura['total_kg'], $this->searchFactura) ||
-//                str_contains((string) $factura['total_volumen'], $this->searchFactura)
-//            ) {
-//                $this->filteredFacturas[] = $factura;
-//            }
+
+            // Verifica si no quedan facturas seleccionadas
+            if (empty($this->selectedFacturas)) {
+                $this->pesoTotal = 0;
+                $this->volumenTotal = 0;
+            }
+
             $this->listar_tarifarios_su();
             $this->validarTarifaSeleccionada();
         }
@@ -307,11 +304,11 @@ class Provincial extends Component
         $this->listar_tarifarios_su();
     }
 
-    public function actualizarVehiculosSugeridos(){
-        $this->listar_tarifarios_su();
-        $this->tarifaMontoSeleccionado = null;
-        $this->selectedTarifario = null;
-    }
+//    public function actualizarVehiculosSugeridos(){
+//        $this->listar_tarifarios_su();
+//        $this->tarifaMontoSeleccionado = null;
+//        $this->selectedTarifario = null;
+//    }
 
     public function seleccionarTarifario($id){
         $vehiculo = collect($this->tarifariosSugeridos)->first(function ($vehiculo) use ($id){
@@ -328,7 +325,17 @@ class Provincial extends Component
 
     public function listar_tarifarios_su(){
         $this->tarifariosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_provincial($this->pesoTotal,2,$this->id_transportistas,$this->id_departamento ,$this->id_provincia ,$this->id_distrito);
-        if (count($this->tarifariosSugeridos) <= 0){
+
+        // Verificar si el tarifario previamente seleccionado sigue siendo válido
+        $tarifaValidar = collect($this->tarifariosSugeridos)->first(function ($tarifa) {
+            return $tarifa->id_tarifario == $this->selectedTarifario;
+        });
+        if ($tarifaValidar){
+            $this->tarifaMontoSeleccionado = $tarifaValidar->tarifa_monto;
+            $this->selectedTarifario = $tarifaValidar->id_tarifario;
+            $this->calcularCostoTotal();
+        } else {
+            // Limpiar valores relacionados
             $this->tarifaMontoSeleccionado = null;
             $this->selectedTarifario = null;
             $this->costoTotal = null;
@@ -406,6 +413,7 @@ class Provincial extends Component
             $programacion = new Programacion();
             $programacion->id_users = Auth::id();
             $programacion->programacion_fecha = $this->programacion_fecha;
+            $programacion->programacion_estado_aprobacion = 0;
             $programacion->programacion_estado = 1;
             $programacion->programacion_microtime = microtime(true);
             if (!$programacion->save()) {
@@ -433,11 +441,20 @@ class Provincial extends Component
                 $despacho_costo_total += $this->despacho_gasto_otros;
             }
             $despacho->despacho_costo_total = $despacho_costo_total;
+            $despacho->despacho_estado_aprobacion = 0;
             $despacho->despacho_descripcion_otros = $this->despacho_gasto_otros > 0 ? $this->despacho_descripcion_otros : null;
             $despacho->despacho_monto_modificado = $this->tarifaMontoSeleccionado ?: null;
             $despacho->despacho_estado_modificado = $this->tarifaMontoSeleccionado !== $this->montoOriginal ? 1 : 0;
             $despacho->despacho_descripcion_modificado = ($this->tarifaMontoSeleccionado !== $this->montoOriginal) ? $this->despacho_descripcion_modificado : null;            $despacho->despacho_estado = 1;
             $despacho->despacho_microtime = microtime(true);
+
+            $existecap = DB::table('tarifarios')
+                ->where('id_tarifario', $this->selectedTarifario)
+                ->select('tarifa_cap_min', 'tarifa_cap_max')
+                ->first();
+            $despacho->despacho_cap_min = $existecap->tarifa_cap_min;
+            $despacho->despacho_cap_max = $existecap->tarifa_cap_max;
+
             if (!$despacho->save()) {
                 DB::rollBack();
                 session()->flash('error', 'Ocurrió un error al guardar el registro.');
@@ -452,6 +469,11 @@ class Provincial extends Component
                 $despachoVenta->despacho_venta_cfnumser = $factura['CFNUMSER'];
                 $despachoVenta->despacho_venta_cfnumdoc = $factura['CFNUMDOC'];
                 $despachoVenta->despacho_venta_factura = $factura['CFNUMSER'] . '-' . $factura['CFNUMDOC'];
+                $despachoVenta->despacho_venta_grefecemision = $factura['GREFECEMISION'];
+                $despachoVenta->despacho_venta_cnomcli = $this->select_nombre_cliente;
+                $despachoVenta->despacho_venta_guia = $factura['guia'];
+                $despachoVenta->despacho_venta_cfimporte = $factura['CFIMPORTE'];
+                $despachoVenta->despacho_venta_total_kg = $factura['total_kg'];
                 $despachoVenta->despacho_detalle_estado = 1;
                 $despachoVenta->despacho_detalle_microtime = microtime(true);
                 if (!$despachoVenta->save()) {

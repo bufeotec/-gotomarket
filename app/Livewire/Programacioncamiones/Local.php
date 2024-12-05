@@ -168,19 +168,7 @@ class Local extends Component
         });
         // Actualizar lista de vehículos sugeridos
         $this->listar_vehiculos_lo();
-
-        // Verifica si el vehículo seleccionado aún es válido
-        $vehiculoValido = collect($this->vehiculosSugeridos)->contains(function ($vehiculo) {
-            return $vehiculo->id_vehiculo == $this->selectedVehiculo &&
-                $vehiculo->id_tarifario == $this->id_tarifario_seleccionado;
-        });
-
-        if (!$vehiculoValido) {
-            $this->tarifaMontoSeleccionado = null;
-            $this->id_tarifario_seleccionado = null;
-            $this->selectedVehiculo = null;
-            $this->costoTotal = null;
-        }
+        $this->validarVehiculoSeleccionado();
     }
 
     public function eliminarFacturaSeleccionada($CFTD, $CFNUMSER, $CFNUMDOC){
@@ -188,6 +176,7 @@ class Local extends Component
         $factura = collect($this->selectedFacturas)->first(function ($f) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
             return $f['CFTD'] === $CFTD && $f['CFNUMSER'] === $CFNUMSER && $f['CFNUMDOC'] === $CFNUMDOC;
         });
+
         if ($factura) {
             // Elimina la factura de la lista seleccionada
             $this->selectedFacturas = collect($this->selectedFacturas)
@@ -196,22 +185,24 @@ class Local extends Component
                 })
                 ->values()
                 ->toArray();
+
             // Actualiza los totales
             $this->pesoTotal -= $factura['total_kg'];
             $this->volumenTotal -= $factura['total_volumen'];
-//            // Añade la factura eliminada a las sugerencias si coincide con la búsqueda actual
-//            if (
-//                str_contains(strtolower($factura['CFTD']), strtolower($this->searchFactura)) ||
-//                str_contains(strtolower($factura['CFNUMSER']), strtolower($this->searchFactura)) ||
-//                str_contains(strtolower($factura['CNOMCLI']), strtolower($this->searchFactura)) ||
-//                str_contains((string) $factura['total_kg'], $this->searchFactura) ||
-//                str_contains((string) $factura['total_volumen'], $this->searchFactura)
-//            ) {
-//                $this->filteredFacturas[] = $factura;
-//            }
-            $this->listar_vehiculos_lo();
 
-            // Verifica si el vehículo seleccionado aún es válido
+            // Verifica si no quedan facturas seleccionadas
+            if (empty($this->selectedFacturas)) {
+                $this->pesoTotal = 0;
+                $this->volumenTotal = 0;
+            }
+
+            $this->listar_vehiculos_lo();
+            $this->validarVehiculoSeleccionado();
+        }
+    }
+
+    public function validarVehiculoSeleccionado(){
+        if ($this->selectedVehiculo && $this->id_tarifario_seleccionado) {
             $vehiculoValido = collect($this->vehiculosSugeridos)->contains(function ($vehiculo) {
                 return $vehiculo->id_vehiculo == $this->selectedVehiculo &&
                     $vehiculo->id_tarifario == $this->id_tarifario_seleccionado;
@@ -221,7 +212,7 @@ class Local extends Component
                 $this->tarifaMontoSeleccionado = null;
                 $this->id_tarifario_seleccionado = null;
                 $this->selectedVehiculo = null;
-                $this->costoTotal = null; // Reinicia costo total
+                $this->costoTotal = null;
             }
         }
     }
@@ -230,17 +221,29 @@ class Local extends Component
         $this->detalle_vehiculo =  $this->vehiculo->listar_informacion_vehiculo($id_ve);
     }
 
-    public function listar_vehiculos_lo() {
+    public function listar_vehiculos_lo(){
         $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_local($this->pesoTotal, $this->volumenTotal, 1, $this->id_transportistas);
 
-        if (count($this->vehiculosSugeridos) <= 0) {
+        // Verificar si el vehículo previamente seleccionado sigue siendo válido
+        $vehiculoValido = collect($this->vehiculosSugeridos)->first(function ($vehiculo) {
+            return $vehiculo->id_vehiculo == $this->selectedVehiculo &&
+                $vehiculo->id_tarifario == $this->id_tarifario_seleccionado;
+        });
+
+        if ($vehiculoValido) {
+            // Mantener el vehículo seleccionado y el monto
+            $this->tarifaMontoSeleccionado = $vehiculoValido->tarifa_monto;
+            $this->selectedVehiculo = $vehiculoValido->id_vehiculo;
+            $this->id_tarifario_seleccionado = $vehiculoValido->id_tarifario;
+            $this->calcularCostoTotal();
+        } else {
+            // Limpiar selección si no es válida
             $this->tarifaMontoSeleccionado = null;
             $this->selectedVehiculo = null;
             $this->id_tarifario_seleccionado = null;
             $this->costoTotal = null;
         }
     }
-
 
     public function calcularCostoTotal(){
         $montoSeleccionado = floatval($this->tarifaMontoSeleccionado);
@@ -305,6 +308,7 @@ class Local extends Component
             $programacion = new Programacion();
             $programacion->id_users = Auth::id();
             $programacion->programacion_fecha = $this->programacion_fecha;
+            $programacion->programacion_estado_aprobacion = 0;
             $programacion->programacion_estado = 1;
             $programacion->programacion_microtime = microtime(true);
             if (!$programacion->save()) {
@@ -327,12 +331,19 @@ class Local extends Component
             $despacho->despacho_gasto_otros = $this->despacho_gasto_otros ?: null;
             $despacho->despacho_costo_total = $this->tarifaMontoSeleccionado +
                 ($this->despacho_ayudante ?: 0) + ($this->despacho_gasto_otros ?: 0);
+            $despacho->despacho_estado_aprobacion = 0;
             $despacho->despacho_descripcion_otros = $this->despacho_gasto_otros > 0 ? $this->despacho_descripcion_otros : null;
             $despacho->despacho_monto_modificado = $this->tarifaMontoSeleccionado ?: null;
             $despacho->despacho_estado_modificado = $this->tarifaMontoSeleccionado !== $this->montoOriginal ? 1 : 0;
             $despacho->despacho_descripcion_modificado = ($this->tarifaMontoSeleccionado !== $this->montoOriginal) ? $this->despacho_descripcion_modificado : null;
             $despacho->despacho_estado = 1;
             $despacho->despacho_microtime = microtime(true);
+            $existecap = DB::table('tarifarios')
+                ->where('id_tarifario', $this->id_tarifario_seleccionado)
+                ->select('tarifa_cap_min', 'tarifa_cap_max')
+                ->first();
+            $despacho->despacho_cap_min = $existecap->tarifa_cap_min;
+            $despacho->despacho_cap_max = $existecap->tarifa_cap_max;
             if (!$despacho->save()) {
                 DB::rollBack();
                 session()->flash('error', 'Ocurrió un error al guardar el despacho.');
@@ -347,6 +358,11 @@ class Local extends Component
                 $despachoVenta->despacho_venta_cfnumser = $factura['CFNUMSER'];
                 $despachoVenta->despacho_venta_cfnumdoc = $factura['CFNUMDOC'];
                 $despachoVenta->despacho_venta_factura = $factura['CFNUMSER'] . '-' . $factura['CFNUMDOC'];
+                $despachoVenta->despacho_venta_grefecemision = $factura['GREFECEMISION'];
+                $despachoVenta->despacho_venta_cnomcli = $factura['CNOMCLI'];
+                $despachoVenta->despacho_venta_guia = $factura['guia'];
+                $despachoVenta->despacho_venta_cfimporte = $factura['CFIMPORTE'];
+                $despachoVenta->despacho_venta_total_kg = $factura['total_kg'];
                 $despachoVenta->despacho_detalle_estado = 1;
                 $despachoVenta->despacho_detalle_microtime = microtime(true);
                 if (!$despachoVenta->save()) {

@@ -1,4 +1,7 @@
 <div>
+    @php
+        $me = new \App\Models\General();
+    @endphp
     <x-modal-general  wire:ignore.self >
         <x-slot name="tama">modal-lg</x-slot>
         <x-slot name="id_modal">modalVehiculo</x-slot>
@@ -35,12 +38,24 @@
                                     <p>S/ {{ $detalle_tarifario->tarifa_monto }}</p>
                                 </div>
                                 <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                    @php
+                                        $modalCapMin = "0";
+                                        if ($detalle_tarifario->tarifa_cap_min){
+                                            $modalCapMin = $me->formatoDecimal($detalle_tarifario->tarifa_cap_min);
+                                        }
+                                    @endphp
                                     <strong style="color: #8c1017">Capacidad en minima:</strong>
-                                    <p>{{ (substr(number_format($detalle_tarifario->tarifa_cap_min, 2, '.', ','), -3) == '.00') ? number_format($detalle_tarifario->tarifa_cap_min, 0, '.', ',') : number_format($detalle_tarifario->tarifa_cap_min, 2, '.', ',') }} {{$detalle_tarifario->id_medida == 9 ? 'cm³' : 'kg' }}</p>
+                                    <p>{{ $modalCapMin }} {{$detalle_tarifario->id_medida == 9 ? 'cm³' : 'kg' }}</p>
                                 </div>
                                 <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                    @php
+                                        $modalCapMax = "0";
+                                        if ($detalle_tarifario->tarifa_cap_max){
+                                            $modalCapMax = $me->formatoDecimal($detalle_tarifario->tarifa_cap_max);
+                                        }
+                                    @endphp
                                     <strong style="color: #8c1017">Capacidad maxima:</strong>
-                                    <p>{{ (substr(number_format($detalle_tarifario->tarifa_cap_max, 2, '.', ','), -3) == '.00') ? number_format($detalle_tarifario->tarifa_cap_max, 0, '.', ',') : number_format($detalle_tarifario->tarifa_cap_max, 2, '.', ',') }} {{$detalle_tarifario->id_medida == 9 ? 'cm³' : 'kg' }}</p>
+                                    <p>{{ $modalCapMax }} {{$detalle_tarifario->id_medida == 9 ? 'cm³' : 'kg' }}</p>
                                 </div>
 
                                 <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
@@ -267,25 +282,37 @@
                                                                 @if(!$comprobanteExiste)
                                                                     <tr style="cursor: pointer" wire:click="seleccionar_factura_cliente('{{$factura->CFTD}}','{{ $factura->CFNUMSER }}','{{ $factura->CFNUMDOC }}')">
                                                                         <td style="width: 39.6%">
-                                                                                <span class="d-block tamanhoTablaComprobantes">
-                                                                                    {{ $factura->CFNUMSER }} - {{ $factura->CFNUMDOC }}
-                                                                                </span>
                                                                             <span class="d-block tamanhoTablaComprobantes">
-                                                                                    {{ $factura->CFTEXGUIA }}
-                                                                                </span>
+                                                                                {{ $factura->CFNUMSER }} - {{ $factura->CFNUMDOC }}
+                                                                            </span>
+                                                                            <span class="d-block tamanhoTablaComprobantes">
+                                                                                {{ $factura->CFTEXGUIA }}
+                                                                            </span>
                                                                         </td>
                                                                         <td>
-                                                                                <span class="d-block tamanhoTablaComprobantes">
-                                                                                    {{ $factura->total_kg }} kg
-                                                                                </span>
+                                                                            @php
+                                                                                $tablaPeso = "0";
+                                                                                if ($factura->total_kg){
+                                                                                    $tablaPeso = $me->formatoDecimal($factura->total_kg);
+                                                                                }
+                                                                            @endphp
+                                                                            @php
+                                                                                $tablaVolumen = "0";
+                                                                                if ($factura->total_volumen){
+                                                                                    $tablaVolumen = $me->formatoDecimal($factura->total_volumen);
+                                                                                }
+                                                                            @endphp
                                                                             <span class="d-block tamanhoTablaComprobantes">
-                                                                                    {{ $factura->total_volumen }} cm³
-                                                                                </span>
+                                                                                {{ $tablaPeso }} kg
+                                                                            </span>
+                                                                            <span class="d-block tamanhoTablaComprobantes">
+                                                                                {{ $tablaVolumen }} cm³
+                                                                            </span>
                                                                         </td>
                                                                         <td>
-                                                                                <span class="d-block tamanhoTablaComprobantes">
-                                                                                    {{ $factura->LLEGADADIRECCION }} <br> UBIGEO: <b style="color: black">{{ $factura->DEPARTAMENTO }} - {{ $factura->PROVINCIA }} - {{ $factura->DISTRITO }}</b>
-                                                                                </span>
+                                                                            <span class="d-block tamanhoTablaComprobantes">
+                                                                                {{ $factura->LLEGADADIRECCION }} <br> UBIGEO: <b style="color: black">{{ $factura->DEPARTAMENTO }} - {{ $factura->PROVINCIA }} - {{ $factura->DISTRITO }}</b>
+                                                                            </span>
                                                                         </td>
                                                                     </tr>
                                                                 @endif
@@ -332,7 +359,7 @@
                                 </div>
                             </div>
                             <div class="col-lg-12">
-                                <select class="form-select" name="id_transportistas" id="id_transportistas" wire:model="id_transportistas" wire:change="actualizarVehiculosSugeridos">
+                                <select class="form-select" name="id_transportistas" id="id_transportistas" wire:model="id_transportistas" wire:change="listar_tarifarios_su">
                                     <option value="">Seleccionar...</option>
                                     @foreach($listar_transportistas as $lt)
                                         <option value="{{ $lt->id_transportistas }}">{{ $lt->transportista_nom_comercial }}</option>
@@ -412,32 +439,40 @@
 
                                                     <label class="circulo-vehiculo-container m-2 {{ $tari->tarifa_estado_aprobacion == 0 ? 'no-aprobado' : '' }}" for="id_check_vehiculo_{{ $tari->id_tarifario}}_{{$conteoGen}}">
                                                         <!-- Progreso Circular usando SVG -->
+                                                        @php
+                                                            $colorCapacidad = $me->obtenerColorPorPorcentaje($tari->capacidad_usada);
+                                                        @endphp
                                                         <svg class="progreso-circular" viewBox="0 0 36 36">
                                                             <path class="progreso-circular-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                                                             <path class="progreso-circular-fg"
                                                                   stroke-dasharray="{{ $tari->capacidad_usada }}, 100"
                                                                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                                                  style="stroke: {{$tari->capacidad_usada <= 25 ? 'red' :
-                                                                    ($tari->capacidad_usada <= 50 ? 'orange' :
-                                                                    ($tari->capacidad_usada <= 75 ? 'yellow' : 'green'))
-                                                                }};" />
+                                                                  style="stroke: {{ $colorCapacidad }};" />
                                                         </svg>
                                                         <div class="circulo-vehiculo">
                                                             <span class="tarifa-monto d-block" style="margin-top: 20px;">
                                                                 @php
-                                                                    $tarifa = number_format($tari->tarifa_monto, 2, '.', ',');
-                                                                    $tarifa = strpos($tarifa, '.00') !== false ? number_format($tari->tarifa_monto, 0, '.', ',') : $tarifa;
+                                                                    $tarifa = "0";
+                                                                    if ($tari->tarifa_monto){
+                                                                        $tarifa = $me->formatoDecimal($tari->tarifa_monto);
+                                                                    }
                                                                 @endphp
                                                                 S/ {{ $tarifa }}
                                                             </span>
                                                             <span class="capacidad-peso d-block">
                                                                 @php
-                                                                    $pesovehiculoMin = number_format($tari->tarifa_cap_min, 2, '.', ',');
-                                                                    $pesovehiculoMin = strpos($pesovehiculoMin, '.00') !== false ? number_format($tari->tarifa_cap_min, 0, '.', ',') : $pesovehiculoMin;
-                                                                    $pesovehiculo = number_format($tari->tarifa_cap_max, 2, '.', ',');
-                                                                    $pesovehiculo = strpos($pesovehiculo, '.00') !== false ? number_format($tari->tarifa_cap_max, 0, '.', ',') : $pesovehiculo;
+                                                                    $pesovehiculoMin = "0";
+                                                                    if ($tari->tarifa_cap_min){
+                                                                        $pesovehiculoMin = $me->formatoDecimal($tari->tarifa_cap_min);
+                                                                    }
                                                                 @endphp
-                                                                {{$pesovehiculoMin}} {{$tari->id_medida == 9 ? 'cm³' : 'kg' }} - {{ $pesovehiculo }} {{$tari->id_medida == 9 ? 'cm³' : 'kg' }}
+                                                                @php
+                                                                    $pesovehiculoMax = "0";
+                                                                    if ($tari->tarifa_cap_max){
+                                                                        $pesovehiculoMax = $me->formatoDecimal($tari->tarifa_cap_max);
+                                                                    }
+                                                                @endphp
+                                                                {{$pesovehiculoMin}} {{$tari->id_medida == 9 ? 'cm³' : 'kg' }} - {{ $pesovehiculoMax }} {{$tari->id_medida == 9 ? 'cm³' : 'kg' }}
                                                             </span>
 
                                                             <div class="boton-container">
@@ -448,16 +483,16 @@
                                                         </div>
                                                     </label>
                                                     @php
-                                                        $me = new \App\Models\General();
                                                         $capacidadPorcentaje = "0";
                                                         if ($tari->capacidad_usada){
                                                             $capacidadPorcentaje = $me->formatoDecimal($tari->capacidad_usada);
                                                         }
+                                                        $colorPorcentaje = $me->obtenerColorPorPorcentaje($capacidadPorcentaje);
                                                     @endphp
                                                     <div class="row">
                                                         <div class="col-lg-12 text-center">
                                                             <span class="d-block text-black tamanhoTablaComprobantes"><b>Peso:</b></span>
-                                                            <div class="tamanhoTablaComprobantes" style="color: {{ $capacidadPorcentaje <= 25 ? 'red' : ($capacidadPorcentaje <= 50 ? 'orange' : ($capacidadPorcentaje <= 75 ? 'yellow' : 'green')) }};">
+                                                            <div class="tamanhoTablaComprobantes" style="color: {{ $colorPorcentaje }};">
                                                                 <span>{{ $capacidadPorcentaje }}%</span>
                                                             </div>
                                                         </div>
@@ -567,14 +602,12 @@
                                 <div class="row">
                                     <div class="col-lg-5 col-md-5 col-sm-12 text-start">
                                         @php
-                                            $me = new \App\Models\General();
                                             $peso = "0";
                                             if ($pesoTotal){
                                                 $peso = $me->formatoDecimal($pesoTotal);
                                             }
                                         @endphp
                                         @php
-                                            $me = new \App\Models\General();
                                             $volumen = "0";
                                             if ($volumenTotal){
                                                 $volumen = $me->formatoDecimal($volumenTotal);
@@ -591,28 +624,24 @@
                                         @if($costoTotal && $importeTotalVenta)
                                             <small class="textTotalComprobantesSeleccionados me-2">
                                                 @php
-                                                    $me = new \App\Models\General();
                                                     $ra1 = 0;
                                                     if ($volumenTotal){
                                                         $to = $costoTotal / $importeTotalVenta;
                                                         $ra1 = $me->formatoDecimal($to);
                                                     }
                                                 @endphp
-
                                                 F.V: {{$costoTotal}} / {{$importeTotalVenta}} =  <span>{{ $ra1 }}</span>
                                             </small>
                                         @endif
                                         @if($costoTotal && $peso)
                                             <small class="textTotalComprobantesSeleccionados">
                                                 @php
-                                                    $me = new \App\Models\General();
                                                     $ra2 = 0;
                                                     if ($volumenTotal){
                                                         $to = $costoTotal / $peso;
                                                         $ra2 = $me->formatoDecimal($to);
                                                     }
                                                 @endphp
-
                                                 F.P: {{$costoTotal}} / {{$peso}} =  <span>{{ $ra2 }}</span>
                                             </small>
                                         @endif
@@ -645,17 +674,15 @@
                                                         </span>
                                                     </td>
                                                     @php
-                                                        $me = new \App\Models\General();
                                                         $importe = "0";
                                                         if ($factura['CFIMPORTE']){
                                                             $importe = $me->formatoDecimal($factura['CFIMPORTE']);
                                                         }
                                                     @endphp
                                                     @php
-                                                        $fe = new \App\Models\General();
                                                         $feFor = "";
                                                         if ($factura['GREFECEMISION']){
-                                                            $feFor = $fe->obtenerNombreFecha($factura['GREFECEMISION'],'DateTime','Date');
+                                                            $feFor = $me->obtenerNombreFecha($factura['GREFECEMISION'],'DateTime','Date');
                                                         }
                                                     @endphp
                                                     <td>
@@ -674,14 +701,12 @@
 {{--                                                        </span>--}}
 {{--                                                    </td>--}}
                                                     @php
-                                                        $me = new \App\Models\General();
                                                         $pesoTabla = "0";
                                                         if ($factura['total_kg']){
                                                             $pesoTabla = $me->formatoDecimal($factura['total_kg']);
                                                         }
                                                     @endphp
                                                     @php
-                                                        $me = new \App\Models\General();
                                                         $volumenTabla = "0";
                                                         if ($factura['total_volumen']){
                                                             $volumenTabla = $me->formatoDecimal($factura['total_volumen']);
