@@ -246,4 +246,29 @@ class General extends Model
         }
     }
 
+    public function obtenerColorPorPorcentaje($valor)
+    {
+        try {
+            // Determinar el color según los rangos específicos
+            if ($valor >= 1 && $valor <= 25) {
+                return 'red'; // 1 a 25: rojo
+            } elseif ($valor >= 26 && $valor <= 50) {
+                return 'orange'; // 26 a 50: naranja
+            } elseif ($valor >= 51 && $valor <= 75) {
+                return '#a68b02'; // 51 a 75: amarillo oscuro
+            } elseif ($valor >= 76 && $valor <= 100) {
+                return 'green'; // 76 a 100: verde
+            }
+
+            // Si el valor no está en el rango esperado, retorna un color por defecto
+            return 'red';
+
+        } catch (\Exception $e) {
+            // Manejo de errores: log y color por defecto
+            $this->logs->insertarLog($e);
+            return 'red';
+        }
+    }
+
+
 }

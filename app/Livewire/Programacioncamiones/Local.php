@@ -168,19 +168,7 @@ class Local extends Component
         });
         // Actualizar lista de vehículos sugeridos
         $this->listar_vehiculos_lo();
-
-        // Verifica si el vehículo seleccionado aún es válido
-        $vehiculoValido = collect($this->vehiculosSugeridos)->contains(function ($vehiculo) {
-            return $vehiculo->id_vehiculo == $this->selectedVehiculo &&
-                $vehiculo->id_tarifario == $this->id_tarifario_seleccionado;
-        });
-
-        if (!$vehiculoValido) {
-            $this->tarifaMontoSeleccionado = null;
-            $this->id_tarifario_seleccionado = null;
-            $this->selectedVehiculo = null;
-            $this->costoTotal = null;
-        }
+        $this->validarVehiculoSeleccionado();
     }
 
     public function eliminarFacturaSeleccionada($CFTD, $CFNUMSER, $CFNUMDOC){
@@ -188,6 +176,7 @@ class Local extends Component
         $factura = collect($this->selectedFacturas)->first(function ($f) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
             return $f['CFTD'] === $CFTD && $f['CFNUMSER'] === $CFNUMSER && $f['CFNUMDOC'] === $CFNUMDOC;
         });
+
         if ($factura) {
             // Elimina la factura de la lista seleccionada
             $this->selectedFacturas = collect($this->selectedFacturas)
@@ -196,22 +185,24 @@ class Local extends Component
                 })
                 ->values()
                 ->toArray();
+
             // Actualiza los totales
             $this->pesoTotal -= $factura['total_kg'];
             $this->volumenTotal -= $factura['total_volumen'];
-//            // Añade la factura eliminada a las sugerencias si coincide con la búsqueda actual
-//            if (
-//                str_contains(strtolower($factura['CFTD']), strtolower($this->searchFactura)) ||
-//                str_contains(strtolower($factura['CFNUMSER']), strtolower($this->searchFactura)) ||
-//                str_contains(strtolower($factura['CNOMCLI']), strtolower($this->searchFactura)) ||
-//                str_contains((string) $factura['total_kg'], $this->searchFactura) ||
-//                str_contains((string) $factura['total_volumen'], $this->searchFactura)
-//            ) {
-//                $this->filteredFacturas[] = $factura;
-//            }
-            $this->listar_vehiculos_lo();
 
-            // Verifica si el vehículo seleccionado aún es válido
+            // Verifica si no quedan facturas seleccionadas
+            if (empty($this->selectedFacturas)) {
+                $this->pesoTotal = 0;
+                $this->volumenTotal = 0;
+            }
+
+            $this->listar_vehiculos_lo();
+            $this->validarVehiculoSeleccionado();
+        }
+    }
+
+    public function validarVehiculoSeleccionado(){
+        if ($this->selectedVehiculo && $this->id_tarifario_seleccionado) {
             $vehiculoValido = collect($this->vehiculosSugeridos)->contains(function ($vehiculo) {
                 return $vehiculo->id_vehiculo == $this->selectedVehiculo &&
                     $vehiculo->id_tarifario == $this->id_tarifario_seleccionado;
@@ -221,7 +212,7 @@ class Local extends Component
                 $this->tarifaMontoSeleccionado = null;
                 $this->id_tarifario_seleccionado = null;
                 $this->selectedVehiculo = null;
-                $this->costoTotal = null; // Reinicia costo total
+                $this->costoTotal = null;
             }
         }
     }
@@ -230,17 +221,29 @@ class Local extends Component
         $this->detalle_vehiculo =  $this->vehiculo->listar_informacion_vehiculo($id_ve);
     }
 
-    public function listar_vehiculos_lo() {
+    public function listar_vehiculos_lo(){
         $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_local($this->pesoTotal, $this->volumenTotal, 1, $this->id_transportistas);
 
-        if (count($this->vehiculosSugeridos) <= 0) {
+        // Verificar si el vehículo previamente seleccionado sigue siendo válido
+        $vehiculoValido = collect($this->vehiculosSugeridos)->first(function ($vehiculo) {
+            return $vehiculo->id_vehiculo == $this->selectedVehiculo &&
+                $vehiculo->id_tarifario == $this->id_tarifario_seleccionado;
+        });
+
+        if ($vehiculoValido) {
+            // Mantener el vehículo seleccionado y el monto
+            $this->tarifaMontoSeleccionado = $vehiculoValido->tarifa_monto;
+            $this->selectedVehiculo = $vehiculoValido->id_vehiculo;
+            $this->id_tarifario_seleccionado = $vehiculoValido->id_tarifario;
+            $this->calcularCostoTotal();
+        } else {
+            // Limpiar selección si no es válida
             $this->tarifaMontoSeleccionado = null;
             $this->selectedVehiculo = null;
             $this->id_tarifario_seleccionado = null;
             $this->costoTotal = null;
         }
     }
-
 
     public function calcularCostoTotal(){
         $montoSeleccionado = floatval($this->tarifaMontoSeleccionado);

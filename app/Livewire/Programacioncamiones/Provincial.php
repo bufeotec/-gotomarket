@@ -259,16 +259,13 @@ class Provincial extends Component
             // Actualiza los totales
             $this->pesoTotal -= $factura['total_kg'];
             $this->volumenTotal -= $factura['total_volumen'];
-//            // Añade la factura eliminada a las sugerencias si coincide con la búsqueda actual
-//            if (
-//                str_contains(strtolower($factura['CFTD']), strtolower($this->searchFactura)) ||
-//                str_contains(strtolower($factura['CFNUMSER']), strtolower($this->searchFactura)) ||
-//                str_contains(strtolower($factura['CNOMCLI']), strtolower($this->searchFactura)) ||
-//                str_contains((string) $factura['total_kg'], $this->searchFactura) ||
-//                str_contains((string) $factura['total_volumen'], $this->searchFactura)
-//            ) {
-//                $this->filteredFacturas[] = $factura;
-//            }
+
+            // Verifica si no quedan facturas seleccionadas
+            if (empty($this->selectedFacturas)) {
+                $this->pesoTotal = 0;
+                $this->volumenTotal = 0;
+            }
+
             $this->listar_tarifarios_su();
             $this->validarTarifaSeleccionada();
         }
@@ -307,11 +304,11 @@ class Provincial extends Component
         $this->listar_tarifarios_su();
     }
 
-    public function actualizarVehiculosSugeridos(){
-        $this->listar_tarifarios_su();
-        $this->tarifaMontoSeleccionado = null;
-        $this->selectedTarifario = null;
-    }
+//    public function actualizarVehiculosSugeridos(){
+//        $this->listar_tarifarios_su();
+//        $this->tarifaMontoSeleccionado = null;
+//        $this->selectedTarifario = null;
+//    }
 
     public function seleccionarTarifario($id){
         $vehiculo = collect($this->tarifariosSugeridos)->first(function ($vehiculo) use ($id){
@@ -328,7 +325,17 @@ class Provincial extends Component
 
     public function listar_tarifarios_su(){
         $this->tarifariosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_provincial($this->pesoTotal,2,$this->id_transportistas,$this->id_departamento ,$this->id_provincia ,$this->id_distrito);
-        if (count($this->tarifariosSugeridos) <= 0){
+
+        // Verificar si el tarifario previamente seleccionado sigue siendo válido
+        $tarifaValidar = collect($this->tarifariosSugeridos)->first(function ($tarifa) {
+            return $tarifa->id_tarifario == $this->selectedTarifario;
+        });
+        if ($tarifaValidar){
+            $this->tarifaMontoSeleccionado = $tarifaValidar->tarifa_monto;
+            $this->selectedTarifario = $tarifaValidar->id_tarifario;
+            $this->calcularCostoTotal();
+        } else {
+            // Limpiar valores relacionados
             $this->tarifaMontoSeleccionado = null;
             $this->selectedTarifario = null;
             $this->costoTotal = null;

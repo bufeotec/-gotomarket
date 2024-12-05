@@ -428,16 +428,22 @@ class Mixto extends Component
         });
         // Actualizar lista de vehículos sugeridos
         $this->listar_vehiculos_lo();
-        $vehiculoValido = collect($this->vehiculosSugeridos)->contains(function ($vehiculo) {
-            return $vehiculo->id_vehiculo == $this->selectedVehiculo &&
-                $vehiculo->id_tarifario == $this->id_tarifario_seleccionado;
-        });
+        $this->validarVehiculoSeleccionado();
+    }
 
-        if (!$vehiculoValido) {
-            $this->tarifaMontoSeleccionado = null;
-            $this->id_tarifario_seleccionado = null;
-            $this->selectedVehiculo = null;
-            $this->costoTotal = null;
+    public function validarVehiculoSeleccionado(){
+        if ($this->selectedVehiculo && $this->id_tarifario_seleccionado) {
+            $vehiculoValido = collect($this->vehiculosSugeridos)->contains(function ($vehiculo) {
+                return $vehiculo->id_vehiculo == $this->selectedVehiculo &&
+                    $vehiculo->id_tarifario == $this->id_tarifario_seleccionado;
+            });
+
+            if (!$vehiculoValido) {
+                $this->tarifaMontoSeleccionado = null;
+                $this->id_tarifario_seleccionado = null;
+                $this->selectedVehiculo = null;
+                $this->costoTotal = null;
+            }
         }
     }
 
@@ -553,8 +559,7 @@ class Mixto extends Component
             ];
         }
     }
-    public function eliminarFacturaProvincial($CFTD, $CFNUMSER, $CFNUMDOC)
-    {
+    public function eliminarFacturaProvincial($CFTD, $CFNUMSER, $CFNUMDOC){
         foreach ($this->clientes_provinciales as $index => &$cliente) {
             // Filtrar comprobantes del cliente actual
             $cliente['comprobantes'] = collect($cliente['comprobantes'])
@@ -598,26 +603,33 @@ class Mixto extends Component
                 break;
             }
         }
+        // Verifica si no quedan facturas seleccionadas
+        if (empty($this->selectedFacturasLocal)) {
+            $this->pesoTotal = 0;
+            $this->volumenTotal = 0;
+        }
         // Reindexar el array `selectedFacturasLocal` después de eliminar elementos
         $this->selectedFacturasLocal = array_values($this->selectedFacturasLocal);
         $this->listar_vehiculos_lo();
-        $vehiculoValido = collect($this->vehiculosSugeridos)->contains(function ($vehiculo) {
+        $this->validarVehiculoSeleccionado();
+    }
+
+    public function listar_vehiculos_lo(){
+        $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_local($this->pesoTotal, $this->volumenTotal,1,$this->id_transportistas);
+        // Verificar si el vehículo previamente seleccionado sigue siendo válido
+        $vehiculoValido = collect($this->vehiculosSugeridos)->first(function ($vehiculo) {
             return $vehiculo->id_vehiculo == $this->selectedVehiculo &&
                 $vehiculo->id_tarifario == $this->id_tarifario_seleccionado;
         });
 
-        if (!$vehiculoValido) {
-            $this->tarifaMontoSeleccionado = null;
-            $this->id_tarifario_seleccionado = null;
-            $this->selectedVehiculo = null;
-            $this->costoTotal = null;
-        }
-    }
-
-    public function listar_vehiculos_lo(){
-
-        $this->vehiculosSugeridos = $this->vehiculo->obtener_vehiculos_con_tarifarios_local($this->pesoTotal, $this->volumenTotal,1,$this->id_transportistas);
-        if (count($this->vehiculosSugeridos) <= 0){
+        if ($vehiculoValido) {
+            // Mantener el vehículo seleccionado y el monto
+            $this->tarifaMontoSeleccionado = $vehiculoValido->tarifa_monto;
+            $this->selectedVehiculo = $vehiculoValido->id_vehiculo;
+            $this->id_tarifario_seleccionado = $vehiculoValido->id_tarifario;
+            $this->calcularCostoTotal();
+        } else {
+            // Limpiar selección si no es válida
             $this->tarifaMontoSeleccionado = null;
             $this->selectedVehiculo = null;
             $this->id_tarifario_seleccionado = null;
@@ -625,12 +637,12 @@ class Mixto extends Component
         }
     }
 
-    public function actualizarVehiculosSugeridos(){
-        $this->listar_vehiculos_lo();
-        $this->tarifaMontoSeleccionado = null;
-        $this->selectedVehiculo = null;
-        $this->id_tarifario_seleccionado = null;
-    }
+//    public function actualizarVehiculosSugeridos(){
+//        $this->listar_vehiculos_lo();
+//        $this->tarifaMontoSeleccionado = null;
+//        $this->selectedVehiculo = null;
+//        $this->id_tarifario_seleccionado = null;
+//    }
 
     public function seleccionarVehiculo($vehiculoId,$id_tarifa){
         $vehiculo = collect($this->vehiculosSugeridos)->first(function ($vehiculo) use ($vehiculoId, $id_tarifa) {
