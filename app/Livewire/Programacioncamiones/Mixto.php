@@ -362,12 +362,9 @@ class Mixto extends Component
     }
 //
     public function buscar_facturas_clientes(){
-        if ($this->searchFacturaCliente !== "") {
-            $this->filteredFacturasYClientes = $this->server->listar_comprobantes_listos_mixto($this->searchFacturaCliente, $this->desde, $this->hasta);
-            if (!$this->filteredFacturasYClientes || count($this->filteredFacturasYClientes) == 0) {
-                $this->filteredFacturasYClientes = [];
-            }
-        } else {
+        $comproba = $this->server->listar_comprobantes_listos_local($this->searchFacturaCliente, $this->desde, $this->hasta);
+        $this->filteredFacturasYClientes = $comproba;
+        if (!$comproba) {
             $this->filteredFacturasYClientes = [];
         }
     }

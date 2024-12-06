@@ -81,13 +81,9 @@ class Local extends Component
     }
 
     public function buscar_comprobantes(){
-        if ($this->searchFactura !== "" || $this->desde || $this->hasta) {
-            $this->filteredFacturas = $this->server->listar_comprobantes_listos_local($this->searchFactura, $this->desde, $this->hasta);
-
-            if (!$this->filteredFacturas || count($this->filteredFacturas) == 0) {
-                $this->filteredFacturas = [];
-            }
-        } else {
+        $datosResult = $this->server->listar_comprobantes_listos_local($this->searchFactura, $this->desde, $this->hasta);
+        $this->filteredFacturas = $datosResult;
+        if (!$datosResult) {
             $this->filteredFacturas = [];
         }
     }

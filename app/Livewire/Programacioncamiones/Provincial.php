@@ -163,10 +163,10 @@ class Provincial extends Component
     }
 
     public function buscar_comprobante() {
-        if ($this->searchComprobante !== "" || $this->desde || $this->hasta || $this->selectedCliente) {
+        if ($this->selectedCliente) {
             $comprobantes = $this->server->listar_comprobantes_por_cliente($this->selectedCliente, $this->searchComprobante, $this->desde, $this->hasta);
             // Si no hay comprobantes, asignar un array vacío
-            if (!$comprobantes || count($comprobantes) == 0) {
+            if (!$comprobantes) {
                 $this->filteredComprobantes = [];
             } else {
                 $this->filteredComprobantes =  $comprobantes;
