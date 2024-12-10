@@ -8,6 +8,7 @@ use App\Http\Controllers\GestiontransporteController;
 use App\Http\Controllers\TarifarioController;
 use App\Http\Controllers\IntranetController;
 use App\Http\Controllers\ProgramacioncamionController;
+use App\Http\Controllers\LiquidacionfleteController;
 
 route::get('/phpinfo', function(){
     phpinfo();
@@ -51,10 +52,14 @@ Route::prefix('Tarifario')->middleware(['auth', 'canMenu:Tarifario'])->group(fun
     route::get('/validar_tarifa',[TarifarioController::class ,'validar_tarifa'])->name('Tarifario.validar_tarifa')->middleware('verifyUserStatus')->middleware('can:validar_tarifa');
 });
 
-
 Route::prefix('Programacioncamion')->middleware(['auth', 'canMenu:Programacioncamion'])->group(function () {
     /* FLETES - TARIFARIOS */
     route::get('/programar_camion',[ProgramacioncamionController::class ,'programar_camion'])->name('Programacioncamion.programar_camion')->middleware('verifyUserStatus')->middleware('can:programar_camion');
     route::get('/historial_programación',[ProgramacioncamionController::class ,'historial_programación'])->name('Programacioncamion.historial_programación')->middleware('verifyUserStatus')->middleware('can:historial_programación');
     route::get('/detalle_programacion',[ProgramacioncamionController::class ,'detalle_programacion'])->name('Programacioncamion.detalle_programacion')->middleware('verifyUserStatus')->middleware('can:detalle_programacion');
+});
+
+Route::prefix('Liquidacionflete')->middleware(['auth', 'canMenu:Liquidacionflete'])->group(function () {
+    /* LIQUIDACION */
+    route::get('/liquidacion_flete',[LiquidacionfleteController::class ,'liquidacion_flete'])->name('Liquidacionflete.liquidacion_flete')->middleware('verifyUserStatus')->middleware('can:liquidacion_flete');
 });
