@@ -59,12 +59,23 @@ class LiquidacionFlete extends Component
 
         if ($value) {
             $this->despachos = DB::table('despachos as d')
-                ->join('transportistas as t','d.id_transportistas','=','t.id_transportistas')
-                ->join('tipo_servicios as ts','d.id_tipo_servicios','=','ts.id_tipo_servicios')
+                ->join('transportistas as t', 'd.id_transportistas', '=', 't.id_transportistas')
+                ->join('tipo_servicios as ts', 'd.id_tipo_servicios', '=', 'ts.id_tipo_servicios')
                 ->where('d.id_transportistas', $value)
                 ->where('d.despacho_estado', 1)
                 ->whereIn('d.despacho_estado_aprobacion', [1, 2, 3])
                 ->get();
+            foreach ($this->despachos as $des) {
+                $des->comprobantes = DB::table('despacho_ventas as dv')
+                    ->where('id_despacho', '=', $des->id_despacho)
+                    ->get();
+                $totalVenta = 0;
+                foreach ($des->comprobantes as $com) {
+                    $precio = floatval($com->despacho_venta_cfimporte);
+                    $totalVenta += round($precio, 2);
+                }
+                $des->totalVentaDespacho = $totalVenta;
+            }
         } else {
             $this->despachos = [];
         }
@@ -143,8 +154,8 @@ class LiquidacionFlete extends Component
                             $gasto = $this->gastos[$id_despacho];
                             $gastoModel = new LiquidacionGastos();
                             $gastoModel->id_liquidacion_detalle = $detalle->id_liquidacion_detalle;
-                            $gastoModel->liquidacion_gasto_concepto = $gasto['concepto'];
-                            $gastoModel->liquidacion_gasto_monto = $gasto['monto'];
+                            $gastoModel->liquidacion_gasto_concepto = $gasto['concepto'] ?? null;
+                            $gastoModel->liquidacion_gasto_monto = $gasto['monto'] ?? null;
                             $gastoModel->liquidacion_gasto_descripcion = $gasto['descripcion'] ?? null;
                             $gastoModel->liquidacion_gasto_estado = 1;
                             $gastoModel->liquidacion_gasto_microtime = microtime(true);

@@ -19,17 +19,20 @@ class Liquidacion extends Model
         $this->logs = new Logs();
     }
 
-    public function listar_liquidacion($desde, $hasta){
+    public function listar_liquidacion($desde, $hasta)
+    {
         try {
-            $result =  DB::table('liquidaciones as li')
+            $result = DB::table('liquidaciones as li')
                 ->join('transportistas as tr', 'li.id_transportistas', '=', 'tr.id_transportistas')
-                ->whereBetween('li.created_at',[$desde,$hasta])
-                ->where('li.liquidacion_estado','=', 1)
+                ->whereBetween(DB::raw('DATE(li.created_at)'), [$desde, $hasta])
+                ->where('li.liquidacion_estado', '=', 1)
+                ->orderBy('li.id_liquidacion','desc')
                 ->get();
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             $this->logs->insertarLog($e);
             $result = [];
         }
         return $result;
     }
+
 }
