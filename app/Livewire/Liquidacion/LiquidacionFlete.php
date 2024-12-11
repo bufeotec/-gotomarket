@@ -58,9 +58,12 @@ class LiquidacionFlete extends Component
         $value = $this->id_transportistas;
 
         if ($value) {
-            $this->despachos = DB::table('despachos')
-                ->where('id_transportistas', $value)
-                ->where('despacho_estado', 1)
+            $this->despachos = DB::table('despachos as d')
+                ->join('transportistas as t','d.id_transportistas','=','t.id_transportistas')
+                ->join('tipo_servicios as ts','d.id_tipo_servicios','=','ts.id_tipo_servicios')
+                ->where('d.id_transportistas', $value)
+                ->where('d.despacho_estado', 1)
+                ->whereIn('d.despacho_estado_aprobacion', [1, 2, 3])
                 ->get();
         } else {
             $this->despachos = [];

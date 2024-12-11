@@ -808,11 +808,18 @@ class Mixto extends Component
                     $despachoVenta->despacho_venta_factura = $comprobantesClien['CFNUMSER'] . '-' . $comprobantesClien['CFNUMDOC'];
                     $despachoVenta->despacho_venta_grefecemision = $comprobantesClien['GREFECEMISION'];
                     $despachoVenta->despacho_venta_cnomcli = $cliente['nombreCliente'];
+                    $despachoVenta->despacho_venta_cfcodcli = $cliente['codigoCliente'];
                     $despachoVenta->despacho_venta_guia = $comprobantesClien['guia'];
                     $despachoVenta->despacho_venta_cfimporte = $comprobantesClien['CFIMPORTE'];
                     $despachoVenta->despacho_venta_total_kg = $comprobantesClien['total_kg'];
+                    $despachoVenta->despacho_venta_total_volumen = $comprobantesClien['total_volumen'];
+                    $despachoVenta->despacho_venta_direccion_llegada = $comprobantesClien['LLEGADADIRECCION'];
+                    $despachoVenta->despacho_venta_departamento = $comprobantesClien['DEPARTAMENTO'];
+                    $despachoVenta->despacho_venta_provincia = $comprobantesClien['PROVINCIA'];
+                    $despachoVenta->despacho_venta_distrito = $comprobantesClien['DISTRITO'];
                     $despachoVenta->despacho_detalle_estado = 1;
                     $despachoVenta->despacho_detalle_microtime = microtime(true);
+                    $despachoVenta->despacho_detalle_estado_entrega = 0;
 
                     if (!$despachoVenta->save()) {
                         DB::rollBack();
@@ -878,12 +885,19 @@ class Mixto extends Component
 
                 $despachoVentaLocal->despacho_venta_grefecemision = $factura['GREFECEMISION'];
                 $despachoVentaLocal->despacho_venta_cnomcli = $factura['CNOMCLI'];
+                $despachoVentaLocal->despacho_venta_cfcodcli = $factura['CCODCLI'];
                 $despachoVentaLocal->despacho_venta_guia = $factura['guia'];
                 $despachoVentaLocal->despacho_venta_cfimporte = $factura['CFIMPORTE'];
                 $despachoVentaLocal->despacho_venta_total_kg = $factura['total_kg'];
+                $despachoVentaLocal->despacho_venta_total_volumen = $factura['total_volumen'];
+                $despachoVentaLocal->despacho_venta_direccion_llegada = $factura['LLEGADADIRECCION'];
+                $despachoVentaLocal->despacho_venta_departamento = $factura['DEPARTAMENTO'];
+                $despachoVentaLocal->despacho_venta_provincia = $factura['PROVINCIA'];
+                $despachoVentaLocal->despacho_venta_distrito = $factura['DISTRITO'];
 
                 $despachoVentaLocal->despacho_detalle_estado = 1;
                 $despachoVentaLocal->despacho_detalle_microtime = microtime(true);
+                $despachoVentaLocal->despacho_detalle_estado_entrega = 0;
 
                 if (!$despachoVentaLocal->save()) {
                     DB::rollBack();
