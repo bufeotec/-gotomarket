@@ -416,7 +416,7 @@
                                         @foreach($tarifariosSugeridos as $index => $tari)
                                             <div class="position-relative mx-2">
                                                 @if($tari->tarifa_estado_aprobacion == 1)
-                                                    <input type="radio" name="vehiculo" id="id_check_vehiculo_{{ $tari->id_tarifario}}_{{$conteoGen}}" class="inputCheckRadio" value="{{ $tari->id_tarifario }}"  wire:click="seleccionarTarifario({{ $tari->id_tarifario }})" />
+                                                    <input type="radio" name="vehiculo" id="id_check_vehiculo_{{ $tari->id_tarifario}}_{{$conteoGen}}" class="inputCheckRadio" value="{{ $tari->id_tarifario }}" wire:model="selectedTarifario"  wire:click="seleccionarTarifario({{ $tari->id_tarifario }})" />
                                                     <label for="id_check_vehiculo_{{ $tari->id_tarifario}}_{{$conteoGen}}" class="labelCheckRadios">
                                                         <div class="container_check_radios" >
                                                             <div class="cRadioBtn">

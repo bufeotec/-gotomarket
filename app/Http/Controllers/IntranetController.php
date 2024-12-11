@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Logs;
+use App\Models\Server;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -26,7 +27,8 @@ class IntranetController extends Controller
     }
     public function intranet(){
         try{
-
+//            $e = new Server();
+//            $test = $e->prueba();
             return view('intranet/index');
         }catch (\Exception $e){
             $this->logs->insertarLog($e);

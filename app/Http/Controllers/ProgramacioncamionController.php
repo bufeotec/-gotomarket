@@ -56,4 +56,24 @@ class ProgramacioncamionController extends Controller
             return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
         }
     }
+    public function editar_programacion(){
+        try {
+            $id_programacion = base64_decode($_GET['data']);
+            if ($id_programacion){
+                $programacion = $this->programacion->listar_informacion_x_id($id_programacion);
+                $conteo = 0;
+                $despacho = $this->despacho->listar_despachos_por_programacion($id_programacion);
+                foreach ($despacho as $de){
+                    $de->comprobantes = $this->despacho_venta->listar_detalle_x_despacho($de->id_despacho);
+                    $conteo+= $de->id_tipo_servicios;
+                }
+                // determinar que tipo de programacion es.
+
+                return view('programacion_camiones.editar_programacion',compact('programacion','despacho','conteo','id_programacion'));
+            }
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
 }

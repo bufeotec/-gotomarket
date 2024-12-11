@@ -65,13 +65,24 @@ class Local extends Component
     public $ratioCostoVenta = 0;
     public $ratioCostoPeso = 0;
     public $despacho_descripcion_otros = '';
-    public function mount(){
+    public $id_programacion_edit = '';
+    public $id_despacho_edit = '';
+    public $checkInput = '';
+    public function mount($id = null){
         $this->id_transportistas = null;
         $this->selectedVehiculo = null;
         $this->programacion_fecha = now()->format('Y-m-d');
         $this->desde = date('Y-m-d', strtotime('-1 month'));
         $this->hasta = date('Y-m-d');
         /*$this->buscar_comprobantes();*/
+        if ($id){
+            $this->id_programacion_edit = $id;
+            $despachoEdit = DB::table('despachos')->where('id_programacion','=',$id)->first();
+            if ($despachoEdit){
+                $this->id_despacho_edit = $despachoEdit->id_despacho;
+                $this->listar_informacion_programacion_edit();
+            }
+        }
     }
 
     public function render(){
@@ -79,7 +90,55 @@ class Local extends Component
         $listar_vehiculos = $this->vehiculo->obtener_vehiculos_con_tarifarios();
         return view('livewire.programacioncamiones.local', compact('listar_transportistas', 'listar_vehiculos'));
     }
+    public function listar_informacion_programacion_edit(){
+        $informacionPrograma = $this->programacion->informacion_id($this->id_programacion_edit);
+        $informacionDespacho = $this->despacho->listar_despachos_por_programacion($this->id_programacion_edit);
+        if ($informacionPrograma && $informacionDespacho){
+            $this->id_transportistas = $informacionDespacho[0]->id_transportistas;
+            $this->programacion_fecha = $informacionPrograma->programacion_fecha;
+            $comprobantes = DB::table('despacho_ventas')->where('id_despacho','=',$informacionDespacho[0]->id_despacho)->get();
+            foreach ($comprobantes as $c){
+                $this->selectedFacturas[] = [
+                    'CFTD' => $c->despacho_venta_cftd,
+                    'CFNUMSER' => $c->despacho_venta_cfnumser,
+                    'CFNUMDOC' => $c->despacho_venta_cfnumdoc,
+                    'total_kg' => $c->despacho_venta_total_kg,
+                    'total_volumen' => $c->despacho_venta_total_volumen,
+                    'CNOMCLI' => $c->despacho_venta_cnomcli,
+                    'CFIMPORTE' => $c->despacho_venta_cfimporte,
+                    'guia' => $c->despacho_venta_guia,
+                    'GREFECEMISION' => $c->despacho_venta_grefecemision, // fecha de emision de la guía
+                    'LLEGADADIRECCION' => $c->despacho_venta_direccion_llegada,// Dirección de destino
+                    'LLEGADAUBIGEO' => null,// Código del ubigeo
+                    'DEPARTAMENTO' => $c->despacho_venta_departamento,// Departamento
+                    'PROVINCIA' => $c->despacho_venta_provincia,// Provincia
+                    'DISTRITO' => $c->despacho_venta_distrito,// Distrito
+                ];
+                $this->pesoTotal += $c->despacho_venta_total_kg;
+                $this->volumenTotal += $c->despacho_venta_total_volumen;
+//                $importe = $this->general->formatoDecimal($c->despacho_venta_cfimporte);
+//                $this->importeTotalVenta += floatval($importe);
+                $importe = $c->despacho_venta_cfimporte;
+                $importe = floatval($importe);
+                $this->importeTotalVenta += $importe;
+            }
+            $this->tarifaMontoSeleccionado = $informacionDespacho[0]->despacho_monto_modificado;
 
+            $this->despacho_descripcion_modificado = $informacionDespacho[0]->despacho_descripcion_modificado;
+            $this->despacho_gasto_otros = $informacionDespacho[0]->despacho_gasto_otros;
+            $this->despacho_descripcion_otros = $informacionDespacho[0]->despacho_descripcion_otros;
+            $this->despacho_ayudante = $informacionDespacho[0]->despacho_ayudante;
+
+            $this->montoOriginal = $informacionDespacho[0]->despacho_flete;
+            $this->id_tarifario_seleccionado = $informacionDespacho[0]->id_tarifario;
+            $this->selectedVehiculo = $informacionDespacho[0]->id_vehiculo;
+            $this->checkInput = $informacionDespacho[0]->id_vehiculo.'-'.$informacionDespacho[0]->id_tarifario;
+            $this->calcularCostoTotal();
+            // Actualizar lista de vehículos sugeridos
+            $this->listar_vehiculos_lo();
+            $this->validarVehiculoSeleccionado();
+        }
+    }
     public function buscar_comprobantes(){
         $datosResult = $this->server->listar_comprobantes_listos_local($this->searchFactura, $this->desde, $this->hasta);
         $this->filteredFacturas = $datosResult;
@@ -156,8 +215,9 @@ class Local extends Component
         ];
         $this->pesoTotal += $factura->total_kg;
         $this->volumenTotal += $factura->total_volumen;
-        $importe = $this->general->formatoDecimal($factura->CFIMPORTE);
-        $this->importeTotalVenta += floatval($importe);
+        $importe = $factura->CFIMPORTE;
+        $importe = floatval($importe);
+        $this->importeTotalVenta += $importe;
 
         // Eliminar la factura de la lista de facturas filtradas
         $this->filteredFacturas = $this->filteredFacturas->filter(function ($f) use ($CFNUMDOC) {
@@ -186,6 +246,7 @@ class Local extends Component
             // Actualiza los totales
             $this->pesoTotal -= $factura['total_kg'];
             $this->volumenTotal -= $factura['total_volumen'];
+            $this->importeTotalVenta =  $this->importeTotalVenta - $factura['CFIMPORTE'];
 
             // Verifica si no quedan facturas seleccionadas
             if (empty($this->selectedFacturas)) {
@@ -229,10 +290,12 @@ class Local extends Component
 
         if ($vehiculoValido) {
             // Mantener el vehículo seleccionado y el monto
-            $this->tarifaMontoSeleccionado = $vehiculoValido->tarifa_monto;
-            $this->selectedVehiculo = $vehiculoValido->id_vehiculo;
-            $this->id_tarifario_seleccionado = $vehiculoValido->id_tarifario;
-            $this->calcularCostoTotal();
+            if (!$this->id_despacho_edit && !$this->id_programacion_edit){
+                $this->tarifaMontoSeleccionado = $vehiculoValido->tarifa_monto;
+                $this->selectedVehiculo = $vehiculoValido->id_vehiculo;
+                $this->id_tarifario_seleccionado = $vehiculoValido->id_tarifario;
+                $this->calcularCostoTotal();
+            }
         } else {
             // Limpiar selección si no es válida
             $this->tarifaMontoSeleccionado = null;
@@ -285,6 +348,11 @@ class Local extends Component
             ]);
             $contadorError = 0;
             DB::beginTransaction();
+            if ($this->id_programacion_edit && $this->id_despacho_edit){
+                // se va a eliminar los comprobantes del anterior registro
+                DB::table('despacho_ventas')->where('id_despacho','=',$this->id_despacho_edit)->delete();
+            }
+            $microtimeCread = microtime(true);
             // Validar duplicidad para las facturas seleccionadas
             foreach ($this->selectedFacturas as $factura) {
                 $existe = DB::table('despacho_ventas')
@@ -302,21 +370,32 @@ class Local extends Component
                 return;
             }
             // Guardar en la tabla Programaciones
-            $programacion = new Programacion();
-            $programacion->id_users = Auth::id();
+            if ($this->id_programacion_edit && $this->id_despacho_edit){
+                // se va a eliminar los comprobantes del anterior registro
+                $programacion = Programacion::find($this->id_programacion_edit);
+            }else{
+                $programacion = new Programacion();
+                $programacion->id_users = Auth::id();
+            }
             $programacion->programacion_fecha = $this->programacion_fecha;
             $programacion->programacion_estado_aprobacion = 0;
             $programacion->programacion_estado = 1;
-            $programacion->programacion_microtime = microtime(true);
+            $programacion->programacion_microtime = $microtimeCread;
             if (!$programacion->save()) {
                 DB::rollBack();
                 session()->flash('error', 'Ocurrió un error al guardar la programación.');
                 return;
             }
+            $programacionCreada =  DB::table('programaciones')->where('programacion_microtime','=',$microtimeCread)->first();
             // Guardar el despacho
-            $despacho = new Despacho();
-            $despacho->id_users = Auth::id();
-            $despacho->id_programacion = $programacion->id_programacion;
+            if ($this->id_programacion_edit && $this->id_despacho_edit){
+                // se va a eliminar los comprobantes del anterior registro
+                $despacho = Despacho::find($this->id_despacho_edit);
+            }else{
+                $despacho = new Despacho();
+                $despacho->id_users = Auth::id();
+            }
+            $despacho->id_programacion = $programacionCreada->id_programacion;
             $despacho->id_transportistas = $this->id_transportistas;
             $despacho->id_tipo_servicios = 1;
             $despacho->id_vehiculo = $this->selectedVehiculo;
@@ -330,11 +409,11 @@ class Local extends Component
                 ($this->despacho_ayudante ?: 0) + ($this->despacho_gasto_otros ?: 0);
             $despacho->despacho_estado_aprobacion = 0;
             $despacho->despacho_descripcion_otros = $this->despacho_gasto_otros > 0 ? $this->despacho_descripcion_otros : null;
-            $despacho->despacho_monto_modificado = $this->tarifaMontoSeleccionado ?: null;
-            $despacho->despacho_estado_modificado = $this->tarifaMontoSeleccionado !== $this->montoOriginal ? 1 : 0;
-            $despacho->despacho_descripcion_modificado = ($this->tarifaMontoSeleccionado !== $this->montoOriginal) ? $this->despacho_descripcion_modificado : null;
+            $despacho->despacho_monto_modificado =  $this->tarifaMontoSeleccionado;
+            $despacho->despacho_estado_modificado = $this->tarifaMontoSeleccionado != $this->montoOriginal ? 1 : 0;
+            $despacho->despacho_descripcion_modificado = ($this->tarifaMontoSeleccionado != $this->montoOriginal) ? $this->despacho_descripcion_modificado : null;
             $despacho->despacho_estado = 1;
-            $despacho->despacho_microtime = microtime(true);
+            $despacho->despacho_microtime = $microtimeCread;
             $existecap = DB::table('tarifarios')
                 ->where('id_tarifario', $this->id_tarifario_seleccionado)
                 ->select('tarifa_cap_min', 'tarifa_cap_max')
@@ -346,10 +425,11 @@ class Local extends Component
                 session()->flash('error', 'Ocurrió un error al guardar el despacho.');
                 return;
             }
+            $ultimoDespacho = DB::table('despachos')->where('despacho_microtime','=',$microtimeCread)->first();
             // Guardar facturas seleccionadas en despacho_ventas
             foreach ($this->selectedFacturas as $factura) {
                 $despachoVenta = new DespachoVenta();
-                $despachoVenta->id_despacho = $despacho->id_despacho;
+                $despachoVenta->id_despacho = $ultimoDespacho->id_despacho;
                 $despachoVenta->id_venta = null;
                 $despachoVenta->despacho_venta_cftd = $factura['CFTD'];
                 $despachoVenta->despacho_venta_cfnumser = $factura['CFNUMSER'];
@@ -376,8 +456,13 @@ class Local extends Component
                 }
             }
             DB::commit();
-            session()->flash('success', 'Registro guardado correctamente.');
-            $this->reiniciar_campos();
+
+            if ($this->id_programacion_edit && $this->id_despacho_edit){
+                return redirect()->route('Programacioncamion.historial_programación')->with('success', '¡Registro actualizado correctamente!');
+            }else{
+                session()->flash('success', 'Registro guardado correctamente.');
+                $this->reiniciar_campos();
+            }
         } catch (\Illuminate\Validation\ValidationException $e) {
             $this->setErrorBag($e->validator->errors());
         } catch (\Exception $e) {
