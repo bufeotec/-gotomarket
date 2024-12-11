@@ -1,4 +1,154 @@
 <div>
+
+    @php
+        $general = new \App\Models\General();
+    @endphp
+{{--    MODAL DETALLE LIQUIDACION--}}
+    <x-modal-general  wire:ignore.self >
+        <x-slot name="tama">modal-xl</x-slot>
+        <x-slot name="id_modal">modalDetalleLiquidacion</x-slot>
+        <x-slot name="titleModal">Detalles de La liquidación</x-slot>
+        <x-slot name="modalContent">
+            @if($listar_detalle_liquidacion)
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12">
+                            <div class="row">
+                                <div class="col-lg-12 col-md-12 col-sm-12">
+                                    <h6>Información Adicional del Despacho</h6>
+                                    <hr>
+                                </div>
+                                <div class="col-lg-2 col-md-3 col-sm-4 mb-3">
+                                    <strong class="colorgotomarket mb-2">Usuario de Registro</strong>
+                                    <p>{{ $listar_detalle_liquidacion->name }}</p>
+                                </div>
+                                @if($listar_detalle_liquidacion->id_vehiculo)
+                                    @php
+                                        $vehiculo = \Illuminate\Support\Facades\DB::table('vehiculos')->where('id_vehiculo','=',$listar_detalle_liquidacion->id_vehiculo)->first();
+                                    @endphp
+                                    <div class="col-lg-2 col-md-3 col-sm-4 mb-3">
+                                        <strong class="colorgotomarket mb-2">Placa del Vehículo:</strong>
+                                        <p>{{ $vehiculo->vehiculo_placa }}</p>
+                                    </div>
+                                    <div class="col-lg-3 col-md-3 col-sm-12 mb-3">
+                                        <strong class="colorgotomarket mb-2">Capacidad del Vehículo:</strong>
+                                        <p>{{ $general->formatoDecimal($vehiculo->vehiculo_capacidad_peso) }} Kg</p>
+                                    </div>
+                                @endif
+
+                                @if($listar_detalle_liquidacion->id_tipo_servicios == 2)
+                                    @php
+                                        $departamento = \Illuminate\Support\Facades\DB::table('departamentos')
+                                        ->where('id_departamento','=',$listar_detalle_liquidacion->id_departamento)->first();
+                                        $provincia = \Illuminate\Support\Facades\DB::table('provincias')
+                                        ->where('id_provincia','=',$listar_detalle_liquidacion->id_provincia)->first();
+                                        $distrito = \Illuminate\Support\Facades\DB::table('distritos')
+                                        ->where('id_distrito','=',$listar_detalle_liquidacion->id_distrito)->first();
+                                    @endphp
+                                    <div class="col-lg-5 col-md-3 col-sm-4 mb-3">
+                                        <strong class="colorgotomarket mb-2">Ubigeo Seleccionado en el Despacho:</strong>
+                                        <p>{{ $departamento ? $departamento->departamento_nombre : '' }} - {{ $provincia ? $provincia->provincia_nombre : '' }} - {{ $distrito ? $distrito->distrito_nombre : 'TODOS LOS DISTRITOS' }}</p>
+                                    </div>
+                                @endif
+
+
+                                @if($listar_detalle_liquidacion->id_tarifario)
+                                    <div class="col-lg-3 col-md-3 col-sm-4 mb-3">
+                                        <strong class="colorgotomarket mb-2">Capacidad de la Tarifa:</strong>
+                                        <p>Min: {{$general->formatoDecimal($listar_detalle_liquidacion->despacho_cap_min)}} Kg - Max: {{ $general->formatoDecimal($listar_detalle_liquidacion->despacho_cap_max) }} Kg</p>
+                                    </div>
+                                @endif
+                                <div class="col-lg-2 col-md-3 col-sm-12 mb-3">
+                                    <strong class="colorgotomarket mb-2">Monto de la Tarifa:</strong>
+                                    <p>S/ {{$general->formatoDecimal($listar_detalle_liquidacion->despacho_flete)}}</p>
+                                </div>
+
+                                <div class="col-lg-2 col-md-3 col-sm-12 mb-3">
+                                    <strong class="colorgotomarket mb-2">Peso del Despacho:</strong>
+                                    <p>{{$general->formatoDecimal($listar_detalle_liquidacion->despacho_peso)}} Kg</p>
+                                </div>
+                                <div class="col-lg-2 col-md-3 col-sm-12 mb-3">
+                                    <strong class="colorgotomarket mb-2">Otros Gastos:</strong>
+                                    <p>S/ {{$general->formatoDecimal($listar_detalle_liquidacion->despacho_gasto_otros)}}</p>
+                                </div>
+                                @if($listar_detalle_liquidacion->despacho_gasto_otros > 0)
+                                    <div class="col-lg-3 col-md-3 col-sm-12 mb-3">
+                                        <strong class="colorgotomarket mb-2">Descripción del Gasto:</strong>
+                                        <p>{{ $listar_detalle_liquidacion->despacho_descripcion_otros }}</p>
+                                    </div>
+                                @endif
+                                @if($listar_detalle_liquidacion->id_tipo_servicios == 1)
+                                    <div class="col-lg-2 col-md-3 col-sm-12 mb-3">
+                                        <strong class="colorgotomarket mb-2">Mano de Obra:</strong>
+                                        <p>S/ {{$general->formatoDecimal($listar_detalle_liquidacion->despacho_ayudante)}}</p>
+                                    </div>
+                                @endif
+                                <div class="col-lg-2 col-md-2 col-sm-12 mb-3">
+                                    <strong class="colorgotomarket mb-2">Total de Despacho:</strong>
+                                    <p>S/ {{ $general->formatoDecimal($listar_detalle_liquidacion->despacho_costo_total) }}</p>
+                                </div>
+                                @if($listar_detalle_liquidacion->despacho_estado_modificado == 1)
+                                    <div class="col-lg-2 col-md-3 col-sm-12 mb-3">
+                                        <strong class="colorgotomarket mb-2">Monto Modificado:</strong>
+                                        <p>S/ {{ $general->formatoDecimal($listar_detalle_liquidacion->despacho_monto_modificado) }}</p>
+                                    </div>
+                                    <div class="col-lg-2 col-md-3 col-sm-12 mb-3">
+                                        <strong class="colorgotomarket mb-2">Descripción:</strong>
+                                        <p>{{ $listar_detalle_liquidacion->despacho_descripcion_modificado }}</p>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="col-lg-12 col-md-12 col-sm-12">
+                            <div class="row">
+                                <div class="col-lg-12 col-md-12 col-sm-12">
+                                    <h6>Información Adicional de la liquidación</h6>
+                                    <hr>
+                                </div>
+                                <div class="col-lg-12 col-md-12 col-sm-12">
+                                    <div class="row">
+                                        <x-table-general>
+                                            <x-slot name="thead">
+                                                <tr>
+                                                    <th>N°</th>
+                                                    <th>Concepto</th>
+                                                    <th>Monto</th>
+                                                    <th>Descripción</th>
+                                                </tr>
+                                            </x-slot>
+
+                                            <x-slot name="tbody">
+                                                @if(count($listar_detalle_liquidacion->gastos) > 0)
+                                                    @php $conteo = 1; @endphp
+                                                    @foreach($listar_detalle_liquidacion->gastos as $gs)
+                                                        <tr>
+                                                            <td>{{ $conteo}} </td>
+                                                            <td>{{ $gs->liquidacion_gasto_concepto}} </td>
+                                                            <td> S/ {{ $general->formatoDecimal($gs->liquidacion_gasto_monto)}} </td>
+                                                            <td>{{ $gs->liquidacion_gasto_descripcion}} </td>
+                                                        </tr>
+                                                        @php $conteo++; @endphp
+                                                    @endforeach
+                                                @else
+                                                    <tr class="odd">
+                                                        <td valign="top" colspan="7" class="dataTables_empty text-center">
+                                                            No se han encontrado resultados.
+                                                        </td>
+                                                    </tr>
+                                                @endif
+                                            </x-slot>
+                                        </x-table-general>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        </x-slot>
+    </x-modal-general>
+
     @if (session()->has('success'))
         <div class="col-lg-12 col-md-12 col-sm-12">
             <div class="alert alert-success alert-dismissible show fade mt-2">
@@ -54,8 +204,20 @@
                                             <td>{{$rs->transportista_razon_social}}</td>
                                             <td>{{$rs->liquidacion_serie}}</td>
                                             <td>{{$rs->liquidacion_correlativo}}</td>
-                                            <td>{{$rs->liquidacion_ruta_comprobante}}</td>
-                                            <td></td>
+                                            <td>
+                                                @if(file_exists($rs->liquidacion_ruta_comprobante))
+                                                    <a href="{{asset($rs->liquidacion_ruta_comprobante)}}" class="btn btn-link" target="_blank">
+                                                        <i class="fas fa-file-invoice"></i>
+                                                    </a>
+                                                @else
+                                                    -
+                                                @endif
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm text-primary" wire:click="listar_informacion_liquidacion({{$rs->id_liquidacion}})" data-bs-toggle="modal" data-bs-target="#modalDetalleLiquidacion">
+                                                    <i class="fa-solid fa-eye"></i>
+                                                </button>
+                                            </td>
                                         </tr>
                                         @php $conteo++; @endphp
                                     @endforeach
