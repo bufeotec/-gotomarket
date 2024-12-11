@@ -74,7 +74,10 @@ class Provincial extends Component
     public $montoOriginal = 0;
     public $importeTotalVenta = 0;
     public $despacho_descripcion_modificado = '';
-    public function mount(){
+    public $id_programacion_edit = '';
+    public $id_despacho_edit = '';
+    public $checkInput = '';
+    public function mount($id = null){
         $this->selectedCliente = null;
         $this->selectedTarifario = null;
         $this->id_transportistas = null;
@@ -87,14 +90,70 @@ class Provincial extends Component
         if ($this->selectedCliente) {
             $this->buscar_comprobante();
         }
-
+        if ($id){
+            $this->id_programacion_edit = $id;
+            $despachoEdit = DB::table('despachos')->where('id_programacion','=',$id)->first();
+            if ($despachoEdit){
+                $this->id_despacho_edit = $despachoEdit->id_despacho;
+                $this->listar_informacion_programacion_edit();
+            }
+        }
     }
     public function render(){
         $listar_transportistas = $this->transportista->listar_transportista_sin_id();
         $listar_departamento = $this->departamento->lista_departamento();
         return view('livewire.programacioncamiones.provincial', compact('listar_transportistas', 'listar_departamento'));
     }
+    public function listar_informacion_programacion_edit(){
+        $informacionPrograma = $this->programacion->informacion_id($this->id_programacion_edit);
+        $informacionDespacho = $this->despacho->listar_despachos_por_programacion($this->id_programacion_edit);
+        if ($informacionPrograma && $informacionDespacho){
+            $this->id_transportistas = $informacionDespacho[0]->id_transportistas;
+            $this->programacion_fecha = $informacionPrograma->programacion_fecha;
+            $comprobantes = DB::table('despacho_ventas')->where('id_despacho','=',$informacionDespacho[0]->id_despacho)->get();
+            if ($comprobantes){
+                /* CLIENTE */
+                $this->selectedCliente = $comprobantes[0]->despacho_venta_cfcodcli;
+                $this->select_nombre_cliente = $comprobantes[0]->despacho_venta_cnomcli;
+                $this->searchCliente = "";
+                $this->searchComprobante = "";
+                $this->filteredClientes = [];
+                /* COMPROBANTES */
+                foreach ($comprobantes as $c){
+                    $this->selectedFacturas[] = [
+                        'CFTD' => $c->despacho_venta_cftd,
+                        'CFNUMSER' => $c->despacho_venta_cfnumser,
+                        'CFNUMDOC' => $c->despacho_venta_cfnumdoc,
+                        'total_kg' => $c->despacho_venta_total_kg,
+                        'total_volumen' => $c->despacho_venta_total_volumen,
+                        'CNOMCLI' => $c->despacho_venta_cnomcli,
+                        'CFIMPORTE' => $c->despacho_venta_cfimporte,
+                        'guia' => $c->despacho_venta_guia,
+                        'GREFECEMISION' => $c->despacho_venta_grefecemision, // fecha de emision de la guía
+                        'LLEGADADIRECCION' => $c->despacho_venta_direccion_llegada,// Dirección de destino
+                        'LLEGADAUBIGEO' => null,// Código del ubigeo
+                        'DEPARTAMENTO' => $c->despacho_venta_departamento,// Departamento
+                        'PROVINCIA' => $c->despacho_venta_provincia,// Provincia
+                        'DISTRITO' => $c->despacho_venta_distrito,// Distrito
+                    ];
+                    $this->pesoTotal += $c->despacho_venta_total_kg;
+                    $this->volumenTotal += $c->despacho_venta_total_volumen;
+                    $importe = $c->despacho_venta_cfimporte;
+                    $importe = floatval($importe);
+                    $this->importeTotalVenta += $importe;
+                }
+                $this->tarifaMontoSeleccionado = $informacionDespacho[0]->despacho_monto_modificado;
+                $this->montoOriginal = $informacionDespacho[0]->despacho_flete;
+                $this->selectedTarifario = $informacionDespacho[0]->id_tarifario;
+                $this->calcularCostoTotal();
+                // Actualizar lista de vehículos sugeridos
+                $this->listar_tarifarios_su();
+                $this->validarTarifaSeleccionada();
+                $this->buscar_comprobante();
+            }
 
+        }
+    }
     public function listar_provincias(){
         $valor = $this->id_departamento;
         if ($valor) {

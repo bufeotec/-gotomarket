@@ -18,6 +18,17 @@ class Programacion extends Model
         parent::__construct();
         $this->logs = new Logs();
     }
+    public function informacion_id($id){
+        try {
+            $result = DB::table('programaciones')
+                ->where('id_programacion','=',$id)
+                ->first();
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
     public function listar_programaciones_realizadas_x_fechas_x_estado($desde,$hasta,$estado){
         try {
             $result = DB::table('programaciones')
@@ -35,7 +46,7 @@ class Programacion extends Model
         try {
             $añoActual = date('Y'); // Solo tomamos el año, no toda la fecha
 
-            $result = DB::table('programaciones')->where('programacion_estado_aprobacion','=',1)->orderBy('id_programacion','desc')->first();
+            $result = DB::table('programaciones')->where('programacion_estado_aprobacion','=',1)->orderBy('programacion_numero_correlativo','desc')->first();
 
             if ($result) {
                 // Extraer el año y el correlativo de la última programación

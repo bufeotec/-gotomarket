@@ -266,8 +266,16 @@
                     <div class="accordion-body" >
                         <div class="row">
                             <div class="col-lg-12 col-md-12 col-sm-12 mb-3 text-end">
-                                <button class="btn btn-sm text-white bg-success" wire:click="cambiarEstadoProgramacion({{$r->id_programacion}},1)" data-bs-toggle="modal" data-bs-target="#modalAprobarProgramacion"><i class="fa-solid fa-check"></i> APROBAR</button>
-                                <button class="btn btn-sm text-white bg-danger" wire:click="cambiarEstadoProgramacion({{$r->id_programacion}},2)" data-bs-toggle="modal" data-bs-target="#modalAprobarProgramacion"><i class="fa fa-x"></i> RECHAZAR</button>
+                                @php
+                                    $user = \Illuminate\Support\Facades\Auth::user(); // Obtiene el usuario autenticado
+                                    // Obtén el primer rol del usuario y su ID
+                                    $roleId = $user->roles->first()->id ?? null;
+                                @endphp
+                                @if($roleId == 1 || $roleId == 2)
+                                    <button class="btn btn-sm text-white bg-success" wire:click="cambiarEstadoProgramacion({{$r->id_programacion}},1)" data-bs-toggle="modal" data-bs-target="#modalAprobarProgramacion"><i class="fa-solid fa-check"></i> APROBAR</button>
+                                    <button class="btn btn-sm text-white bg-danger" wire:click="cambiarEstadoProgramacion({{$r->id_programacion}},4)" data-bs-toggle="modal" data-bs-target="#modalAprobarProgramacion"><i class="fa fa-x"></i> RECHAZAR</button>
+                                @endif
+                                <a class="btn btn-sm text-white bg-primary" href="{{route('Programacioncamion.editar_programacion',['data'=>base64_encode($r->id_programacion)])}}"><i class="fa-solid fa-pencil"></i> EDITAR</a>
                             </div>
                             <div class="col-lg-12 col-md-12 col-sm-12 table-responsive">
                                 <table class="table">
