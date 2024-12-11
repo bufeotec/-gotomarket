@@ -13,6 +13,7 @@ use App\Models\Programacion;
 use App\Models\Despacho;
 use App\Models\DespachoVenta;
 use App\Models\General;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
 class Provincial extends Component
@@ -142,9 +143,29 @@ class Provincial extends Component
                     $importe = floatval($importe);
                     $this->importeTotalVenta += $importe;
                 }
-                $this->tarifaMontoSeleccionado = $informacionDespacho[0]->despacho_monto_modificado;
-                $this->montoOriginal = $informacionDespacho[0]->despacho_flete;
-                $this->selectedTarifario = $informacionDespacho[0]->id_tarifario;
+                $montoModifi = floatval($informacionDespacho[0]->despacho_monto_modificado);
+                if ($montoModifi){
+                    $this->tarifaMontoSeleccionado = $montoModifi;
+                }
+                $this->montoOriginal = floatval($informacionDespacho[0]->despacho_flete);
+                $this->despacho_descripcion_modificado = $informacionDespacho[0]->despacho_descripcion_modificado;
+                $this->despacho_gasto_otros = $informacionDespacho[0]->despacho_gasto_otros;
+                $this->despacho_descripcion_otros = $informacionDespacho[0]->despacho_descripcion_otros;
+                $this->despacho_ayudante = $informacionDespacho[0]->despacho_ayudante;
+                if ($informacionDespacho[0]->id_departamento){
+                    $this->id_departamento = $informacionDespacho[0]->id_departamento;
+                    $this->listar_provincias();
+                    if ($informacionDespacho[0]->id_provincia){
+                        $this->id_provincia = $informacionDespacho[0]->id_provincia;
+                        $this->listar_distritos();
+                        if ($informacionDespacho[0]->id_distrito){
+                            $this->id_distrito = $informacionDespacho[0]->id_distrito;
+                        }
+                    }
+                }
+                $id_despacho = $informacionDespacho[0]->id_tarifario;
+                $this->selectedTarifario = $id_despacho;
+
                 $this->calcularCostoTotal();
                 // Actualizar lista de vehículos sugeridos
                 $this->listar_tarifarios_su();
@@ -220,7 +241,6 @@ class Provincial extends Component
         $this->desde = date('Y-m-d', strtotime('-1 month'));
         $this->hasta = date('Y-m-d');
     }
-
     public function buscar_comprobante() {
         if ($this->selectedCliente) {
             $comprobantes = $this->server->listar_comprobantes_por_cliente($this->selectedCliente, $this->searchComprobante, $this->desde, $this->hasta);
@@ -234,9 +254,6 @@ class Provincial extends Component
             $this->filteredComprobantes = [];
         }
     }
-
-
-
     public function resetear_cliente() {
         $this->selectedCliente = null;
         $this->select_nombre_cliente = null;
@@ -390,14 +407,17 @@ class Provincial extends Component
             return $tarifa->id_tarifario == $this->selectedTarifario;
         });
         if ($tarifaValidar){
-            $this->tarifaMontoSeleccionado = $tarifaValidar->tarifa_monto;
-            $this->selectedTarifario = $tarifaValidar->id_tarifario;
-            $this->calcularCostoTotal();
+            if (!$this->id_despacho_edit && !$this->id_programacion_edit){
+                $this->tarifaMontoSeleccionado = $tarifaValidar->tarifa_monto;
+                $this->selectedTarifario = $tarifaValidar->id_tarifario;
+                $this->calcularCostoTotal();
+            }
         } else {
             // Limpiar valores relacionados
             $this->tarifaMontoSeleccionado = null;
             $this->selectedTarifario = null;
             $this->costoTotal = null;
+            Log::info("Eder");
         }
     }
 
@@ -424,7 +444,7 @@ class Provincial extends Component
                 'despacho_ayudante' => 'nullable|regex:/^[0-9]+(\.[0-9]+)?$/',
                 'despacho_gasto_otros' => 'nullable|regex:/^[0-9]+(\.[0-9]+)?$/',
                 'despacho_descripcion_otros' => $this->despacho_gasto_otros > 0 ? 'required|string' : 'nullable|string',
-                'despacho_descripcion_modificado' => $this->tarifaMontoSeleccionado !== $this->montoOriginal ? 'required|string' : 'nullable|string',
+                'despacho_descripcion_modificado' => $this->tarifaMontoSeleccionado != $this->montoOriginal ? 'required|string' : 'nullable|string',
                 ], [
                 'selectedTarifario.required' => 'Debes seleccionar una tarifa.',
                 'selectedTarifario.integer' => 'La tarifa debe ser un número entero.',
@@ -452,6 +472,11 @@ class Provincial extends Component
             ]);
             $contadorError = 0;
             DB::beginTransaction();
+            if ($this->id_programacion_edit && $this->id_despacho_edit){
+                // se va a eliminar los comprobantes del anterior registro
+                DB::table('despacho_ventas')->where('id_despacho','=',$this->id_despacho_edit)->delete();
+            }
+            $microtimeCread = microtime(true);
             // Validar duplicidad para las facturas seleccionadas
             foreach ($this->selectedFacturas as $factura) {
                 $existe = DB::table('despacho_ventas')
@@ -468,22 +493,35 @@ class Provincial extends Component
                 DB::rollBack();
                 return;
             }
-            // Guardar en la tabla Programaciones
-            $programacion = new Programacion();
-            $programacion->id_users = Auth::id();
+
+            if ($this->id_programacion_edit && $this->id_despacho_edit){
+                // actualizar en la tabla Programaciones
+                $programacion = Programacion::find($this->id_programacion_edit);
+            }else{
+                // Guardar en la tabla Programaciones
+                $programacion = new Programacion();
+                $programacion->id_users = Auth::id();
+            }
             $programacion->programacion_fecha = $this->programacion_fecha;
             $programacion->programacion_estado_aprobacion = 0;
             $programacion->programacion_estado = 1;
-            $programacion->programacion_microtime = microtime(true);
+            $programacion->programacion_microtime = $microtimeCread;
             if (!$programacion->save()) {
                 DB::rollBack();
                 session()->flash('error', 'Ocurrió un error al guardar la programación.');
                 return;
             }
-            // Guardar el despacho
-            $despacho = new Despacho();
-            $despacho->id_users = Auth::id();
-            $despacho->id_programacion = $programacion->id_programacion;
+            $programacionCreada =  DB::table('programaciones')->where('programacion_microtime','=',$microtimeCread)->first();
+
+            if ($this->id_programacion_edit && $this->id_despacho_edit){
+                // actulizar el despacho
+                $despacho = Despacho::find($this->id_despacho_edit);
+            }else{
+                // Guardar el despacho
+                $despacho = new Despacho();
+                $despacho->id_users = Auth::id();
+            }
+            $despacho->id_programacion = $programacionCreada->id_programacion;
             $despacho->id_transportistas = $this->id_transportistas;
             $despacho->id_tipo_servicios = 2;
             $despacho->id_tarifario = $this->selectedTarifario;
@@ -495,7 +533,7 @@ class Provincial extends Component
             $despacho->despacho_flete = $this->montoOriginal;
             $despacho->despacho_gasto_otros = $this->despacho_gasto_otros ?: null;
             // Calcular despacho_costo_total
-            $despacho_costo_total = $this->tarifaMontoSeleccionado * $this->pesoTotal;;
+            $despacho_costo_total = $this->tarifaMontoSeleccionado * $this->pesoTotal;
             if (!empty($this->despacho_gasto_otros)) {
                 $despacho_costo_total += $this->despacho_gasto_otros;
             }
@@ -503,9 +541,9 @@ class Provincial extends Component
             $despacho->despacho_estado_aprobacion = 0;
             $despacho->despacho_descripcion_otros = $this->despacho_gasto_otros > 0 ? $this->despacho_descripcion_otros : null;
             $despacho->despacho_monto_modificado = $this->tarifaMontoSeleccionado ?: null;
-            $despacho->despacho_estado_modificado = $this->tarifaMontoSeleccionado !== $this->montoOriginal ? 1 : 0;
-            $despacho->despacho_descripcion_modificado = ($this->tarifaMontoSeleccionado !== $this->montoOriginal) ? $this->despacho_descripcion_modificado : null;            $despacho->despacho_estado = 1;
-            $despacho->despacho_microtime = microtime(true);
+            $despacho->despacho_estado_modificado = $this->tarifaMontoSeleccionado != $this->montoOriginal ? 1 : 0;
+            $despacho->despacho_descripcion_modificado = ($this->tarifaMontoSeleccionado != $this->montoOriginal) ? $this->despacho_descripcion_modificado : null;            $despacho->despacho_estado = 1;
+            $despacho->despacho_microtime = $microtimeCread;
 
             $existecap = DB::table('tarifarios')
                 ->where('id_tarifario', $this->selectedTarifario)
@@ -519,10 +557,12 @@ class Provincial extends Component
                 session()->flash('error', 'Ocurrió un error al guardar el registro.');
                 return;
             }
+            $ultimoDespacho = DB::table('despachos')->where('despacho_microtime','=',$microtimeCread)->first();
+
             // Guardar facturas seleccionadas en despacho_ventas
             foreach ($this->selectedFacturas as $factura) {
                 $despachoVenta = new DespachoVenta();
-                $despachoVenta->id_despacho = $despacho->id_despacho;
+                $despachoVenta->id_despacho = $ultimoDespacho->id_despacho;
                 $despachoVenta->id_venta = null;
                 $despachoVenta->despacho_venta_cftd = $factura['CFTD'];
                 $despachoVenta->despacho_venta_cfnumser = $factura['CFNUMSER'];
@@ -549,7 +589,12 @@ class Provincial extends Component
                 }
             }
             DB::commit();
-            session()->flash('success', 'Registro guardado correctamente.');
+            if ($this->id_programacion_edit && $this->id_despacho_edit){
+                return redirect()->route('Programacioncamion.historial_programación')->with('success', '¡Registro actualizado correctamente!');
+            }else{
+                session()->flash('success', 'Registro guardado correctamente.');
+                $this->reiniciar_campos();
+            }
             $this->reiniciar_campos();
         } catch (\Illuminate\Validation\ValidationException $e) {
             $this->setErrorBag($e->validator->errors());

@@ -74,7 +74,7 @@ class Local extends Component
         $this->programacion_fecha = now()->format('Y-m-d');
         $this->desde = date('Y-m-d', strtotime('-1 month'));
         $this->hasta = date('Y-m-d');
-        /*$this->buscar_comprobantes();*/
+        /**/
         if ($id){
             $this->id_programacion_edit = $id;
             $despachoEdit = DB::table('despachos')->where('id_programacion','=',$id)->first();
@@ -83,6 +83,7 @@ class Local extends Component
                 $this->listar_informacion_programacion_edit();
             }
         }
+        $this->buscar_comprobantes();
     }
 
     public function render(){
@@ -105,6 +106,7 @@ class Local extends Component
                     'total_kg' => $c->despacho_venta_total_kg,
                     'total_volumen' => $c->despacho_venta_total_volumen,
                     'CNOMCLI' => $c->despacho_venta_cnomcli,
+                    'CCODCLI' => $c->despacho_venta_cfcodcli,
                     'CFIMPORTE' => $c->despacho_venta_cfimporte,
                     'guia' => $c->despacho_venta_guia,
                     'GREFECEMISION' => $c->despacho_venta_grefecemision, // fecha de emision de la guía
@@ -165,6 +167,7 @@ class Local extends Component
             $this->montoOriginal = $vehiculo->tarifa_monto;
             $this->id_tarifario_seleccionado = $id_tarifa;
             $this->selectedVehiculo = $vehiculoId;
+            $this->checkInput = $vehiculoId.'-'.$id_tarifa;
             $this->calcularCostoTotal();
         }
     }
@@ -294,6 +297,7 @@ class Local extends Component
                 $this->tarifaMontoSeleccionado = $vehiculoValido->tarifa_monto;
                 $this->selectedVehiculo = $vehiculoValido->id_vehiculo;
                 $this->id_tarifario_seleccionado = $vehiculoValido->id_tarifario;
+                $this->checkInput = $vehiculoValido->id_vehiculo.'-'.$vehiculoValido->id_tarifario;
                 $this->calcularCostoTotal();
             }
         } else {
@@ -302,6 +306,7 @@ class Local extends Component
             $this->selectedVehiculo = null;
             $this->id_tarifario_seleccionado = null;
             $this->costoTotal = null;
+            $this->checkInput = null;
         }
     }
 
