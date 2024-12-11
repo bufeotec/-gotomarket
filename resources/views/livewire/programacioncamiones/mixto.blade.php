@@ -296,7 +296,7 @@
                                             @foreach($tarifariosSugeridos as $index => $tari)
                                                 <div class="position-relative mx-2">
                                                     @if($tari->tarifa_estado_aprobacion == 1)
-                                                        <input type="radio" name="vehiculo" id="id_check_vehiculo_{{ $tari->id_tarifario}}_{{$conteoGen}}" class="inputCheckRadio" value="{{ $tari->id_tarifario }}"  wire:model.live="id_tari" wire:change="save_cliente_data({{$clienteindex}})" />
+                                                        <input type="radio" name="sugerencia_tarifa" id="id_check_vehiculo_{{ $tari->id_tarifario}}_{{$conteoGen}}" class="inputCheckRadio" value="{{ $tari->id_tarifario }}"  wire:model.live="id_tari" wire:change="save_cliente_data({{$clienteindex}})" />
                                                         <label for="id_check_vehiculo_{{ $tari->id_tarifario}}_{{$conteoGen}}" class="labelCheckRadios">
                                                             <div class="container_check_radios" >
                                                                 <div class="cRadioBtn">

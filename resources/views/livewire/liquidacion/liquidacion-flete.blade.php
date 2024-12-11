@@ -271,7 +271,6 @@
         {{--    DESPACHOS DEL TRANSPORTISTA --}}
         <div class="row mt-3">
             <div class="col-12">
-                @php $conteo = 1; @endphp
                 @foreach($despachos as $key => $despacho)
                     <div class="p-3 mb-3" style="background-color: #e8e8f1; border-radius: 8px;">
                         <div class="d-flex align-items-center justify-content-between">
@@ -283,15 +282,12 @@
                                     wire:click="actualizarDespacho('{{ $despacho->id_despacho }}', $event.target.checked)"
                                 >
                                 <div>
-                                    <strong>Despacho #{{$conteo}}</strong>
+                                    <strong>Despacho #{{ $despacho->despacho_numero_correlativo }}</strong>
                                     <p class="mb-0">
-                                        Peso: {{ $despacho->despacho_peso }} | Volumen: {{ $despacho->despacho_volumen }} | Flete: {{ $despacho->despacho_flete }}
+                                        Peso: {{ $despacho->despacho_peso }} | Volumen: {{ $despacho->despacho_volumen }} | Flete: {{ $despacho->despacho_flete }} | <button class="btn btn-sm text-primary" wire:click="listar_informacion_despacho({{ $despacho->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </button>
                                     </p>
-                                </div>
-                                <div>
-                                    <button class="btn btn-sm text-primary" wire:click="listar_informacion_despacho({{ $despacho->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">
-                                        <i class="fa-solid fa-eye"></i>
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -321,7 +317,6 @@
                             </div>
                         @endif
                     </div>
-                    @php $conteo++; @endphp
                 @endforeach
             </div>
         </div>

@@ -145,6 +145,7 @@ class Local extends Component
             'CNOMCLI' => $factura->CNOMCLI,
             'CFIMPORTE' => $factura->CFIMPORTE,
             'CFCODMON' => $factura->CFCODMON,
+            'CCODCLI' => $factura->CCODCLI,
             'guia' => $factura->CFTEXGUIA,
             'GREFECEMISION' => $factura->GREFECEMISION, // fecha de emision de la guía
             'LLEGADADIRECCION' => $factura->LLEGADADIRECCION,// Dirección de destino
@@ -356,11 +357,18 @@ class Local extends Component
                 $despachoVenta->despacho_venta_factura = $factura['CFNUMSER'] . '-' . $factura['CFNUMDOC'];
                 $despachoVenta->despacho_venta_grefecemision = $factura['GREFECEMISION'];
                 $despachoVenta->despacho_venta_cnomcli = $factura['CNOMCLI'];
+                $despachoVenta->despacho_venta_cfcodcli = $factura['CCODCLI'];
                 $despachoVenta->despacho_venta_guia = $factura['guia'];
                 $despachoVenta->despacho_venta_cfimporte = $factura['CFIMPORTE'];
                 $despachoVenta->despacho_venta_total_kg = $factura['total_kg'];
+                $despachoVenta->despacho_venta_total_volumen = $factura['total_volumen'];
+                $despachoVenta->despacho_venta_direccion_llegada = $factura['LLEGADADIRECCION'];
+                $despachoVenta->despacho_venta_departamento = $factura['DEPARTAMENTO'];
+                $despachoVenta->despacho_venta_provincia = $factura['PROVINCIA'];
+                $despachoVenta->despacho_venta_distrito = $factura['DISTRITO'];
                 $despachoVenta->despacho_detalle_estado = 1;
                 $despachoVenta->despacho_detalle_microtime = microtime(true);
+                $despachoVenta->despacho_detalle_estado_entrega = 0;
                 if (!$despachoVenta->save()) {
                     DB::rollBack();
                     session()->flash('error', 'Ocurrió un error al guardar las facturas.');
