@@ -344,25 +344,24 @@
                                             <tr>
                                                 <td colspan="11">
                                                     <div class="p-3" style="background-color: #FFFFFF; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
-                                                        <div class="row">
-                                                            <div class="col-lg-4 mb-3">
-                                                                <label class="form-label" for="gasto_concepto_{{ $key }}">Concepto(*)</label>
-                                                                <input type="text" wire:model.defer="gastos.{{ $despacho->id_despacho }}.concepto" id="gasto_concepto_{{ $key }}" class="form-control">
-                                                                @error("gastos.$despacho->id_despacho.concepto")
-                                                                <span class="text-danger">{{ $message }}</span>
-                                                                @enderror
-                                                            </div>
-                                                            <div class="col-lg-4 mb-3">
-                                                                <label class="form-label" for="gasto_monto_{{ $key }}">Monto(*)</label>
-                                                                <input type="text" wire:model.defer="gastos.{{ $despacho->id_despacho }}.monto" id="gasto_monto_{{ $key }}" onkeyup="validar_numeros(this.id)" class="form-control">
-                                                                @error("gastos.$despacho->id_despacho.monto")
-                                                                <span class="text-danger">{{ $message }}</span>
-                                                                @enderror
-                                                            </div>
-                                                            <div class="col-lg-4 mb-3">
-                                                                <label class="form-label" for="gasto_descripcion_{{ $key }}">Descripción</label>
-                                                                <textarea class="form-control" wire:model.defer="gastos.{{ $despacho->id_despacho }}.descripcion" id="gasto_descripcion_{{ $key }}"></textarea>
-                                                            </div>
+                                                        <div>
+                                                            <button class="btn btn-primary mb-3" wire:click.prevent="agregarGasto({{ $despacho->id_despacho }})">Agregar gasto</button>
+                                                            @foreach($gastos[$despacho->id_despacho] ?? [] as $index => $gasto)
+                                                                <div class="row mb-2">
+                                                                    <div class="col-lg-4">
+                                                                        <label class="form-label">Concepto(*)</label>
+                                                                        <input type="text" wire:model.defer="gastos.{{ $despacho->id_despacho }}.{{ $index }}.concepto" class="form-control">
+                                                                    </div>
+                                                                    <div class="col-lg-4">
+                                                                        <label class="form-label">Monto(*)</label>
+                                                                        <input type="text" wire:model.defer="gastos.{{ $despacho->id_despacho }}.{{ $index }}.monto" onkeyup="validar_numeros(this.id)" class="form-control">
+                                                                    </div>
+                                                                    <div class="col-lg-4">
+                                                                        <label class="form-label">Descripción</label>
+                                                                        <textarea wire:model.defer="gastos.{{ $despacho->id_despacho }}.{{ $index }}.descripcion" class="form-control"></textarea>
+                                                                    </div>
+                                                                </div>
+                                                            @endforeach
                                                         </div>
                                                     </div>
                                                 </td>
