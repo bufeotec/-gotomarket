@@ -588,7 +588,7 @@
                             </div>
                         </div>
 
-                        @if($searchFacturaCliente !== '')
+                        @if($filteredFacturasYClientes != '' || $filteredFacturasYClientes)
                             <div class="row mt-3">
                                 <div class="col-lg-12 col-md-12 col-sm-12">
                                     <div class="contenedor-comprobante" style="max-height: 600px; overflow: auto">
@@ -758,7 +758,7 @@
                                     @foreach($vehiculosSugeridos as $index => $vehiculo)
                                         <div class="position-relative mx-2">
                                             @if($vehiculo->tarifa_estado_aprobacion == 1)
-                                                <input type="radio"  name="vehiculo" id="id_check_vehiculo_{{ $vehiculo->id_vehiculo }}_{{ $vehiculo->id_tarifario}}_{{$conteoGen}}" class="inputCheckRadio" value="{{ $vehiculo->id_vehiculo }}-{{ $vehiculo->id_tarifario }}"  wire:click="seleccionarVehiculo({{ $vehiculo->id_vehiculo }},{{ $vehiculo->id_tarifario }})" />
+                                                <input type="radio"  name="vehiculo" id="id_check_vehiculo_{{ $vehiculo->id_vehiculo }}_{{ $vehiculo->id_tarifario}}_{{$conteoGen}}" class="inputCheckRadio" value="{{ $vehiculo->id_vehiculo }}-{{ $vehiculo->id_tarifario }}" wire:model="checkInput"  wire:click="seleccionarVehiculo({{ $vehiculo->id_vehiculo }},{{ $vehiculo->id_tarifario }})" />
                                                 <label for="id_check_vehiculo_{{ $vehiculo->id_vehiculo }}_{{ $vehiculo->id_tarifario}}_{{$conteoGen}}" class="labelCheckRadios">
                                                     <div class="container_check_radios" >
                                                         <div class="cRadioBtn">
@@ -909,10 +909,8 @@
                                             <small class="textTotalComprobantesSeleccionados me-2">
                                                 @php
                                                     $ra1 = 0;
-                                                    if ($volumenTotal){
-                                                        $to = $costoTotal / $importeTotalVenta;
-                                                        $ra1 = $me->formatoDecimal($to);
-                                                    }
+                                                    $to = $costoTotal / $importeTotalVenta;
+                                                    $ra1 = $me->formatoDecimal($to);
                                                 @endphp
 
                                                 F.V: {{$costoTotal}} / {{$importeTotalVenta}} =  <span>{{ $ra1 }}</span>
@@ -922,12 +920,9 @@
                                             <small class="textTotalComprobantesSeleccionados">
                                                 @php
                                                     $ra2 = 0;
-                                                    if ($volumenTotal){
-                                                        $to = $costoTotal / $peso;
-                                                        $ra2 = $me->formatoDecimal($to);
-                                                    }
+                                                    $to = $costoTotal / $peso;
+                                                    $ra2 = $me->formatoDecimal($to);
                                                 @endphp
-
                                                 F.P: {{$costoTotal}} / {{$peso}} =  <span>{{ $ra2 }}</span>
                                             </small>
                                         @endif

@@ -12,7 +12,7 @@
         @elseif($conteo == 2) {{-- provincial --}}
             @livewire('programacioncamiones.provincial',['id'=>$id_programacion])
         @else
-            @livewire('programacioncamiones.mixto')
+            @livewire('programacioncamiones.mixto',['id'=>$id_programacion])
         @endif
     </div>
 

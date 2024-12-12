@@ -82,7 +82,13 @@ class Mixto extends Component
     public $despacho_descripcion_otros = '';
     public $costoTotal = 0;
     public $importeTotalVenta = 0;
-    public function mount()
+    public $montoOriginal = 0;
+    /* ---------------------------------- */
+    public $id_programacion_edit = '';
+    public $id_despacho_edit = '';
+    public $checkInput = '';
+    /* ---------------------------------- */
+    public function mount($id = null)
     {
         $this->id_transportistas = null;
         $this->selectedVehiculo = null;
@@ -90,6 +96,15 @@ class Mixto extends Component
         $this->programacion_fecha = now()->format('Y-m-d');
         $this->desde = date('Y-m-d', strtotime('-1 month'));
         $this->hasta = date('Y-m-d');
+        if ($id){
+            $this->id_programacion_edit = $id;
+            $despachoEdit = DB::table('despachos')->where('id_programacion','=',$id)->where('id_tipo_servicios','=',1)->first();
+            $despachoEditProvinci = DB::table('despachos')->where('id_programacion','=',$id)->where('id_tipo_servicios','=',2)->first();
+            if ($despachoEdit && $despachoEditProvinci){
+                $this->id_despacho_edit = $despachoEdit->id_despacho; // despacho local
+                $this->listar_informacion_programacion_edit();
+            }
+        }
     }
 
     public function render()
@@ -99,7 +114,6 @@ class Mixto extends Component
         $listar_departamento = $this->departamento->lista_departamento();
         return view('livewire.programacioncamiones.mixto', compact('tipo_servicio_local_provincial', 'listar_transportistas', 'listar_transportistas', 'listar_departamento'));
     }
-
 //    PARA EL MODAL DE PROVINCIA
     public $clienteSeleccionado;
     public $clienteindex;
@@ -129,6 +143,122 @@ class Mixto extends Component
     public $arrayDistritoPronvicial = [];
     public $detalle_tarifario = [];
     public $opcionDetalle = false;
+    public function listar_informacion_programacion_edit(){
+        $informacionPrograma = $this->programacion->informacion_id($this->id_programacion_edit);
+        $informacionDespachoLocal = DB::table('despachos')->where('id_despacho','=',$this->id_despacho_edit)->first();
+        $despachosProvinciales = DB::table('despachos')->where('id_tipo_servicios','=',2)->where('id_programacion','=',$this->id_programacion_edit)->get();
+        if ($informacionPrograma && $informacionDespachoLocal && $despachosProvinciales){
+            $this->id_transportistas = $informacionDespachoLocal->id_transportistas;
+            $this->programacion_fecha = $informacionPrograma->programacion_fecha;
+            /*------------------------------*/
+
+            /*------------------------------*/
+            $comprobantes = DB::table('despacho_ventas')->where('id_despacho','=',$informacionDespachoLocal->id_despacho)->get();
+            foreach ($comprobantes as $c){
+                $validarcheckComprobante = DB::table('despacho_ventas as dv')
+                    ->join('despachos as d','d.id_despacho','=','dv.id_despacho')
+                    ->where([
+                        ['d.id_programacion','=',$this->id_programacion_edit],
+                        ['d.id_tipo_servicios','=',2],
+                        ['dv.despacho_venta_cftd','=',$c->despacho_venta_cftd],
+                        ['dv.despacho_venta_cfnumser','=',$c->despacho_venta_cfnumser],
+                        ['dv.despacho_venta_cfnumdoc','=',$c->despacho_venta_cfnumdoc],
+                    ])->exists();
+                $this->selectedFacturasLocal[] = [
+                    'CFTD' => $c->despacho_venta_cftd,
+                    'CFNUMSER' => $c->despacho_venta_cfnumser,
+                    'CFNUMDOC' => $c->despacho_venta_cfnumdoc,
+                    'total_kg' => $c->despacho_venta_total_kg,
+                    'total_volumen' => $c->despacho_venta_total_volumen,
+                    'CNOMCLI' => $c->despacho_venta_cnomcli,
+                    'CCODCLI' => $c->despacho_venta_cfcodcli,
+                    'CFIMPORTE' => $c->despacho_venta_cfimporte,
+                    'guia' => $c->despacho_venta_guia,
+                    'isChecked' => $validarcheckComprobante,
+                    'GREFECEMISION' => $c->despacho_venta_grefecemision, // fecha de emision de la guía
+                    'LLEGADADIRECCION' => $c->despacho_venta_direccion_llegada,// Dirección de destino
+                    'LLEGADAUBIGEO' => null,// Código del ubigeo
+                    'DEPARTAMENTO' => $c->despacho_venta_departamento,// Departamento
+                    'PROVINCIA' => $c->despacho_venta_provincia,// Provincia
+                    'DISTRITO' => $c->despacho_venta_distrito,// Distrito
+                ];
+                $this->pesoTotal += $c->despacho_venta_total_kg;
+                $this->volumenTotal += $c->despacho_venta_total_volumen;
+//                $importe = $this->general->formatoDecimal($c->despacho_venta_cfimporte);
+//                $this->importeTotalVenta += floatval($importe);
+                $importe = $c->despacho_venta_cfimporte;
+                $importe = floatval($importe);
+                $this->importeTotalVenta += $importe;
+            }
+            // Agrupar los IDs de despachos provinciales para optimizar las consultas
+            $idsDespachos = $despachosProvinciales->pluck('id_despacho');
+
+            // Obtener todos los comprobantes relacionados en una sola consulta
+            $comprobantesProvinciales = DB::table('despacho_ventas')
+                ->whereIn('id_despacho', $idsDespachos)
+                ->get()
+                ->groupBy('id_despacho');
+
+            foreach ($despachosProvinciales as $de){
+                $comprobantes = $comprobantesProvinciales[$de->id_despacho] ?? collect();
+                $comprobantesPro = DB::table('despacho_ventas')->where('id_despacho','=',$de->id_despacho)->get();
+                $this->clientes_provinciales[] = [
+                    'codigoCliente' =>  $comprobantesPro[0]->despacho_venta_cfcodcli,
+                    'nombreCliente' =>  $comprobantesPro[0]->despacho_venta_cnomcli,
+                    'total_kg' =>  $de->despacho_peso,
+                    'total_volumen' =>  $de->despacho_volumen,
+                    'id_transportista' =>  $de->id_transportistas,
+                    'id_tarifario' =>  $de->id_tarifario,
+                    'montoOriginal' =>  $de->despacho_flete,
+                    'montoSeleccionado' =>  $de->despacho_monto_modificado, // guardar el monto que se puede modificar.
+                    'montoSeleccionadoDescripcion' =>  $de->despacho_descripcion_modificado, // descripción al modificar el precio.
+                    'otros' =>  $de->despacho_gasto_otros,
+                    'otrosDescripcion' =>  $de->despacho_descripcion_otros, // descripción al añadir el precio en el campo otros.
+                    'mano_obra' =>  0,
+                    'departamento' =>  $de->id_departamento,
+                    'provincia' =>  $de->id_provincia,
+                    'distrito' =>  $de->id_distrito,
+                    'listo' =>  true,
+                    'ubiDepar' =>  $comprobantesPro[0]->despacho_venta_departamento,
+                    'ubiPro' =>  $comprobantesPro[0]->despacho_venta_provincia,
+                    'ubiDis' =>  $comprobantesPro[0]->despacho_venta_distrito,
+                    'ubiDirc' =>  $comprobantesPro[0]->despacho_venta_direccion_llegada,
+                    'comprobantes' => $comprobantes->map(function ($factura) {
+                        return [
+                            'CFTD' => $factura->despacho_venta_cftd,
+                            'CFNUMSER' => $factura->despacho_venta_cfnumser,
+                            'CFNUMDOC' => $factura->despacho_venta_cfnumdoc,
+                            'total_kg' => $factura->despacho_venta_total_kg,
+                            'total_volumen' => $factura->despacho_venta_total_volumen,
+                            'CFIMPORTE' => $factura->despacho_venta_cfimporte,
+                            'guia' => $factura->despacho_venta_guia,
+                            'GREFECEMISION' => $factura->despacho_venta_grefecemision,
+                            'LLEGADADIRECCION' => $factura->despacho_venta_direccion_llegada,
+//                            'LLEGADAUBIGEO' => $factura->LLEGADAUBIGEO,
+                            'DEPARTAMENTO' => $factura->despacho_venta_departamento,
+                            'PROVINCIA' => $factura->despacho_venta_provincia,
+                            'DISTRITO' => $factura->despacho_venta_distrito,
+                        ];
+                    })->toArray(),
+                ];
+            }
+            $this->tarifaMontoSeleccionado = $informacionDespachoLocal->despacho_monto_modificado;
+
+            $this->despacho_descripcion_modificado = $informacionDespachoLocal->despacho_descripcion_modificado;
+            $this->despacho_gasto_otros = $informacionDespachoLocal->despacho_gasto_otros;
+            $this->despacho_descripcion_otros = $informacionDespachoLocal->despacho_descripcion_otros;
+            $this->despacho_ayudante = $informacionDespachoLocal->despacho_ayudante;
+
+            $this->montoOriginal = $informacionDespachoLocal->despacho_flete;
+            $this->id_tarifario_seleccionado = $informacionDespachoLocal->id_tarifario;
+            $this->selectedVehiculo = $informacionDespachoLocal->id_vehiculo;
+            $this->checkInput = $informacionDespachoLocal->id_vehiculo.'-'.$informacionDespachoLocal->id_tarifario;
+            $this->calcularCostoTotal();
+            // Actualizar lista de vehículos sugeridos
+            $this->listar_vehiculos_lo();
+            $this->validarVehiculoSeleccionado();
+        }
+    }
     public function abrirModalComprobantes($cliente,$index){ // en $cliente llega el código del cliente, DNI o RUC
         /* limpiamos primero el array */
         $this->clienteSeleccionado = "";
@@ -231,7 +361,7 @@ class Mixto extends Component
             }
         }
     }
-    function limpiarParaPro($index){
+    public function limpiarParaPro($index){
         $this->clientes_provinciales[$index]['id_tarifario'] = '';
         $this->montoSelect = '';
         $this->selectedTarifario = '';
@@ -404,7 +534,7 @@ class Mixto extends Component
             'CNOMCLI' => $factura->CNOMCLI, // Nombre cliente
             'CCODCLI' => $factura->CCODCLI, // Código del cliente
             'CFIMPORTE' => $factura->CFIMPORTE, // importe
-            'CFCODMON' => $factura->CFCODMON, // código de moneda
+            //'CFCODMON' => $factura->CFCODMON, // código de moneda
             'guia' => $factura->CFTEXGUIA, // guia
             'isChecked' => false,
             'GREFECEMISION' => $factura->GREFECEMISION, // fecha de emision de la guía
@@ -501,7 +631,7 @@ class Mixto extends Component
                         'total_kg' => $factura['total_kg'],
                         'total_volumen' => $factura['total_volumen'],
                         'CFIMPORTE' => $factura['CFIMPORTE'],
-                        'CFCODMON' => $factura['CFCODMON'],
+//                        'CFCODMON' => $factura['CFCODMON'],
                         'guia' => $factura['guia'], // guia
                         'GREFECEMISION' => $factura['GREFECEMISION'], // fecha de emision de la guía
                         'LLEGADADIRECCION' => $factura['LLEGADADIRECCION'],// Dirección de destino
@@ -543,7 +673,7 @@ class Mixto extends Component
                         'total_kg' => $factura['total_kg'],
                         'total_volumen' => $factura['total_volumen'],
                         'CFIMPORTE' => $factura['CFIMPORTE'],
-                        'CFCODMON' => $factura['CFCODMON'],
+//                        'CFCODMON' => $factura['CFCODMON'],
                         'guia' => $factura['guia'],
                         'GREFECEMISION' => $factura['GREFECEMISION'],
                         'LLEGADADIRECCION' => $factura['LLEGADADIRECCION'],
@@ -571,6 +701,8 @@ class Mixto extends Component
             // Si el cliente no tiene comprobantes restantes, eliminarlo del array
             if (empty($cliente['comprobantes'])) {
                 unset($this->clientes_provinciales[$index]);
+            }else{
+                $cliente['listo'] = false;
             }
         }
 
@@ -649,8 +781,11 @@ class Mixto extends Component
         if ($vehiculo) {
             // Actualiza el monto de la tarifa del vehículo seleccionado
             $this->tarifaMontoSeleccionado = $vehiculo->tarifa_monto;
+            $this->montoOriginal = $vehiculo->tarifa_monto;
             $this->id_tarifario_seleccionado = $id_tarifa;
             $this->selectedVehiculo = $vehiculoId;
+            $this->checkInput = $vehiculoId.'-'.$id_tarifa;
+
             $this->calcularCostoTotal();
         }
     }
@@ -688,6 +823,20 @@ class Mixto extends Component
             ]);
 
             DB::beginTransaction();
+            if ($this->id_programacion_edit && $this->id_despacho_edit){
+                // Se va a eliminar los comprobantes del anterior registro local
+                DB::table('despacho_ventas')->where('id_despacho','=',$this->id_despacho_edit)->delete();
+                /* vamos eliminar los despachos provinciales */
+                // Obtener los despachos provinciales relacionados
+                $despachosProvinciales = Despacho::where('id_tipo_servicios', 2)
+                    ->where('id_programacion', $this->id_programacion_edit)
+                    ->get();
+                foreach ($despachosProvinciales as $despachoDelete) {
+                    // Eliminar detalles de despacho y el registro principal
+                    DespachoVenta::where('id_despacho', $despachoDelete->id_despacho)->delete();
+                    $despachoDelete->delete();
+                }
+            }
 
             $duplicados = 0;
             // Validar facturas locales
@@ -732,10 +881,14 @@ class Mixto extends Component
             }
             /* ------------------------------------------------------------------------ */
             $microPro = microtime(true);
-
             // Guardar en la tabla Programaciones
-            $programacion = new Programacion();
-            $programacion->id_users = Auth::id();
+            if ($this->id_programacion_edit && $this->id_despacho_edit){
+                // se va a eliminar los comprobantes del anterior registro
+                $programacion = Programacion::find($this->id_programacion_edit);
+            }else{
+                $programacion = new Programacion();
+                $programacion->id_users = Auth::id();
+            }
             $programacion->programacion_fecha = $this->programacion_fecha;
             $programacion->programacion_estado_aprobacion = 0;
             $programacion->programacion_estado = 1;
@@ -829,15 +982,18 @@ class Mixto extends Component
                 }
             }
 
-            // Crear despachos para comprobantes locales (uno por cada comprobante)
+
             $comprobantesLocales = $this->selectedFacturasLocal;
 
-            $costoOriginalFlete = DB::table('tarifarios')
-                ->where('id_tarifario','=',$this->id_tarifario_seleccionado)->first();
-            // Crear un solo despacho para todos los comprobantes locales
+            $costoOriginalFlete = DB::table('tarifarios')->where('id_tarifario','=',$this->id_tarifario_seleccionado)->first();
             $microLocal = microtime(true);
-            $despachoLocal = new Despacho();
-            $despachoLocal->id_users = Auth::id();
+            if ($this->id_programacion_edit && $this->id_despacho_edit){
+                // se va a eliminar los comprobantes del anterior registro
+                $despachoLocal = Despacho::find($this->id_despacho_edit);
+            }else{
+                $despachoLocal = new Despacho();
+                $despachoLocal->id_users = Auth::id();
+            }
             $despachoLocal->id_programacion = $prograCreado->id_programacion;
             $despachoLocal->id_transportistas = $this->id_transportistas;
             $despachoLocal->id_tipo_servicios = 1; // Local
@@ -871,8 +1027,7 @@ class Mixto extends Component
                 return;
             }
 
-            $deslocal = DB::table('despachos')
-                ->where('despacho_microtime','=',$microLocal)->first();
+            $deslocal = DB::table('despachos')->where('despacho_microtime','=',$microLocal)->first();
             // Guardar las facturas asociadas al despacho local
             foreach ($comprobantesLocales as $factura) {
                 $despachoVentaLocal = new DespachoVenta();
@@ -905,10 +1060,13 @@ class Mixto extends Component
                     return;
                 }
             }
-
             DB::commit();
-            session()->flash('success', 'Despachos guardados correctamente.');
-            $this->reiniciar_campos();
+            if ($this->id_programacion_edit && $this->id_despacho_edit){
+                return redirect()->route('Programacioncamion.historial_programación')->with('success', '¡Registro actualizado correctamente!');
+            }else{
+                session()->flash('success', 'Registro guardado correctamente.');
+                $this->reiniciar_campos();
+            }
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logs->insertarLog($e);
