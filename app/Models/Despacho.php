@@ -33,7 +33,7 @@ class Despacho extends Model
         try {
             $añoActual = date('Y'); // Solo tomamos el año, no toda la fecha
 
-            $result = DB::table('despachos')->where('despacho_estado_aprobacion','=',1)->orderBy('despacho_numero_correlativo','desc')->first();
+            $result = DB::table('despachos')->whereIn('despacho_estado_aprobacion',[1,2,3])->orderBy('despacho_numero_correlativo','desc')->first();
 
             if ($result) {
                 // Extraer el año y el correlativo de la última programación

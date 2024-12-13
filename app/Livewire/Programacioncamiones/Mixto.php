@@ -1002,7 +1002,7 @@ class Mixto extends Component
                 $despacho->id_tipo_servicios = 2;
                 $despacho->id_departamento = $cliente['departamento'];
                 $despacho->id_provincia = $cliente['provincia'];
-                $despacho->id_distrito = $cliente['distrito'];
+                $despacho->id_distrito = $cliente['distrito'] ? $cliente['distrito'] : null;
                 $despacho->id_tarifario = $cliente['id_tarifario'];
                 $despacho->despacho_peso = $cliente['total_kg'];
                 $despacho->despacho_volumen = $cliente['total_volumen'];
