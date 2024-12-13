@@ -181,14 +181,17 @@
                                 </div>
                             @endif
                         </div>
-                        <div class="row">
-                            <div class="col-lg-6 col-md-2 col-sm-12 mb-2">
-                                <input type="date" name="fecha_desde" id="fecha_desde" wire:model.live="desde" wire:change="buscar_comprobante" class="form-control">
+                        @if($select_nombre_cliente)
+                            <div class="row">
+                                <div class="col-lg-6 col-md-2 col-sm-12 mb-2">
+                                    <input type="date" name="fecha_desde" id="fecha_desde" wire:model.live="desde" wire:change="buscar_comprobante" class="form-control">
+                                </div>
+                                <div class="col-lg-6 col-md-2 col-sm-12 mb-2">
+                                    <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model.live="hasta" wire:change="buscar_comprobante" class="form-control">
+                                </div>
                             </div>
-                            <div class="col-lg-6 col-md-2 col-sm-12 mb-2">
-                                <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model.live="hasta" wire:change="buscar_comprobante" class="form-control">
-                            </div>
-                        </div>
+                        @endif
+
                         <div class="row">
                             <div class="col-lg-12">
                                 {{-- Buscador --}}

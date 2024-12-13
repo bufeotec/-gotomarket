@@ -363,7 +363,7 @@
         </x-card-general-view>
     @endif
 
-    <div class="row">
+    <div class="row mb-4">
         <div class="col-lg-12">
             @if(isset($select_despachos) && count($select_despachos) > 0)
                 <div class="text-center d-flex justify-content-end">

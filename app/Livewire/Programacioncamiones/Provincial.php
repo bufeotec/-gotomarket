@@ -101,7 +101,17 @@ class Provincial extends Component
         }
     }
     public function render(){
-        $listar_transportistas = $this->transportista->listar_transportista_sin_id();
+        // listar transportistas que coinciden con las tarifas
+        if (count($this->tarifariosSugeridos) > 0){
+            // Obtener los id_transportistas únicos de la colección
+            $idsTransportistas = $this->tarifariosSugeridos->pluck('id_transportistas')->unique();
+            // Consultar la base de datos para traer transportistas únicos
+            $listar_transportistas = DB::table('transportistas')
+                ->whereIn('id_transportistas', $idsTransportistas)
+                ->get();
+        }else{
+            $listar_transportistas = $this->transportista->listar_transportista_sin_id();
+        }
         $listar_departamento = $this->departamento->lista_departamento();
         return view('livewire.programacioncamiones.provincial', compact('listar_transportistas', 'listar_departamento'));
     }
@@ -289,6 +299,32 @@ class Provincial extends Component
             session()->flash('error', 'El peso o el volumen deben ser mayores a 0.');
             return;
         }
+        if (count($this->selectedFacturas) > 0){
+            // Obtiene el primer comprobante seleccionado
+            $primerComprobante = $this->selectedFacturas[0];
+
+            $esUbigeo = $primerComprobante['DEPARTAMENTO'] == $factura->DEPARTAMENTO && $primerComprobante['PROVINCIA'] == $factura->PROVINCIA && $primerComprobante['DISTRITO'] == $factura->DISTRITO;
+            if ($esUbigeo){
+                if (
+                    $factura->DEPARTAMENTO != $primerComprobante['DEPARTAMENTO'] ||
+                    $factura->PROVINCIA != $primerComprobante['PROVINCIA'] ||
+                    $factura->DISTRITO != $primerComprobante['DISTRITO']
+                ) {
+                    $tex = $primerComprobante['DEPARTAMENTO'].' - '.$primerComprobante['PROVINCIA'].' - '.$primerComprobante['DISTRITO'];
+                    session()->flash('error', "No puedes agregar un comprobante con un ubigeo diferente a $tex.");
+                    return;
+                }
+            }else{
+                if (
+                    $primerComprobante['DEPARTAMENTO'] !== $factura->DEPARTAMENTO ||
+                    $primerComprobante['PROVINCIA'] !== $factura->PROVINCIA ||
+                    $primerComprobante['DISTRITO'] !== $factura->DISTRITO
+                ) {
+                    session()->flash('error', 'No puedes agregar un comprobante con un ubigeo diferente al del primer comprobante seleccionado.');
+                    return;
+                }
+            }
+        }
         // Agregar la factura seleccionada y actualizar el peso y volumen total
         $this->selectedFacturas[] = [
             'CFTD' => $CFTD,
@@ -316,6 +352,32 @@ class Provincial extends Component
         $this->filteredComprobantes = $this->filteredComprobantes->filter(function ($f) use ($CFNUMDOC) {
             return $f->CFNUMDOC !== $CFNUMDOC;
         });
+        if (count($this->selectedFacturas) == 1){
+            // para el primer comprobante agregado se debe listar Departamento (*) , Provincia (*) y Distrito
+            // esto funciona bien
+            $primerRegistroComprobante = $this->selectedFacturas[0];
+            // Eliminar espacios al principio y al final del texto
+            $departamento = trim($primerRegistroComprobante['DEPARTAMENTO']);
+            $provincia = trim($primerRegistroComprobante['PROVINCIA']);
+            $distrito = trim($primerRegistroComprobante['DISTRITO']);
+
+            $departame = DB::table('departamentos')->where('departamento_nombre','like','%'.$departamento.'%')->first();
+            if ($departame){
+                $this->id_departamento = $departame->id_departamento;
+                $this->listar_provincias();
+                $provinDepa = DB::table('provincias')->where('id_departamento','=',$this->id_departamento)
+                    ->where('provincia_nombre','LIKE','%'.$provincia.'%')->first();
+                if ($provinDepa){
+                    $this->id_provincia = $provinDepa->id_provincia;
+                    $this->listar_distritos();
+                    $distri = DB::table('distritos')->where('id_provincia','=',$provinDepa->id_provincia)
+                        ->where('distrito_nombre','like','%'.$distrito.'%')->first();
+                    if ($distri){
+                        $this->id_distrito = $distri->id_distrito;
+                    }
+                }
+            }
+        }
         // Actualizar lista de vehículos sugeridos
         $this->listar_tarifarios_su();
         $this->validarTarifaSeleccionada();
@@ -421,7 +483,6 @@ class Provincial extends Component
             $this->tarifaMontoSeleccionado = null;
             $this->selectedTarifario = null;
             $this->costoTotal = null;
-            Log::info("Eder");
         }
     }
 

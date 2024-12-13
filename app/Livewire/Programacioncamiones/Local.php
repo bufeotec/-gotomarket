@@ -87,7 +87,17 @@ class Local extends Component
     }
 
     public function render(){
-        $listar_transportistas = $this->transportista->listar_transportista_sin_id();
+        if (count($this->vehiculosSugeridos) > 0){
+            // Obtener los id_transportistas únicos de la colección
+            $idsTransportistas = $this->vehiculosSugeridos->pluck('id_transportistas')->unique();
+            // Consultar la base de datos para traer transportistas únicos
+            $listar_transportistas = DB::table('transportistas')
+                ->whereIn('id_transportistas', $idsTransportistas)
+                ->get();
+        }else{
+            $listar_transportistas = $this->transportista->listar_transportista_sin_id();
+        }
+//        $listar_transportistas = $this->transportista->listar_transportista_sin_id();
         $listar_vehiculos = $this->vehiculo->obtener_vehiculos_con_tarifarios();
         return view('livewire.programacioncamiones.local', compact('listar_transportistas', 'listar_vehiculos'));
     }
