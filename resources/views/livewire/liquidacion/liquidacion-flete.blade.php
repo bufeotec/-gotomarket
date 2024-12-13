@@ -283,105 +283,97 @@
                                     </tr>
                                 </x-slot>
 
-                                <x-slot name="tbody">
-                                    @if(count($despachos) > 0)
-                                        @foreach($despachos as $key => $despacho)
-                                            <tr>
-                                                <td>
-                                                    <input
-                                                        type="checkbox"
-                                                        class="form-check-input"
-                                                        wire:model.defer="select_despachos.{{ $despacho->id_despacho }}"
-                                                        wire:click="actualizarDespacho('{{ $despacho->id_despacho }}', $event.target.checked)"
-                                                    >
-                                                </td>
-                                                <td>{{ $despacho->despacho_numero_correlativo }}</td>
-                                                <td>{{ $despacho->tipo_servicio_concepto }}</td>
-                                                <td>S/ {{ $despacho->despacho_flete }}</td>
-                                                <td>{{ $despacho->despacho_peso }} kg</td>
-                                                <td>
-                                                    @php
-                                                        $indi = "-";
-                                                        if ($despacho->id_vehiculo) {
-                                                            $vehiculo = \DB::table('vehiculos')->where('id_vehiculo', $despacho->id_vehiculo)->first();
-                                                            if ($vehiculo) {
-                                                                $indi = ($despacho->despacho_peso / $vehiculo->vehiculo_capacidad_peso) * 100;
-                                                                $indi = number_format($indi, 2);
-                                                                $indi = $indi.'%';
-                                                            }
+                            <x-slot name="tbody">
+                                @if(count($despachos) > 0)
+                                    @foreach($despachos as $key => $despacho)
+                                        <tr>
+                                            <td>
+                                                <input
+                                                    type="checkbox"
+                                                    class="form-check-input"
+                                                    wire:model.defer="select_despachos.{{ $despacho->id_despacho }}"
+                                                    wire:click="actualizarDespacho('{{ $despacho->id_despacho }}', $event.target.checked)"
+                                                >
+                                            </td>
+                                            <td>{{ $despacho->despacho_numero_correlativo }}</td>
+                                            <td>{{ $despacho->tipo_servicio_concepto }}</td>
+                                            <td>S/ {{ $despacho->despacho_flete }}</td>
+                                            <td>{{ $despacho->despacho_peso }} kg</td>
+                                            <td>
+                                                @php
+                                                    $indi = "-";
+                                                    if ($despacho->id_vehiculo) {
+                                                        $vehiculo = \DB::table('vehiculos')->where('id_vehiculo', $despacho->id_vehiculo)->first();
+                                                        if ($vehiculo) {
+                                                            $indi = ($despacho->despacho_peso / $vehiculo->vehiculo_capacidad_peso) * 100;
+                                                            $indi = number_format($indi, 2);
                                                         }
-                                                    @endphp
-                                                    <span style="color: {{ $indi > 0 ? '#28a745' : '#dc3545' }}">{{ $indi }}</span>
-                                                </td>
-                                                <td>
-                                                    <b class="{{ $despacho->despacho_estado_modificado ? 'text-success' : 'text-danger' }}">
-                                                        {{ $despacho->despacho_estado_modificado ? 'SI' : 'NO' }}
-                                                    </b>
-                                                </td>
-                                                <td>
-                                                    <span class="{{ $despacho->despacho_estado_modificado ? 'text-danger' : '' }}">S/ {{ $despacho->despacho_flete }}</span>
-                                                    @if($despacho->despacho_estado_modificado)
-                                                        <b class="text-success">=> S/ {{ $despacho->despacho_monto_modificado }}</b>
-                                                    @endif
-                                                </td>
-                                                <td>{{ $despacho->despacho_costo_total && $despacho->totalVentaDespacho > 0 ? number_format($despacho->despacho_costo_total / $despacho->totalVentaDespacho, 2) : '-' }}</td>
-                                                <td>{{ $despacho->despacho_costo_total ? number_format($despacho->despacho_costo_total / $despacho->despacho_peso, 2) : '-' }}</td>
-                                                <td>
-                                                    <x-btn-accion class="btn btn-sm text-primary" wire:click="listar_informacion_despacho({{ $despacho->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">
-                                                        <x-slot name="message">
-                                                            <i class="fa-solid fa-eye"></i>
-                                                        </x-slot>
-                                                    </x-btn-accion>
+                                                    }
+                                                @endphp
+                                                <span style="color: {{ $indi > 0 ? '#28a745' : '#dc3545' }}">{{ $indi }}%</span>
+                                            </td>
+                                            <td>
+                                                <b class="{{ $despacho->despacho_estado_modificado ? 'text-success' : 'text-danger' }}">
+                                                    {{ $despacho->despacho_estado_modificado ? 'SI' : 'NO' }}
+                                                </b>
+                                            </td>
+                                            <td>
+                                                <span class="{{ $despacho->despacho_estado_modificado ? 'text-danger' : '' }}">S/ {{ $despacho->despacho_flete }}</span>
+                                                @if($despacho->despacho_estado_modificado)
+                                                    <b class="text-success">=> S/ {{ $despacho->despacho_monto_modificado }}</b>
+                                                @endif
+                                            </td>
+                                            <td>{{ $despacho->despacho_costo_total && $despacho->totalVentaDespacho > 0 ? number_format($despacho->despacho_costo_total / $despacho->totalVentaDespacho, 2) : '-' }}</td>
+                                            <td>{{ $despacho->despacho_costo_total ? number_format($despacho->despacho_costo_total / $despacho->despacho_peso, 2) : '-' }}</td>
+                                            <td>
+                                                <x-btn-accion class="btn btn-sm text-primary" wire:click="listar_informacion_despacho({{ $despacho->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">
+                                                    <x-slot name="message">
+                                                        <i class="fa-solid fa-eye"></i>
+                                                    </x-slot>
+                                                </x-btn-accion>
+                                            </td>
+                                        </tr>
+                                        @if(!empty($select_despachos[$despacho->id_despacho]))
+                                            <tr>
+                                                <td colspan="11">
+                                                    <div class="p-3" style="background-color: #FFFFFF; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+                                                        <div>
+                                                            <button class="btn btn-primary mb-3" wire:click.prevent="agregarGasto({{ $despacho->id_despacho }})">Agregar gasto</button>
+                                                            @foreach($gastos[$despacho->id_despacho] ?? [] as $index => $gasto)
+                                                                <div class="row mb-2">
+                                                                    <div class="col-lg-4">
+                                                                        <label class="form-label">Concepto(*)</label>
+                                                                        <input type="text" wire:model.defer="gastos.{{ $despacho->id_despacho }}.{{ $index }}.concepto" class="form-control">
+                                                                    </div>
+                                                                    <div class="col-lg-4">
+                                                                        <label class="form-label">Monto(*)</label>
+                                                                        <input type="text" wire:model.defer="gastos.{{ $despacho->id_despacho }}.{{ $index }}.monto" onkeyup="validar_numeros(this.id)" class="form-control">
+                                                                    </div>
+                                                                    <div class="col-lg-4">
+                                                                        <label class="form-label">Descripción</label>
+                                                                        <textarea wire:model.defer="gastos.{{ $despacho->id_despacho }}.{{ $index }}.descripcion" class="form-control"></textarea>
+                                                                    </div>
+                                                                </div>
+                                                            @endforeach
+                                                        </div>
+                                                    </div>
                                                 </td>
                                             </tr>
-                                            @if(!empty($select_despachos[$despacho->id_despacho]))
-                                                <tr>
-                                                    <td colspan="11">
-                                                        <div class="p-3" style="background-color: #FFFFFF; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
-                                                            <div class="row">
-                                                                <div class="col-lg-4 mb-3">
-                                                                    <label class="form-label" for="gasto_concepto_{{ $key }}">Concepto(*)</label>
-                                                                    <input type="text" wire:model.defer="gastos.{{ $despacho->id_despacho }}.concepto" id="gasto_concepto_{{ $key }}" class="form-control">
-                                                                    @error("gastos.$despacho->id_despacho.concepto")
-                                                                    <span class="text-danger">{{ $message }}</span>
-                                                                    @enderror
-                                                                </div>
-                                                                <div class="col-lg-4 mb-3">
-                                                                    <label class="form-label" for="gasto_monto_{{ $key }}">Monto(*)</label>
-                                                                    <input type="text" wire:model.defer="gastos.{{ $despacho->id_despacho }}.monto" id="gasto_monto_{{ $key }}" onkeyup="validar_numeros(this.id)" class="form-control">
-                                                                    @error("gastos.$despacho->id_despacho.monto")
-                                                                    <span class="text-danger">{{ $message }}</span>
-                                                                    @enderror
-                                                                </div>
-                                                                <div class="col-lg-4 mb-3">
-                                                                    <label class="form-label" for="gasto_descripcion_{{ $key }}">Descripción</label>
-                                                                    <textarea class="form-control" wire:model.defer="gastos.{{ $despacho->id_despacho }}.descripcion" id="gasto_descripcion_{{ $key }}"></textarea>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            @endif
-                                        @endforeach
-                                    @else
-                                        <tr>
-                                            <td colspan="11" class="text-center">No se han encontrado resultados.</td>
-                                        </tr>
-                                    @endif
-                                </x-slot>
-                            </x-table-general>
-                        </div>
+                                        @endif
+                                    @endforeach
+                                @else
+                                    <tr>
+                                        <td colspan="11" class="text-center">No se han encontrado resultados.</td>
+                                    </tr>
+                                @endif
+                            </x-slot>
+                        </x-table-general>
                     </div>
-                </x-slot>
-            </x-card-general-view>
-        @else
-            @if($id_transportistas && $despachos->isEmpty())
-                <div class="alert alert-danger mt-4">
-                    <p>Transportista sin despachos.</p>
                 </div>
-            @endif
-        @endif
-    </div>
+            </x-slot>
+        </x-card-general-view>
+    @endif
+
     <div class="row">
         <div class="col-lg-12">
             @if(isset($select_despachos) && count($select_despachos) > 0)
