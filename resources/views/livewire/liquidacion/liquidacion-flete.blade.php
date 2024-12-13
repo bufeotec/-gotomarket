@@ -322,14 +322,20 @@
                                                     <div class="p-3" style="background-color: #FFFFFF; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
                                                         <div>
                                                             <div class="row mb-4">
-                                                                <div class="col-lg-12 col-md-12 col-sm-12">
+                                                                <div class="col-lg-6 col-md-6 col-sm-6">
                                                                     <span class="btn btn-success btn-sm" wire:click.prevent="agregarGasto({{ $despacho->id_despacho }})">
                                                                         AGREGAR GASTO <i class="fa fa-plus"></i>
                                                                     </span>
                                                                 </div>
                                                             </div>
+
                                                             @foreach($gastos[$despacho->id_despacho] ?? [] as $index => $gasto)
                                                                 <div class="row mb-2">
+                                                                    <div class="col-lg-12 mt-2 text-end">
+                                                                        <span class="btn btn-danger btn-sm text-end" wire:click.prevent="eliminarGasto({{ $despacho->id_despacho }}, {{ $index }})">
+                                                                            ELIMINAR <i class="fa fa-trash"></i>
+                                                                        </span>
+                                                                    </div>
                                                                     <div class="col-lg-4">
                                                                         <label class="form-label">Concepto(*)</label>
                                                                         <input type="text" wire:model.defer="gastos.{{ $despacho->id_despacho }}.{{ $index }}.concepto" class="form-control">
@@ -349,6 +355,7 @@
                                                 </td>
                                             </tr>
                                         @endif
+
                                     @endforeach
                                 @else
                                     <tr>

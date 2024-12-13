@@ -24,6 +24,7 @@ class Liquidacion extends Model
         try {
             $result = DB::table('liquidaciones as li')
                 ->join('transportistas as tr', 'li.id_transportistas', '=', 'tr.id_transportistas')
+                ->join('users as u', 'li.id_users', '=', 'u.id_users')
                 ->whereBetween(DB::raw('DATE(li.created_at)'), [$desde, $hasta])
                 ->where('li.liquidacion_estado', '=', 1)
                 ->orderBy('li.id_liquidacion','desc')
