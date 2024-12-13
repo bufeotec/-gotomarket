@@ -212,51 +212,33 @@
             <div class="col-lg-3 col-md-3 col-sm-12">
                 <div class="card mb-0 h-100">
                     <div class="card-body">
-                        <div class="row">
-                            <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                                <h6>Serie</h6>
-                            </div>
-                            <div class="col-lg-12">
-                                <input class="form-control" type="text" id="liquidacion_serie" name="liquidacion_serie" wire:model="liquidacion_serie">
-                                @error('liquidacion_serie')
-                                <span class="message-error">{{ $message }}</span>
-                                @enderror
-                            </div>
-                        </div>
+                        <h6>Serie (*)</h6>
+                        <input class="form-control" type="text" id="liquidacion_serie" name="liquidacion_serie" wire:model="liquidacion_serie">
+                        @error('liquidacion_serie')
+                        <span class="message-error">{{ $message }}</span>
+                        @enderror
                     </div>
                 </div>
             </div>
             <div class="col-lg-3 col-md-3 col-sm-12">
                 <div class="card mb-0 h-100">
                     <div class="card-body">
-                        <div class="row">
-                            <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                                <h6>Correlativo</h6>
-                            </div>
-                            <div class="col-lg-12">
-                                <input class="form-control" type="text" id="liquidacion_correlativo" name="liquidacion_correlativo" wire:model="liquidacion_correlativo">
-                                @error('liquidacion_correlativo')
-                                <span class="message-error">{{ $message }}</span>
-                                @enderror
-                            </div>
-                        </div>
+                        <h6>Correlativo (*)</h6>
+                        <input class="form-control" type="text" id="liquidacion_correlativo" name="liquidacion_correlativo" wire:model="liquidacion_correlativo">
+                        @error('liquidacion_correlativo')
+                        <span class="message-error">{{ $message }}</span>
+                        @enderror
                     </div>
                 </div>
             </div>
             <div class="col-lg-3 col-md-3 col-sm-12">
                 <div class="card mb-0 h-100">
                     <div class="card-body">
-                        <div class="row">
-                            <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                                <h6>Comprobante</h6>
-                            </div>
-                            <div class="col-lg-12">
-                                <input class="form-control" type="file" id="liquidacion_ruta_comprobante" name="liquidacion_ruta_comprobante" wire:model="liquidacion_ruta_comprobante">
-                                @error('liquidacion_ruta_comprobante')
-                                <span class="message-error">{{ $message }}</span>
-                                @enderror
-                            </div>
-                        </div>
+                        <h6>Comprobante</h6>
+                        <input class="form-control" type="file" id="liquidacion_ruta_comprobante" name="liquidacion_ruta_comprobante" wire:model="liquidacion_ruta_comprobante">
+                        @error('liquidacion_ruta_comprobante')
+                        <span class="message-error">{{ $message }}</span>
+                        @enderror
                     </div>
                 </div>
             </div>
@@ -307,10 +289,11 @@
                                                         if ($vehiculo) {
                                                             $indi = ($despacho->despacho_peso / $vehiculo->vehiculo_capacidad_peso) * 100;
                                                             $indi = number_format($indi, 2);
+                                                            $indi = $indi.'%';
                                                         }
                                                     }
                                                 @endphp
-                                                <span style="color: {{ $indi > 0 ? '#28a745' : '#dc3545' }}">{{ $indi }}%</span>
+                                                <span style="color: {{ $indi > 0 ? '#28a745' : '#dc3545' }}">{{ $indi }}</span>
                                             </td>
                                             <td>
                                                 <b class="{{ $despacho->despacho_estado_modificado ? 'text-success' : 'text-danger' }}">
@@ -338,7 +321,13 @@
                                                 <td colspan="11">
                                                     <div class="p-3" style="background-color: #FFFFFF; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
                                                         <div>
-                                                            <button class="btn btn-primary mb-3" wire:click.prevent="agregarGasto({{ $despacho->id_despacho }})">Agregar gasto</button>
+                                                            <div class="row mb-4">
+                                                                <div class="col-lg-12 col-md-12 col-sm-12">
+                                                                    <span class="btn btn-success btn-sm" wire:click.prevent="agregarGasto({{ $despacho->id_despacho }})">
+                                                                        AGREGAR GASTO <i class="fa fa-plus"></i>
+                                                                    </span>
+                                                                </div>
+                                                            </div>
                                                             @foreach($gastos[$despacho->id_despacho] ?? [] as $index => $gasto)
                                                                 <div class="row mb-2">
                                                                     <div class="col-lg-4">
@@ -351,7 +340,7 @@
                                                                     </div>
                                                                     <div class="col-lg-4">
                                                                         <label class="form-label">Descripción</label>
-                                                                        <textarea wire:model.defer="gastos.{{ $despacho->id_despacho }}.{{ $index }}.descripcion" class="form-control"></textarea>
+                                                                        <textarea wire:model.defer="gastos.{{ $despacho->id_despacho }}.{{ $index }}.descripcion" rows="1" class="form-control"></textarea>
                                                                     </div>
                                                                 </div>
                                                             @endforeach
