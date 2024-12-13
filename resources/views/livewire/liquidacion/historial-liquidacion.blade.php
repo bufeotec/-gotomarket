@@ -214,16 +214,19 @@
         <x-slot name="id_modal">modalAgregarComprobante</x-slot>
         <x-slot name="titleModal">Agregar comprobante</x-slot>
         <x-slot name="modalContent">
-            <div class="row">
-                <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                    <label for="liquidacion_ruta_comprobante" class="form-label">Comprobante</label>
-                    <input type="file" class="form-control" id="liquidacion_ruta_comprobante" name="liquidacion_ruta_comprobante" wire:model="liquidacion_ruta_comprobante">
+            <form wire:submit="guardar_comprobante">
+                <div class="row">
+                    <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                        <label for="liquidacion_ruta_comprobante" class="form-label">Comprobante</label>
+                        <input type="file" class="form-control" id="liquidacion_ruta_comprobante" name="liquidacion_ruta_comprobante" wire:model="liquidacion_ruta_comprobante">
+                    </div>
                 </div>
-            </div>
-            <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-end">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" wire:click="guardar_comprobante">Guardar</button>
-            </div>
+                <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-end">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" >Guardar</button>
+                </div>
+            </form>
+
         </x-slot>
     </x-modal-general>
 
@@ -286,8 +289,8 @@
                                             <td>{{$rs->liquidacion_correlativo}}</td>
                                             <td>
                                                 @if(file_exists($rs->liquidacion_ruta_comprobante))
-                                                    <a href="{{asset($rs->liquidacion_ruta_comprobante)}}" class="btn btn-link" target="_blank">
-                                                        <i class="fas fa-file-invoice"></i>
+                                                    <a href="{{asset($rs->liquidacion_ruta_comprobante)}}" class="btn btn-warning text-white btn-sm" target="_blank">
+                                                        Ver Comprobante <i class="fas fa-file-invoice"></i>
                                                     </a>
                                                 @else
                                                     <span class="font-bold badge bg-label-success curso-pointer" wire:click="agregar_comprobante('{{ base64_encode($rs->id_liquidacion) }}')" data-bs-toggle="modal" data-bs-target="#modalAgregarComprobante" >

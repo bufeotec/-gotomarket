@@ -85,7 +85,7 @@ class HistorialLiquidacion extends Component
         try {
             DB::beginTransaction();
 
-            $liquidacion = Liquidacion::findOrFail($this->id_liquidacion);
+            $liquidacion = Liquidacion::find($this->id_liquidacion);
             if ($liquidacion) {
                 if ($this->liquidacion_ruta_comprobante) {
                     $liquidacion->liquidacion_ruta_comprobante = $this->general->save_files($this->liquidacion_ruta_comprobante, 'liquidacion/comprobantes');
