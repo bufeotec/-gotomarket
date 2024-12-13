@@ -387,7 +387,7 @@
     </div>
     <style>
         .card{
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
             border: none;
         }
     </style>

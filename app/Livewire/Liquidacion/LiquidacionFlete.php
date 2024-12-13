@@ -63,6 +63,7 @@ class LiquidacionFlete extends Component
                 ->join('transportistas as t', 'd.id_transportistas', '=', 't.id_transportistas')
                 ->join('tipo_servicios as ts', 'd.id_tipo_servicios', '=', 'ts.id_tipo_servicios')
                 ->where('d.id_transportistas', $value)
+                ->where('d.despacho_liquidado', '=',0)
                 ->where('d.despacho_estado', 1)
                 ->where('d.despacho_estado_aprobacion','=',3)
                 ->get();
@@ -158,38 +159,48 @@ class LiquidacionFlete extends Component
                         $detalle->id_despacho = $id_despacho;
                         $detalle->liquidacion_detalle_estado = 1;
                         $detalle->liquidacion_detalle_microtime = microtime(true);
-                        $detalle->save();
-
-                        // GUARDA EN LA TABLA LIQUIDACION_GASTOS
-                        if (isset($this->gastos[$id_despacho])) {
-                            foreach ($this->gastos[$id_despacho] as $gasto) {
-                                // Verificar que concepto y monto no estén vacíos
-                                if (empty($gasto['concepto']) || empty($gasto['monto'])) {
-                                    // Obtener el número de correlativo del despacho
-                                    $despacho = DB::table('despachos')->where('id_despacho', $id_despacho)->first();
-                                    // Mostrar el mensaje de error con el número de correlativo
-                                    session()->flash('error', 'Existe un gasto con concepto o monto inválido para el despacho: ' . $despacho->despacho_numero_correlativo);
-                                    return;
+                        if ($detalle->save()){
+                            /* ------------------------------------------------- */
+                            DB::table('despachos')->where('id_despacho','=',$id_despacho)->update(['despacho_liquidado'=>1]);
+                            /* ------------------------------------------------- */
+                            // GUARDA EN LA TABLA LIQUIDACION_GASTOS
+                            if (isset($this->gastos[$id_despacho])) {
+                                foreach ($this->gastos[$id_despacho] as $gasto) {
+                                    // Verificar que concepto y monto no estén vacíos
+                                    if (empty($gasto['concepto']) || empty($gasto['monto'])) {
+                                        // Obtener el número de correlativo del despacho
+                                        $despacho = DB::table('despachos')->where('id_despacho', $id_despacho)->first();
+                                        // Mostrar el mensaje de error con el número de correlativo
+                                        session()->flash('error', 'Existe un gasto con concepto o monto inválido para el despacho: ' . $despacho->despacho_numero_correlativo);
+                                        return;
+                                    }
+                                    $gastoModel = new LiquidacionGastos();
+                                    $gastoModel->id_liquidacion_detalle = $detalle->id_liquidacion_detalle;
+                                    $gastoModel->liquidacion_gasto_concepto = $gasto['concepto'];
+                                    $gastoModel->liquidacion_gasto_monto = $gasto['monto'];
+                                    $gastoModel->liquidacion_gasto_descripcion = $gasto['descripcion'] ?: null;
+                                    $gastoModel->liquidacion_gasto_estado = 1;
+                                    $gastoModel->liquidacion_gasto_microtime = microtime(true);
+                                    if (!$gastoModel->save()){
+                                        DB::rollBack();
+                                        session()->flash('error', 'A ocurrido un error al guardar uno de los gastos.');
+                                        return;
+                                    }
                                 }
-                                $gastoModel = new LiquidacionGastos();
-                                $gastoModel->id_liquidacion_detalle = $detalle->id_liquidacion_detalle;
-                                $gastoModel->liquidacion_gasto_concepto = $gasto['concepto'];
-                                $gastoModel->liquidacion_gasto_monto = $gasto['monto'];
-                                $gastoModel->liquidacion_gasto_descripcion = $gasto['descripcion'] ?: null;
-                                $gastoModel->liquidacion_gasto_estado = 1;
-                                $gastoModel->liquidacion_gasto_microtime = microtime(true);
-                                $gastoModel->save();
                             }
+                        }else{
+                            DB::rollBack();
+                            session()->flash('error', 'A ocurrido un error al guardar los detalles del despacho');
+                            return;
                         }
-
-
                     }
                 }
             } else{
+                DB::rollBack();
                 session()->flash('error', 'La serie y el correlativo ya existen.');
                 return;
             }
-            DB::commit(); // Confirmar la transacción si todo salió bien
+            DB::commit();
             session()->flash('success', 'Liquidación guardada correctamente.');
             $this->limpiar_campos_liquidacion();
         } catch (\Illuminate\Validation\ValidationException $e) {

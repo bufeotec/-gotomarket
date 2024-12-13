@@ -1,5 +1,5 @@
 @extends('layouts.dashboard_template')
-@section('title','Programación de camiones')
+@section('title','Historial de Programación')
 @section('content')
 
     <link rel="stylesheet" href="{{asset('js/select2/dist/css/select2.min.css')}}">

@@ -6,7 +6,7 @@
     <script src="{{asset('js/select2/dist/js/select2.min.js')}}"></script>
 
     <div class="page-heading">
-        <x-navegation-view text="Liquidación flete." />
+        <x-navegation-view text="Efectuar la liquidación correspondiente al transportista." />
 
         @livewire('liquidacion.liquidacion-flete')
 

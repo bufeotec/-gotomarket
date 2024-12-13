@@ -487,6 +487,8 @@ class Provincial extends Component
                     ->where('despacho_venta_cftd', $factura['CFTD'])
                     ->where('despacho_venta_cfnumser', $factura['CFNUMSER'])
                     ->where('despacho_venta_cfnumdoc', $factura['CFNUMDOC'])
+                    ->whereIn('despacho_detalle_estado_entrega', [0,1,2])
+                    ->orderBy('id_despacho_venta', 'desc')
                     ->exists();
                 if ($existe) {
                     $contadorError++;
