@@ -32,18 +32,18 @@ class HistorialLiquidacion extends Component
 
     public function listar_informacion_liquidacion($id){
         try {
-            // Obtener información de la liquidación con un JOIN a la tabla liquidacion_detalles
             $this->listar_detalle_liquidacion = DB::table('liquidaciones as l')
                 ->join('users as u', 'l.id_users', '=', 'u.id_users')
                 ->join('liquidacion_detalles as ld', 'ld.id_liquidacion', '=', 'l.id_liquidacion')
                 ->join('despachos as d', 'ld.id_despacho', '=', 'd.id_despacho')
                 ->where('l.id_liquidacion', '=', $id)
-                ->first();
-            // Si se encontró la liquidación, buscar gastos relacionados
-            if ($this->listar_detalle_liquidacion) {
-                $this->listar_detalle_liquidacion->gastos = DB::table('liquidacion_detalles as ld')
+                ->get();
+            // Asignar los gastos a cada detalle de liquidación
+            foreach ($this->listar_detalle_liquidacion as $detalle) {
+                $detalle->gastos = DB::table('liquidacion_detalles as ld')
                     ->join('liquidacion_gastos as lg', 'ld.id_liquidacion_detalle', '=', 'lg.id_liquidacion_detalle')
                     ->where('ld.id_liquidacion', '=', $id)
+                    ->where('ld.id_despacho', '=', $detalle->id_despacho)
                     ->get();
             }
         } catch (\Exception $e) {
