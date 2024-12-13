@@ -98,6 +98,14 @@ class LiquidacionFlete extends Component
         ];
     }
 
+    public function eliminarGasto($idDespacho, $index) {
+        // Verificar si el despacho y el índice existen
+        if (isset($this->gastos[$idDespacho][$index])) {
+            unset($this->gastos[$idDespacho][$index]);
+            $this->gastos[$idDespacho] = array_values($this->gastos[$idDespacho]);
+        }
+    }
+
     public function listar_informacion_despacho($id){
         try {
             $this->listar_detalle_despacho = DB::table('despachos as d')

@@ -4,6 +4,7 @@
         $general = new \App\Models\General();
     @endphp
 
+    {{--    MODAL DETALLE DESPACHO LIQUIDACION --}}
     <x-modal-general wire:ignore.self>
         <x-slot name="tama">modal-xl</x-slot>
         <x-slot name="id_modal">modalDetalleLiquidacion</x-slot>
@@ -99,7 +100,64 @@
                                                     <p>{{ $liquidacion->despacho_descripcion_modificado }}</p>
                                                 </div>
                                             @endif
+                                            <div class="col-lg-2 col-md-2 col-sm-12 mb-3">
+                                                @php
+                                                    $ra = 0;
+                                                    if ($liquidacion->despacho_costo_total && isset($liquidacion->totalVentaDespacho) && $liquidacion->totalVentaDespacho > 0) {
+                                                        $to = $liquidacion->despacho_costo_total / $liquidacion->totalVentaDespacho;
+                                                        $ra = $general->formatoDecimal($to);
+                                                    }
+                                                @endphp
+                                                <strong class="colorgotomarket mb-2">Flete / Venta:</strong>
+                                                <p>{{$ra}}</p>
+                                            </div>
+                                            <div class="col-lg-2 col-md-2 col-sm-12 mb-3">
+                                                @php
+                                                    $ra2 = 0;
+                                                    if ($liquidacion->despacho_costo_total && isset($liquidacion->despacho_peso) && $liquidacion->despacho_peso > 0) {
+                                                        $to = $liquidacion->despacho_costo_total / $liquidacion->despacho_peso;
+                                                        $ra2 = $general->formatoDecimal($to);
+                                                    }
+                                                @endphp
+                                                <strong class="colorgotomarket mb-2">Flete / Peso:</strong>
+                                                <p>{{$ra2}}</p>
+                                            </div>
+                                            <div class="col-lg-2 col-md-2 col-sm-12 mb-3">
+                                                @php
+                                                    $indi = "";
+                                                    if ($liquidacion->id_vehiculo){
+                                                        $vehi = \Illuminate\Support\Facades\DB::table('vehiculos')->where('id_vehiculo','=',$liquidacion->id_vehiculo)->first();
+                                                        $indi = ($liquidacion->despacho_peso / $vehi->vehiculo_capacidad_peso) * 100;
+                                                        $indi = $general->formatoDecimal($indi);
+                                                    }else{
+                                                        $indi = "-";
+                                                    }
+                                                @endphp
+                                                <strong class="colorgotomarket mb-2">Llenado en Peso:</strong>
+                                                <p style="color: {{$general->obtenerColorPorPorcentaje($indi)}}">{{ $indi > 0 ? $indi.'%' : '-' }}</p>
+                                            </div>
+                                            <div class="col-lg-2 col-md-2 col-sm-12 mb-3">
+                                                @php
+                                                    $totalMontoLiquidacion = \Illuminate\Support\Facades\DB::table('liquidacion_gastos')
+                                                    ->where('id_liquidacion_detalle', '=', $liquidacion->id_liquidacion_detalle)
+                                                    ->sum('liquidacion_gasto_monto');
+                                                @endphp
+                                                <strong class="colorgotomarket mb-2">Monto de la liquidación:</strong>
+                                                <p>
+                                                    S/ {{ $general->formatoDecimal($totalMontoLiquidacion) }}
+                                                </p>
+                                            </div>
+                                            <div class="col-lg-2 col-md-2 col-sm-12 mb-3">
+                                                @php
+                                                    $sumaTotal = $totalMontoLiquidacion + $liquidacion->despacho_costo_total;
+                                                @endphp
+                                                <strong class="colorgotomarket mb-2">Suma total:</strong>
+                                                <p>
+                                                    S/ {{ $general->formatoDecimal($sumaTotal) }}
+                                                </p>
+                                            </div>
                                         </div>
+
                                         <div class="row">
                                             <div class="col-lg-12">
                                                 <h6>Información Adicional de la liquidación</h6>
@@ -117,23 +175,19 @@
                                                             </tr>
                                                         </x-slot>
                                                         <x-slot name="tbody">
-                                                            @if(count($liquidacion->gastos) > 0)
+                                                            @if(isset($liquidacion->gastos) && count($liquidacion->gastos) > 0)
                                                                 @php $conteoGastos = 1; @endphp
                                                                 @foreach($liquidacion->gastos as $gs)
                                                                     <tr>
                                                                         <td>{{ $conteoGastos }} </td>
                                                                         <td>{{ $gs->liquidacion_gasto_concepto }} </td>
                                                                         <td>S/ {{ $general->formatoDecimal($gs->liquidacion_gasto_monto) }} </td>
-                                                                        <td>{{ $gs->liquidacion_gasto_descripcion }} </td>
+                                                                        <td>{{ $gs->liquidacion_gasto_descripcion ?? '-' }}</td>
                                                                     </tr>
                                                                     @php $conteoGastos++; @endphp
                                                                 @endforeach
                                                             @else
-                                                                <tr class="odd">
-                                                                    <td valign="top" colspan="7" class="dataTables_empty text-center">
-                                                                        No se han encontrado resultados.
-                                                                    </td>
-                                                                </tr>
+                                                                <tr><td colspan="4">No hay gastos registrados</td></tr>
                                                             @endif
                                                         </x-slot>
                                                     </x-table-general>
@@ -152,6 +206,24 @@
                     <p>No se encontraron detalles de liquidación.</p>
                 </div>
             @endif
+        </x-slot>
+    </x-modal-general>
+
+    {{--    MODAL AGREGAR COMPROBANTE --}}
+    <x-modal-general wire:ignore.self>
+        <x-slot name="id_modal">modalAgregarComprobante</x-slot>
+        <x-slot name="titleModal">Agregar comprobante</x-slot>
+        <x-slot name="modalContent">
+            <div class="row">
+                <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                    <label for="liquidacion_ruta_comprobante" class="form-label">Comprobante</label>
+                    <input type="file" class="form-control" id="liquidacion_ruta_comprobante" name="liquidacion_ruta_comprobante" wire:model="liquidacion_ruta_comprobante">
+                </div>
+            </div>
+            <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-end">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" wire:click="guardar_comprobante">Guardar</button>
+            </div>
         </x-slot>
     </x-modal-general>
 
@@ -193,6 +265,7 @@
                             <x-slot name="thead">
                                 <tr>
                                     <th>N°</th>
+                                    <th>Usuario responsable</th>
                                     <th>Transportista</th>
                                     <th>Serie</th>
                                     <th>Correlativo</th>
@@ -207,6 +280,7 @@
                                     @foreach($resultado as $rs)
                                         <tr>
                                             <td>{{$conteo}}</td>
+                                            <td>{{$rs->name}}</td>
                                             <td>{{$rs->transportista_razon_social}}</td>
                                             <td>{{$rs->liquidacion_serie}}</td>
                                             <td>{{$rs->liquidacion_correlativo}}</td>
@@ -216,7 +290,9 @@
                                                         <i class="fas fa-file-invoice"></i>
                                                     </a>
                                                 @else
-                                                    -
+                                                    <span class="font-bold badge bg-label-success curso-pointer" wire:click="agregar_comprobante('{{ base64_encode($rs->id_liquidacion) }}')" data-bs-toggle="modal" data-bs-target="#modalAgregarComprobante" >
+                                                        Agregar comprobante <i class="fa-solid fa-file-circle-plus ms-1"></i>
+                                                    </span>
                                                 @endif
                                             </td>
                                             <td>
@@ -242,3 +318,11 @@
         </x-card-general-view>
 
 </div>
+
+@script
+<script>
+    $wire.on('hideModal', () => {
+        $('#modalAgregarComprobante').modal('hide');
+    });
+</script>
+@endscript
