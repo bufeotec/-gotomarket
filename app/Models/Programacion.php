@@ -86,4 +86,20 @@ class Programacion extends Model
         }
         return $result;
     }
+    public function listar_programaciones_historial_programacion($desde,$hasta,$serie = null){
+        try {
+            $result = DB::table('programaciones')->select('*');
+            if ($desde  && $hasta){
+                $result->whereBetween('programacion_fecha',[$desde,$hasta]);
+            }
+            if ($serie){
+                $result->where('programacion_numero_correlativo','like',"%$serie%");
+            }
+            $result = $result->where('programacion_estado_aprobacion','<>',0)->orderBy('programacion_numero_correlativo', 'desc')->paginate(20);
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
 }

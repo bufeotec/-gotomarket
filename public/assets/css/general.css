@@ -184,6 +184,14 @@
     background-color: #ffe0db !important;
     color: #ff3e1d !important;
 }
+.bg-label-warning {
+    background-color: #fff7db !important;
+    color: #ffca1d !important;
+}
+.bg-label-primary {
+    background-color: #dbebff !important;
+    color: #1d77ff !important;
+}
 
 
 .card-table{

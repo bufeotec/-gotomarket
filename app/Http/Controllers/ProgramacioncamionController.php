@@ -32,9 +32,17 @@ class ProgramacioncamionController extends Controller
             return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
         }
     }
-    public function historial_programación(){
+    public function programacion_pendientes(){
         try {
-            return view('programacion_camiones.historial_programación');
+            return view('programacion_camiones.programacion_pendientes');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
+    public function historial_programacion(){
+        try {
+            return view('programacion_camiones.historial_programacion');
         }catch (\Exception $e){
             $this->logs->insertarLog($e);
             return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');

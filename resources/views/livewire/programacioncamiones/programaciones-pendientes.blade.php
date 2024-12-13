@@ -116,23 +116,6 @@
                                     <h6>Información de Comprobantes</h6>
                                     <hr>
                                 </div>
-                                @if (session()->has('successComprobante'))
-                                    <div class="col-lg-12 col-md-12 col-sm-12">
-                                        <div class="alert alert-success alert-dismissible show fade mt-2">
-                                            {{ session('successComprobante') }}
-                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                        </div>
-                                    </div>
-                                @endif
-                                @if (session()->has('errorComprobante'))
-                                    <div class="col-lg-12 col-md-12 col-sm-12">
-                                        <div class="alert alert-danger alert-dismissible show fade mt-2">
-                                            {{ session('errorComprobante') }}
-                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                        </div>
-                                    </div>
-                                @endif
-
                                 <div class="col-lg-12 col-md-12 col-sm-12">
                                     <x-table-general>
                                         <x-slot name="thead">
@@ -144,9 +127,6 @@
                                                 <th>Guía de Remisión</th>
                                                 <th>Importe Venta</th>
                                                 <th>Peso Kilos</th>
-                                                @if($listar_detalle_despacho->despacho_estado_aprobacion == 2 || $listar_detalle_despacho->despacho_estado_aprobacion == 3)
-                                                    <th>Estado del comprobante</th>
-                                                @endif
                                             </tr>
                                         </x-slot>
 
@@ -164,22 +144,6 @@
                                                         <td>{{$ta->despacho_venta_guia}}</td>
                                                         <td>S/ {{$general->formatoDecimal($ta->despacho_venta_cfimporte)}}</td>
                                                         <td>{{$general->formatoDecimal($ta->despacho_venta_total_kg)}} Kg</td>
-                                                        @if($listar_detalle_despacho->despacho_estado_aprobacion == 2 || $listar_detalle_despacho->despacho_estado_aprobacion == 3)
-                                                            <td>
-                                                                @if($listar_detalle_despacho->despacho_estado_aprobacion == 2)
-                                                                    <select name="" id="" class="form-control form-select"  wire:change="cambiarEstadoComprobante({{ $ta->id_despacho_venta }}, $event.target.value)">
-                                                                        <option value="" {{$ta->despacho_detalle_estado_entrega == 1 ? 'selected' : ''}}>Seleccionar</option>
-                                                                        <option value="2" {{$ta->despacho_detalle_estado_entrega == 2 ? 'selected' : ''}}>Entregado</option>
-                                                                        <option value="3" {{$ta->despacho_detalle_estado_entrega == 3 ? 'selected' : ''}}>No entregado</option>
-                                                                    </select>
-                                                                @else
-                                                                    <span class="font-bold badge  {{$ta->despacho_detalle_estado_entrega == 2 ? 'bg-label-success' : 'bg-label-danger'}}">
-                                                                        {{$ta->despacho_detalle_estado_entrega == 2 ? 'ENTREGADO ' : 'NO ENTREGADO'}}
-                                                                    </span>
-                                                                @endif
-
-                                                            </td>
-                                                        @endif
                                                     </tr>
                                                     @php $conteo++; @endphp
                                                 @endforeach
@@ -203,14 +167,20 @@
     <x-modal-delete  wire:ignore.self >
         <x-slot name="id_modal">modalAprobarProgramacion</x-slot>
         <x-slot name="modalContentDelete">
-            <form wire:submit.prevent="cambiarEstadoDespachoFormulario">
+            <form wire:submit.prevent="cambiarEstadoProgramacionFormulario">
                 <div class="row">
                     <div class="col-lg-12 col-md-12 col-sm-12">
-                        <h2 class="deleteTitle">¿Confirma que desea cambiar el estado del despacho a "En Camino"?</h2>
+                        @if($estadoPro == 1)
+                            <h2 class="deleteTitle">¿Está seguro de aprobar esta programación?</h2>
+                        @else
+                            <h2 class="deleteTitle">¿Está seguro de rechazar esta programación?</h2>
+                        @endif
                     </div>
                     <div class="col-lg-12 col-md-12 col-sm-12">
                         @error('id_progr') <span class="message-error">{{ $message }}</span> @enderror
+
                         @error('estadoPro') <span class="message-error">{{ $message }}</span> @enderror
+
                         @if (session()->has('error_delete'))
                             <div class="alert alert-danger alert-dismissible show fade">
                                 {{ session('error_delete') }}
@@ -230,10 +200,6 @@
 
 
     <div class="row align-items-center mt-2">
-        <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-            <label for="serie_correlativo" class="form-label">Número de programación</label>
-            <input type="text" name="serie_correlativo" id="serie_correlativo" wire:model.live="serie_correlativo" placeholder="Ingrese la información" class="form-control">
-        </div>
         <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
             <label for="fecha_desde" class="form-label">Desde</label>
             <input type="date" name="fecha_desde" id="fecha_desde" wire:model.live="desde" class="form-control">
@@ -262,10 +228,7 @@
                 <h6 class="m-0">FC : Fecha de Creación</h6>
             </div>
             <div class="col-lg col-md-3 col-sm-3 mb-1">
-                <h6 class="m-0">FA : Fecha de Aprobación</h6>
-            </div>
-            <div class="col-lg col-md-3 col-sm-3 mb-1">
-                <h6 class="m-0">N° C : Número Correlativo</h6>
+                <h6 class="m-0">E : Estado</h6>
             </div>
         </div>
     @endif
@@ -291,25 +254,35 @@
                 $general = new \App\Models\General();
                 $fe = $general->obtenerNombreFecha($r->programacion_fecha,'Date','Date');
                 $fc = $general->obtenerNombreFecha($r->created_at,'DateTime','DateTime');
-                $fa = $general->obtenerNombreFecha($r->programacion_fecha_aprobacion,'DateTime','DateTime');
             @endphp
 {{--            {{route('Programacioncamion.detalle_programacion',['data'=>base64_encode($r->id_programacion) ])}}--}}
             <div class="accordion-item" >
                 <h2 class="accordion-header">
                     <button class="accordion-button {{$index == 0 ? '' : 'collapsed'}}" wire:ignore.self type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne_{{$index}}" aria-expanded="true" aria-controls="collapseOne_{{$index}}">
-                        #{{$conteoGeneral}} | FE : {{$fe}} | UR : {{$usuarios}} | FC : {{$fc}} | FA : {{$fa}} | N° C : {{$r->programacion_numero_correlativo}}
+                        #{{$conteoGeneral}} | FE : {{$fe}} | UR : {{$usuarios}} | FC : {{$fc}} | E : {{$r->programacion_estado == 1 ? 'ACTIVO' : 'DESHABILITADO'}}
                     </button>
                 </h2>
                 <div id="collapseOne_{{$index}}" class="accordion-collapse collapse {{$index == 0 ? 'show' : ''}}" data-bs-parent="#accordionExample" wire:ignore.self >
                     <div class="accordion-body" >
                         <div class="row">
+                            <div class="col-lg-12 col-md-12 col-sm-12 mb-3 text-end">
+                                @php
+                                    $user = \Illuminate\Support\Facades\Auth::user(); // Obtiene el usuario autenticado
+                                    // Obtén el primer rol del usuario y su ID
+                                    $roleId = $user->roles->first()->id ?? null;
+                                @endphp
+                                @if($roleId == 1 || $roleId == 2)
+                                    <button class="btn btn-sm text-white bg-success" wire:click="cambiarEstadoProgramacion({{$r->id_programacion}},1)" data-bs-toggle="modal" data-bs-target="#modalAprobarProgramacion"><i class="fa-solid fa-check"></i> APROBAR</button>
+                                    <button class="btn btn-sm text-white bg-danger" wire:click="cambiarEstadoProgramacion({{$r->id_programacion}},4)" data-bs-toggle="modal" data-bs-target="#modalAprobarProgramacion"><i class="fa fa-x"></i> RECHAZAR</button>
+                                @endif
+                                <a class="btn btn-sm text-white bg-primary" href="{{route('Programacioncamion.editar_programacion',['data'=>base64_encode($r->id_programacion)])}}"><i class="fa-solid fa-pencil"></i> EDITAR</a>
+                            </div>
                             <div class="col-lg-12 col-md-12 col-sm-12 table-responsive">
                                 <table class="table">
                                     <thead>
                                     <tr style="background: #f5f5f9">
                                         <th>N°</th>
                                         <th>Servicio</th>
-                                        <th>Orden Servicio</th>
                                         <th>Proveedor</th>
                                         <th>Importe Total</th>
                                         <th>Peso</th>
@@ -318,7 +291,6 @@
                                         <th>Coso Flete</th>
                                         <th>Flete / Venta</th>
                                         <th>Flete / Peso</th>
-                                        <th>Estado Despacho</th>
                                         <th>Acciones</th>
                                     </tr>
                                     </thead>
@@ -329,7 +301,6 @@
                                             <tr>
                                                 <td>{{$conteoGeneral2}}</td>
                                                 <td>{{$des->tipo_servicio_concepto}}</td>
-                                                <td>{{$des->despacho_numero_correlativo}}</td>
                                                 <td>{{$des->transportista_nom_comercial}}</td>
                                                 <td>S/ {{$general->formatoDecimal($des->totalVentaDespacho)}}</td>
                                                 <td>{{$des->despacho_peso}} kg</td>
@@ -374,34 +345,9 @@
                                                 @endphp
                                                 <td>{{$ra2}}</td>
                                                 <td>
-                                                    @php
-                                                        $colorBadge = "";
-                                                        if ($des->despacho_estado_aprobacion == 1){
-                                                            $colorBadge = "bg-label-warning";
-                                                        }elseif ($des->despacho_estado_aprobacion == 2){
-                                                            $colorBadge = "bg-label-primary";
-                                                        }elseif ($des->despacho_estado_aprobacion == 3){
-                                                            $colorBadge = "bg-label-success";
-                                                        }else{
-                                                            $colorBadge = "bg-label-danger";
-                                                        }
-                                                     @endphp
-                                                     <span class="font-bold badge  {{$colorBadge}}">
-                                                        {{$des->despacho_estado_aprobacion == 1 ? 'APROBADO ' : ''}}
-                                                        {{$des->despacho_estado_aprobacion == 2 ? 'EN CAMINO ' : ''}}
-                                                        {{$des->despacho_estado_aprobacion == 3 ? 'CULMINADO' : ''}}
-                                                        {{$des->despacho_estado_aprobacion == 4 ? 'RECHAZADO' : ''}}
-                                                    </span>
-                                                </td>
-                                                <td>
                                                     <button class="btn btn-sm text-primary" wire:click="listar_informacion_despacho({{$des->id_despacho}})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">
                                                         <i class="fa-solid fa-eye"></i>
                                                     </button>
-                                                    @if($des->despacho_estado_aprobacion == 1)
-                                                        <button class="btn btn-sm text-warning" wire:click="cambiarEstadoDespacho({{$des->id_despacho}})" data-bs-toggle="modal" data-bs-target="#modalAprobarProgramacion">
-                                                            <i class="fa fa-car-side"></i>
-                                                        </button>
-                                                    @endif
                                                 </td>
                                             </tr>
                                             @php $conteoGeneral2++; @endphp

@@ -3,6 +3,7 @@
 namespace App\Livewire\Programacioncamiones;
 
 use App\Models\Despacho;
+use App\Models\DespachoVenta;
 use App\Models\General;
 use App\Models\Logs;
 use App\Models\Programacion;
@@ -20,8 +21,9 @@ class HistorialProgramacion extends Component
 
     public $desde;
     public $hasta;
+    public $serie_correlativo;
     public $listar_detalle_despacho = [];
-    public $id_progr = "";
+    public $id_despacho = "";
     public $estadoPro = "";
     /* ---------------------------------------- */
     private $logs;
@@ -38,19 +40,20 @@ class HistorialProgramacion extends Component
     public function mount(){
         $this->desde = date('Y-m-d');
         $this->hasta = date('Y-m-d');
+        $this->tipo_aprobacacion = null;
     }
 
     public function render()
     {
-        $resultado = $this->programacion->listar_programaciones_realizadas_x_fechas_x_estado($this->desde,$this->hasta,0);
-        foreach ($resultado as $re){
+        $resultado = $this->programacion->listar_programaciones_historial_programacion($this->desde,$this->hasta,$this->serie_correlativo);
+        foreach($resultado as $rehs){
             $totalVenta = 0;
-            $re->despacho = DB::table('despachos as d')
+            $rehs->despacho = DB::table('despachos as d')
                 ->join('transportistas as t','t.id_transportistas','=','d.id_transportistas')
                 ->join('tipo_servicios as ts','ts.id_tipo_servicios','=','d.id_tipo_servicios')
-                ->where('d.id_programacion','=',$re->id_programacion)
+                ->where('d.id_programacion','=',$rehs->id_programacion)
                 ->get();
-            foreach ($re->despacho as $des){
+            foreach ($rehs->despacho as $des){
                 $des->comprobantes =  DB::table('despacho_ventas as dv')
                     ->where('id_despacho','=',$des->id_despacho)
                     ->get();
@@ -61,6 +64,8 @@ class HistorialProgramacion extends Component
                 $des->totalVentaDespacho = $totalVenta;
             }
         }
+
+
         return view('livewire.programacioncamiones.historial-programacion',compact('resultado'));
     }
 
@@ -78,80 +83,99 @@ class HistorialProgramacion extends Component
         }
     }
 
-    public function cambiarEstadoProgramacion($id,$estado){ //  $estado = 1 aprobar , 2 desaprobar
+    public function cambiarEstadoDespacho($id){ //  $estado = 1 aprobar , 2 desaprobar
         if ($id){
-            $this->id_progr = $id;
-            $this->estadoPro = $estado;
+            $this->id_despacho = $id;
         }
     }
-    public function cambiarEstadoProgramacionFormulario(){
+    public function cambiarEstadoDespachoFormulario(){
         try {
 
-            if (!Gate::allows('aprobar_rechzar_programacion')) {
-                session()->flash('error_delete', 'No tiene permisos para aprobar o rechazar esta programación.');
+            if (!Gate::allows('cambiar_estado_despacho')) {
+                session()->flash('error_delete', 'No tiene permisos para poder cambiar el estado del despacho.');
                 return;
             }
             $this->validate([
-                'id_progr' => 'required|integer',
-                'estadoPro' => 'required|integer',
+                'id_despacho' => 'required|integer',
             ], [
-                'id_progr.required' => 'El identificador es obligatorio.',
-                'id_progr.integer' => 'El identificador debe ser un número entero.',
-
-                'estadoPro.required' => 'El estado es obligatorio.',
-                'estadoPro.integer' => 'El estado debe ser un número entero.',
+                'id_despacho.required' => 'El identificador es obligatorio.',
+                'id_despacho.integer' => 'El identificador debe ser un número entero.',
             ]);
 
             DB::beginTransaction();
-            $correlaApro = null;
-            if ($this->estadoPro == 1){ // APROBACIÓN
-                /* Listar ultima programación aprobada */
-                $correlaApro = $this->programacion->listar_ultima_aprobacion();
-            }
-            $programacionUpdate = Programacion::find($this->id_progr);
-            $programacionUpdate->id_users_programacion = Auth::id();
-            $programacionUpdate->programacion_fecha_aprobacion = date('Y-m-d');
-            $programacionUpdate->programacion_estado_aprobacion = $this->estadoPro;
-            if ($correlaApro){
-                $programacionUpdate->programacion_numero_correlativo = $correlaApro;
-            }
-            if ($programacionUpdate->save()) {
-                // listar despachos realizados
-                $despachos = DB::table('despachos')->where('id_programacion','=',$this->id_progr)->get();
-                foreach ($despachos as $des){
-                    $updateDespacho = Despacho::find($des->id_despacho);
-                    $updateDespacho->id_users_programacion = Auth::id();
-                    $updateDespacho->despacho_estado_aprobacion = $this->estadoPro;
-                    if ($this->estadoPro == 1){
-                        $correlaApro = $this->despacho->listar_ultima_aprobacion_despacho();
-                        $updateDespacho->despacho_numero_correlativo = $correlaApro;
-                    }
-                    $updateDespacho->despacho_fecha_aprobacion = date('Y-m-d');
-                    if (!$updateDespacho->save()){
-                        DB::rollBack();
-                        session()->flash('error_delete', 'No se pudo aprobar los despachos relacionados a la programación.');
-                        return;
-                    }
+
+            $updateDespacho = Despacho::find($this->id_despacho);
+            $updateDespacho->despacho_estado_aprobacion = 2;
+            if ($updateDespacho->save()){
+                $existeComprobanteCamino = DB::table('despacho_ventas')->where('id_despacho', $this->id_despacho)->update(['despacho_detalle_estado_entrega'=>1]);
+                if ($existeComprobanteCamino){
+                    DB::commit();
+                    $this->dispatch('hideModalDelete');
+                    session()->flash('success', 'Despacho en camino.');
                 }
-                DB::commit();
-                $this->dispatch('hideModalDelete');
-                if ($this->estadoPro == 1){
-                    session()->flash('success', 'Registro aprobado correctamente.');
-                }else{
-                    session()->flash('success', 'Registro rechazado correctamente.');
-                }
-            } else {
+            }else{
                 DB::rollBack();
-                session()->flash('error_delete', 'No se pudo cambiar el estado de la programación.');
+                session()->flash('error_delete', 'No se pudo cambiar el estado del despacho a "En Camino".');
                 return;
             }
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             $this->setErrorBag($e->validator->errors());
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logs->insertarLog($e);
             session()->flash('error', 'Ocurrió un error al cambiar el estado del registro. Por favor, inténtelo nuevamente.');
+        }
+    }
+    public function cambiarEstadoComprobante($id_comprobante,$estado){
+        try {
+            // Validar el estado recibido
+            if (!in_array((int)$estado, [2, 3])) {
+                session()->flash('errorComprobante', 'Estado inválido seleccionado.');
+                return;
+            }
+            // $estado sebe contener el valor del select
+            if (!Gate::allows('cambiar_estado_comprobante')) {
+                session()->flash('errorComprobante', 'No tiene permisos para poder cambiar el estado del comprobante.');
+                return;
+            }
+            if ($id_comprobante){
+                DB::beginTransaction();
+                $updateComprobante = DespachoVenta::find($id_comprobante);
+                if (!$updateComprobante) {
+                    DB::rollBack();
+                    session()->flash('errorComprobante', 'Comprobante no encontrado.');
+                    return;
+                }
+                $updateComprobante->despacho_detalle_estado_entrega = (int)$estado;
+                if (!$updateComprobante->save()){
+                    DB::rollBack();
+                    session()->flash('errorComprobante', 'No se pudo cambiar el estado del comprobante.');
+                    return;
+                }
+                // validar cambiar el estado del despacho
+                $id_despacho = $updateComprobante->id_despacho;
+                if ($id_despacho){
+                    // validar si existe algún comprobante con estado 1 'En transito"
+                    $existeComprobanteCamino = DespachoVenta::where('id_despacho', $id_despacho)
+                        ->where('despacho_detalle_estado_entrega', 1)
+                        ->exists();
+
+                    if (!$existeComprobanteCamino){
+                        // si no existe ninguno en transito cambiar a culminado
+                        Despacho::where('id_despacho', $id_despacho)
+                            ->update(['despacho_estado_aprobacion' => 3]);
+                    }
+                    DB::commit();
+                    session()->flash('successComprobante', 'El estado del comprobante se cambió correctamente.');
+                }
+
+            }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->setErrorBag($e->validator->errors());
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logs->insertarLog($e);
+            session()->flash('errorComprobante', 'Ocurrió un error al cambiar el estado del registro. Por favor, inténtelo nuevamente.');
         }
     }
 

@@ -98,10 +98,14 @@ class Vehiculo extends Model
 
     public function obtener_vehiculos_con_tarifarios_local($pesot, $volument,$type, $idt = null){
         try {
-            $query = DB::table('vehiculos as v')
-                ->join('tipo_vehiculos as tv', 'tv.id_tipo_vehiculo', '=', 'v.id_tipo_vehiculo')
-                ->join('tarifarios as t', 't.id_tipo_vehiculo', '=', 'tv.id_tipo_vehiculo')
-                ->join('transportistas as tr', 'tr.id_transportistas', '=', 't.id_transportistas')
+//            $query = DB::table('vehiculos as v');
+
+            $query = DB::table('transportistas as tr')
+                ->join('tarifarios as t', 't.id_transportistas', '=', 'tr.id_transportistas')
+                ->join('vehiculos as v', 'v.id_transportistas', '=', 'tr.id_transportistas')
+//                ->join('vehiculos as v2', 'v2.id_tipo_vehiculo', '=', 't.id_tipo_vehiculo')
+                ->join('tipo_vehiculos as tv', 'tv.id_tipo_vehiculo', '=', 't.id_tipo_vehiculo')
+                ->join('tipo_vehiculos as tv2', 'tv2.id_tipo_vehiculo', '=', 'v.id_tipo_vehiculo')
                 ->select('tr.id_transportistas','v.id_vehiculo','v.vehiculo_placa','v.vehiculo_capacidad_peso','v.vehiculo_capacidad_volumen','t.tarifa_cap_min','t.tarifa_cap_max','t.tarifa_monto','t.tarifa_estado_aprobacion','t.id_tarifario')
                 ->where('t.tarifa_estado','=', 1)
                 ->where('v.vehiculo_estado','=', 1)
@@ -109,7 +113,10 @@ class Vehiculo extends Model
                 ->where('v.vehiculo_capacidad_peso', '>=', $pesot)
                 ->where('t.tarifa_cap_min', '<=', $pesot)
                 ->where('t.tarifa_cap_max', '>=', $pesot)
-            ;
+                // Comparar columnas
+                ->whereColumn('v.id_tipo_vehiculo', '=', 't.id_tipo_vehiculo')
+//                ->where('v2.id_tipo_vehiculo', '=', 't.id_tipo_vehiculo')
+                ; // Nueva condición
 
             if ($volument) {
                 $query->where('v.vehiculo_capacidad_volumen','>=',$volument);

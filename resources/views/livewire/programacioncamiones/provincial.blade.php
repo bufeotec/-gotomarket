@@ -620,15 +620,13 @@
                                             Cm³: <span>{{ $volumen }}</span>
                                         </small>
                                     </div>
-                                    <div class="col-lg-7 col-md-7 col-sm-12 text-end">
+                                    <div class="col-lg-12 col-md-12 col-sm-12 text-end">
                                         @if($costoTotal && $importeTotalVenta)
                                             <small class="textTotalComprobantesSeleccionados me-2">
                                                 @php
                                                     $ra1 = 0;
-                                                    if ($volumenTotal){
-                                                        $to = $costoTotal / $importeTotalVenta;
-                                                        $ra1 = $me->formatoDecimal($to);
-                                                    }
+                                                    $to = $costoTotal / $importeTotalVenta;
+                                                    $ra1 = $me->formatoDecimal($to);
                                                 @endphp
                                                 F.V: {{$costoTotal}} / {{$importeTotalVenta}} =  <span>{{ $ra1 }}</span>
                                             </small>
@@ -637,10 +635,8 @@
                                             <small class="textTotalComprobantesSeleccionados">
                                                 @php
                                                     $ra2 = 0;
-                                                    if ($volumenTotal){
-                                                        $to = $costoTotal / $peso;
-                                                        $ra2 = $me->formatoDecimal($to);
-                                                    }
+                                                    $to = $costoTotal / $pesoTotal;
+                                                    $ra2 = $me->formatoDecimal($to);
                                                 @endphp
                                                 F.P: {{$costoTotal}} / {{$peso}} =  <span>{{ $ra2 }}</span>
                                             </small>

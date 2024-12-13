@@ -501,7 +501,7 @@
                                             <small class="textTotalComprobantesSeleccionados">
                                                 @php
                                                     $ra2 = 0;
-                                                    $to = $costoTotal / $peso;
+                                                    $to = $costoTotal / $pesoTotal;
                                                     $ra2 = $me->formatoDecimal($to);
                                                 @endphp
                                                 F.P: {{$costoTotal}} / {{$peso}} =  <span>{{ $ra2 }}</span>

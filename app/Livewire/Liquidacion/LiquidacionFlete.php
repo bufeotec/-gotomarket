@@ -63,7 +63,7 @@ class LiquidacionFlete extends Component
                 ->join('tipo_servicios as ts', 'd.id_tipo_servicios', '=', 'ts.id_tipo_servicios')
                 ->where('d.id_transportistas', $value)
                 ->where('d.despacho_estado', 1)
-                ->whereIn('d.despacho_estado_aprobacion', [1, 2, 3])
+                ->where('d.despacho_estado_aprobacion','=',3)
                 ->get();
             foreach ($this->despachos as $des) {
                 $des->comprobantes = DB::table('despacho_ventas as dv')

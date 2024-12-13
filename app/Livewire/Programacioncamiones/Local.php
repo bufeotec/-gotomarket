@@ -463,7 +463,7 @@ class Local extends Component
             DB::commit();
 
             if ($this->id_programacion_edit && $this->id_despacho_edit){
-                return redirect()->route('Programacioncamion.historial_programación')->with('success', '¡Registro actualizado correctamente!');
+                return redirect()->route('Programacioncamion.programacion_pendientes')->with('success', '¡Registro actualizado correctamente!');
             }else{
                 session()->flash('success', 'Registro guardado correctamente.');
                 $this->reiniciar_campos();

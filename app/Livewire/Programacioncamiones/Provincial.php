@@ -307,8 +307,10 @@ class Provincial extends Component
         ];
         $this->pesoTotal += $factura->total_kg;
         $this->volumenTotal += $factura->total_volumen;
-        $importe = $this->general->formatoDecimal($factura->CFIMPORTE);
-        $this->importeTotalVenta += floatval($importe);
+//        $importe = $this->general->formatoDecimal($factura->CFIMPORTE);
+        $importe = $factura->CFIMPORTE;
+        $importe = floatval($importe);
+        $this->importeTotalVenta += $importe;
 
         // Eliminar la factura de la lista de facturas filtradas
         $this->filteredComprobantes = $this->filteredComprobantes->filter(function ($f) use ($CFNUMDOC) {
@@ -335,6 +337,7 @@ class Provincial extends Component
             // Actualiza los totales
             $this->pesoTotal -= $factura['total_kg'];
             $this->volumenTotal -= $factura['total_volumen'];
+            $this->importeTotalVenta =  $this->importeTotalVenta - $factura['CFIMPORTE'];
 
             // Verifica si no quedan facturas seleccionadas
             if (empty($this->selectedFacturas)) {
@@ -395,6 +398,7 @@ class Provincial extends Component
             $this->tarifaMontoSeleccionado = $vehiculo->tarifa_monto;
             $this->montoOriginal = $vehiculo->tarifa_monto;
             $this->selectedTarifario = $id;
+            $this->despacho_descripcion_modificado = "";
             $this->calcularCostoTotal();
         }
     }
@@ -590,7 +594,7 @@ class Provincial extends Component
             }
             DB::commit();
             if ($this->id_programacion_edit && $this->id_despacho_edit){
-                return redirect()->route('Programacioncamion.historial_programación')->with('success', '¡Registro actualizado correctamente!');
+                return redirect()->route('Programacioncamion.programacion_pendientes')->with('success', '¡Registro actualizado correctamente!');
             }else{
                 session()->flash('success', 'Registro guardado correctamente.');
                 $this->reiniciar_campos();

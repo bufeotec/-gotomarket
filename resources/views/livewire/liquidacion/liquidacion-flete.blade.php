@@ -129,6 +129,7 @@
                                                 <th>Guía de Remisión</th>
                                                 <th>Importe Venta</th>
                                                 <th>Peso Kilos</th>
+                                                <th>Estado del comprobante</th>
                                             </tr>
                                         </x-slot>
 
@@ -146,6 +147,11 @@
                                                         <td>{{$ta->despacho_venta_guia}}</td>
                                                         <td>S/ {{$general->formatoDecimal($ta->despacho_venta_cfimporte)}}</td>
                                                         <td>{{$general->formatoDecimal($ta->despacho_venta_total_kg)}} Kg</td>
+                                                        <td>
+                                                            <span class="font-bold badge  {{$ta->despacho_detalle_estado_entrega == 2 ? 'bg-label-success' : 'bg-label-danger'}}">
+                                                                {{$ta->despacho_detalle_estado_entrega == 2 ? 'ENTREGADO ' : 'NO ENTREGADO'}}
+                                                            </span>
+                                                        </td>
                                                     </tr>
                                                     @php $conteo++; @endphp
                                                 @endforeach
@@ -185,8 +191,8 @@
     @endif
 
     <div class="row">
-        <div class="col-lg-6">
-            <div class="card">
+        <div class="col-lg-3">
+            <div class="card mb-0 h-100">
                 <div class="card-body">
                     <h6>Lista de transportistas</h6>
                     <select class="form-select" name="id_transportistas" id="id_transportistas" wire:model="id_transportistas" wire:change="seleccion_trans">
@@ -201,187 +207,181 @@
                 </div>
             </div>
         </div>
-    </div>
-
-    {{--    DATOS DEL DESPACHO SEGUN EL TRANSPORTISTA--}}
-    @if($id_transportistas && $despachos->isEmpty())
-        <div class="alert alert-danger mt-1">
-            <p>Transportista sin despachos.</p>
-        </div>
-    @elseif($despachos && count($despachos) > 0)
-        {{-- CAMPOS QUE MUESTRA SEGUN EL TRANSPORTISTA SELECCIONADO --}}
-        <div class="row">
-            <div class="col-lg-12">
-                <div class="row">
-                    <div class="col-lg-4 col-md-4 col-sm-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                                        <h6>Serie</h6>
-                                    </div>
-                                    <div class="col-lg-12">
-                                        <input class="form-control" type="text" id="liquidacion_serie" name="liquidacion_serie" wire:model="liquidacion_serie">
-                                        @error('liquidacion_serie')
-                                        <span class="message-error">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                </div>
+        @if($despachos && count($despachos) > 0)
+            {{-- CAMPOS QUE MUESTRA SEGUN EL TRANSPORTISTA SELECCIONADO --}}
+            <div class="col-lg-3 col-md-3 col-sm-12">
+                <div class="card mb-0 h-100">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                                <h6>Serie</h6>
                             </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-4 col-md-4 col-sm-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                                        <h6>Correlativo</h6>
-                                    </div>
-                                    <div class="col-lg-12">
-                                        <input class="form-control" type="text" id="liquidacion_correlativo" name="liquidacion_correlativo" wire:model="liquidacion_correlativo">
-                                        @error('liquidacion_correlativo')
-                                        <span class="message-error">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-4 col-md-4 col-sm-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                                        <h6>Comprobante</h6>
-                                    </div>
-                                    <div class="col-lg-12">
-                                        <input class="form-control" type="file" id="liquidacion_ruta_comprobante" name="liquidacion_ruta_comprobante" wire:model="liquidacion_ruta_comprobante">
-                                        @error('liquidacion_ruta_comprobante')
-                                        <span class="message-error">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                </div>
+                            <div class="col-lg-12">
+                                <input class="form-control" type="text" id="liquidacion_serie" name="liquidacion_serie" wire:model="liquidacion_serie">
+                                @error('liquidacion_serie')
+                                <span class="message-error">{{ $message }}</span>
+                                @enderror
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-
-        {{--    DESPACHOS DEL TRANSPORTISTA --}}
-        <x-card-general-view>
-            <x-slot name="content">
-                <div class="row">
-                    <div class="col-lg-12 col-md-12 col-sm-12">
-                        <x-table-general>
-                            <x-slot name="thead">
-                                <tr>
-                                    <th>Check</th>
-                                    <th>Correlativo</th>
-                                    <th>Servicio</th>
-                                    <th>Importe Total</th>
-                                    <th>Peso</th>
-                                    <th>Llenado en Peso</th>
-                                    <th>Cambio de Tarifa</th>
-                                    <th>Costo Flete</th>
-                                    <th>Flete / Venta</th>
-                                    <th>Flete / Peso</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </x-slot>
-
-                            <x-slot name="tbody">
-                                @if(count($despachos) > 0)
-                                    @foreach($despachos as $key => $despacho)
-                                        <tr>
-                                            <td>
-                                                <input
-                                                    type="checkbox"
-                                                    class="form-check-input"
-                                                    wire:model.defer="select_despachos.{{ $despacho->id_despacho }}"
-                                                    wire:click="actualizarDespacho('{{ $despacho->id_despacho }}', $event.target.checked)"
-                                                >
-                                            </td>
-                                            <td>{{ $despacho->despacho_numero_correlativo }}</td>
-                                            <td>{{ $despacho->tipo_servicio_concepto }}</td>
-                                            <td>S/ {{ $despacho->despacho_flete }}</td>
-                                            <td>{{ $despacho->despacho_peso }} kg</td>
-                                            <td>
-                                                @php
-                                                    $indi = "-";
-                                                    if ($despacho->id_vehiculo) {
-                                                        $vehiculo = \DB::table('vehiculos')->where('id_vehiculo', $despacho->id_vehiculo)->first();
-                                                        if ($vehiculo) {
-                                                            $indi = ($despacho->despacho_peso / $vehiculo->vehiculo_capacidad_peso) * 100;
-                                                            $indi = number_format($indi, 2);
-                                                        }
-                                                    }
-                                                @endphp
-                                                <span style="color: {{ $indi > 0 ? '#28a745' : '#dc3545' }}">{{ $indi }}%</span>
-                                            </td>
-                                            <td>
-                                                <b class="{{ $despacho->despacho_estado_modificado ? 'text-success' : 'text-danger' }}">
-                                                    {{ $despacho->despacho_estado_modificado ? 'SI' : 'NO' }}
-                                                </b>
-                                            </td>
-                                            <td>
-                                                <span class="{{ $despacho->despacho_estado_modificado ? 'text-danger' : '' }}">S/ {{ $despacho->despacho_flete }}</span>
-                                                @if($despacho->despacho_estado_modificado)
-                                                    <b class="text-success">=> S/ {{ $despacho->despacho_monto_modificado }}</b>
-                                                @endif
-                                            </td>
-                                            <td>{{ $despacho->despacho_costo_total && $despacho->totalVentaDespacho > 0 ? number_format($despacho->despacho_costo_total / $despacho->totalVentaDespacho, 2) : '-' }}</td>
-                                            <td>{{ $despacho->despacho_costo_total ? number_format($despacho->despacho_costo_total / $despacho->despacho_peso, 2) : '-' }}</td>
-                                            <td>
-                                                <x-btn-accion class="btn btn-sm text-primary" wire:click="listar_informacion_despacho({{ $despacho->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">
-                                                    <x-slot name="message">
-                                                        <i class="fa-solid fa-eye"></i>
-                                                    </x-slot>
-                                                </x-btn-accion>
-                                            </td>
-                                        </tr>
-                                        @if(!empty($select_despachos[$despacho->id_despacho]))
-                                            <tr>
-                                                <td colspan="11">
-                                                    <div class="p-3" style="background-color: #FFFFFF; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
-                                                        <div class="row">
-                                                            <div class="col-lg-4 mb-3">
-                                                                <label class="form-label" for="gasto_concepto_{{ $key }}">Concepto(*)</label>
-                                                                <input type="text" wire:model.defer="gastos.{{ $despacho->id_despacho }}.concepto" id="gasto_concepto_{{ $key }}" class="form-control">
-                                                                @error("gastos.$despacho->id_despacho.concepto")
-                                                                <span class="text-danger">{{ $message }}</span>
-                                                                @enderror
-                                                            </div>
-                                                            <div class="col-lg-4 mb-3">
-                                                                <label class="form-label" for="gasto_monto_{{ $key }}">Monto(*)</label>
-                                                                <input type="text" wire:model.defer="gastos.{{ $despacho->id_despacho }}.monto" id="gasto_monto_{{ $key }}" onkeyup="validar_numeros(this.id)" class="form-control">
-                                                                @error("gastos.$despacho->id_despacho.monto")
-                                                                <span class="text-danger">{{ $message }}</span>
-                                                                @enderror
-                                                            </div>
-                                                            <div class="col-lg-4 mb-3">
-                                                                <label class="form-label" for="gasto_descripcion_{{ $key }}">Descripción</label>
-                                                                <textarea class="form-control" wire:model.defer="gastos.{{ $despacho->id_despacho }}.descripcion" id="gasto_descripcion_{{ $key }}"></textarea>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @endif
-                                    @endforeach
-                                @else
-                                    <tr>
-                                        <td colspan="11" class="text-center">No se han encontrado resultados.</td>
-                                    </tr>
-                                @endif
-                            </x-slot>
-                        </x-table-general>
+            <div class="col-lg-3 col-md-3 col-sm-12">
+                <div class="card mb-0 h-100">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                                <h6>Correlativo</h6>
+                            </div>
+                            <div class="col-lg-12">
+                                <input class="form-control" type="text" id="liquidacion_correlativo" name="liquidacion_correlativo" wire:model="liquidacion_correlativo">
+                                @error('liquidacion_correlativo')
+                                <span class="message-error">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </x-slot>
-        </x-card-general-view>
-    @endif
+            </div>
+            <div class="col-lg-3 col-md-3 col-sm-12">
+                <div class="card mb-0 h-100">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                                <h6>Comprobante</h6>
+                            </div>
+                            <div class="col-lg-12">
+                                <input class="form-control" type="file" id="liquidacion_ruta_comprobante" name="liquidacion_ruta_comprobante" wire:model="liquidacion_ruta_comprobante">
+                                @error('liquidacion_ruta_comprobante')
+                                <span class="message-error">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
+            {{--    DESPACHOS DEL TRANSPORTISTA --}}
+            <x-card-general-view>
+                <x-slot name="content">
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12">
+                            <x-table-general>
+                                <x-slot name="thead">
+                                    <tr>
+                                        <th>Check</th>
+                                        <th>Correlativo</th>
+                                        <th>Servicio</th>
+                                        <th>Importe Total</th>
+                                        <th>Peso</th>
+                                        <th>Llenado en Peso</th>
+                                        <th>Cambio de Tarifa</th>
+                                        <th>Costo Flete</th>
+                                        <th>Flete / Venta</th>
+                                        <th>Flete / Peso</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </x-slot>
+
+                                <x-slot name="tbody">
+                                    @if(count($despachos) > 0)
+                                        @foreach($despachos as $key => $despacho)
+                                            <tr>
+                                                <td>
+                                                    <input
+                                                        type="checkbox"
+                                                        class="form-check-input"
+                                                        wire:model.defer="select_despachos.{{ $despacho->id_despacho }}"
+                                                        wire:click="actualizarDespacho('{{ $despacho->id_despacho }}', $event.target.checked)"
+                                                    >
+                                                </td>
+                                                <td>{{ $despacho->despacho_numero_correlativo }}</td>
+                                                <td>{{ $despacho->tipo_servicio_concepto }}</td>
+                                                <td>S/ {{ $despacho->despacho_flete }}</td>
+                                                <td>{{ $despacho->despacho_peso }} kg</td>
+                                                <td>
+                                                    @php
+                                                        $indi = "-";
+                                                        if ($despacho->id_vehiculo) {
+                                                            $vehiculo = \DB::table('vehiculos')->where('id_vehiculo', $despacho->id_vehiculo)->first();
+                                                            if ($vehiculo) {
+                                                                $indi = ($despacho->despacho_peso / $vehiculo->vehiculo_capacidad_peso) * 100;
+                                                                $indi = number_format($indi, 2);
+                                                                $indi = $indi.'%';
+                                                            }
+                                                        }
+                                                    @endphp
+                                                    <span style="color: {{ $indi > 0 ? '#28a745' : '#dc3545' }}">{{ $indi }}</span>
+                                                </td>
+                                                <td>
+                                                    <b class="{{ $despacho->despacho_estado_modificado ? 'text-success' : 'text-danger' }}">
+                                                        {{ $despacho->despacho_estado_modificado ? 'SI' : 'NO' }}
+                                                    </b>
+                                                </td>
+                                                <td>
+                                                    <span class="{{ $despacho->despacho_estado_modificado ? 'text-danger' : '' }}">S/ {{ $despacho->despacho_flete }}</span>
+                                                    @if($despacho->despacho_estado_modificado)
+                                                        <b class="text-success">=> S/ {{ $despacho->despacho_monto_modificado }}</b>
+                                                    @endif
+                                                </td>
+                                                <td>{{ $despacho->despacho_costo_total && $despacho->totalVentaDespacho > 0 ? number_format($despacho->despacho_costo_total / $despacho->totalVentaDespacho, 2) : '-' }}</td>
+                                                <td>{{ $despacho->despacho_costo_total ? number_format($despacho->despacho_costo_total / $despacho->despacho_peso, 2) : '-' }}</td>
+                                                <td>
+                                                    <x-btn-accion class="btn btn-sm text-primary" wire:click="listar_informacion_despacho({{ $despacho->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">
+                                                        <x-slot name="message">
+                                                            <i class="fa-solid fa-eye"></i>
+                                                        </x-slot>
+                                                    </x-btn-accion>
+                                                </td>
+                                            </tr>
+                                            @if(!empty($select_despachos[$despacho->id_despacho]))
+                                                <tr>
+                                                    <td colspan="11">
+                                                        <div class="p-3" style="background-color: #FFFFFF; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+                                                            <div class="row">
+                                                                <div class="col-lg-4 mb-3">
+                                                                    <label class="form-label" for="gasto_concepto_{{ $key }}">Concepto(*)</label>
+                                                                    <input type="text" wire:model.defer="gastos.{{ $despacho->id_despacho }}.concepto" id="gasto_concepto_{{ $key }}" class="form-control">
+                                                                    @error("gastos.$despacho->id_despacho.concepto")
+                                                                    <span class="text-danger">{{ $message }}</span>
+                                                                    @enderror
+                                                                </div>
+                                                                <div class="col-lg-4 mb-3">
+                                                                    <label class="form-label" for="gasto_monto_{{ $key }}">Monto(*)</label>
+                                                                    <input type="text" wire:model.defer="gastos.{{ $despacho->id_despacho }}.monto" id="gasto_monto_{{ $key }}" onkeyup="validar_numeros(this.id)" class="form-control">
+                                                                    @error("gastos.$despacho->id_despacho.monto")
+                                                                    <span class="text-danger">{{ $message }}</span>
+                                                                    @enderror
+                                                                </div>
+                                                                <div class="col-lg-4 mb-3">
+                                                                    <label class="form-label" for="gasto_descripcion_{{ $key }}">Descripción</label>
+                                                                    <textarea class="form-control" wire:model.defer="gastos.{{ $despacho->id_despacho }}.descripcion" id="gasto_descripcion_{{ $key }}"></textarea>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            @endif
+                                        @endforeach
+                                    @else
+                                        <tr>
+                                            <td colspan="11" class="text-center">No se han encontrado resultados.</td>
+                                        </tr>
+                                    @endif
+                                </x-slot>
+                            </x-table-general>
+                        </div>
+                    </div>
+                </x-slot>
+            </x-card-general-view>
+        @else
+            @if($id_transportistas && $despachos->isEmpty())
+                <div class="alert alert-danger mt-4">
+                    <p>Transportista sin despachos.</p>
+                </div>
+            @endif
+        @endif
+    </div>
     <div class="row">
         <div class="col-lg-12">
             @if(isset($select_despachos) && count($select_despachos) > 0)
@@ -393,5 +393,10 @@
             @endif
         </div>
     </div>
-
+    <style>
+        .card{
+            margin-bottom: 1rem;
+            border: none;
+        }
+    </style>
 </div>

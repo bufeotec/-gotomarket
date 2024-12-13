@@ -128,11 +128,25 @@ class Server extends Model
                     ];
                 })->toArray();
                 // Consulta a la base de datos del proyecto para obtener comprobantes ya existentes
-                $comprobantesExistentes = DB::table('despacho_ventas')
-                    ->whereIn('despacho_venta_cftd', array_column($comprobantes, 'CFTD'))
-                    ->whereIn('despacho_venta_cfnumser', array_column($comprobantes, 'CFNUMSER'))
-                    ->whereIn('despacho_venta_cfnumdoc', array_column($comprobantes, 'CFNUMDOC'))
-                    ->select('despacho_venta_cftd', 'despacho_venta_cfnumser', 'despacho_venta_cfnumdoc')
+                $comprobantesExistentes = DB::table('despacho_ventas as dv')
+                    ->select(
+                        'dv.despacho_venta_cftd',
+                        'dv.despacho_venta_cfnumser',
+                        'dv.despacho_venta_cfnumdoc'
+                    )
+                    ->whereIn('dv.despacho_venta_cftd', array_column($comprobantes, 'CFTD'))
+                    ->whereIn('dv.despacho_venta_cfnumser', array_column($comprobantes, 'CFNUMSER'))
+                    ->whereIn('dv.despacho_venta_cfnumdoc', array_column($comprobantes, 'CFNUMDOC'))
+                    ->whereIn('dv.despacho_detalle_estado_entrega', [0, 1, 2])
+                    ->whereRaw('
+                            dv.despacho_detalle_estado_entrega = (
+                                SELECT MAX(sub.despacho_detalle_estado_entrega)
+                                FROM despacho_ventas AS sub
+                                WHERE sub.despacho_venta_cftd = dv.despacho_venta_cftd
+                                  AND sub.despacho_venta_cfnumser = dv.despacho_venta_cfnumser
+                                  AND sub.despacho_venta_cfnumdoc = dv.despacho_venta_cfnumdoc
+                            )
+                        ')
                     ->get()
                     ->map(function ($item) {
                         return $item->despacho_venta_cftd . $item->despacho_venta_cfnumser . $item->despacho_venta_cfnumdoc;
@@ -261,11 +275,25 @@ class Server extends Model
                     ];
                 })->toArray();
                 // Consulta a la base de datos del proyecto para obtener comprobantes ya existentes
-                $comprobantesExistentes = DB::table('despacho_ventas')
-                    ->whereIn('despacho_venta_cftd', array_column($comprobantes, 'CFTD'))
-                    ->whereIn('despacho_venta_cfnumser', array_column($comprobantes, 'CFNUMSER'))
-                    ->whereIn('despacho_venta_cfnumdoc', array_column($comprobantes, 'CFNUMDOC'))
-                    ->select('despacho_venta_cftd', 'despacho_venta_cfnumser', 'despacho_venta_cfnumdoc')
+                $comprobantesExistentes = DB::table('despacho_ventas as dv')
+                    ->select(
+                        'dv.despacho_venta_cftd',
+                        'dv.despacho_venta_cfnumser',
+                        'dv.despacho_venta_cfnumdoc'
+                    )
+                    ->whereIn('dv.despacho_venta_cftd', array_column($comprobantes, 'CFTD'))
+                    ->whereIn('dv.despacho_venta_cfnumser', array_column($comprobantes, 'CFNUMSER'))
+                    ->whereIn('dv.despacho_venta_cfnumdoc', array_column($comprobantes, 'CFNUMDOC'))
+                    ->whereIn('dv.despacho_detalle_estado_entrega', [0, 1, 2])
+                    ->whereRaw('
+                            dv.despacho_detalle_estado_entrega = (
+                                SELECT MAX(sub.despacho_detalle_estado_entrega)
+                                FROM despacho_ventas AS sub
+                                WHERE sub.despacho_venta_cftd = dv.despacho_venta_cftd
+                                  AND sub.despacho_venta_cfnumser = dv.despacho_venta_cfnumser
+                                  AND sub.despacho_venta_cfnumdoc = dv.despacho_venta_cfnumdoc
+                            )
+                        ')
                     ->get()
                     ->map(function ($item) {
                         return $item->despacho_venta_cftd . $item->despacho_venta_cfnumser . $item->despacho_venta_cfnumdoc;
