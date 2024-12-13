@@ -13,14 +13,14 @@
                 <div class="modal-body">
                     <div class="accordion" id="accordionExample">
                         @php $conteo = 1; @endphp
-                        @foreach($listar_detalle_liquidacion as $liquidacion)
+                        @foreach($listar_detalle_liquidacion  as $index => $liquidacion)
                             <div class="accordion-item">
                                 <h2 class="accordion-header" id="heading{{ $conteo }}">
-                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ $conteo }}" aria-expanded="true" aria-controls="collapse{{ $conteo }}" wire:ignore.self>
+                                    <button class="accordion-button {{$conteo == 1 ? '' : 'collapsed'}}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ $conteo }}" aria-expanded="true" aria-controls="collapse{{ $conteo }}" wire:ignore.self>
                                         #{{ $conteo }} | Despacho: {{ $liquidacion->despacho_numero_correlativo ?? 'N/A' }}
                                     </button>
                                 </h2>
-                                <div id="collapse{{ $conteo }}" class="accordion-collapse collapse {{ $conteo == 1 ? 'show' : '' }}" aria-labelledby="heading{{ $conteo }}" data-bs-parent="#accordionExample">
+                                <div id="collapse{{ $conteo }}" class="accordion-collapse collapse {{ $conteo == 1 ? 'show' : '' }}" aria-labelledby="heading{{ $conteo }}" data-bs-parent="#accordionExample" wire:ignore.self >
                                     <div class="accordion-body">
                                         <div class="row">
                                             <div class="col-lg-12">
@@ -100,7 +100,6 @@
                                                 </div>
                                             @endif
                                         </div>
-
                                         <div class="row">
                                             <div class="col-lg-12">
                                                 <h6>Información Adicional de la liquidación</h6>
