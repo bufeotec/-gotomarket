@@ -35,7 +35,7 @@
                                 </div>
                                 <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
                                     <strong style="color: #8c1017">Precio:</strong>
-                                    <p>S/ {{ $detalle_tarifario->tarifa_monto }}</p>
+                                    <p>S/ {{ $me->formatoDecimal($detalle_tarifario->tarifa_monto) }}</p>
                                 </div>
                                 <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
                                     @php
@@ -233,19 +233,19 @@
                                                                 @foreach($filteredClientes as $factura)
                                                                     <tr style="cursor: pointer" wire:click="seleccionar_cliente('{{$factura->CCODCLI}}')">
                                                                         <td style="width: 39.6%">
-                                                                        <span class="d-block tamanhoTablaComprobantes">
-                                                                            {{ $factura->CNOMCLI }}
-                                                                        </span>
-                                                                        </td>
-                                                                        <td style="width: 32.2%">
-                                                                        <span class="d-block tamanhoTablaComprobantes">
-                                                                            {{ $factura->CCODCLI }}
-                                                                        </span>
-                                                                        </td>
-                                                                        <td>
-                                                                        <span class="d-block tamanhoTablaComprobantes">
-                                                                            {{ $factura->CDIRCLI }} kg
-                                                                        </span>
+                                                                            <span class="d-block tamanhoTablaComprobantes">
+                                                                                {{ $factura->CNOMCLI }}
+                                                                            </span>
+                                                                            </td>
+                                                                            <td style="width: 32.2%">
+                                                                            <span class="d-block tamanhoTablaComprobantes">
+                                                                                <b class="colorBlackComprobantes">{{ $factura->CCODCLI }}</b>
+                                                                            </span>
+                                                                            </td>
+                                                                            <td>
+                                                                            <span class="d-block tamanhoTablaComprobantes">
+                                                                                {{ $factura->CDIRCLI }}
+                                                                            </span>
                                                                         </td>
                                                                     </tr>
                                                                 @endforeach
@@ -285,11 +285,17 @@
                                                                 @if(!$comprobanteExiste)
                                                                     <tr style="cursor: pointer" wire:click="seleccionar_factura_cliente('{{$factura->CFTD}}','{{ $factura->CFNUMSER }}','{{ $factura->CFNUMDOC }}')">
                                                                         <td style="width: 39.6%">
+                                                                             <span class="tamanhoTablaComprobantes">
+                                                                                <b class="colorBlackComprobantes">{{ date('d/m/Y',strtotime($factura->GREFECEMISION)) }}</b>
+                                                                            </span>
                                                                             <span class="d-block tamanhoTablaComprobantes">
                                                                                 {{ $factura->CFNUMSER }} - {{ $factura->CFNUMDOC }}
                                                                             </span>
+                                                                            @php
+                                                                                $guia = $me->formatearCodigo($factura->CFTEXGUIA)
+                                                                            @endphp
                                                                             <span class="d-block tamanhoTablaComprobantes">
-                                                                                {{ $factura->CFTEXGUIA }}
+                                                                                {{ $guia}}
                                                                             </span>
                                                                         </td>
                                                                         <td>
@@ -306,10 +312,10 @@
                                                                                 }
                                                                             @endphp
                                                                             <span class="d-block tamanhoTablaComprobantes">
-                                                                                {{ $tablaPeso }} kg
+                                                                                <b class="colorBlackComprobantes">{{ $tablaPeso }} kg</b>
                                                                             </span>
                                                                             <span class="d-block tamanhoTablaComprobantes">
-                                                                                {{ $tablaVolumen }} cm³
+                                                                                <b class="colorBlackComprobantes">{{ $tablaVolumen }} cm³</b>
                                                                             </span>
                                                                         </td>
                                                                         <td>
@@ -369,7 +375,7 @@
                                     @endforeach
                                 </select>
                                 @error('id_transportistas')
-                                <span class="message-error">{{ $message }}</span>
+                                    <span class="message-error">{{ $message }}</span>
                                 @enderror
                             </div>
                         </div>
@@ -406,7 +412,7 @@
                                     <div class="col-lg-8 col-md-8 col-sm-12 mb-2">
                                         <p class="text-end mb-0">Monto de la tarifa seleccionado:
                                             <span class="font-bold badge bg-label-success curso-pointer" data-bs-toggle="modal" data-bs-target="#modalMontoModificado">
-                                                S/ {{ $tarifaMontoSeleccionado }}
+                                                S/ {{ $me->formatoDecimal($tarifaMontoSeleccionado) }}
                                             </span>
                                         </p>
                                     </div>
@@ -627,21 +633,17 @@
                                         @if($costoTotal && $importeTotalVenta)
                                             <small class="textTotalComprobantesSeleccionados me-2">
                                                 @php
-                                                    $ra1 = 0;
                                                     $to = $costoTotal / $importeTotalVenta;
-                                                    $ra1 = $me->formatoDecimal($to);
                                                 @endphp
-                                                F.V: {{$costoTotal}} / {{$importeTotalVenta}} =  <span>{{ $ra1 }}</span>
+                                                F / V: <b class="colorBlackComprobantes">{{$me->formatoDecimal($costoTotal)}}</b> / <b class="colorBlackComprobantes">{{$me->formatoDecimal($importeTotalVenta)}}</b> =  <span>{{ $me->formatoDecimal($to) }}</span>
                                             </small>
                                         @endif
-                                        @if($costoTotal && $peso)
+                                        @if($costoTotal && $pesoTotal)
                                             <small class="textTotalComprobantesSeleccionados">
                                                 @php
-                                                    $ra2 = 0;
-                                                    $to = $costoTotal / $pesoTotal;
-                                                    $ra2 = $me->formatoDecimal($to);
+                                                    $to2 = $costoTotal / $pesoTotal;
                                                 @endphp
-                                                F.P: {{$costoTotal}} / {{$peso}} =  <span>{{ $ra2 }}</span>
+                                                F / P: <b class="colorBlackComprobantes">{{$me->formatoDecimal($costoTotal)}}</b> / <b class="colorBlackComprobantes">{{$me->formatoDecimal($pesoTotal)}}</b> =  <span>{{ $me->formatoDecimal($to2) }}</span>
                                             </small>
                                         @endif
                                     </div>
@@ -668,8 +670,11 @@
                                                         <span class="d-block tamanhoTablaComprobantes">
                                                             {{ $factura['CFNUMSER'] }} - {{ $factura['CFNUMDOC'] }}
                                                         </span>
+                                                        @php
+                                                            $guiaTable = $me->formatearCodigo($factura['guia'])
+                                                        @endphp
                                                         <span class="d-block tamanhoTablaComprobantes">
-                                                            {{ $factura['guia'] }}
+                                                            {{ $guiaTable }}
                                                         </span>
                                                     </td>
                                                     @php
@@ -691,7 +696,7 @@
                                                     </td>
                                                     <td>
                                                         <span class="d-block tamanhoTablaComprobantes">
-                                                            {{ $importe }}
+                                                            <b class="colorBlackComprobantes">{{ $importe }} </b>
                                                         </span>
                                                     </td>
 {{--                                                    <td>--}}
@@ -712,21 +717,21 @@
                                                         }
                                                     @endphp
                                                     <td>
-                                                            <span class="d-block tamanhoTablaComprobantes">
-                                                               {{ $pesoTabla }} kg
-                                                            </span>
                                                         <span class="d-block tamanhoTablaComprobantes">
-                                                                 {{ $volumenTabla }} cm³
-                                                            </span>
+                                                            <b class="colorBlackComprobantes">{{ $pesoTabla }} kg</b>
+                                                        </span>
+                                                        <span class="d-block tamanhoTablaComprobantes">
+                                                            <b class="colorBlackComprobantes">{{ $volumenTabla }} cm³</b>
+                                                        </span>
                                                     </td>
                                                     <td>
-                                                             <span class="d-block tamanhoTablaComprobantes">
-                                                                 {{ $factura['LLEGADADIRECCION'] }}
-                                                             </span>
+                                                         <span class="d-block tamanhoTablaComprobantes">
+                                                             {{ $factura['LLEGADADIRECCION'] }}
+                                                         </span>
                                                         <br>
                                                         <span class="d-block tamanhoTablaComprobantes" style="color: black;font-weight: bold">
-                                                                 {{ $factura['DEPARTAMENTO'] }} - {{ $factura['PROVINCIA'] }}- {{ $factura['DISTRITO'] }}
-                                                             </span>
+                                                            {{ $factura['DEPARTAMENTO'] }} - {{ $factura['PROVINCIA'] }}- {{ $factura['DISTRITO'] }}
+                                                        </span>
                                                     </td>
                                                     <td>
                                                         <a href="#" wire:click.prevent="eliminarFacturaSeleccionada('{{$factura['CFTD']}}','{{ $factura['CFNUMSER'] }}','{{ $factura['CFNUMDOC'] }}')" class="btn btn-danger btn-sm text-white">

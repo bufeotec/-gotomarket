@@ -1,6 +1,10 @@
 <div>
     @livewire('gestiontransporte.servicios')
 
+    @php
+        $general = new \App\Models\General();
+    @endphp
+
     {{--    MODAL REGISTRO TARIFARIOS--}}
     <x-modal-general  wire:ignore.self >
         <x-slot name="id_modal">modalTarifario</x-slot>
@@ -302,10 +306,9 @@
                                     <strong style="color: #8c1017">Capacidad Mínima:</strong>
                                     <p>
                                         @php
-                                            $me = new \App\Models\General();
                                             $capacidadMinima = "0";
                                             if ($detalles->tarifa_cap_min){
-                                                $capacidadMinima = $me->formatoDecimal($detalles->tarifa_cap_min);
+                                                $capacidadMinima = $general->formatoDecimal($detalles->tarifa_cap_min);
                                             }
                                         @endphp
                                         {{ isset($detalles->tarifa_cap_min) ? $capacidadMinima : 'No disponible' }}
@@ -319,10 +322,9 @@
                                     <strong style="color: #8c1017">Capacidad Máxima:</strong>
                                     <p>
                                         @php
-                                            $me = new \App\Models\General();
                                             $capacidadMaxima = "0";
                                             if ($detalles->tarifa_cap_max){
-                                                $capacidadMaxima = $me->formatoDecimal($detalles->tarifa_cap_max);
+                                                $capacidadMaxima = $general->formatoDecimal($detalles->tarifa_cap_max);
                                             }
                                         @endphp
                                         {{ isset($detalles->tarifa_cap_max) ? $capacidadMaxima : 'No disponible' }}
@@ -335,10 +337,9 @@
                                     <strong style="color: #8c1017">Monto de Tarifa sin IGV:</strong>
                                     <p>
                                         @php
-                                            $me = new \App\Models\General();
                                             $monto = "0";
                                             if ($detalles->tarifa_monto){
-                                                $monto = $me->formatoDecimal($detalles->tarifa_monto);
+                                                $monto = $general->formatoDecimal($detalles->tarifa_monto);
                                             }
                                         @endphp
                                         {{ isset($detalles->tarifa_monto) ? 'S/ ' . $monto : 'No disponible' }}
@@ -489,41 +490,19 @@
                                         <td>{{ $ta->tipo_servicio_concepto }}</td>
                                         <td>{{ is_null($ta->id_medida) ? '-' : ($ta->id_medida == 23 ? 'PESO' : 'VOLUMEN') }}</td>
                                         <td>
-                                            @php
-                                                $me = new \App\Models\General();
-                                                $capacidadMinima = "0";
-                                                if ($ta->tarifa_cap_min){
-                                                    $capacidadMinima = $me->formatoDecimal($ta->tarifa_cap_min);
-                                                }
-                                            @endphp
-                                            {{ $capacidadMinima }}
-                                            <small class="text-dark">
-                                                {{ $ta->id_tipo_servicio == 1 ? '(Kg)' : ($ta->id_tipo_servicio == 2 ? ($ta->id_medida == 9 ? '(cm³)' : ($ta->id_medida == 23 ? '(Kg)' : '')) : '') }}
-                                            </small>
-                                        </td>
-
-                                        <td>
-                                            @php
-                                                $me = new \App\Models\General();
-                                                $capacidadMaxima = "0";
-                                                if ($ta->tarifa_cap_max){
-                                                    $capacidadMaxima = $me->formatoDecimal($ta->tarifa_cap_max);
-                                                }
-                                            @endphp
-                                            {{ $capacidadMaxima }}
+                                            {{ $general->formatoDecimal($ta->tarifa_cap_min) }}
                                             <small class="text-dark">
                                                 {{ $ta->id_tipo_servicio == 1 ? '(Kg)' : ($ta->id_tipo_servicio == 2 ? ($ta->id_medida == 9 ? '(cm³)' : ($ta->id_medida == 23 ? '(Kg)' : '')) : '') }}
                                             </small>
                                         </td>
                                         <td>
-                                            @php
-                                                $me = new \App\Models\General();
-                                                $monto = "0";
-                                                if ($ta->tarifa_monto){
-                                                    $monto = $me->formatoDecimal($ta->tarifa_monto);
-                                                }
-                                            @endphp
-                                            S/ {{ $monto }}
+                                            {{ $general->formatoDecimal($ta->tarifa_cap_max) }}
+                                            <small class="text-dark">
+                                                {{ $ta->id_tipo_servicio == 1 ? '(Kg)' : ($ta->id_tipo_servicio == 2 ? ($ta->id_medida == 9 ? '(cm³)' : ($ta->id_medida == 23 ? '(Kg)' : '')) : '') }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            S/ {{ $general->formatoDecimal($ta->tarifa_monto) }}
                                             <small class="text-dark">
                                                 {{ $ta->id_tipo_servicio == 1 ? '/ VIAJE' : ($ta->id_tipo_servicio == 2 ? '/ kg' : '') }}
                                             </small>
@@ -583,7 +562,7 @@
             </div>
         </x-slot>
     </x-card-general-view>
-{{--        {{ $tarifario->links(data: ['scrollTo' => false]) }}--}}
+    {{ $tarifario->links(data: ['scrollTo' => false]) }}
 </div>
 
 @script

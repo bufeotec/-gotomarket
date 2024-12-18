@@ -105,14 +105,39 @@ class Mixto extends Component
                 $this->listar_informacion_programacion_edit();
             }
         }
+
+
+//        $this->buscar_facturas_clientes();
     }
 
     public function render()
     {
         $tipo_servicio_local_provincial = $this->tiposervicio->listar_tipo_servicio_local_provincial();
-        $listar_transportistas = $this->transportista->listar_transportista_sin_id();
+//        $listar_transportistas = $this->transportista->listar_transportista_sin_id();
         $listar_departamento = $this->departamento->lista_departamento();
-        return view('livewire.programacioncamiones.mixto', compact('tipo_servicio_local_provincial', 'listar_transportistas', 'listar_transportistas', 'listar_departamento'));
+        if (count($this->vehiculosSugeridos) > 0){
+            // Obtener los id_transportistas únicos de la colección
+            $idsTransportistas = $this->vehiculosSugeridos->pluck('id_transportistas')->unique();
+            // Consultar la base de datos para traer transportistas únicos
+            $listar_transportistas = DB::table('transportistas')
+                ->whereIn('id_transportistas', $idsTransportistas)
+                ->get();
+        }else{
+            $listar_transportistas = [];
+        }
+
+        if (count($this->tarifariosSugeridos) > 0){
+            // Obtener los id_transportistas únicos de la colección
+            $idsTransportistas = $this->tarifariosSugeridos->pluck('id_transportistas')->unique();
+            // Consultar la base de datos para traer transportistas únicos
+            $listar_transportistasProvinciales = DB::table('transportistas')
+                ->whereIn('id_transportistas', $idsTransportistas)
+                ->get();
+        }else{
+            $listar_transportistasProvinciales = [];
+        }
+
+        return view('livewire.programacioncamiones.mixto', compact('tipo_servicio_local_provincial', 'listar_transportistas', 'listar_transportistas', 'listar_departamento','listar_transportistasProvinciales'));
     }
 //    PARA EL MODAL DE PROVINCIA
     public $clienteSeleccionado;
@@ -267,7 +292,7 @@ class Mixto extends Component
         $this->clienteSeleccionado = $cliente;
         $this->clienteindex = $index;
         $datosCliente = $this->clientes_provinciales[$index] ?? null;
-        $this->id_trans = $datosCliente['id_transportista'] ?? null;
+        $this->id_trans = null;
         $this->id_tari =  null;
         $this->montoSelect =  null;
         $this->montoSelectDescripcion =  null;
@@ -351,6 +376,7 @@ class Mixto extends Component
         }
         $this->listar_tarifarios_su($index);
         $this->activar_botonListo($index);
+        $this->save_cliente_data($index);
     }
     public function listar_tarifarios_su($index){
         $datosCliente = $this->clientes_provinciales[$index] ?? null;
@@ -689,7 +715,7 @@ class Mixto extends Component
             ];
         }
     }
-    public function eliminarFacturaProvincial($CFTD, $CFNUMSER, $CFNUMDOC){
+    public function eliminarFacturaProvincial($CFTD, $CFNUMSER, $CFNUMDOC,$indexCliente){
         foreach ($this->clientes_provinciales as $index => &$cliente) {
             // Filtrar comprobantes del cliente actual
             $cliente['comprobantes'] = collect($cliente['comprobantes'])
@@ -705,7 +731,9 @@ class Mixto extends Component
             if (empty($cliente['comprobantes'])) {
                 unset($this->clientes_provinciales[$index]);
             }else{
-                $cliente['listo'] = false;
+                if ($indexCliente == $index){
+                    $cliente['listo'] = false;
+                }
             }
         }
 
@@ -1072,11 +1100,12 @@ class Mixto extends Component
                 session()->flash('success', 'Registro guardado correctamente.');
                 $this->reiniciar_campos();
             }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->setErrorBag($e->validator->errors());
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logs->insertarLog($e);
-            session()->flash('error', 'Ocurrió un error al guardar la programación.');
-            return;
+            session()->flash('error', 'Ocurrió un error al guardar el registro. Por favor, inténtelo nuevamente.');
         }
     }
 
@@ -1103,6 +1132,7 @@ class Mixto extends Component
         $this->despacho_volumen = null;
         $this->despacho_flete = null;
         $this->id_tarifario = null;
+        $this->checkInput = null;
         $this->id_tarifario_seleccionado = '';
         $this->clientes_provinciales = [];
     }

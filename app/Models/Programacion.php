@@ -86,16 +86,30 @@ class Programacion extends Model
         }
         return $result;
     }
-    public function listar_programaciones_historial_programacion($desde,$hasta,$serie = null){
+    public function listar_programaciones_historial_programacion($desde,$hasta,$serie = null,$tipo = null){
         try {
-            $result = DB::table('programaciones')->select('*');
+            $result = DB::table('programaciones as p');
+            if ($tipo){
+                $result->select('p.id_programacion','p.id_users','p.id_users_programacion','p.programacion_fecha','p.programacion_estado_aprobacion','p.programacion_numero_correlativo','p.programacion_fecha_aprobacion','p.programacion_estado','p.created_at')
+                    ->join('despachos as d','d.id_programacion','=','p.id_programacion')
+                    ->where('d.despacho_estado_aprobacion','=',$tipo);
+            }else{
+                $result->select('p.*');
+            }
             if ($desde  && $hasta){
-                $result->whereBetween('programacion_fecha',[$desde,$hasta]);
+                $result->whereBetween('p.programacion_fecha',[$desde,$hasta]);
             }
             if ($serie){
-                $result->where('programacion_numero_correlativo','like',"%$serie%");
+                $result->where('p.programacion_numero_correlativo','like',"%$serie%");
             }
-            $result = $result->where('programacion_estado_aprobacion','<>',0)->orderBy('programacion_numero_correlativo', 'desc')->paginate(20);
+
+            if ($tipo){
+                $result->groupBy('p.id_programacion','p.id_users','p.id_users_programacion','p.programacion_fecha','p.programacion_estado_aprobacion','p.programacion_numero_correlativo','p.programacion_fecha_aprobacion','p.programacion_estado','p.created_at');
+            }
+
+            $result = $result->where('p.programacion_estado_aprobacion','<>',0)
+                ->orderBy('p.programacion_numero_correlativo', 'desc')->paginate(20);
+
         }catch (\Exception $e){
             $this->logs->insertarLog($e);
             $result = [];

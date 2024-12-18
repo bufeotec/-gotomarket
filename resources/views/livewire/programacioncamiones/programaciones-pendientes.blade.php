@@ -251,7 +251,6 @@
                         $usuarios2 = $e->name.' '.$e->last_name;
                     }
                 }
-                $general = new \App\Models\General();
                 $fe = $general->obtenerNombreFecha($r->programacion_fecha,'Date','Date');
                 $fc = $general->obtenerNombreFecha($r->created_at,'DateTime','DateTime');
             @endphp

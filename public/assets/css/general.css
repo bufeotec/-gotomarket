@@ -513,6 +513,9 @@
 .tamanhoTablaComprobantes{
     font-size: 12px;
 }
+.colorBlackComprobantes{
+    color: black!important;
+}
 
 /**/
 .overlay__eliminar {

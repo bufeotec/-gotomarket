@@ -228,17 +228,18 @@ class General extends Model
     public function formatoDecimal($valor)
     {
         try {
-            // Truncamos el número a dos decimales sin redondear
-            $formattedValue = floor($valor * 100) / 100;
+            if ($valor){
+                // Truncamos el número a dos decimales sin redondear
+                $formattedValue = floor($valor * 100) / 100;
 
-            // Si el valor truncado no tiene decimales, mostramos sin decimales
-            if ($formattedValue == floor($formattedValue)) {
-                return number_format($formattedValue, 0, '.', ',');
+                // Si el valor truncado no tiene decimales, mostramos sin decimales
+                if ($formattedValue == floor($formattedValue)) {
+                    return number_format($formattedValue, 0, '.', ',');
+                }
+
+                // Si tiene decimales, mostramos dos decimales
+                return number_format($formattedValue, 2, '.', ',');
             }
-
-            // Si tiene decimales, mostramos dos decimales
-            return number_format($formattedValue, 2, '.', ',');
-
         } catch (\Exception $e) {
             // En caso de error, insertamos el log y retornamos un array vacío
             $this->logs->insertarLog($e);
@@ -270,5 +271,14 @@ class General extends Model
         }
     }
 
-
+    function formatearCodigo($codigo) {
+        // Validar si la longitud de la cadena es mayor o igual a 4
+        if (strlen($codigo) >= 4) {
+            // Insertar el guion después del cuarto carácter
+            return substr($codigo, 0, 4) . ' - ' . substr($codigo, 4);
+        } else {
+            // Si la longitud es menor a 4, agregar el guion al final
+            return $codigo . '-';
+        }
+    }
 }

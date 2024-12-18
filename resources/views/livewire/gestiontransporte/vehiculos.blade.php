@@ -1,6 +1,8 @@
 <div>
     @livewire('gestiontransporte.tipovehiculos')
-
+    @php
+        $general = new \App\Models\General();
+    @endphp
     {{--    MODAL REGISTRO VEHICULO--}}
     <x-modal-general  wire:ignore.self >
         <x-slot name="id_modal">modalVehiculos</x-slot>
@@ -210,58 +212,23 @@
                                         <td>{{$lv->tipo_vehiculo_concepto}}</td>
                                         <td>{{$lv->vehiculo_placa}}</td>
                                         <td>
-                                            @php
-                                                $me = new \App\Models\General();
-                                                $peso = "0";
-                                                if ($lv->vehiculo_capacidad_peso){
-                                                    $peso = $me->formatoDecimal($lv->vehiculo_capacidad_peso);
-                                                }
-                                            @endphp
-                                            {{ $peso }}
+                                            {{ $general->formatoDecimal($lv->vehiculo_capacidad_peso) }}
                                             <b>(kg)</b>
                                         </td>
                                         <td>
-                                            @php
-                                                $me = new \App\Models\General();
-                                                $ancho = "0";
-                                                if ($lv->vehiculo_ancho){
-                                                    $ancho = $me->formatoDecimal($lv->vehiculo_ancho);
-                                                }
-                                            @endphp
-                                            {{ $ancho }}
+                                            {{ $general->formatoDecimal($lv->vehiculo_ancho) }}
                                             <b>(cm)</b>
                                         </td>
                                         <td>
-                                            @php
-                                                $me = new \App\Models\General();
-                                                $largo = "0";
-                                                if ($lv->vehiculo_largo){
-                                                    $largo = $me->formatoDecimal($lv->vehiculo_largo);
-                                                }
-                                            @endphp
-                                            {{ $largo }}
+                                            {{ $general->formatoDecimal($lv->vehiculo_largo) }}
                                             <b>(cm)</b>
                                         </td>
                                         <td>
-                                            @php
-                                                $me = new \App\Models\General();
-                                                $alto = "0";
-                                                if ($lv->vehiculo_alto){
-                                                    $alto = $me->formatoDecimal($lv->vehiculo_alto);
-                                                }
-                                            @endphp
-                                            {{ $alto }}
+                                            {{ $general->formatoDecimal($lv->vehiculo_alto) }}
                                             <b>(cm)</b>
                                         </td>
                                         <td>
-                                            @php
-                                                $me = new \App\Models\General();
-                                                $capacidadVolumenVehiculo = "0";
-                                                if ($lv->vehiculo_capacidad_volumen){
-                                                    $capacidadVolumenVehiculo = $me->formatoDecimal($lv->vehiculo_capacidad_volumen);
-                                                }
-                                            @endphp
-                                            {{ $capacidadVolumenVehiculo }}
+                                            {{ $general->formatoDecimal($lv->vehiculo_capacidad_volumen) }}
                                             <b>(cm³)</b>
                                         </td>
                                         <td>

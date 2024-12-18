@@ -1,4 +1,7 @@
 <div>
+    @php
+        $general = new \App\Models\General();
+    @endphp
     {{--    MODAL VER DETALLES --}}
     <x-modal-general wire:ignore.self>
         <x-slot name="id_modal">modalVerDetalles</x-slot>
@@ -135,10 +138,9 @@
                                     <strong style="color: #8c1017">Capacidad Mínima:</strong>
                                     <p>
                                         @php
-                                            $me = new \App\Models\General();
                                             $capacidadMinima = "0";
                                             if ($detalles->tarifa_cap_min){
-                                                $capacidadMinima = $me->formatoDecimal($detalles->tarifa_cap_min);
+                                                $capacidadMinima = $general->formatoDecimal($detalles->tarifa_cap_min);
                                             }
                                         @endphp
                                         {{ isset($detalles->tarifa_cap_min) ? $capacidadMinima : 'No disponible' }}
@@ -152,10 +154,9 @@
                                     <strong style="color: #8c1017">Capacidad Máxima:</strong>
                                     <p>
                                         @php
-                                            $me = new \App\Models\General();
                                             $capacidadMaxima = "0";
                                             if ($detalles->tarifa_cap_max){
-                                                $capacidadMaxima = $me->formatoDecimal($detalles->tarifa_cap_max);
+                                                $capacidadMaxima = $general->formatoDecimal($detalles->tarifa_cap_max);
                                             }
                                         @endphp
                                         {{ isset($detalles->tarifa_cap_max) ? $capacidadMaxima : 'No disponible' }}
@@ -168,10 +169,9 @@
                                     <strong style="color: #8c1017">Monto de Tarifa sin IGV:</strong>
                                     <p>
                                         @php
-                                            $me = new \App\Models\General();
                                             $monto = "0";
                                             if ($detalles->tarifa_monto){
-                                                $monto = $me->formatoDecimal($detalles->tarifa_monto);
+                                                $monto = $general->formatoDecimal($detalles->tarifa_monto);
                                             }
                                         @endphp
                                         {{ isset($detalles->tarifa_monto) ? 'S/ ' . $monto : 'No disponible' }}
@@ -211,10 +211,9 @@
                                 <td>{{ $registro->registro_concepto }}</td>
                                 <td>
                                     @php
-                                        $fe = new \App\Models\General();
                                         $feFor = "";
                                         if ($registro->registro_hora_fecha){
-                                            $feFor = $fe->obtenerNombreFecha($registro->registro_hora_fecha,'DateTime','DateTime');
+                                            $feFor = $general->obtenerNombreFecha($registro->registro_hora_fecha,'DateTime','DateTime');
                                         }
                                     @endphp
                                     {{ $feFor }}
@@ -342,10 +341,9 @@
                                         <td>{{$ta->tipo_servicio_concepto}}</td>
                                         <td>
                                             @php
-                                                $me = new \App\Models\General();
                                                 $capacidadMinima = "0";
                                                 if ($ta->tarifa_cap_min){
-                                                    $capacidadMinima = $me->formatoDecimal($ta->tarifa_cap_min);
+                                                    $capacidadMinima = $general->formatoDecimal($ta->tarifa_cap_min);
                                                 }
                                             @endphp
                                             {{ $capacidadMinima }}
@@ -356,10 +354,9 @@
 
                                         <td>
                                             @php
-                                                $me = new \App\Models\General();
                                                 $capacidadMaxima = "0";
                                                 if ($ta->tarifa_cap_max){
-                                                    $capacidadMaxima = $me->formatoDecimal($ta->tarifa_cap_max);
+                                                    $capacidadMaxima = $general->formatoDecimal($ta->tarifa_cap_max);
                                                 }
                                             @endphp
                                             {{ $capacidadMaxima }}
@@ -369,10 +366,9 @@
                                         </td>
                                         <td>
                                             @php
-                                                $me = new \App\Models\General();
                                                 $monto = "0";
                                                 if ($ta->tarifa_monto){
-                                                    $monto = $me->formatoDecimal($ta->tarifa_monto);
+                                                    $monto = $general->formatoDecimal($ta->tarifa_monto);
                                                 }
                                             @endphp
                                             S/ {{ $monto }}
