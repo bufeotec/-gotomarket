@@ -6,6 +6,7 @@ use App\Models\Programacion;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use App\Models\Logs;
 use App\Models\Despacho;
@@ -186,7 +187,12 @@ class LiquidacionesPendientes extends Component
                 $liquidacionUpdate->liquidacion_numero_correlativo = $correlaApro;
             }
             if ($liquidacionUpdate->save()) {
-
+                if ($this->estado_liquidacion == 2){
+                    $detalleLi = DB::table('liquidacion_detalles')->where('id_liquidacion','=',$this->id_liqui)->get();
+                    foreach ($detalleLi as $de){
+                        DB::table('despachos')->where('id_despacho','=',$de->id_despacho)->update(['despacho_liquidado'=>0]);
+                    }
+                }
                 DB::commit();
                 $this->dispatch('hideModalDeleteA');
 
@@ -245,13 +251,15 @@ class LiquidacionesPendientes extends Component
             session()->flash('error', 'Ocurrió un error. Por favor, inténtelo nuevamente.');
         }
     }
-    public function listar_informacion_despacho($id){
+    public function listar_informacion_despacho($id,$liquidacion){
         try {
             $this->listar_detalle_despacho = DB::table('liquidacion_detalles as ld')
                 ->join('despachos as d','d.id_despacho','=','ld.id_despacho')
                 ->join('programaciones as p','p.id_programacion','=','d.id_programacion')
                 ->join('users as u','u.id_users','=','d.id_users')
-                ->where('d.id_despacho','=',$id)->first();
+                ->where('d.id_despacho','=',$id)
+                ->where('ld.id_liquidacion','=',$liquidacion)
+                ->first();
             if ($this->listar_detalle_despacho){
                 $this->listar_detalle_despacho->comprobantes = DB::table('despacho_ventas')
                     ->where('id_despacho','=',$id)->get();

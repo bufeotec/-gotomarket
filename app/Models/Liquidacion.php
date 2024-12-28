@@ -186,7 +186,7 @@ class Liquidacion extends Model
             ->join('transportistas as tr', 'li.id_transportistas', '=', 'tr.id_transportistas')
             ->join('users as u', 'u.id_users', '=', 'li.id_users')
             ->where('li.liquidacion_estado', '=', 1)
-            ->whereIn('li.liquidacion_estado_aprobacion', [1,2]);
+            ->where('li.liquidacion_estado_aprobacion', '=',1);
 
             if ($desde && $hasta){
                 $result->whereBetween(DB::raw('DATE(li.created_at)'), [$desde, $hasta]);

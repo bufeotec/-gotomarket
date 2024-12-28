@@ -684,7 +684,7 @@
                                                     <td style="{{$colorMontoLiquidado}}">{{ $general->formatoDecimal(($totalDespachoMontoLiquidado / $totalVentaDespaDespacho) * 100) }} % </td>
                                                     <td style="{{$colorMontoLiquidado}}">{{ $general->formatoDecimal($totalDespachoMontoLiquidado / $pesoFinalLiquidacion) }} </td>
                                                     <td>
-                                                        <x-btn-accion class="btn btn-sm text-primary" wire:click="listar_informacion_despacho({{ $de->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">
+                                                        <x-btn-accion class="btn btn-sm text-primary" wire:click="listar_informacion_despacho({{ $de->id_despacho }},{{ $de->id_liquidacion }})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">
                                                             <x-slot name="message">
                                                                 <i class="fa-solid fa-eye"></i>
                                                             </x-slot>

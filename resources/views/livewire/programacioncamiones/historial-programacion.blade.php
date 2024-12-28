@@ -294,8 +294,8 @@
             </div>
         @endif
         @if(count($selectedItems) > 0)
-            <div class="col-lg-4 col-md-4 col-sm-12 mb-2 text-end">
-                <button class="btn text-white bg-warning" data-bs-toggle="modal" data-bs-target="#modalAprobarProgramacion">
+            <div class="col-lg-2 col-md-2 col-sm-12 mb-2 text-end">
+                <button class="btn text-white bg-warning mt-4" data-bs-toggle="modal" data-bs-target="#modalAprobarProgramacion">
                     Cambiar a "En Camino"
                 </button>
             </div>

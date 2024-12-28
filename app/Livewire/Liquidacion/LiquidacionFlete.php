@@ -334,6 +334,8 @@ class LiquidacionFlete extends Component
             DB::beginTransaction();
 
             $validar = DB::table('liquidaciones')
+                ->where('liquidacion_estado', '=', 1)
+                ->where('liquidacion_estado_aprobacion', '=', 1)
                 ->where('liquidacion_serie', '=', $this->liquidacion_serie)
                 ->where('liquidacion_correlativo', '=', $this->liquidacion_correlativo);
                 if ($this->id_liquidacion_edit){

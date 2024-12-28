@@ -31,7 +31,7 @@ class Despacho extends Model
     }
     public function listar_ultima_aprobacion_despacho(){
         try {
-            $añoActual = date('Y'); // Solo tomamos el año, no toda la fecha
+            $añoActual = date('y'); // Solo tomamos el año, no toda la fecha
 
             $result = DB::table('despachos')->whereIn('despacho_estado_aprobacion',[1,2,3])->orderBy('despacho_numero_correlativo','desc')->first();
 

@@ -182,13 +182,15 @@ class HistorialLiquidacion extends Component
 //            $this->logs->insertarLog($e);
 //        }
 //    }
-    public function listar_informacion_despacho($id){
+    public function listar_informacion_despacho($id,$liquidacion){
         try {
             $this->listar_detalle_despacho = DB::table('liquidacion_detalles as ld')
                 ->join('despachos as d','d.id_despacho','=','ld.id_despacho')
                 ->join('programaciones as p','p.id_programacion','=','d.id_programacion')
                 ->join('users as u','u.id_users','=','d.id_users')
-                ->where('d.id_despacho','=',$id)->first();
+                ->where('d.id_despacho','=',$id)
+                ->where('ld.id_liquidacion','=',$liquidacion)
+                ->first();
             if ($this->listar_detalle_despacho){
                 $this->listar_detalle_despacho->comprobantes = DB::table('despacho_ventas')
                     ->where('id_despacho','=',$id)->get();
