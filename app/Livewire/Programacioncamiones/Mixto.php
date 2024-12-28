@@ -15,6 +15,7 @@ use App\Models\DespachoVenta;
 use App\Models\Departamento;
 use App\Models\General;
 
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 
 class Mixto extends Component
@@ -105,7 +106,7 @@ class Mixto extends Component
                 $this->listar_informacion_programacion_edit();
             }
         }
-
+        $this->dispatch('buscar_comprobantes');
 
 //        $this->buscar_facturas_clientes();
     }
@@ -715,7 +716,7 @@ class Mixto extends Component
             ];
         }
     }
-    public function eliminarFacturaProvincial($CFTD, $CFNUMSER, $CFNUMDOC,$indexCliente){
+    public function eliminarFacturaProvincial($CFTD, $CFNUMSER, $CFNUMDOC,$indexCliente = null){
         foreach ($this->clientes_provinciales as $index => &$cliente) {
             // Filtrar comprobantes del cliente actual
             $cliente['comprobantes'] = collect($cliente['comprobantes'])
@@ -837,6 +838,10 @@ class Mixto extends Component
 
     public function guardarDespachos(){
         try {
+            if (!Gate::allows('guardar_despacho_mixto')) {
+                session()->flash('error', 'No tiene permisos para crear una programación mixta.');
+                return;
+            }
             $this->validate([
                 'id_tipo_servicios' => 'nullable|integer',
                 'id_transportistas' => 'required|integer',

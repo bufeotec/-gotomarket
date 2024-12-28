@@ -119,45 +119,61 @@ class Server extends Model
 
             $result = $result->limit(50)->get();
             if (count($result) > 0){
-                // Extraer los comprobantes en un formato fácil de consultar
-                $comprobantes = $result->map(function ($item) {
-                    return [
-                        'CFTD' => $item->CFTD,
-                        'CFNUMSER' => $item->CFNUMSER,
-                        'CFNUMDOC' => $item->CFNUMDOC,
-                    ];
-                })->toArray();
-                // Consulta a la base de datos del proyecto para obtener comprobantes ya existentes
-                $comprobantesExistentes = DB::table('despacho_ventas as dv')
-                    ->select(
-                        'dv.despacho_venta_cftd',
-                        'dv.despacho_venta_cfnumser',
-                        'dv.despacho_venta_cfnumdoc'
-                    )
-                    ->whereIn('dv.despacho_venta_cftd', array_column($comprobantes, 'CFTD'))
-                    ->whereIn('dv.despacho_venta_cfnumser', array_column($comprobantes, 'CFNUMSER'))
-                    ->whereIn('dv.despacho_venta_cfnumdoc', array_column($comprobantes, 'CFNUMDOC'))
-                    ->whereIn('dv.despacho_detalle_estado_entrega', [0, 1, 2])
-                    ->whereRaw('
-                            dv.despacho_detalle_estado_entrega = (
-                                SELECT MAX(sub.despacho_detalle_estado_entrega)
-                                FROM despacho_ventas AS sub
-                                WHERE sub.despacho_venta_cftd = dv.despacho_venta_cftd
-                                  AND sub.despacho_venta_cfnumser = dv.despacho_venta_cfnumser
-                                  AND sub.despacho_venta_cfnumdoc = dv.despacho_venta_cfnumdoc
-                            )
-                        ')
-                    ->get()
-                    ->map(function ($item) {
-                        return $item->despacho_venta_cftd . $item->despacho_venta_cfnumser . $item->despacho_venta_cfnumdoc;
-                    })
-                    ->toArray();
+                // Iteramos sobre el resultado
+                foreach ($result as $key => $re) {
+                    // Verificamos si existe el despacho en la tabla 'despacho_ventas'
+                    $validarExistencia = DB::table('despacho_ventas as dv')
+                        ->where('dv.despacho_venta_cftd', $re->CFTD)
+                        ->where('dv.despacho_venta_cfnumser', $re->CFNUMSER)
+                        ->where('dv.despacho_venta_cfnumdoc', $re->CFNUMDOC)
+                        ->whereIn('dv.despacho_detalle_estado_entrega', [0,1,2])
+                        ->orderBy('dv.id_despacho_venta','desc')
+                        ->exists();
 
-                // Filtrar comprobantes para eliminar los que ya existen
-                $result = $result->filter(function ($item) use ($comprobantesExistentes) {
-                    $comprobanteKey = $item->CFTD . $item->CFNUMSER . $item->CFNUMDOC;
-                    return !in_array($comprobanteKey, $comprobantesExistentes);
-                });
+                    // Si existe, eliminamos el registro de $result
+                    if ($validarExistencia) {
+                        unset($result[$key]); // Elimina el elemento del array
+                    }
+                }
+                // Extraer los comprobantes en un formato fácil de consultar
+//                $comprobantes = $result->map(function ($item) {
+//                    return [
+//                        'CFTD' => $item->CFTD,
+//                        'CFNUMSER' => $item->CFNUMSER,
+//                        'CFNUMDOC' => $item->CFNUMDOC,
+//                    ];
+//                })->toArray();
+//                // Consulta a la base de datos del proyecto para obtener comprobantes ya existentes
+//                $comprobantesExistentes = DB::table('despacho_ventas as dv')
+//                    ->select(
+//                        'dv.despacho_venta_cftd',
+//                        'dv.despacho_venta_cfnumser',
+//                        'dv.despacho_venta_cfnumdoc'
+//                    )
+//                    ->whereIn('dv.despacho_venta_cftd', array_column($comprobantes, 'CFTD'))
+//                    ->whereIn('dv.despacho_venta_cfnumser', array_column($comprobantes, 'CFNUMSER'))
+//                    ->whereIn('dv.despacho_venta_cfnumdoc', array_column($comprobantes, 'CFNUMDOC'))
+//                    ->whereIn('dv.despacho_detalle_estado_entrega', [0, 1, 2])
+//                    ->whereRaw('
+//                            dv.despacho_detalle_estado_entrega = (
+//                                SELECT MAX(sub.despacho_detalle_estado_entrega)
+//                                FROM despacho_ventas AS sub
+//                                WHERE sub.despacho_venta_cftd = dv.despacho_venta_cftd
+//                                  AND sub.despacho_venta_cfnumser = dv.despacho_venta_cfnumser
+//                                  AND sub.despacho_venta_cfnumdoc = dv.despacho_venta_cfnumdoc
+//                            )
+//                        ')
+//                    ->get()
+//                    ->map(function ($item) {
+//                        return $item->despacho_venta_cftd . $item->despacho_venta_cfnumser . $item->despacho_venta_cfnumdoc;
+//                    })
+//                    ->toArray();
+//
+//                // Filtrar comprobantes para eliminar los que ya existen
+//                $result = $result->filter(function ($item) use ($comprobantesExistentes) {
+//                    $comprobanteKey = $item->CFTD . $item->CFNUMSER . $item->CFNUMDOC;
+//                    return !in_array($comprobanteKey, $comprobantesExistentes);
+//                });
 
                 foreach ($result as $re){
                     $valornew = $re->total_kg / 1000;
@@ -267,44 +283,60 @@ class Server extends Model
             $result = $result->limit(50)->get();
 
             if (count($result) > 0){
-                $comprobantes = $result->map(function ($item) {
-                    return [
-                        'CFTD' => $item->CFTD,
-                        'CFNUMSER' => $item->CFNUMSER,
-                        'CFNUMDOC' => $item->CFNUMDOC,
-                    ];
-                })->toArray();
-                // Consulta a la base de datos del proyecto para obtener comprobantes ya existentes
-                $comprobantesExistentes = DB::table('despacho_ventas as dv')
-                    ->select(
-                        'dv.despacho_venta_cftd',
-                        'dv.despacho_venta_cfnumser',
-                        'dv.despacho_venta_cfnumdoc'
-                    )
-                    ->whereIn('dv.despacho_venta_cftd', array_column($comprobantes, 'CFTD'))
-                    ->whereIn('dv.despacho_venta_cfnumser', array_column($comprobantes, 'CFNUMSER'))
-                    ->whereIn('dv.despacho_venta_cfnumdoc', array_column($comprobantes, 'CFNUMDOC'))
-                    ->whereIn('dv.despacho_detalle_estado_entrega', [0, 1, 2])
-                    ->whereRaw('
-                            dv.despacho_detalle_estado_entrega = (
-                                SELECT MAX(sub.despacho_detalle_estado_entrega)
-                                FROM despacho_ventas AS sub
-                                WHERE sub.despacho_venta_cftd = dv.despacho_venta_cftd
-                                  AND sub.despacho_venta_cfnumser = dv.despacho_venta_cfnumser
-                                  AND sub.despacho_venta_cfnumdoc = dv.despacho_venta_cfnumdoc
-                            )
-                        ')
-                    ->get()
-                    ->map(function ($item) {
-                        return $item->despacho_venta_cftd . $item->despacho_venta_cfnumser . $item->despacho_venta_cfnumdoc;
-                    })
-                    ->toArray();
+                foreach ($result as $key => $re) {
+                    // Verificamos si existe el despacho en la tabla 'despacho_ventas'
+                    $validarExistencia = DB::table('despacho_ventas as dv')
+                        ->where('dv.despacho_venta_cftd', $re->CFTD)
+                        ->where('dv.despacho_venta_cfnumser', $re->CFNUMSER)
+                        ->where('dv.despacho_venta_cfnumdoc', $re->CFNUMDOC)
+                        ->whereIn('dv.despacho_detalle_estado_entrega', [0,1,2])
+                        ->orderBy('dv.id_despacho_venta','desc')
+                        ->exists();
 
-                // Filtrar comprobantes para eliminar los que ya existen
-                $result = $result->filter(function ($item) use ($comprobantesExistentes) {
-                    $comprobanteKey = $item->CFTD . $item->CFNUMSER . $item->CFNUMDOC;
-                    return !in_array($comprobanteKey, $comprobantesExistentes);
-                });
+                    // Si existe, eliminamos el registro de $result
+                    if ($validarExistencia) {
+                        unset($result[$key]); // Elimina el elemento del array
+                    }
+                }
+
+//                $comprobantes = $result->map(function ($item) {
+//                    return [
+//                        'CFTD' => $item->CFTD,
+//                        'CFNUMSER' => $item->CFNUMSER,
+//                        'CFNUMDOC' => $item->CFNUMDOC,
+//                    ];
+//                })->toArray();
+//                // Consulta a la base de datos del proyecto para obtener comprobantes ya existentes
+//                $comprobantesExistentes = DB::table('despacho_ventas as dv')
+//                    ->select(
+//                        'dv.despacho_venta_cftd',
+//                        'dv.despacho_venta_cfnumser',
+//                        'dv.despacho_venta_cfnumdoc'
+//                    )
+//                    ->whereIn('dv.despacho_venta_cftd', array_column($comprobantes, 'CFTD'))
+//                    ->whereIn('dv.despacho_venta_cfnumser', array_column($comprobantes, 'CFNUMSER'))
+//                    ->whereIn('dv.despacho_venta_cfnumdoc', array_column($comprobantes, 'CFNUMDOC'))
+//                    ->whereIn('dv.despacho_detalle_estado_entrega', [0, 1, 2])
+//                    ->whereRaw('
+//                            dv.despacho_detalle_estado_entrega = (
+//                                SELECT MAX(sub.despacho_detalle_estado_entrega)
+//                                FROM despacho_ventas AS sub
+//                                WHERE sub.despacho_venta_cftd = dv.despacho_venta_cftd
+//                                  AND sub.despacho_venta_cfnumser = dv.despacho_venta_cfnumser
+//                                  AND sub.despacho_venta_cfnumdoc = dv.despacho_venta_cfnumdoc
+//                            )
+//                        ')
+//                    ->get()
+//                    ->map(function ($item) {
+//                        return $item->despacho_venta_cftd . $item->despacho_venta_cfnumser . $item->despacho_venta_cfnumdoc;
+//                    })
+//                    ->toArray();
+//
+//                // Filtrar comprobantes para eliminar los que ya existen
+//                $result = $result->filter(function ($item) use ($comprobantesExistentes) {
+//                    $comprobanteKey = $item->CFTD . $item->CFNUMSER . $item->CFNUMDOC;
+//                    return !in_array($comprobanteKey, $comprobantesExistentes);
+//                });
 
                 foreach ($result as $re){
                     $valornew = $re->total_kg / 1000;

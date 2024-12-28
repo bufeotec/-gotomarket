@@ -188,9 +188,9 @@ class Vehiculo extends Model
             if ($idprovincia) {
                 $query->where('t.id_provincia', $idprovincia);
             }
-            if ($iddistrito) {
-                $query->where('t.id_distrito', $iddistrito);
-            }
+//            if ($iddistrito) {
+//                $query->where('t.id_distrito', $iddistrito);
+//            }
 
             $result = $query->get();
 

@@ -697,3 +697,66 @@
 .colorgotomarket{
     color: var(--primary-color-goto);
 }
+
+
+
+/* ----------------------- Tooltip ------------------------- */
+
+/* Estilos para el botón */
+.table-responsive {
+    position: relative;
+}
+.custom-tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+/* Estilos para el texto del tooltip */
+.custom-tooltip-text {
+    visibility: hidden;
+    width: 250px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 8px;
+    padding: 5px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%; /* Posición superior */
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+/*.custom-tooltip-text {*/
+/*    position: fixed;*/
+/*    visibility: hidden;*/
+/*    width: 160px;*/
+/*    background-color: #333;*/
+/*    color: #fff;*/
+/*    text-align: center;*/
+/*    border-radius: 8px;*/
+/*    padding: 5px;*/
+/*    z-index: 1;*/
+/*    opacity: 0;*/
+/*    transition: opacity 0.3s ease, visibility 0.3s ease;*/
+/*}*/
+/* Flecha del tooltip */
+.custom-tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: #333 transparent transparent transparent;
+}
+
+/* Mostrar tooltip al hacer hover en el botón */
+.custom-tooltip:hover .custom-tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+

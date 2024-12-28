@@ -87,7 +87,7 @@ class ProgramacionesPendientes extends Component
     public function cambiarEstadoProgramacionFormulario(){
         try {
 
-            if (!Gate::allows('aprobar_rechzar_programacion')) {
+            if (!Gate::allows('aprobar_rechazar_programacion')) {
                 session()->flash('error_delete', 'No tiene permisos para aprobar o rechazar esta programación.');
                 return;
             }

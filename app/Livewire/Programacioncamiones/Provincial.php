@@ -13,6 +13,7 @@ use App\Models\Programacion;
 use App\Models\Despacho;
 use App\Models\DespachoVenta;
 use App\Models\General;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
@@ -495,6 +496,10 @@ class Provincial extends Component
 
     public function guardarDespachos(){
         try {
+            if (!Gate::allows('guardar_despacho_provincial')) {
+                session()->flash('error', 'No tiene permisos para crear una programación provincial.');
+                return;
+            }
             $this->validate([
                 'id_tipo_servicios' => 'nullable|integer',
                 'id_transportistas' => 'required|integer',

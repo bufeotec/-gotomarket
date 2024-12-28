@@ -3,6 +3,8 @@
 namespace App\Livewire\Programacioncamiones;
 
 use App\Models\General;
+use Illuminate\Support\Facades\Gate;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -83,7 +85,7 @@ class Local extends Component
                 $this->listar_informacion_programacion_edit();
             }
         }
-        $this->buscar_comprobantes();
+
     }
 
     public function render(){
@@ -151,6 +153,7 @@ class Local extends Component
             $this->validarVehiculoSeleccionado();
         }
     }
+//    #[On('buscarCom')]
     public function buscar_comprobantes(){
         $datosResult = $this->server->listar_comprobantes_listos_local($this->searchFactura, $this->desde, $this->hasta);
         $this->filteredFacturas = $datosResult;
@@ -330,6 +333,10 @@ class Local extends Component
 
     public function guardarDespachos(){
         try {
+            if (!Gate::allows('guardar_despacho_local')) {
+                session()->flash('error', 'No tiene permisos para crear una programación local.');
+                return;
+            }
             $this->validate([
                 'id_tipo_servicios' => 'nullable|integer',
                 'id_transportistas' => 'required|integer',

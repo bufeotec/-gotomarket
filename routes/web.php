@@ -64,5 +64,7 @@ Route::prefix('Programacioncamion')->middleware(['auth', 'canMenu:Programacionca
 Route::prefix('Liquidacionflete')->middleware(['auth', 'canMenu:Liquidacionflete'])->group(function () {
     /* LIQUIDACION */
     route::get('/liquidacion_flete',[LiquidacionfleteController::class ,'liquidacion_flete'])->name('Liquidacionflete.liquidacion_flete')->middleware('verifyUserStatus')->middleware('can:liquidacion_flete');
+    route::get('/editar_liquidacion',[LiquidacionfleteController::class ,'editar_liquidacion'])->name('Liquidacionflete.editar_liquidacion')->middleware('verifyUserStatus')->middleware('can:editar_liquidacion');
+    route::get('/liquidaciones_pendientes',[LiquidacionfleteController::class ,'liquidaciones_pendientes'])->name('Liquidacionflete.liquidaciones_pendientes')->middleware('verifyUserStatus')->middleware('can:liquidaciones_pendientes');
     route::get('/historial_liquidacion',[LiquidacionfleteController::class ,'historial_liquidacion'])->name('Liquidacionflete.historial_liquidacion')->middleware('verifyUserStatus')->middleware('can:historial_liquidacion');
 });

@@ -1202,6 +1202,11 @@
 </div>
 @script
 <script>
+    document.addEventListener('livewire:navigated', () => {
+        setTimeout(() => {
+            $wire.buscar_facturas_clientes(); // Llama directamente al método Livewire
+        }, 2000); // Esperar 2 segundos
+    })
     $wire.on('hideModal', () => {
         $('#modalComprobantes').modal('hide');
     });

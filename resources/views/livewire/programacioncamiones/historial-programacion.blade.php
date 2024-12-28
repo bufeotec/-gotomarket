@@ -288,6 +288,11 @@
             <label for="fecha_hasta" class="form-label">Hasta</label>
             <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model.live="hasta" class="form-control">
         </div>
+        @if(count($resultado) > 0)
+            <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
+                <button class="btn btn-success text-white mt-4" wire:click="generar_excel_historial_programacion" wire:loading.attr="disabled"><i class="fa-solid fa-file-excel"></i> Generar Reporte</button>
+            </div>
+        @endif
         @if(count($selectedItems) > 0)
             <div class="col-lg-4 col-md-4 col-sm-12 mb-2 text-end">
                 <button class="btn text-white bg-warning" data-bs-toggle="modal" data-bs-target="#modalAprobarProgramacion">
@@ -501,10 +506,7 @@
                 @php $conteoGeneral++; @endphp
             @endforeach
         @else
-            <div class="alert alert-danger alert-dismissible show fade mt-2">
-                Registros Insuficientes
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
+            <p class="text-center"> Registros Insuficientes</p>
         @endif
     </div>
 

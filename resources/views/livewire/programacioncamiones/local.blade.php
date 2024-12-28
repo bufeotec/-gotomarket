@@ -643,10 +643,12 @@
     </style>
 
 </div>
-{{--@script--}}
-{{--    <script>--}}
-{{--        $(document).ready(function(){--}}
-{{--            $('#ederTable').DataTable();--}}
-{{--        })--}}
-{{--    </script>--}}
-{{--@endscript--}}
+@script
+<script>
+    document.addEventListener('livewire:navigated', () => {
+        setTimeout(() => {
+            $wire.buscar_comprobantes(); // Llama directamente al método Livewire
+        }, 2000); // Esperar 2 segundos
+    })
+</script>
+@endscript

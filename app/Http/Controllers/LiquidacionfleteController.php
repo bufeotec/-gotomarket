@@ -22,6 +22,26 @@ class LiquidacionfleteController extends Controller
         }
     }
 
+    public function liquidaciones_pendientes(){
+        try {
+            return view('liquidacion.liquidaciones_pendientes');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
+    public function editar_liquidacion(){
+        try {
+            $id_liquidacion = base64_decode($_GET['data']);
+            if ($id_liquidacion){
+
+                return view('liquidacion.editar_liquidacion',compact('id_liquidacion'));
+            }
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
     public function historial_liquidacion(){
         try {
             return view('liquidacion.historial_liquidacion');
