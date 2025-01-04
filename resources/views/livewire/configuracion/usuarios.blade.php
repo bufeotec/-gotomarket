@@ -66,8 +66,10 @@
                         <label for="id_rol" class="form-label">Rol (*)</label>
                         <select id="id_rol" class=" form-select" wire:model="id_rol">
                             <option value="">Seleccionar</option>
-                            @foreach($roles as $re)
-                                <option value="{{$re->id}}">{{$re->name}}</option>
+                            @foreach($roles as $indexRol => $re)
+                                @if($roleId == 1 || $indexRol > 0)
+                                    <option value="{{ $re->id }}">{{ $re->name }}</option>
+                                @endif
                             @endforeach
                         </select>
                         @error('id_rol')

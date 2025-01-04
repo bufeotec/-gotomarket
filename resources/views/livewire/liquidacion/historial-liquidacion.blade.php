@@ -905,12 +905,13 @@
         <x-slot name="id_modal">modalAgregarComprobante</x-slot>
         <x-slot name="titleModal">Agregar comprobante</x-slot>
         <x-slot name="modalContent">
-            <form wire:submit="guardar_comprobante">
+            <form wire:submit.prevent="guardar_comprobante">
                 <div class="row">
                     <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
                         <label for="liquidacion_ruta_comprobante" class="form-label">Comprobante</label>
                         <input type="file" class="form-control" id="liquidacion_ruta_comprobante" name="liquidacion_ruta_comprobante" wire:model="liquidacion_ruta_comprobante">
                     </div>
+                    @error('liquidacion_ruta_comprobante') <span class="message-error">{{ $message }}</span> @enderror
                 </div>
                 <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-end">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -997,6 +998,13 @@
                     <div id="collapseOne_{{$index}}" class="accordion-collapse collapse {{$index == 0 ? 'show' : ''}}" data-bs-parent="#accordionExample" wire:ignore.self >
                         <div class="accordion-body" >
                             <div class="row">
+                                <div class="col-lg-12 col-md-12 col-sm-12 mb-3 text-end">
+                                    @if(file_exists($r->liquidacion_ruta_comprobante))
+                                        <a class="btn btn-sm text-white bg-secondary" href="{{asset($r->liquidacion_ruta_comprobante)}}" target="_blank"><i class="fa-solid fa-eye"></i> VER DOCUMENTO</a>
+                                    @else
+                                        <button class="btn btn-sm text-white bg-secondary" wire:click="agregar_comprobante({{$r->id_liquidacion}})" data-bs-toggle="modal" data-bs-target="#modalAgregarComprobante"><i class="fa-solid fa-file-circle-plus"></i> ADJUNTAR DOCUMENTO</button>
+                                    @endif
+                                </div>
                                 @if($r->liquidacion_observaciones)
                                     <div class="col-lg-12 col-md-12 col-sm-12">
                                         <label for="">Observaciones:</label>

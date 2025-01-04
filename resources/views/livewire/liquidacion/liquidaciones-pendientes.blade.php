@@ -387,19 +387,19 @@
         <x-slot name="id_modal">modalAgregarComprobante</x-slot>
         <x-slot name="titleModal">Agregar comprobante</x-slot>
         <x-slot name="modalContent">
-            <form wire:submit="guardar_comprobante">
+            <form wire:submit.prevent="guardar_comprobante_new">
                 <div class="row">
                     <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
                         <label for="liquidacion_ruta_comprobante" class="form-label">Comprobante</label>
                         <input type="file" class="form-control" id="liquidacion_ruta_comprobante" name="liquidacion_ruta_comprobante" wire:model="liquidacion_ruta_comprobante">
                     </div>
+                    @error('liquidacion_ruta_comprobante') <span class="message-error">{{ $message }}</span> @enderror
                 </div>
                 <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-end">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-primary" >Guardar</button>
                 </div>
             </form>
-
         </x-slot>
     </x-modal-general>
     {{-- APROBAR --}}
@@ -513,6 +513,12 @@
                                         <button class="btn btn-sm text-white bg-danger" wire:click="cambiarEstadoLiquidacion({{$r->id_liquidacion}},2)" data-bs-toggle="modal" data-bs-target="#modalAprobarLiquidacion"><i class="fa fa-x"></i> RECHAZAR</button>
                                     @endif
                                     <a class="btn btn-sm text-white bg-primary" href="{{route('Liquidacionflete.editar_liquidacion',['data'=>base64_encode($r->id_liquidacion)])}}"><i class="fa-solid fa-pencil"></i> EDITAR</a>
+                                    @if(file_exists($r->liquidacion_ruta_comprobante))
+                                        <a class="btn btn-sm text-white bg-secondary" href="{{asset($r->liquidacion_ruta_comprobante)}}" target="_blank"><i class="fa-solid fa-eye"></i> VER DOCUMENTO</a>
+                                    @else
+                                        <button class="btn btn-sm text-white bg-secondary" wire:click="agregar_comprobante({{$r->id_liquidacion}})" data-bs-toggle="modal" data-bs-target="#modalAgregarComprobante"><i class="fa-solid fa-file-circle-plus"></i> ADJUNTAR DOCUMENTO</button>
+                                    @endif
+
                                 </div>
                                 @if($r->liquidacion_observaciones)
                                     <div class="col-lg-12 col-md-12 col-sm-12">

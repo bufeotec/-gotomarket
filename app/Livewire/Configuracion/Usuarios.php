@@ -67,7 +67,10 @@ class Usuarios extends Component
             $usuarios = $this->user->listar_usuarios_activos($this->search, $this->pagination);
             $roles = DB::table('roles')->where('roles_status','=',1)->get();
 
-            return view('livewire.configuracion.usuarios', compact('usuarios','roles'));
+//            $user = \Illuminate\Support\Facades\Auth::user(); // Obtiene el usuario autenticado
+            $roleId = auth()->user()->roles->first()->id ?? null;
+
+            return view('livewire.configuracion.usuarios', compact('usuarios','roles','roleId'));
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);
         }
@@ -229,6 +232,7 @@ class Usuarios extends Component
         $usersEditar = User::find(base64_decode($id));
         if ($usersEditar){
             $rol = DB::table('model_has_roles as  mr')->join('roles as r','r.id','=','mr.role_id')->where('mr.model_id','=',$usersEditar->id_users)->first();
+            $this->password = null;
             $this->name = $usersEditar->name;
             $this->last_name = $usersEditar->last_name;
             $this->username = $usersEditar->username;
@@ -252,9 +256,10 @@ class Usuarios extends Component
         $this->users_cargo  = "";
         $this->username  = "";
         $this->profile_picture  = "";
-        $this->password  = "";
+        $this->password  = null;
         $this->id_users  = "";
         $this->id_rol  = "";
+//        $this->password  = "";
         $this->ruta_img_default = "assets/images/faces/1.jpg";
         $this->dispatch('updateUserImagePreview', ['image' => asset($this->ruta_img_default)]);
     }

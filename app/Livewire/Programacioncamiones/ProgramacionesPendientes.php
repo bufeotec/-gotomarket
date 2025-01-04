@@ -61,7 +61,8 @@ class ProgramacionesPendientes extends Component
                 $des->totalVentaDespacho = $totalVenta;
             }
         }
-        return view('livewire.programacioncamiones.programaciones-pendientes',compact('resultado'));
+        $conteoProgramacionesPend = DB::table('programaciones')->where('programacion_estado_aprobacion','=',0)->count();
+        return view('livewire.programacioncamiones.programaciones-pendientes',compact('resultado','conteoProgramacionesPend'));
     }
 
     public function listar_informacion_despacho($id){

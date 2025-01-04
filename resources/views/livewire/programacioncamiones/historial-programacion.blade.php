@@ -307,7 +307,12 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
-
+    @if (session()->has('error'))
+        <div class="alert alert-danger alert-dismissible show fade mt-2">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
     @if(count($resultado) > 0)
         <div class="row mt-4">
             <div class="col-lg col-md-3 col-sm-3 mb-1">
@@ -361,19 +366,21 @@
                     <div id="collapseOne_{{$index}}" class="accordion-collapse collapse {{$index == 0 ? 'show' : ''}}" data-bs-parent="#accordionExample" wire:ignore.self >
                         <div class="accordion-body" >
                             <div class="row">
-                                @php
-                                    $conteoRetornar = 0;
-                                    foreach ($r->despacho as $des){
-                                        if ($des->despacho_estado_aprobacion != 1){
-                                            $conteoRetornar++;
+                                @if($roleId == 1 || $roleId == 2)
+                                    @php
+                                        $conteoRetornar = 0;
+                                        foreach ($r->despacho as $des){
+                                            if ($des->despacho_estado_aprobacion != 1){
+                                                $conteoRetornar++;
+                                            }
                                         }
-                                    }
-                                @endphp
-                                @if($conteoRetornar == 0)
-                                    <div class="col-lg-12 col-md-12 col-sm-12 text-end mb-4">
-                                        <button class="btn btn-secondary text-white btn-sm"  wire:click="retornarProgamacionApro({{$r->id_programacion}})" data-bs-toggle="modal" data-bs-target="#modalRetornarPendiente"
-                                        ><i class="fa-solid fa-arrow-left"></i> Retornar a Programaciones Pendientes</button>
-                                    </div>
+                                    @endphp
+                                    @if($conteoRetornar == 0)
+                                        <div class="col-lg-12 col-md-12 col-sm-12 text-end mb-4">
+                                            <button class="btn btn-secondary text-white btn-sm"  wire:click="retornarProgamacionApro({{$r->id_programacion}})" data-bs-toggle="modal" data-bs-target="#modalRetornarPendiente"
+                                            ><i class="fa-solid fa-arrow-left"></i> Retornar a Programaciones Pendientes</button>
+                                        </div>
+                                    @endif
                                 @endif
 
                                 <div class="col-lg-12 col-md-12 col-sm-12 table-responsive">

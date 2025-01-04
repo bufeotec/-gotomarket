@@ -260,10 +260,14 @@ class Tarifarios extends Component
 
                 $validar = DB::table('tarifarios')
                     ->where('id_transportistas', '=', $this->id_transportistas)
-                    ->where('id_tipo_servicio', '=', $this->id_tipo_servicio)
-                    ->where('tarifa_cap_max', '<=', $this->tarifa_cap_max)
-                    ->where('tarifa_cap_min', '>=', $this->tarifa_cap_min)
-                    ->first();
+                    ->where('id_tipo_servicio', '=', $this->id_tipo_servicio);
+                if ($this->id_tipo_servicio == 2){
+                    $validar->where('id_departamento','=',$this->id_departamento)->where('id_provincia','=',$this->id_provincia);
+                }
+                $validar->where('tarifa_cap_max', '<=', $this->tarifa_cap_max)
+                    ->where('tarifa_cap_min', '>=', $this->tarifa_cap_min);
+
+                $validar =  $validar->first();
 
                 if (!$validar) {
                     $microtime = microtime(true);
@@ -360,14 +364,18 @@ class Tarifarios extends Component
                 $validar = DB::table('tarifarios')
                     ->where('id_tarifario', '<>', $this->id_tarifario)
                     ->where('id_transportistas', '=', $this->id_transportistas)
-                    ->where('id_tipo_servicio', '=', $this->id_tipo_servicio)
-                    ->where('tarifa_cap_max', '<=', $this->tarifa_cap_max)
-                    ->where('tarifa_cap_min', '>=', $this->tarifa_cap_min)
-                    ->first();
+                    ->where('id_tipo_servicio', '=', $this->id_tipo_servicio);
+                     if ($this->id_tipo_servicio == 2){
+                         $validar->where('id_departamento','=',$this->id_departamento)->where('id_provincia','=',$this->id_provincia);
+                     }
+                $validar->where('tarifa_cap_max', '<=', $this->tarifa_cap_max)
+                    ->where('tarifa_cap_min', '>=', $this->tarifa_cap_min);
+
+                $validar = $validar->first();
 
                 if (!$validar) {
                     // Obtener el registro actual antes de realizar cambios
-                    $tarifario_update = Tarifario::findOrFail($this->id_tarifario);
+                    $tarifario_update = Tarifario::find($this->id_tarifario);
                     // Guardar los valores originales para verificar cambios
                     $originalValues = $tarifario_update->getOriginal();
                     // Actualizar los campos del registro

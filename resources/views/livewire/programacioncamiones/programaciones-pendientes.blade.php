@@ -208,6 +208,9 @@
             <label for="fecha_hasta" class="form-label">Hasta</label>
             <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model.live="hasta" class="form-control">
         </div>
+        <div class="col-lg-12 col-md-12 col-sm-12">
+            <p>Actualmente, hay <b class="colorgotomarket">{{$conteoProgramacionesPend}}</b> programaciones pendientes.</p>
+        </div>
     </div>
     @if (session()->has('success'))
         <div class="alert alert-success alert-dismissible show fade mt-2">

@@ -440,12 +440,13 @@
             <x-select-filter wire:model.live="pagination_tarifario" />
         </div>
         <div class="col-lg-6 col-md-6 col-sm-12 text-end">
-{{--            <x-btn-export class="bg-secondary text-white" wire:click="limpiar_nombre_convenio" data-bs-toggle="modal" data-bs-target="#modalServicios">--}}
-{{--                <x-slot name="icons">--}}
-{{--                    fa-solid fa-plus--}}
-{{--                </x-slot>--}}
-{{--                Agregar Servicios--}}
-{{--            </x-btn-export>--}}
+            <a class="btn bg-white text-dark create-new ms-3" href="{{route('Tarifario.fletes')}}" >
+                <span>
+                    <i class="fa-solid fa-arrow-left me-sm-1"></i>
+                    <span class="d-none d-sm-inline-block">Regresar</span>
+                </span>
+            </a>
+
             <x-btn-export wire:click="clear_form_tarifario" class="bg-success text-white" data-bs-toggle="modal" data-bs-target="#modalTarifario" >
                 <x-slot name="icons">
                     fa-solid fa-plus
@@ -543,7 +544,7 @@
                                                     </x-btn-accion>
                                                 @endif
                                             @else
-                                                <x-btn-accion class=" text-primary"  wire:click="edit_data('{{ base64_encode($ta->id_tarifario) }}')" data-bs-toggle="modal" data-bs-target="#modalTarifario"><x-slot name="message"><i class="fa-solid fa-pen-to-square"></i></x-slot></x-btn-accion>
+{{--                                                <x-btn-accion class=" text-primary"  wire:click="edit_data('{{ base64_encode($ta->id_tarifario) }}')" data-bs-toggle="modal" data-bs-target="#modalTarifario"><x-slot name="message"><i class="fa-solid fa-pen-to-square"></i></x-slot></x-btn-accion>--}}
                                             @endif
                                         </td>
                                     </tr>

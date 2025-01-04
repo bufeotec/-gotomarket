@@ -283,6 +283,15 @@
             <x-input-general  type="date" name="date_hasta" id="date_hasta" wire:model="date_hasta" wire:change="{{$id_liquidacion_edit ? 'seleccion_trans_edit' : 'seleccion_trans'}}"/>
         </div>
     </div>
+    @if($id_transportistas)
+        @php
+            $conteoLiquida = \Illuminate\Support\Facades\DB::table('despachos as d')->where('d.despacho_liquidado', '=',0)
+                ->where('d.id_transportistas', $id_transportistas)
+                ->where('d.despacho_estado', 1)
+                ->where('d.despacho_estado_aprobacion','=',3)->count();
+        @endphp
+        <p class="mt-2">Existe <b class="colorgotomarket">{{$conteoLiquida}}</b> despachos que aún están pendientes de liquidación.</p>
+    @endif
     @if($despachos && count($despachos) > 0)
         <div class="row">
             <div class="col-lg-3 col-md-3 col-sm-12">
@@ -321,15 +330,7 @@
         </div>
     @endif
 
-    @if($id_transportistas)
-        @php
-            $conteoLiquida = \Illuminate\Support\Facades\DB::table('despachos as d')->where('d.despacho_liquidado', '=',0)
-                ->where('d.id_transportistas', $id_transportistas)
-                ->where('d.despacho_estado', 1)
-                ->where('d.despacho_estado_aprobacion','=',3)->count();
-        @endphp
-        <p class="mt-2">Existen <b class="colorBlackComprobantes">{{$conteoLiquida}}</b> despachos que aún están pendientes de liquidación.</p>
-    @endif
+
     <form  wire:submit.prevent="guardar_liquidacion">
         <x-card-general-view>
             <x-slot name="content">

@@ -95,33 +95,41 @@ class LiquidacionesPendientes extends Component
     }
 
     public function agregar_comprobante($id_liquidqcion){
-        $id = base64_decode($id_liquidqcion);
-        $this->id_liquidacion = $id;
-        $this->liquidacion_ruta_comprobante = '';
-    }
+        try {
+            if ($id_liquidqcion){
+                $id = $id_liquidqcion;
+                $this->id_liquidacion = $id;
+                $this->liquidacion_ruta_comprobante = '';
+            }
 
-    public function guardar_comprobante(){
-        if (!Gate::allows('guardar_comprobante_liquidacion')) {
-            session()->flash('error', 'No tiene permisos para guardar el comprobante relacionado con la liquidación.');
+        }catch (\Exception $e) {
+            $this->logs->insertarLog($e);
             return;
         }
-        $this->validate([
-            'liquidacion_ruta_comprobante' => 'nullable|file|mimes:jpg,jpeg,pdf,png|max:2048',
-        ], [
-            'liquidacion_ruta_comprobante.file' => 'Debe cargar un archivo válido.',
-            'liquidacion_ruta_comprobante.mimes' => 'El archivo debe ser JPG, JPEG, PNG o PDF.',
-            'liquidacion_ruta_comprobante.max' => 'El archivo no puede exceder los 2MB.',
-        ]);
 
+    }
+
+    public function guardar_comprobante_new(){
         try {
-            DB::beginTransaction();
+            if (!Gate::allows('guardar_comprobante_liquidacion')) {
+                session()->flash('error', 'No tiene permisos para guardar el comprobante relacionado con la liquidación.');
+                return;
+            }
+            $this->validate([
+                'liquidacion_ruta_comprobante' => 'nullable|file|mimes:jpg,jpeg,pdf,png|max:2048',
+            ], [
+                'liquidacion_ruta_comprobante.file' => 'Debe cargar un archivo válido.',
+                'liquidacion_ruta_comprobante.mimes' => 'El archivo debe ser JPG, JPEG, PNG o PDF.',
+                'liquidacion_ruta_comprobante.max' => 'El archivo no puede exceder los 2MB.',
+            ]);
 
+            DB::beginTransaction();
+            Log::info($this->id_liquidacion);
             $liquidacion = Liquidacion::find($this->id_liquidacion);
             if ($liquidacion) {
                 if ($this->liquidacion_ruta_comprobante) {
                     $liquidacion->liquidacion_ruta_comprobante = $this->general->save_files($this->liquidacion_ruta_comprobante, 'liquidacion/comprobantes');
                 }
-
                 if ($liquidacion->save()) {
                     DB::commit();
                     $this->dispatch('hideModal');
@@ -134,9 +142,13 @@ class LiquidacionesPendientes extends Component
                 DB::rollBack();
                 session()->flash('error', 'Liquidación no encontrada.');
             }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->setErrorBag($e->validator->errors());
         } catch (\Exception $e) {
             DB::rollBack();
-            session()->flash('error', 'Ocurrió un error al guardar el comprobante: ' . $e->getMessage());
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error al guardar el comprobante');
+            return;
         }
     }
 

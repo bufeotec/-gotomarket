@@ -72,9 +72,16 @@ class HistorialLiquidacion extends Component
         }
     }
     public function agregar_comprobante($id_liquidqcion){
-        $id = base64_decode($id_liquidqcion);
-        $this->id_liquidacion = $id;
-        $this->liquidacion_ruta_comprobante = '';
+        try {
+            if ($id_liquidqcion){
+                $id = $id_liquidqcion;
+                $this->id_liquidacion = $id;
+                $this->liquidacion_ruta_comprobante = '';
+            }
+        }catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            return;
+        }
     }
     public function guardar_comprobante(){
         if (!Gate::allows('guardar_comprobante_liquidacion')) {
