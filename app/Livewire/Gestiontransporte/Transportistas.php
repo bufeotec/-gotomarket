@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Gestiontransporte;
 
-use App\Livewire\Intranet\sidebar;
 use App\Models\General;
 use App\Models\Logs;
 use App\Models\Menu;
@@ -192,7 +191,6 @@ class Transportistas extends Component
 
                     if ($transportistas_save->save()) {
                         DB::commit();
-                        // Emitir el evento al componente sidebar
                         $this->dispatch('hideModal');
                         session()->flash('success', 'Registro guardado correctamente.');
 

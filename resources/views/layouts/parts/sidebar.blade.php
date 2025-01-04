@@ -14,7 +14,7 @@
             </div>
         </div>
         <div class="sidebar-menu">
-            @livewire('intranet.sidebar')
+            @livewire('intranet.navegation')
         </div>
         <button class="sidebar-toggler btn x"><i data-feather="x"></i></button>
     </div>

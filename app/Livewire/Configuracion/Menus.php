@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Configuracion;
 
-use App\Livewire\Intranet\sidebar;
+use App\Livewire\Intranet\Navegation;
 use App\Models\Logs;
 use App\Models\Menu;
 use Illuminate\Support\Facades\DB;
@@ -114,8 +114,8 @@ class Menus extends Component
                             if ($role) {
                                 $permission->syncRoles([$role->id]);
                                 DB::commit();
-                                // Emitir el evento al componente sidebar
-                                $this->dispatch('refresh_sidebar_menu',$this->urlActual)->to(sidebar::class);
+                                // Emitir el evento al componente sidebarNew
+                                $this->dispatch('refresh_sidebar_menu',$this->urlActual)->to(Navegation::class);
                                 $this->dispatch('hideModal');
                                 session()->flash('success', 'Registro guardado correctamente.');
                             } else {
@@ -179,9 +179,9 @@ class Menus extends Component
                 }
 
                 DB::commit();
-                $this->dispatch('refresh_sidebar_menu',$this->urlActual)->to(sidebar::class);
+                $this->dispatch('refresh_sidebar_menu',$this->urlActual)->to(Navegation::class);
 
-//                $this->dispatch('refresh_sidebar_menu')->to(sidebar::class);
+//                $this->dispatch('refresh_sidebar_menu')->to(sidebarNew::class);
                 $this->dispatch('hideModal');
                 session()->flash('success', 'Menú actualizado correctamente.');
             }
@@ -253,7 +253,7 @@ class Menus extends Component
             $menu_delete->menu_status = $this->statusMenu;
             if ($menu_delete->save()) {
                 DB::commit();
-                $this->dispatch('refresh_sidebar_menu',$this->urlActual)->to(sidebar::class);
+                $this->dispatch('refresh_sidebar_menu',$this->urlActual)->to(Navegation::class);
                 $this->dispatch('hideModalDelete');
                 if ($this->statusMenu == 0){
                     session()->flash('success', 'Registro deshabilitado correctamente.');

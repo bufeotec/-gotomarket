@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Configuracion;
 
-use App\Livewire\Intranet\sidebar;
+use App\Livewire\Intranet\Navegation;
 use App\Models\Logs;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -378,7 +378,7 @@ class Roles extends Component
                 $rol->syncPermissions($datosPermissions);
                 if ($rol->save()) {
                     DB::commit();
-                    $this->dispatch('refresh_sidebar_menu',$this->urlActual)->to(sidebar::class);
+                    $this->dispatch('refresh_sidebar_menu',$this->urlActual)->to(Navegation::class);
                     session()->flash('success_permissions', 'El rol se ha registrado exitosamente.');
                 } else {
                     DB::rollBack();

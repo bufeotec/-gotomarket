@@ -170,7 +170,6 @@ class Vehiculos extends Component
 
                     if ($vehiculo_save->save()) {
                         DB::commit();
-                        // Emitir el evento al componente sidebar
 //                    $this->dispatch('refresh_select_servicios')->to(Transportistas::class);
                         $this->dispatch('hideModal');
                         session()->flash('success', 'Registro guardado correctamente.');

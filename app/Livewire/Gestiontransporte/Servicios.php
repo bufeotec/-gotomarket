@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Gestiontransporte;
 
-use App\Livewire\Intranet\sidebar;
 use App\Livewire\Registroflete\Tarifarios;
 use App\Models\Logs;
 use App\Models\Menu;
@@ -66,7 +65,7 @@ class Servicios extends Component
 
                 if ($tiposervicio_save->save()) {
                     DB::commit();
-                    // Emitir el evento al componente sidebar
+                    // Emitir el evento al componente sidebarNew
                     $this->dispatch('refresh_select_servicios')->to(Tarifarios::class);
 //                    $this->dispatch('hideModal');
                     $this->tipo_servicio_concepto = "";

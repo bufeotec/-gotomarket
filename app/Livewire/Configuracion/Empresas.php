@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Configuracion;
 
-use App\Livewire\Intranet\sidebar;
+use App\Livewire\Intranet\Navegation;
 use App\Models\Empresa;
 use App\Models\General;
 use App\Models\Logs;

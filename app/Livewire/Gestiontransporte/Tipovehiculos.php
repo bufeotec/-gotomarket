@@ -65,7 +65,6 @@ class Tipovehiculos extends Component
 
                 if ($tipovehiculo_save->save()) {
                     DB::commit();
-                    // Emitir el evento al componente sidebar
                     $this->dispatch('refresh_select_tipo_vehiculo')->to(Vehiculos::class);
 //                    $this->dispatch('hideModal');
                     $this->tipo_vehiculo_concepto = "";

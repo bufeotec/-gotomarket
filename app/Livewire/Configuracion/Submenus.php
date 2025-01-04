@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Configuracion;
 
-use App\Livewire\Intranet\sidebar;
+use App\Livewire\Intranet\Navegation;
 use App\Models\Logs;
 use App\Models\Menu;
 use App\Models\Submenu;
@@ -129,7 +129,7 @@ class Submenus extends Component
                 }else{
                     session()->flash('success', 'Registro habilitado correctamente.');
                 }
-                $this->dispatch('refresh_sidebar_menu',$this->urlActual)->to(sidebar::class);
+                $this->dispatch('refresh_sidebar_menu',$this->urlActual)->to(Navegation::class);
                 $this->dispatch('hideModalDeleteSubmenu');
             } else {
                 DB::rollBack();
@@ -207,8 +207,8 @@ class Submenus extends Component
                             if ($role) {
                                 $permission->syncRoles([$role->id]);
                                 DB::commit();
-                                // Emitir el evento al componente sidebar
-                                $this->dispatch('refresh_sidebar_menu',$this->urlActual)->to(sidebar::class);
+                                // Emitir el evento al componente sidebarNew
+                                $this->dispatch('refresh_sidebar_menu',$this->urlActual)->to(Navegation::class);
                                 $this->dispatch('hideModalSubmenu');
                                 session()->flash('success', 'Registro guardado correctamente.');
                             } else {
@@ -268,7 +268,7 @@ class Submenus extends Component
                 }
 
                 DB::commit();
-                $this->dispatch('refresh_sidebar_menu',$this->urlActual)->to(sidebar::class);
+                $this->dispatch('refresh_sidebar_menu',$this->urlActual)->to(Navegation::class);
                 $this->dispatch('hideModalSubmenu');
                 session()->flash('success', 'Submenú actualizado correctamente.');
             }

@@ -5,11 +5,11 @@ namespace App\Livewire\Intranet;
 use App\Models\Logs;
 use App\Models\Menu;
 use App\Models\Submenu;
-use Livewire\Component;
-use Livewire\Attributes\On;
 use Illuminate\Support\Facades\Request;
+use Livewire\Attributes\On;
+use Livewire\Component;
 
-class sidebar extends Component
+class Navegation extends Component
 {
     private $logs;
     private $menus;
@@ -44,6 +44,6 @@ class sidebar extends Component
                 $me->submenu = $this->submenus->listar_submenus_x_menu($me->id_menu);
             }
         }
-        return view('livewire.intranet.sidebar');
+        return view('livewire.intranet.navegation');
     }
 }
