@@ -90,8 +90,9 @@
                         <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width:600px;">
                             <tr>
                                 <td align="center" style="font-family: Open Sans, Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 400; line-height: 24px;">
-                                   <div style="display: flex;align-items: center;justify-content: end;padding: 15px 20px 15px 20px;background: #1648ff;border-top-right-radius: 10px;border-top-left-radius: 10px">
-                                       <img src="{{asset('logoColors.png')}}" style="width: 210px;height: 45px;margin-left: auto" />
+                                   <div style="display: flex;align-items: center;justify-content: end;padding: 15px 20px 15px 20px;background: #e51821;border-top-right-radius: 10px;border-top-left-radius: 10px">
+                                       <img src="{{asset('isologoCompleteGo.png')}}" style="width: 90px;height: 60px;" />
+                                       <h3 class="mb-0 font-weight-bold ml-2" style="font-weight: 800!important;color: white;margin-left: 5px">GO TO MARKET</h3>
                                    </div>
                                     <div style="display: flex;align-items: center!important;justify-content: center;">
                                         <img src="{{asset('Forgot password-bro.png')}}" style="width: 55%;margin-top: 5%" alt="">
@@ -144,24 +145,25 @@
 
                 <!-- Publicidad a Bufeo -->
                 <tr>
-                    <td align="center" style="padding: 35px;background: linear-gradient(to bottom, #1648ff, #2d3748);" bgcolor="#139a43">
+{{--                    <td align="center" style="padding: 35px;background: linear-gradient(to bottom, #1648ff, #2d3748);" bgcolor="#139a43">--}}
+                    <td align="center" style="padding: 35px; background: linear-gradient(to bottom, #283890, #fd3164);" bgcolor="#139a43">
                         <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width:600px;">
-{{--                            <tr>--}}
-{{--                                <td align="center">--}}
-{{--                                    <img src="https://bufeotec.com/archivos_clientes/logo_bufeo_nuevo.png" width="100" style="display: block; border: 0px;"/>--}}
-{{--                                </td>--}}
-{{--                            </tr>--}}
+                            <tr>
+                                <td align="center">
+                                    <img src="https://bufeotec.com/archivos_clientes/logo_bufeo_nuevo.png" width="100" style="display: block; border: 0px;"/>
+                                </td>
+                            </tr>
                             <tr>
                                 <td align="center" style="font-family: Open Sans, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 400; line-height: 24px; padding: 5px 0 10px 0;">
                                     <p style="font-size: 14px; font-weight: 800; line-height: 18px; color: white;">
-                                        Desarrollado por Eder Alfredo
+                                        Desarrollado por Bufeo Tec
                                     </p>
                                 </td>
                             </tr>
                             <tr>
                                 <td align="center" style="font-family: Open Sans, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 400; line-height: 24px;">
                                     <p style="font-size: 14px; font-weight: 400; line-height: 20px; color: white;">
-                                        <a href="http://apaguesoft.com/" target="_blank" style="color: white;">¿Interesado? Visita nuestro sitio web</a>.
+                                        <a href="https://bufeotec.com/" target="_blank" style="color: white;">¿Interesado? Visita nuestro sitio web</a>.
                                     </p>
                                 </td>
                             </tr>

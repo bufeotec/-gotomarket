@@ -139,22 +139,44 @@ class HistorialProgramacion extends Component
 //                                ->where('d.id_programacion','=',$result->id_programacion)
 //                                ->where('d.id_tipo_servicios','<>',2)
 //                                ->get();
-                                $dat =  DB::table('despacho_ventas as dv')
+                                // Comprobantes locales
+                                $datLocales =  DB::table('despacho_ventas as dv')
                                     ->join('despachos as d', 'd.id_despacho', '=', 'dv.id_despacho')
                                     ->where('d.id_despacho', '=', $des->id_despacho)
                                     ->where('d.id_programacion', '=', $result->id_programacion)
-                                    ->where('d.id_tipo_servicios', '<>', 2) // Excluir provinciales
+//                                    ->where('d.id_tipo_servicios', '<>', 2) // Excluir provinciales
                                     ->whereNotExists(function ($query) use ($result) {
                                         $query->select(DB::raw(1))
                                             ->from('despacho_ventas as dv_provincial')
                                             ->join('despachos as d_provincial', 'd_provincial.id_despacho', '=', 'dv_provincial.id_despacho')
                                             ->where('d_provincial.id_programacion', '=', $result->id_programacion)
                                             ->where('d_provincial.id_tipo_servicios', '=', 2) // Solo considerar provinciales
-                                            ->whereRaw('dv_provincial.id_venta = dv.id_venta'); // Comparar ventas duplicadas
+                                            ->whereRaw('dv_provincial.despacho_venta_cftd = dv.despacho_venta_cftd') // Comparar ventas duplicadas
+                                            ->whereRaw('dv_provincial.despacho_venta_cfnumser = dv.despacho_venta_cfnumser') // Comparar ventas duplicadas
+                                            ->whereRaw('dv_provincial.despacho_venta_cfnumdoc = dv.despacho_venta_cfnumdoc'); // Comparar ventas duplicadas
                                     })
                                     ->get();
-                                Log::info($dat);
-                                $des->comprobantes = $dat;
+
+                                /* BUSCAR DESPACHOS PROVINCIALES DE LA MISMA PROGRAMACION */
+                                // Obtener todos los despachos provinciales de la misma programación
+                                $desProvinciPro = DB::table('despachos')
+                                    ->where('id_programacion', '=', $result->id_programacion)
+                                    ->where('id_tipo_servicios', '=', 2)
+                                    ->pluck('id_despacho'); // Solo obtenemos los IDs de los despachos provinciales
+
+                                // Obtener comprobantes provinciales si existen
+                                $datProvinciales = collect(); // Inicializar como colección vacía
+
+                                if ($desProvinciPro->isNotEmpty()) {
+                                    $datProvinciales = DB::table('despacho_ventas')
+                                        ->whereIn('id_despacho', $desProvinciPro) // Obtener comprobantes de todos los despachos provinciales
+                                        ->get();
+                                }
+
+                                // Combinar comprobantes locales y provinciales
+                                $datCombinado = $datLocales->merge($datProvinciales);
+                                $des->comprobantes = $datCombinado;
+
                             }else{
                                 $des->comprobantes =  DB::table('despacho_ventas as dv')
                                 ->where('dv.id_despacho','=',$des->id_despacho)
@@ -405,6 +427,7 @@ class HistorialProgramacion extends Component
 
                             $totalPesoDespachos = 0;
                             $importeTotalDespachos = 0;
+                            $osAnteriorMixto = null;
                             foreach ($des->comprobantes  as $indexComprobante => $comproba){
                                 /**/
                                 // buscar si es mixto o un servicio normal
@@ -417,9 +440,9 @@ class HistorialProgramacion extends Component
                                     ->where('d.id_tipo_servicios','=',2)->first();
 
                                 if ($validarMixto){
-                                    $loc = 'MIXTO';
+                                    $typeComprop = 3;
                                 }else {
-                                    $loc = $des->id_tipo_servicios == 1 ? 'LOCAL' : 'PROVINCIAL';
+                                    $typeComprop = $des->id_tipo_servicios;
                                 }
 
                                 /**/
@@ -439,6 +462,13 @@ class HistorialProgramacion extends Component
                                 $sheet1->setCellValue('J'.$row, $parte2);
                                 $sheet1->setCellValue('K'.$row, $this->general->formatoDecimal($comproba->despacho_venta_cfimporte));
                                 $sheet1->setCellValue('L'.$row, date('d/m/Y',strtotime($resPro->programacion_fecha_aprobacion)));
+
+                                $loc = match ($typeComprop) {
+                                    1 => 'LOCAL',
+                                    2 => 'PROVINCIAL',
+                                    3 => 'MIXTO',
+                                    default => '',
+                                };
 
                                 $sheet1->setCellValue('M'.$row, $loc);
                                 $cellRange = 'M'.$row.':M'.$row;
@@ -487,82 +517,7 @@ class HistorialProgramacion extends Component
                                                     $fleteFinalLocal = $totalGeneralLocal;
                                                     $filaPorcentajeLocal = $row;
 
-                                                    /* SI EN CASO LA PROGRAMACIÓN ES MIXTA LLENAR LAS OS DE PROVINCIAL */
-                                                    $osMixtoProgramacion = DB::table('despachos as d')
-                                                        ->join('transportistas as t','t.id_transportistas','=','d.id_transportistas')
-                                                        ->where('d.id_programacion','=',$resPro->id_programacion)
-                                                        ->where('d.id_tipo_servicios','=',2)->get();
 
-
-//                                                    if (count($osMixtoProgramacion) > 0){
-//                                                        $rowMixto = $row;
-//                                                        foreach ($osMixtoProgramacion as $mixt){
-//
-//                                                            $totalImporteComprobanteDespachoPro = DB::table('despacho_ventas')
-//                                                                ->where('id_despacho','=',$mixt->id_despacho)
-//                                                                ->where('despacho_detalle_estado_entrega','=',2)
-//                                                                ->sum('despacho_venta_cfimporte');
-//
-//                                                            $informacionliquidacion = DB::table('liquidacion_detalles as ld')
-//                                                                ->join('liquidaciones as l','l.id_liquidacion','=','ld.id_liquidacion')
-//                                                                ->join('despachos as d','d.id_despacho','=','ld.id_despacho')
-//                                                                ->where('l.liquidacion_estado_aprobacion','=',1)
-//                                                                ->where('ld.id_despacho','=',$mixt->id_despacho)
-//                                                                ->orderBy('ld.id_liquidacion_detalle','desc')
-//                                                                ->orderBy('l.id_liquidacion','desc')->first();
-//
-//                                                            if ($informacionliquidacion){
-//
-//
-//                                                                $gastos = DB::table('liquidacion_gastos')->where('id_liquidacion_detalle','=',$informacionliquidacion->id_liquidacion_detalle)->get();
-//                                                                if ($gastos){
-//
-//
-//                                                                    $costoTarifa = $gastos[0]->liquidacion_gasto_monto;
-//                                                                    $costoMano = $gastos[1]->liquidacion_gasto_monto;
-//                                                                    $costoOtros = $gastos[2]->liquidacion_gasto_monto;
-//                                                                    $pesoFinalLiquidacion = $gastos[3]->liquidacion_gasto_monto;
-//
-//                                                                    $totalGeneralLocal = (($costoTarifa * $pesoFinalLiquidacion) + $costoMano + $costoOtros);
-//
-//                                                                    $destino = "";
-//                                                                    if ($informacionliquidacion->id_departamento){
-//                                                                        $dep = DB::table('departamentos')->where('id_departamento','=',$informacionliquidacion->id_departamento)->first();
-//                                                                        $destino.= $dep->departamento_nombre;
-//                                                                    }
-//                                                                    if ($informacionliquidacion->id_provincia){
-//                                                                        $provi = DB::table('provincias')->where('id_provincia','=',$informacionliquidacion->id_provincia)->first();
-//                                                                        $destino.= "-".$provi->provincia_nombre;
-//                                                                    }
-//                                                                    if ($informacionliquidacion->id_distrito){
-//                                                                        $disti = DB::table('distritos')->where('id_distrito','=',$informacionliquidacion->id_distrito)->first();
-//                                                                        $destino.= "-".$disti->distrito_nombre;
-//                                                                    }
-//
-//                                                                    $sheet1->setCellValue('W'.$rowMixto, $mixt->despacho_numero_correlativo);
-//                                                                    $sheet1->setCellValue('X'.$rowMixto, $mixt->transportista_nom_comercial);
-//                                                                    $sheet1->setCellValue('Y'.$rowMixto, $destino);
-//                                                                    $sheet1->setCellValue('Z'.$rowMixto, $informacionliquidacion->liquidacion_serie.'-'.$informacionliquidacion->liquidacion_correlativo);
-//                                                                    $sheet1->setCellValue('AA'.$rowMixto, $this->general->formatoDecimal($totalGeneralLocal));
-//                                                                    $sheet1->setCellValue('AB'.$rowMixto, $this->general->formatoDecimal(($totalGeneralLocal / $totalImporteComprobanteDespachoPro) * 100));
-//                                                                    if ($informacionliquidacion->liquidacion_detalle_comentarios){
-//                                                                        $sheet1->setCellValue('AC'.$rowMixto, $informacionliquidacion->liquidacion_detalle_comentarios);
-//                                                                        $sheet1->getColumnDimension('AC')->setWidth(15);
-//                                                                        $cellRange = 'AC'.$rowMixto.':AC'.$rowMixto;
-//                                                                        $sheet1->mergeCells($cellRange);
-//                                                                        $rowStyle = $sheet1->getStyle($cellRange);
-//                                                                        $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FABF8F'); // Fondo
-//                                                                        $rowStyle->getFont()->setBold(true); // Hacer negritas
-//
-//                                                                    }
-//
-//                                                                    $rowMixto++;
-//
-//
-//                                                                }
-//                                                            }
-//                                                        }
-//                                                    }
                                                 }
                                             }
                                         }else{
@@ -594,6 +549,7 @@ class HistorialProgramacion extends Component
                                         $sheet1->setCellValue('U'.$row, '');
                                         $sheet1->setCellValue('V'.$row, '');
                                     }
+
 
 
                                     /* PROVINCIAL */
@@ -651,6 +607,101 @@ class HistorialProgramacion extends Component
 //                                        $sheet1->setCellValue('AB'.$row, '');
                                     }
                                 }
+                                if ($typeComprop == 3){
+
+                                    /*--------------------------------------------------------------------------------------- */
+                                    /* SI EN CASO LA PROGRAMACIÓN ES MIXTA LLENAR LAS OS DE PROVINCIAL */
+                                    $osMixtoProgramacion = DB::table('despachos as d')
+                                        ->join('despacho_ventas as dv','dv.id_despacho','=','d.id_despacho')
+                                        ->join('transportistas as t','t.id_transportistas','=','d.id_transportistas')
+                                        ->where('d.id_programacion','=',$resPro->id_programacion)
+                                        ->where('dv.despacho_venta_cftd','=',$comproba->despacho_venta_cftd)
+                                        ->where('dv.despacho_venta_cfnumser','=',$comproba->despacho_venta_cfnumser)
+                                        ->where('dv.despacho_venta_cfnumdoc','=',$comproba->despacho_venta_cfnumdoc)
+                                        ->where('d.id_tipo_servicios','=',2)->first();
+
+
+                                    if(!$osAnteriorMixto){ // SI ESTO ES NULO ES POR QUE AUN NO ESTA CON VALOR DE OS
+                                        $osAnteriorMixto = $osMixtoProgramacion->despacho_numero_correlativo;
+                                        $ingreExcelMixto = true;
+                                    }else{
+                                        if ($osMixtoProgramacion->despacho_numero_correlativo == $osAnteriorMixto){ // SI LA OS QUE INGRESA YA ESTA COMO VALOR EN $osAnteriorMixto ES POR QUE YA SE PUSO COMO VALOR AL PRIMERO
+                                            $ingreExcelMixto = false;
+                                        }else{
+                                            $osAnteriorMixto = $osMixtoProgramacion->despacho_numero_correlativo;
+                                            $ingreExcelMixto = true;
+                                        }
+
+                                    }
+
+
+
+                                    if ($osMixtoProgramacion && $ingreExcelMixto){
+//                                        $rowMixto = $row;
+                                        $totalImporteComprobanteDespachoPro = DB::table('despacho_ventas')
+                                            ->where('id_despacho','=',$osMixtoProgramacion->id_despacho)
+                                            ->where('despacho_detalle_estado_entrega','=',2)
+                                            ->sum('despacho_venta_cfimporte');
+
+                                        $informacionliquidacion = DB::table('liquidacion_detalles as ld')
+                                            ->join('liquidaciones as l','l.id_liquidacion','=','ld.id_liquidacion')
+                                            ->join('despachos as d','d.id_despacho','=','ld.id_despacho')
+                                            ->where('l.liquidacion_estado_aprobacion','=',1)
+                                            ->where('ld.id_despacho','=',$osMixtoProgramacion->id_despacho)
+                                            ->orderBy('ld.id_liquidacion_detalle','desc')
+                                            ->orderBy('l.id_liquidacion','desc')->first();
+
+                                        if ($informacionliquidacion){
+
+
+                                            $gastos = DB::table('liquidacion_gastos')->where('id_liquidacion_detalle','=',$informacionliquidacion->id_liquidacion_detalle)->get();
+                                            if ($gastos){
+
+
+                                                $costoTarifa = $gastos[0]->liquidacion_gasto_monto;
+                                                $costoMano = $gastos[1]->liquidacion_gasto_monto;
+                                                $costoOtros = $gastos[2]->liquidacion_gasto_monto;
+                                                $pesoFinalLiquidacion = $gastos[3]->liquidacion_gasto_monto;
+
+                                                $totalGeneralLocal = (($costoTarifa * $pesoFinalLiquidacion) + $costoMano + $costoOtros);
+
+                                                $destino = "";
+                                                if ($informacionliquidacion->id_departamento){
+                                                    $dep = DB::table('departamentos')->where('id_departamento','=',$informacionliquidacion->id_departamento)->first();
+                                                    $destino.= $dep->departamento_nombre;
+                                                }
+                                                if ($informacionliquidacion->id_provincia){
+                                                    $provi = DB::table('provincias')->where('id_provincia','=',$informacionliquidacion->id_provincia)->first();
+                                                    $destino.= "-".$provi->provincia_nombre;
+                                                }
+                                                if ($informacionliquidacion->id_distrito){
+                                                    $disti = DB::table('distritos')->where('id_distrito','=',$informacionliquidacion->id_distrito)->first();
+                                                    $destino.= "-".$disti->distrito_nombre;
+                                                }
+
+                                                $sheet1->setCellValue('W'.$row, $osMixtoProgramacion->despacho_numero_correlativo);
+                                                $sheet1->setCellValue('X'.$row, $osMixtoProgramacion->transportista_nom_comercial);
+                                                $sheet1->setCellValue('Y'.$row, $destino);
+                                                $sheet1->setCellValue('Z'.$row, $informacionliquidacion->liquidacion_serie.'-'.$informacionliquidacion->liquidacion_correlativo);
+                                                $sheet1->setCellValue('AA'.$row, $this->general->formatoDecimal($totalGeneralLocal));
+                                                $sheet1->setCellValue('AB'.$row, $this->general->formatoDecimal(($totalGeneralLocal / $totalImporteComprobanteDespachoPro) * 100));
+                                                if ($informacionliquidacion->liquidacion_detalle_comentarios){
+                                                    $sheet1->setCellValue('AC'.$row, $informacionliquidacion->liquidacion_detalle_comentarios);
+                                                    $sheet1->getColumnDimension('AC')->setWidth(15);
+                                                    $cellRange = 'AC'.$row.':AC'.$row;
+                                                    $sheet1->mergeCells($cellRange);
+                                                    $rowStyle = $sheet1->getStyle($cellRange);
+                                                    $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FABF8F'); // Fondo
+                                                    $rowStyle->getFont()->setBold(true); // Hacer negritas
+
+                                                }
+//                                                    $rowMixto++;
+                                            }
+                                        }
+                                    }
+                                    /*--------------------------------------------------------------------------------------- */
+                                }
+
                                 $cellRange = 'A'.$row.':AB'.$row;
                                 $rowStyle = $sheet1->getStyle($cellRange);
                                 $rowStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
@@ -668,8 +719,11 @@ class HistorialProgramacion extends Component
                                 $sheet1->mergeCells('P'.$row.':Q'.$row);
 
                                 $row++;
-                                $importeTotalDespachos+=$comproba->despacho_venta_cfimporte;
-                                $totalPesoDespachos+=$comproba->despacho_venta_total_kg;
+                                if ($comproba->despacho_detalle_estado_entrega == 2){
+                                    $importeTotalDespachos+=$comproba->despacho_venta_cfimporte;
+                                    $totalPesoDespachos+=$comproba->despacho_venta_total_kg;
+                                }
+
                             }
                             $comentariosLiquidacion = DB::table('liquidacion_detalles')->where('id_despacho','=',$des->id_despacho)->orderBy('id_liquidacion_detalle','desc')->orderBy('id_despacho','desc')->first();
                             $comenLi = "";
