@@ -95,8 +95,8 @@ class Mixto extends Component
         $this->selectedVehiculo = null;
         $this->showBotonListo = null;
         $this->programacion_fecha = now()->format('Y-m-d');
-        $this->desde = date('Y-m-d', strtotime('-1 month'));
-        $this->hasta = date('Y-m-d');
+        $this->desde = null;
+        $this->hasta = null;
         if ($id){
             $this->id_programacion_edit = $id;
             $despachoEdit = DB::table('despachos')->where('id_programacion','=',$id)->where('id_tipo_servicios','=',1)->first();
@@ -106,7 +106,7 @@ class Mixto extends Component
                 $this->listar_informacion_programacion_edit();
             }
         }
-        $this->dispatch('buscar_comprobantes');
+//        $this->dispatch('buscar_comprobantes');
 
 //        $this->buscar_facturas_clientes();
     }
@@ -519,6 +519,20 @@ class Mixto extends Component
     }
 //
     public function buscar_facturas_clientes(){
+        // Verificar si ambas fechas están presentes
+        if (!empty($this->desde) && !empty($this->hasta)) {
+            // Obtener el año de las fechas 'desde' y 'hasta'
+            $yearDesde = date('Y', strtotime($this->desde));
+            $yearHasta = date('Y', strtotime($this->hasta));
+
+            // Validar que los años sean 2025 o posteriores
+            if ($yearDesde < 2025 || $yearHasta < 2025) {
+                // Mostrar un mensaje de error si los años no son válidos
+                session()->flash('error', 'Las fechas deben ser a partir de 2025.');
+                return; // Salir del método si la validación falla
+            }
+        }
+
         $comproba = $this->server->listar_comprobantes_listos_local($this->searchFacturaCliente, $this->desde, $this->hasta);
         $this->filteredFacturasYClientes = $comproba;
         if (!$comproba) {

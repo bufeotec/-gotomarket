@@ -561,20 +561,26 @@
 
                         <div class="row">
                             <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
-                                <input type="date" name="fecha_desde" id="fecha_desde" wire:model="desde" wire:change="buscar_facturas_clientes" class="form-control">
+                                <input type="date" name="fecha_desde" id="fecha_desde" wire:model="desde" min="2025-01-01"  class="form-control">
                             </div>
                             <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
-                                <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model="hasta" wire:change="buscar_facturas_clientes" class="form-control">
+                                <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model="hasta" min="2025-01-01"  class="form-control">
                             </div>
-                            <div class="col-lg-12">
+                            <div class="col-lg-9">
                                 <div class="position-relative">
                                     <input type="text" class="form-control bg-dark text-white rounded-pill ps-5 custom-placeholder"
                                            placeholder="Buscar comprobante o cliente"
                                            wire:model="searchFacturaCliente"
-                                           wire:change="buscar_facturas_clientes"
                                            style="border: none; outline: none;" />
                                     <i class="fas fa-search position-absolute" style="left: 15px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
                                 </div>
+                            </div>
+                            <div class="col-lg-3 col-md-3 col-sm-12 mb-2">
+                                <button class="btn btn-sm bg-primary text-white w-100" wire:click="buscar_facturas_clientes" >
+                                    <i class="fa fa-search"></i> BUSCAR
+                                </button>
+                            </div>
+                            <div class="col-lg-12 col-md-12 col-sm-12">
                                 <div class="loader mt-2" wire:loading wire:target="buscar_facturas_clientes"></div>
                             </div>
                         </div>

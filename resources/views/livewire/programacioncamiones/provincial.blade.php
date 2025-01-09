@@ -184,10 +184,10 @@
                         @if($select_nombre_cliente)
                             <div class="row">
                                 <div class="col-lg-6 col-md-2 col-sm-12 mb-2">
-                                    <input type="date" name="fecha_desde" id="fecha_desde" wire:model.live="desde" wire:change="buscar_comprobante" class="form-control">
+                                    <input type="date" name="fecha_desde" id="fecha_desde" wire:model.live="desde" min="2025-01-01"  class="form-control">
                                 </div>
                                 <div class="col-lg-6 col-md-2 col-sm-12 mb-2">
-                                    <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model.live="hasta" wire:change="buscar_comprobante" class="form-control">
+                                    <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model.live="hasta"  min="2025-01-01"   class="form-control">
                                 </div>
                             </div>
                         @endif
@@ -195,22 +195,40 @@
                         <div class="row">
                             <div class="col-lg-12">
                                 {{-- Buscador --}}
-                                <div class="position-relative mb-3">
-                                    <input
-                                        type="text"
-                                        class="form-control bg-dark text-white rounded-pill ps-5 custom-placeholder"
-                                        placeholder="{{ $selectedCliente ? 'Buscar comprobante' : 'Buscar cliente' }}"
-                                        wire:model="{{ $selectedCliente ? 'searchComprobante' : 'searchCliente' }}"
-                                        wire:change="{{ $selectedCliente ? 'buscar_comprobante' : 'buscar_cliente' }}"
-                                        value="{{ $selectedCliente ? $searchComprobante : $searchCliente }}"
-                                        style="border: none; outline: none;"
-                                    />
-                                    <i class="fas fa-search position-absolute"
-                                       style="left: 15px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
+                                <div class="row align-items-center">
+                                    <div class="col-lg-9 col-md-9 col-sm-12 mb-2">
+                                        <div class="position-relative ">
+                                            <input
+                                                type="text"
+                                                class="form-control bg-dark text-white rounded-pill ps-5 custom-placeholder"
+                                                placeholder="{{ $selectedCliente ? 'Buscar comprobante' : 'Buscar cliente' }}"
+                                                wire:model="{{ $selectedCliente ? 'searchComprobante' : 'searchCliente' }}"
+{{--                                                wire:change="{{ $selectedCliente ? 'buscar_comprobante' : 'buscar_cliente' }}"--}}
+                                                value="{{ $selectedCliente ? $searchComprobante : $searchCliente }}"
+                                                style="border: none; outline: none;"
+                                            />
+                                            <i class="fas fa-search position-absolute"
+                                               style="left: 15px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-3 col-md-3 col-sm-12 mb-2">
+                                        @if($selectedCliente)
+                                            <button class="btn btn-sm bg-primary text-white w-100" wire:click="buscar_comprobante" >
+                                                <i class="fa fa-search"></i> BUSCAR
+                                            </button>
+                                        @else
+                                            <button class="btn btn-sm bg-primary text-white w-100" wire:click="buscar_cliente" >
+                                                <i class="fa fa-search"></i> BUSCAR
+                                            </button>
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="col-lg-12 col-md-12 col-sm-12">
+                                    <div class="loader mt-2" wire:loading wire:target="buscar_comprobante"></div>
+                                    <div class="loader mt-2" wire:loading wire:target="buscar_cliente"></div>
                                 </div>
 
-                                <div class="loader mt-2" wire:loading wire:target="buscar_comprobante"></div>
-                                <div class="loader mt-2" wire:loading wire:target="buscar_cliente"></div>
+
 
                                 @if(!$selectedCliente)
                                     {{-- Mostrar clientes cuando no hay cliente seleccionado --}}

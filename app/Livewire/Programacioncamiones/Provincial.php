@@ -87,8 +87,8 @@ class Provincial extends Component
         $this->id_provincia = null;
         $this->id_distrito = null;
         $this->programacion_fecha = now()->format('Y-m-d');
-        $this->desde = date('Y-m-d', strtotime('-1 month'));
-        $this->hasta = date('Y-m-d');
+        $this->desde = null;
+        $this->hasta = null;
         if ($this->selectedCliente) {
             $this->buscar_comprobante();
         }
@@ -229,7 +229,7 @@ class Provincial extends Component
             $this->searchCliente = "";
             $this->searchComprobante = "";
             $this->filteredClientes = [];
-            $this->buscar_comprobante();
+//            $this->buscar_comprobante();
         } else {
             $this->resetear_cliente();
         }
@@ -254,6 +254,20 @@ class Provincial extends Component
     }
     public function buscar_comprobante() {
         if ($this->selectedCliente) {
+            // Verificar si ambas fechas están presentes
+            if (!empty($this->desde) && !empty($this->hasta)) {
+                // Obtener el año de las fechas 'desde' y 'hasta'
+                $yearDesde = date('Y', strtotime($this->desde));
+                $yearHasta = date('Y', strtotime($this->hasta));
+
+                // Validar que los años sean 2025 o posteriores
+                if ($yearDesde < 2025 || $yearHasta < 2025) {
+                    // Mostrar un mensaje de error si los años no son válidos
+                    session()->flash('error', 'Las fechas deben ser a partir de 2025.');
+                    return; // Salir del método si la validación falla
+                }
+            }
+
             $comprobantes = $this->server->listar_comprobantes_por_cliente($this->selectedCliente, $this->searchComprobante, $this->desde, $this->hasta);
             // Si no hay comprobantes, asignar un array vacío
             if (!$comprobantes) {

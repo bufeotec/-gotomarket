@@ -74,8 +74,8 @@ class Local extends Component
         $this->id_transportistas = null;
         $this->selectedVehiculo = null;
         $this->programacion_fecha = now()->format('Y-m-d');
-        $this->desde = date('Y-m-d', strtotime('-1 month'));
-        $this->hasta = date('Y-m-d');
+        $this->desde = null;
+        $this->hasta = null;
         /**/
         if ($id){
             $this->id_programacion_edit = $id;
@@ -155,6 +155,20 @@ class Local extends Component
     }
 //    #[On('buscarCom')]
     public function buscar_comprobantes(){
+        // Verificar si ambas fechas están presentes
+        if (!empty($this->desde) && !empty($this->hasta)) {
+            // Obtener el año de las fechas 'desde' y 'hasta'
+            $yearDesde = date('Y', strtotime($this->desde));
+            $yearHasta = date('Y', strtotime($this->hasta));
+
+            // Validar que los años sean 2025 o posteriores
+            if ($yearDesde < 2025 || $yearHasta < 2025) {
+                // Mostrar un mensaje de error si los años no son válidos
+                session()->flash('error', 'Las fechas deben ser a partir de 2025.');
+                return; // Salir del método si la validación falla
+            }
+        }
+
         $datosResult = $this->server->listar_comprobantes_listos_local($this->searchFactura, $this->desde, $this->hasta);
         $this->filteredFacturas = $datosResult;
         if (!$datosResult) {
