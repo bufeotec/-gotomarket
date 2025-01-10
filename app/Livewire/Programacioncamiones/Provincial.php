@@ -249,8 +249,8 @@ class Provincial extends Component
         $this->volumenTotal  = 0;
         $this->tarifariosSugeridos = [];
         $this->selectedFacturas = [];
-        $this->desde = date('Y-m-d', strtotime('-1 month'));
-        $this->hasta = date('Y-m-d');
+        $this->desde = null;
+        $this->hasta = null;
     }
     public function buscar_comprobante() {
         if ($this->selectedCliente) {
