@@ -559,8 +559,8 @@
 }
 .circulo-vehiculo-container {
     position: relative;
-    width: 130px;!important;
-    height: 130px!important;
+    width: 150px;!important;
+    height: 150px!important;
     display: flex;
     align-items: center;
     justify-content: center;

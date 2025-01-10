@@ -36,7 +36,7 @@
                                 </div>
                                 <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
                                     <strong style="color: #8c1017">Placa del vehículo:</strong>
-                                    <p>{{ $me->formatoDecimal($detalle_vehiculo->vehiculo_placa) }}</p>
+                                    <p>{{ $detalle_vehiculo->vehiculo_placa }}</p>
                                 </div>
                                 <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
                                     @php
@@ -400,7 +400,16 @@
                                                                 $pesovehiculo = $me->formatoDecimal($vehiculo->vehiculo_capacidad_peso);
                                                             }
                                                         @endphp
-                                                    {{ $pesovehiculo }} kg
+                                                        V: {{ $pesovehiculo }} kg
+                                                    </span>
+                                                    <span class="capacidad-peso d-block">
+                                                        @php
+                                                            $tarifa_cap_max = "0";
+                                                            if ($vehiculo->tarifa_cap_max){
+                                                                $tarifa_cap_max = $me->formatoDecimal($vehiculo->tarifa_cap_max);
+                                                            }
+                                                        @endphp
+                                                        T: {{ $tarifa_cap_max }} kg
                                                     </span>
                                                     <span class="capacidad-peso d-block">
                                                         @php
