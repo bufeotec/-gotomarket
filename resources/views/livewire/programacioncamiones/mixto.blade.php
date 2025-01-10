@@ -232,9 +232,9 @@
                             @if($montoSelect)
                                 <small class="textTotalComprobantesSeleccionados me-2">
                                     @php
-                                        $toVenta = ($precioTotal + $otros_gastos) / $imporTotalPro;
+                                        $toVenta = (($precioTotal + $otros_gastos) / $imporTotalPro) * 100;
                                     @endphp
-                                    F / V: <b class="colorBlackComprobantes">{{$me->formatoDecimal($precioTotal + $otros_gastos) }}</b> / <b class="colorBlackComprobantes">{{$me->formatoDecimal($imporTotalPro)}}</b> =  <span>{{ $me->formatoDecimal($toVenta)}}</span>
+                                    F / V: <b class="colorBlackComprobantes">{{$me->formatoDecimal($precioTotal + $otros_gastos) }}</b> / <b class="colorBlackComprobantes">{{$me->formatoDecimal($imporTotalPro)}}</b> =  <span>{{ $me->formatoDecimal($toVenta)}} %</span>
                                 </small>
                             @endif
                             @if($montoSelect)
@@ -913,9 +913,9 @@
                                                 @if($costoTotal && $importeTotalVenta)
                                                     <small class="textTotalComprobantesSeleccionados me-2">
                                                         @php
-                                                            $to = $costoTotal / $importeTotalVenta;
+                                                            $to = ($costoTotal / $importeTotalVenta) * 100;
                                                         @endphp
-                                                        F / V: <b class="colorBlackComprobantes">{{$me->formatoDecimal($costoTotal)}}</b> / <b class="colorBlackComprobantes">{{$me->formatoDecimal($importeTotalVenta)}}</b> =  <span>{{ $me->formatoDecimal($to) }}</span>
+                                                        F / V: <b class="colorBlackComprobantes">{{$me->formatoDecimal($costoTotal)}}</b> / <b class="colorBlackComprobantes">{{$me->formatoDecimal($importeTotalVenta)}}</b> =  <span>{{ $me->formatoDecimal($to) }} %</span>
                                                     </small>
                                                 @endif
                                                 @if($costoTotal && $pesoTotal)
