@@ -13,6 +13,7 @@ use Livewire\Component;
 class Tipovehiculos extends Component
 {
     private $logs;
+    public $conceptos = [];
     private $tipovehiculo;
     public function __construct(){
         $this->logs = new Logs();
@@ -27,6 +28,8 @@ class Tipovehiculos extends Component
     public function render()
     {
         $listar_tipo_vehiculos = $this->tipovehiculo->listar_tipo_vehiculo();
+        // Inicializar conceptos con los valores actuales
+        $this->conceptos = $listar_tipo_vehiculos->pluck('tipo_vehiculo_concepto', 'id_tipo_vehiculo')->toArray();
         return view('livewire.gestiontransporte.tipovehiculos', compact('listar_tipo_vehiculos'));
     }
 
@@ -35,6 +38,35 @@ class Tipovehiculos extends Component
         $this->tipo_vehiculo_concepto = "";
     }
 
+    public function update_tipo_vehiculo_concepto($idEncoded)
+    {
+        $id = base64_decode($idEncoded);
+
+        // Validar si el concepto existe en la propiedad $conceptos
+        if (!isset($this->conceptos[$id])) {
+            session()->flash('error', 'Concepto no encontrado.');
+            return;
+        }
+
+        $nuevoConcepto = $this->conceptos[$id];
+
+        // Validar el nuevo concepto
+        $this->validate([
+            "conceptos.$id" => 'required|string|max:255',
+        ]);
+
+        // Actualizar el concepto en la base de datos
+        $vehiculo = TipoVehiculo::find($id);
+
+        if ($vehiculo) {
+            $vehiculo->tipo_vehiculo_concepto = $nuevoConcepto;
+            $vehiculo->save();
+            $this->dispatch('refresh_select_tipo_vehiculo')->to(Vehiculos::class);
+            session()->flash('success_tipo_vehiculo', 'Concepto actualizado correctamente.');
+        } else {
+            session()->flash('error_tipo_vehiculo', 'No se encontró el tipo de vehículo.');
+        }
+    }
     public function saveTipoVehiculo(){
         try {
             $this->validate([

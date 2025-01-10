@@ -26,6 +26,20 @@
                     </div>
                 </div>
             </form>
+            <div class="row">
+                @if (session()->has('success_tipo_vehiculo'))
+                    <div class="alert alert-success alert-dismissible show fade mt-2">
+                        {{ session('success_tipo_vehiculo') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+                @if (session()->has('error_tipo_vehiculo'))
+                    <div class="alert alert-danger alert-dismissible show fade mt-2">
+                        {{ session('error_tipo_vehiculo') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+            </div>
             <div class="row mt-3">
                 <div class="col-lg-12 col-md-12">
                     <x-table-general>
@@ -43,7 +57,14 @@
                             @foreach($listar_tipo_vehiculos as $lpv)
                                 <tr>
                                     <td>{{$conteo}}</td>
-                                    <td>{{$lpv->tipo_vehiculo_concepto}}</td>
+                                    <td>
+                                        <input
+                                            type="text"
+                                            class="form-control"
+                                            value="{{$lpv->tipo_vehiculo_concepto}}"
+                                            wire:model.defer="conceptos.{{ $lpv->id_tipo_vehiculo }}"
+                                        />
+                                    </td>
                                     <td>
                                         <span class="font-bold badge {{$lpv->tipo_vehiculo_estado == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
                                             {{$lpv->tipo_vehiculo_estado == 1 ? 'Habilitado ' : 'Desabilitado'}}
@@ -63,6 +84,11 @@
                                                 </x-slot>
                                             </x-btn-accion>
                                         @endif
+                                            <x-btn-accion class="text-primary" wire:click="update_tipo_vehiculo_concepto('{{ base64_encode($lpv->id_tipo_vehiculo) }}')">
+                                                <x-slot name="message">
+                                                    <i class="fa-solid fa-save"></i>
+                                                </x-slot>
+                                            </x-btn-accion>
                                     </td>
                                 </tr>
                                 @php $conteo++; @endphp
