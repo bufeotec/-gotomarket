@@ -450,11 +450,11 @@
                                                     @php
                                                         $ra = 0;
                                                         if ($des->despacho_costo_total && $des->totalVentaDespacho > 0) {
-                                                            $to = $des->despacho_costo_total / $des->totalVentaDespacho;
+                                                            $to = ($des->despacho_costo_total / $des->totalVentaDespacho) * 100;
                                                             $ra = $general->formatoDecimal($to);
                                                         }
                                                     @endphp
-                                                    <td>{{$ra}}</td>
+                                                    <td>{{$ra}} %</td>
                                                     @php
                                                         $ra2 = 0;
                                                         if ($des->despacho_costo_total){
