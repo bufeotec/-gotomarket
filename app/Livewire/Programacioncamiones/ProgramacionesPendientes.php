@@ -7,6 +7,7 @@ use App\Models\General;
 use App\Models\Logs;
 use App\Models\Programacion;
 use App\Models\Transportista;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -35,9 +36,10 @@ class ProgramacionesPendientes extends Component
         $this->despacho = new Despacho();
         $this->general = new General();
     }
-    public function mount(){
-        $this->desde = date('Y-m-d');
-        $this->hasta = date('Y-m-d');
+    public function mount()
+    {
+        $this->desde = Carbon::today()->toDateString(); // Fecha actual
+        $this->hasta = Carbon::tomorrow()->toDateString(); // Un día después de la fecha actual
     }
 
     public function render()

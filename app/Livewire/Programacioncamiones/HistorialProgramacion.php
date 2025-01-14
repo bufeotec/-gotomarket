@@ -8,6 +8,7 @@ use App\Models\General;
 use App\Models\Logs;
 use App\Models\Programacion;
 use App\Models\Transportista;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -44,10 +45,10 @@ class HistorialProgramacion extends Component
         $this->despacho = new Despacho();
         $this->general = new General();
     }
-    public function mount(){
-        $this->desde = date('Y-m-d');
-        $this->hasta = date('Y-m-d');
-        $this->tipo_aprobacacion = null;
+    public function mount()
+    {
+        $this->desde = Carbon::today()->toDateString(); // Fecha actual
+        $this->hasta = Carbon::today()->addDays(6)->toDateString(); // Fecha 6 días después de la actual
     }
 
     public function render()
