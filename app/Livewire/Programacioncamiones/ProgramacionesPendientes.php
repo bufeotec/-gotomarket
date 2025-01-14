@@ -46,15 +46,15 @@ class ProgramacionesPendientes extends Component
     {
         $resultado = $this->programacion->listar_programaciones_realizadas_x_fechas_x_estado($this->desde,$this->hasta,0);
         foreach ($resultado as $re){
-            $totalVenta = 0;
             $re->despacho = DB::table('despachos as d')
                 ->join('transportistas as t','t.id_transportistas','=','d.id_transportistas')
                 ->join('tipo_servicios as ts','ts.id_tipo_servicios','=','d.id_tipo_servicios')
                 ->where('d.id_programacion','=',$re->id_programacion)
                 ->get();
             foreach ($re->despacho as $des){
+                $totalVenta = 0;
                 $des->comprobantes =  DB::table('despacho_ventas as dv')
-                    ->where('id_despacho','=',$des->id_despacho)
+                    ->where('dv.id_despacho','=',$des->id_despacho)
                     ->get();
                 foreach ($des->comprobantes as $com){
                     $precio = floatval($com->despacho_venta_cfimporte);

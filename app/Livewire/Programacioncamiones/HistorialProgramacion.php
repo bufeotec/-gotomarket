@@ -55,15 +55,15 @@ class HistorialProgramacion extends Component
     {
         $resultado = $this->programacion->listar_programaciones_historial_programacion($this->desde,$this->hasta,$this->serie_correlativo,$this->estadoPro);
         foreach($resultado as $rehs){
-            $totalVenta = 0;
             $rehs->despacho = DB::table('despachos as d')
                 ->join('transportistas as t','t.id_transportistas','=','d.id_transportistas')
                 ->join('tipo_servicios as ts','ts.id_tipo_servicios','=','d.id_tipo_servicios')
                 ->where('d.id_programacion','=',$rehs->id_programacion)
                 ->get();
             foreach ($rehs->despacho as $des){
+                $totalVenta = 0;
                 $des->comprobantes =  DB::table('despacho_ventas as dv')
-                    ->where('id_despacho','=',$des->id_despacho)
+                    ->where('dv.id_despacho','=',$des->id_despacho)
                     ->get();
                 foreach ($des->comprobantes as $com){
                     $precio = floatval($com->despacho_venta_cfimporte);
