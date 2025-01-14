@@ -230,7 +230,9 @@ class General extends Model
         try {
             if ($valor){
                 // Truncamos el número a dos decimales sin redondear
-                $formattedValue = floor($valor * 100) / 100;
+                $formattedValue = bcdiv($valor, '1', 2);
+                // Truncamos el número a dos decimales sin redondear
+//                $formattedValue = floor($valor * 100) / 100;
 
                 // Si el valor truncado no tiene decimales, mostramos sin decimales
                 if ($formattedValue == floor($formattedValue)) {

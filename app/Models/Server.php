@@ -45,6 +45,8 @@ class Server extends Model
                     foreach ($result as $key => $re) {
                         // Verificamos si existe el despacho en la tabla 'despacho_ventas'
                         $validarExistencia = DB::table('despacho_ventas as dv')
+                            ->join('despachos as d','d.id_despacho','=','dv.id_despacho')
+                            ->where('d.despacho_estado_aprobacion','<>',4)
                             ->where('dv.despacho_venta_cftd', $re->CFTD)
                             ->where('dv.despacho_venta_cfnumser', $re->CFNUMSER)
                             ->where('dv.despacho_venta_cfnumdoc', $re->CFNUMDOC)
@@ -128,6 +130,8 @@ class Server extends Model
                     foreach ($result as $key => $re) {
                         // Verificamos si existe el despacho en la tabla 'despacho_ventas'
                         $validarExistencia = DB::table('despacho_ventas as dv')
+                            ->join('despachos as d','d.id_despacho','=','dv.id_despacho')
+                            ->where('d.despacho_estado_aprobacion','<>',4)
                             ->where('dv.despacho_venta_cftd', $re->CFTD)
                             ->where('dv.despacho_venta_cfnumser', $re->CFNUMSER)
                             ->where('dv.despacho_venta_cfnumdoc', $re->CFNUMDOC)

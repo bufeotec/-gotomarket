@@ -563,12 +563,14 @@ class Provincial extends Component
             $microtimeCread = microtime(true);
             // Validar duplicidad para las facturas seleccionadas
             foreach ($this->selectedFacturas as $factura) {
-                $existe = DB::table('despacho_ventas')
-                    ->where('despacho_venta_cftd', $factura['CFTD'])
-                    ->where('despacho_venta_cfnumser', $factura['CFNUMSER'])
-                    ->where('despacho_venta_cfnumdoc', $factura['CFNUMDOC'])
-                    ->whereIn('despacho_detalle_estado_entrega', [0,1,2])
-                    ->orderBy('id_despacho_venta', 'desc')
+                $existe = DB::table('despacho_ventas as dv')
+                    ->join('despachos as d','d.id_despacho','=','dv.id_despacho')
+                    ->where('d.despacho_estado_aprobacion','<>',4)
+                    ->where('dv.despacho_venta_cftd', $factura['CFTD'])
+                    ->where('dv.despacho_venta_cfnumser', $factura['CFNUMSER'])
+                    ->where('dv.despacho_venta_cfnumdoc', $factura['CFNUMDOC'])
+                    ->whereIn('dv.despacho_detalle_estado_entrega', [0,1,2])
+                    ->orderBy('dv.id_despacho_venta', 'desc')
                     ->exists();
                 if ($existe) {
                     $contadorError++;
