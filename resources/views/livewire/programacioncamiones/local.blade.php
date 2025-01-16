@@ -511,7 +511,8 @@
                                         @if($costoTotal && $importeTotalVenta)
                                             <small class="textTotalComprobantesSeleccionados me-2">
                                                 @php
-                                                    $to = ($costoTotal / $importeTotalVenta) * 100;
+                                                    $divisor2 = $importeTotalVenta != 0 ? $importeTotalVenta : 1;
+                                                    $to = ($costoTotal / $divisor2) * 100;
                                                 @endphp
                                                 F / V: <b class="colorBlackComprobantes">{{$me->formatoDecimal($costoTotal)}}</b> / <b class="colorBlackComprobantes">{{$me->formatoDecimal($importeTotalVenta)}}</b> =  <span>{{ $me->formatoDecimal($to) }} %</span>
                                             </small>
