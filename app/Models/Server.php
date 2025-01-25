@@ -21,8 +21,8 @@ class Server extends Model
             $result = array();
 
             $client = new \GuzzleHttp\Client();
-//            $url = "http://127.0.0.1/api_goto/public/api/v1/list_local_receipts";
-            $url = "http://161.132.173.106:8081/api_goto/public/api/v1/list_local_receipts";
+            $url = "http://127.0.0.1/api_goto/public/api/v1/list_local_receipts";
+//            $url = "http://161.132.173.106:8081/api_goto/public/api/v1/list_local_receipts";
             // Enviar la solicitud POST con los parámetros proporcionados
             $response = $client->post($url, [
                 'form_params' => [
@@ -75,8 +75,8 @@ class Server extends Model
         try {
             $result =  array();
             $client = new \GuzzleHttp\Client();
-//            $url = "http://127.0.0.1/api_goto/public/api/v1/list_local_receipts";
-            $url = "http://161.132.173.106:8081/api_goto/public/api/v1/list_customers";
+            $url = "http://127.0.0.1/api_goto/public/api/v1/list_local_receipts";
+//            $url = "http://161.132.173.106:8081/api_goto/public/api/v1/list_customers";
 
             // Enviar la solicitud POST con los parámetros proporcionados
             $response = $client->post($url, [
@@ -105,9 +105,9 @@ class Server extends Model
         try {
             $result =  array();
             $client = new \GuzzleHttp\Client();
-//            $url = "http://127.0.0.1/api_goto/public/api/v1/list_local_receipts";
+            $url = "http://127.0.0.1/api_goto/public/api/v1/list_local_receipts";
 
-            $url = "http://161.132.173.106:8081/api_goto/public/api/v1/list_customer_receipts";
+//            $url = "http://161.132.173.106:8081/api_goto/public/api/v1/list_customer_receipts";
 
             // Enviar la solicitud POST con los parámetros proporcionados
             $response = $client->post($url, [
