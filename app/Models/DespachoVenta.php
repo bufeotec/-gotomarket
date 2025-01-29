@@ -27,4 +27,16 @@ class DespachoVenta extends Model
         }
         return $result;
     }
+
+    public function listar_facturas_estado_cinco(){
+        try {
+            $result = DB::table('despacho_ventas')
+                ->where('despacho_detalle_estado_entrega','=',5)
+                ->get();
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
 }

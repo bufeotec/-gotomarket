@@ -15,6 +15,7 @@ use App\Models\Vehiculo;
 use App\Models\Programacion;
 use App\Models\Despacho;
 use App\Models\DespachoVenta;
+use App\Models\Facturaspreprogramacion;
 
 
 class Local extends Component
@@ -27,6 +28,7 @@ class Local extends Component
     private $despacho;
     private $despachoventa;
     private $general;
+    private $facpreprog;
     public function __construct(){
         $this->logs = new Logs();
         $this->server = new Server();
@@ -36,6 +38,7 @@ class Local extends Component
         $this->despacho = new Despacho();
         $this->despachoventa = new DespachoVenta();
         $this->general = new General();
+        $this->facpreprog = new Facturaspreprogramacion();
     }
     public $searchFactura = "";
     public $filteredFacturas = [];
@@ -70,6 +73,7 @@ class Local extends Component
     public $id_programacion_edit = '';
     public $id_despacho_edit = '';
     public $checkInput = '';
+    public $facturas_pre_prog_estado_tres = [];
     public function mount($id = null){
         $this->id_transportistas = null;
         $this->selectedVehiculo = null;
@@ -101,8 +105,66 @@ class Local extends Component
         }
 //        $listar_transportistas = $this->transportista->listar_transportista_sin_id();
         $listar_vehiculos = $this->vehiculo->obtener_vehiculos_con_tarifarios();
-        return view('livewire.programacioncamiones.local', compact('listar_transportistas', 'listar_vehiculos'));
+        $facturas_pre_prog_estado_dos = $this->facpreprog->listar_facturas_pre_programacion_estado_dos();
+        $this->facturas_pre_prog_estado_tres = Facturaspreprogramacion::where('fac_pre_prog_estado_aprobacion', 3)->get();
+        return view('livewire.programacioncamiones.local', compact('listar_transportistas', 'listar_vehiculos', 'facturas_pre_prog_estado_dos'));
     }
+//    NUEVO
+
+    public $messagePrePro = "";
+    public $id_fac_pre_prog = "";
+    public $fac_pre_prog_estado_aprobacion = "";
+    public function cambio_estado($id_factura, $estado){
+        $id = base64_decode($id_factura);
+        if ($id) {
+            $this->id_fac_pre_prog = $id;
+            $this->fac_pre_prog_estado_aprobacion = $estado;
+            $this->messagePrePro = "¿Está seguro de aceptar esta factura?";
+        }
+    }
+    public function disable_pre_pro(){
+        try {
+            if (!Gate::allows('disable_pre_pro')) {
+                session()->flash('error_pre_pro', 'No tiene permisos para cambiar los estados de este registro.');
+                return;
+            }
+            $this->validate([
+                'id_fac_pre_prog' => 'required|integer',
+                'fac_pre_prog_estado_aprobacion' => 'required|integer',
+            ], [
+                'id_fac_pre_prog.required' => 'El identificador es obligatorio.',
+                'id_fac_pre_prog.integer' => 'El identificador debe ser un número entero.',
+                'fac_pre_prog_estado_aprobacion.required' => 'El estado es obligatorio.',
+                'fac_pre_prog_estado_aprobacion.integer' => 'El estado debe ser un número entero.',
+            ]);
+            DB::beginTransaction();
+            $factura = Facturaspreprogramacion::find($this->id_fac_pre_prog);
+
+            if ($factura) {
+                $factura->fac_pre_prog_estado_aprobacion = $this->fac_pre_prog_estado_aprobacion;
+
+                if ($factura->save()) {
+                    DB::commit();
+                    $this->dispatch('hidemodalPrePro');
+                    session()->flash('success', 'Factura aprobada.');
+                } else {
+                    DB::rollBack();
+                    session()->flash('error_pre_pro', 'No se pudo cambiar el estado de la factura.');
+                }
+            } else {
+                DB::rollBack();
+                session()->flash('error_pre_pro', 'La factura no existe.');
+            }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->setErrorBag($e->validator->errors());
+        } catch (\Exception $e) {
+            DB::rollBack();
+            session()->flash('error', 'Ocurrió un error al aceptar la factura. Por favor, inténtelo nuevamente.');
+        }
+    }
+
+
+//    FIN NUEVO
     public function listar_informacion_programacion_edit(){
         $informacionPrograma = $this->programacion->informacion_id($this->id_programacion_edit);
         $informacionDespacho = $this->despacho->listar_despachos_por_programacion($this->id_programacion_edit);
@@ -162,7 +224,7 @@ class Local extends Component
             $yearHasta = date('Y', strtotime($this->hasta));
 
             // Validar que los años sean 2025 o posteriores
-            if ($yearDesde < 2025 || $yearHasta < 2025) {
+            if ($yearDesde < 2024 || $yearHasta < 2024) {
                 // Mostrar un mensaje de error si los años no son válidos
                 session()->flash('error', 'Las fechas deben ser a partir de 2025.');
                 return; // Salir del método si la validación falla
@@ -199,64 +261,62 @@ class Local extends Component
         }
     }
 
-    public function seleccionarFactura($CFTD, $CFNUMSER, $CFNUMDOC){
-        // Validar que la factura no exista en el array selectedFacturas
-        $comprobanteExiste = collect($this->selectedFacturas)->first(function ($factura) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
-            return $factura['CFTD'] === $CFTD
-                && $factura['CFNUMSER'] === $CFNUMSER
-                && $factura['CFNUMDOC'] === $CFNUMDOC;
+    public function seleccionarFactura($idFacPreProg){
+        // Buscar la factura por su ID
+        $factura = collect($this->facturas_pre_prog_estado_tres)->first(function ($f) use ($idFacPreProg) {
+            return $f->id_fac_pre_prog === $idFacPreProg;
+        });
+
+        if (!$factura) {
+            session()->flash('error', 'Factura no encontrada.');
+            return;
+        }
+
+        // Validar que la factura no esté ya en el array selectedFacturas
+        $comprobanteExiste = collect($this->selectedFacturas)->first(function ($facturaSeleccionada) use ($factura) {
+            return $facturaSeleccionada['id_fac_pre_prog'] === $factura->id_fac_pre_prog;
         });
 
         if ($comprobanteExiste) {
-            // Mostrar un mensaje de error si la factura ya fue agregada
+            // Si la factura ya fue agregada, mostrar un mensaje de error
             session()->flash('error', 'Este comprobante ya fue agregado.');
             return;
         }
 
-        // Buscar la factura en el array filteredFacturas
-        $factura = $this->filteredFacturas->first(function ($f) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
-            return $f->CFTD === $CFTD
-                && $f->CFNUMSER === $CFNUMSER
-                && $f->CFNUMDOC === $CFNUMDOC;
-        });
-
-        if ($factura->total_kg <= 0 || $factura->total_volumen <= 0){
+        // Verificar que el peso y volumen sean mayores a 0
+        if ($factura->fac_pre_prog_total_kg <= 0 || $factura->fac_pre_prog_total_volumen <= 0) {
             session()->flash('error', 'El peso o el volumen deben ser mayores a 0.');
             return;
         }
-        // Agregar la factura seleccionada y actualizar el peso y volumen total
-        $this->selectedFacturas[] = [
-            'CFTD' => $CFTD,
-            'CFNUMSER' => $CFNUMSER,
-            'CFNUMDOC' => $CFNUMDOC,
-            'total_kg' => $factura->total_kg,
-            'total_volumen' => $factura->total_volumen,
-            'CNOMCLI' => $factura->CNOMCLI,
-            'CFIMPORTE' => $factura->CFIMPORTE,
-            'CFCODMON' => $factura->CFCODMON,
-            'CCODCLI' => $factura->CCODCLI,
-            'guia' => $factura->CFTEXGUIA,
-            'GREFECEMISION' => $factura->GREFECEMISION, // fecha de emision de la guía
-            'LLEGADADIRECCION' => $factura->LLEGADADIRECCION,// Dirección de destino
-            'LLEGADAUBIGEO' => $factura->LLEGADAUBIGEO,// Código del ubigeo
-            'DEPARTAMENTO' => $factura->DEPARTAMENTO,// Departamento
-            'PROVINCIA' => $factura->PROVINCIA,// Provincia
-            'DISTRITO' => $factura->DISTRITO,// Distrito
-        ];
-        $this->pesoTotal += $factura->total_kg;
-        $this->volumenTotal += $factura->total_volumen;
-        $importe = $factura->CFIMPORTE;
-        $importe = floatval($importe);
-        $this->importeTotalVenta += $importe;
 
-        // Eliminar la factura de la lista de facturas filtradas
-        $this->filteredFacturas = $this->filteredFacturas->filter(function ($f) use ($CFNUMDOC) {
-            return $f->CFNUMDOC !== $CFNUMDOC;
-        });
+        // Agregar la factura seleccionada al array
+        $this->selectedFacturas[] = [
+            'id_fac_pre_prog' => $factura->id_fac_pre_prog,
+            'CFTD' => $factura->fac_pre_prog_cftd,
+            'CFNUMSER' => $factura->fac_pre_prog_cfnumser,
+            'CFNUMDOC' => $factura->fac_pre_prog_cfnumdoc,
+            'total_kg' => $factura->fac_pre_prog_total_kg,
+            'total_volumen' => $factura->fac_pre_prog_total_volumen,
+            'CNOMCLI' => $factura->fac_pre_prog_cnomcli,
+            'CCODCLI' => $factura->fac_pre_prog_cfcodcli,
+            'CFIMPORTE' => $factura->fac_pre_prog_cfimporte,
+            'guia' => $factura->fac_pre_prog_guia,
+            'GREFECEMISION' => $factura->fac_pre_prog_grefecemision,
+            'LLEGADADIRECCION' => $factura->fac_pre_prog_direccion_llegada,
+            'DEPARTAMENTO' => $factura->fac_pre_prog_departamento,
+            'PROVINCIA' => $factura->fac_pre_prog_provincia,
+            'DISTRITO' => $factura->fac_pre_prog_distrito,
+        ];
+
+        // Actualizar los totales
+        $this->pesoTotal += $factura->fac_pre_prog_total_kg;
+        $this->volumenTotal += $factura->fac_pre_prog_total_volumen;
+
         // Actualizar lista de vehículos sugeridos
         $this->listar_vehiculos_lo();
         $this->validarVehiculoSeleccionado();
     }
+
 
     public function eliminarFacturaSeleccionada($CFTD, $CFNUMSER, $CFNUMDOC){
         // Encuentra la factura en las seleccionadas
@@ -495,6 +555,10 @@ class Local extends Component
                     return;
                 }
             }
+            $idsFacturas = array_column($this->selectedFacturas, 'id_fac_pre_prog');
+            DB::table('facturas_pre_programaciones')
+                ->whereIn('id_fac_pre_prog', $idsFacturas)
+                ->update(['fac_pre_prog_estado_aprobacion' => 4]);
             DB::commit();
 
             if ($this->id_programacion_edit && $this->id_despacho_edit){
