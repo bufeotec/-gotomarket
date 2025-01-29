@@ -133,11 +133,11 @@
                                 </div>
                                 <div class="col-lg-2 col-md-2 col-sm-12 mb-3">
                                     <strong class="colorgotomarket mb-2">Flete / Venta</strong>
-                                    <p>{{ $general->formatoDecimal(($listar_detalle_despacho->despacho_costo_total / $listar_detalle_despacho->totalVentaDespacho) * 100) }} %</p>
+                                    <p>{{$listar_detalle_despacho->totalVentaDespacho != 0 ? $general->formatoDecimal(($listar_detalle_despacho->despacho_costo_total / $listar_detalle_despacho->totalVentaDespacho) * 100) : 0 }} %</p>
                                 </div>
                                 <div class="col-lg-2 col-md-2 col-sm-12 mb-3">
                                     <strong class="colorgotomarket mb-2">Flete / Peso</strong>
-                                    <p>{{ $general->formatoDecimal($listar_detalle_despacho->despacho_costo_total / $listar_detalle_despacho->despacho_peso) }}</p>
+                                    <p>{{$listar_detalle_despacho->despacho_peso != 0 ? $general->formatoDecimal($listar_detalle_despacho->despacho_costo_total / $listar_detalle_despacho->despacho_peso) : 0 }}</p>
                                 </div>
                             </div>
                             <div class="row">
@@ -187,11 +187,11 @@
                                         </div>
                                         <div class="col-lg-2 col-md-2 col-sm-12 mb-3">
                                             <strong class="colorgotomarket mb-2">Flete / Venta</strong>
-                                            <p>{{ $general->formatoDecimal(($despachoGeneraLiquidacionModal / $totalVentaDespaDespachoModal) * 100) }} %</p>
+                                            <p>{{$totalVentaDespaDespachoModal != 0 ? $general->formatoDecimal(($despachoGeneraLiquidacionModal / $totalVentaDespaDespachoModal) * 100) : 0 }} %</p>
                                         </div>
                                         <div class="col-lg-2 col-md-2 col-sm-12 mb-3">
                                             <strong class="colorgotomarket mb-2">Flete / Peso</strong>
-                                            <p>{{ $general->formatoDecimal($despachoGeneraLiquidacionModal / $totalPesoDespachoModal) }}</p>
+                                            <p>{{$totalPesoDespachoModal != 0 ? $general->formatoDecimal($despachoGeneraLiquidacionModal / $totalPesoDespachoModal) : 0 }}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -248,8 +248,8 @@
                                                                     </td>
                                                                 @endforeach
                                                                 <td>S/ {{ $general->formatoDecimal($totalDespachoLiqui) }}</td>
-                                                                <td>{{ $general->formatoDecimal(($totalDespachoLiqui / $totalVentaDespaDespachoModal) * 100) }} %</td>
-                                                                <td>{{ $general->formatoDecimal($totalDespachoLiqui / $pesoFiL) }}</td>
+                                                                <td>{{ $totalVentaDespaDespachoModal != 0 ? $general->formatoDecimal(($totalDespachoLiqui / $totalVentaDespaDespachoModal) * 100) : 0 }} %</td>
+                                                                <td>{{ $pesoFiL != 0 ? $general->formatoDecimal($totalDespachoLiqui / $pesoFiL) : 0 }}</td>
                                                             </tr>
                                                         @endif
                                                     </x-slot>
@@ -687,8 +687,8 @@
                                                         }
                                                     @endphp
                                                     <td style="{{$colorMontoLiquidado}}">S/ {{ $general->formatoDecimal($totalDespachoMontoLiquidado) }}</td>
-                                                    <td style="{{$colorMontoLiquidado}}">{{ $general->formatoDecimal(($totalDespachoMontoLiquidado / $totalVentaDespaDespacho) * 100) }} % </td>
-                                                    <td style="{{$colorMontoLiquidado}}">{{ $general->formatoDecimal($totalDespachoMontoLiquidado / $pesoFinalLiquidacion) }} </td>
+                                                    <td style="{{$colorMontoLiquidado}}">{{$totalVentaDespaDespacho != 0 ? $general->formatoDecimal(($totalDespachoMontoLiquidado / $totalVentaDespaDespacho) * 100) : 0 }} % </td>
+                                                    <td style="{{$colorMontoLiquidado}}">{{$pesoFinalLiquidacion != 0 ? $general->formatoDecimal($totalDespachoMontoLiquidado / $pesoFinalLiquidacion)  : 0 }} </td>
                                                     <td>
                                                         <x-btn-accion class="btn btn-sm text-primary" wire:click="listar_informacion_despacho({{ $de->id_despacho }},{{ $de->id_liquidacion }})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">
                                                             <x-slot name="message">
