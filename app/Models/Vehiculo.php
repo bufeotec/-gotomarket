@@ -54,7 +54,6 @@ class Vehiculo extends Model
                 })->orderBy('v.id_vehiculo', $order);
 
             $result = $query->paginate($pagination);
-
         }catch (\Exception $e){
             $this->logs->insertarLog($e);
             $result = [];
