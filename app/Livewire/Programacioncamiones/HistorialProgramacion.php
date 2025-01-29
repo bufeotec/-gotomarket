@@ -462,7 +462,7 @@ class HistorialProgramacion extends Component
                                 $sheet1->setCellValue('I'.$row, $parte1);
                                 $sheet1->setCellValue('J'.$row, $parte2);
                                 $sheet1->setCellValue('K'.$row, $this->general->formatoDecimal($comproba->despacho_venta_cfimporte));
-                                $sheet1->setCellValue('L'.$row, date('d/m/Y',strtotime($resPro->programacion_fecha_aprobacion)));
+                                $sheet1->setCellValue('L'.$row, date('d/m/Y',strtotime($resPro->programacion_fecha)));
 
                                 $loc = match ($typeComprop) {
                                     1 => 'LOCAL',

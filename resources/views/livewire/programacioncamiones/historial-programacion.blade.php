@@ -316,7 +316,7 @@
     @if(count($resultado) > 0)
         <div class="row mt-4">
             <div class="col-lg col-md-3 col-sm-3 mb-1">
-                <h6 class="m-0">FE : Fecha de Entrega</h6>
+                <h6 class="m-0">FD : Fecha de Despacho</h6>
             </div>
             <div class="col-lg col-md-3 col-sm-3 mb-1">
                 <h6 class="m-0">UR : Usuario de Registro</h6>
@@ -360,7 +360,7 @@
                 <div class="accordion-item" >
                     <h2 class="accordion-header">
                         <button class="accordion-button {{$index == 0 ? '' : 'collapsed'}}" wire:ignore.self type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne_{{$index}}" aria-expanded="true" aria-controls="collapseOne_{{$index}}">
-                            #{{$conteoGeneral}} | FE : {{$fe}} | UR : {{$usuarios}} | FC : {{$fc}} | FA : {{$fa}} | N° C : {{$r->programacion_numero_correlativo}}
+                            #{{$conteoGeneral}} | FD : {{$fe}} | UR : {{$usuarios}} | FC : {{$fc}} | FA : {{$fa}} | N° C : {{$r->programacion_numero_correlativo}}
                         </button>
                     </h2>
                     <div id="collapseOne_{{$index}}" class="accordion-collapse collapse {{$index == 0 ? 'show' : ''}}" data-bs-parent="#accordionExample" wire:ignore.self >
