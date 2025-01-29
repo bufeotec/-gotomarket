@@ -112,103 +112,103 @@ class HistorialProgramacion extends Component
         }
     }
     public function generar_excel_historial_programacion(){
-        try {
-            if (!Gate::allows('generar_excel_historial_programacion')) {
-                session()->flash('error', 'No tiene permisos para generar el reporte en excel.');
-                return;
-            }
-            $resultado = $this->programacion->listar_programaciones_historial_programacion_excel($this->desde,$this->hasta);
-            $conteoDesp = 0;
-            foreach($resultado as $result){
-                $totalVenta = 0;
-                $result->despacho = DB::table('despachos as d')
-                    ->join('transportistas as t','t.id_transportistas','=','d.id_transportistas')
-                    ->join('tipo_servicios as ts','ts.id_tipo_servicios','=','d.id_tipo_servicios')
-                    ->where('d.id_programacion','=',$result->id_programacion)
-                    ->where('d.despacho_estado_aprobacion','=',3)
+    try {
+        if (!Gate::allows('generar_excel_historial_programacion')) {
+            session()->flash('error', 'No tiene permisos para generar el reporte en excel.');
+            return;
+        }
+        $resultado = $this->programacion->listar_programaciones_historial_programacion_excel($this->desde,$this->hasta);
+        $conteoDesp = 0;
+        foreach($resultado as $result){
+            $totalVenta = 0;
+            $result->despacho = DB::table('despachos as d')
+                ->join('transportistas as t','t.id_transportistas','=','d.id_transportistas')
+                ->join('tipo_servicios as ts','ts.id_tipo_servicios','=','d.id_tipo_servicios')
+                ->where('d.id_programacion','=',$result->id_programacion)
+                ->where('d.despacho_estado_aprobacion','<>',4)
 //                    ->limit(1) // solo se va a traer 1 por que primero es el primer despacho ya que  en local y provincial  es solo una OS y en mixto el primero es local y los demas provionciales pero en caso de mixto el
-                    ->get();
-                if (count($result->despacho) > 0){
-                    $conteoDesp++;
-                    foreach ($result->despacho as $indexComprobantes => $des){
-                        if ($indexComprobantes == 0){
+                ->get();
+            if (count($result->despacho) > 0){
+                $conteoDesp++;
+                foreach ($result->despacho as $indexComprobantes => $des){
+                    if ($indexComprobantes == 0){
 
-                            if ($des->id_tipo_servicios == 1){ // si es mixto va a entrar el primero que es local donde traigo todo
+                        if ($des->id_tipo_servicios == 1){ // si es mixto va a entrar el primero que es local donde traigo todo
 //                                $des->comprobantes =  DB::table('despacho_ventas as dv')
 //                                ->join('despachos as d','d.id_despacho','=','dv.id_despacho')
 //                                ->where('d.id_despacho','=',$des->id_despacho)
 //                                ->where('d.id_programacion','=',$result->id_programacion)
 //                                ->where('d.id_tipo_servicios','<>',2)
 //                                ->get();
-                                // Comprobantes locales
-                                $datLocales =  DB::table('despacho_ventas as dv')
-                                    ->join('despachos as d', 'd.id_despacho', '=', 'dv.id_despacho')
-                                    ->where('d.id_despacho', '=', $des->id_despacho)
-                                    ->where('d.id_programacion', '=', $result->id_programacion)
+                            // Comprobantes locales
+                            $datLocales =  DB::table('despacho_ventas as dv')
+                                ->join('despachos as d', 'd.id_despacho', '=', 'dv.id_despacho')
+                                ->where('d.id_despacho', '=', $des->id_despacho)
+                                ->where('d.id_programacion', '=', $result->id_programacion)
 //                                    ->where('d.id_tipo_servicios', '<>', 2) // Excluir provinciales
-                                    ->whereNotExists(function ($query) use ($result) {
-                                        $query->select(DB::raw(1))
-                                            ->from('despacho_ventas as dv_provincial')
-                                            ->join('despachos as d_provincial', 'd_provincial.id_despacho', '=', 'dv_provincial.id_despacho')
-                                            ->where('d_provincial.id_programacion', '=', $result->id_programacion)
-                                            ->where('d_provincial.id_tipo_servicios', '=', 2) // Solo considerar provinciales
-                                            ->whereRaw('dv_provincial.despacho_venta_cftd = dv.despacho_venta_cftd') // Comparar ventas duplicadas
-                                            ->whereRaw('dv_provincial.despacho_venta_cfnumser = dv.despacho_venta_cfnumser') // Comparar ventas duplicadas
-                                            ->whereRaw('dv_provincial.despacho_venta_cfnumdoc = dv.despacho_venta_cfnumdoc'); // Comparar ventas duplicadas
-                                    })
+                                ->whereNotExists(function ($query) use ($result) {
+                                    $query->select(DB::raw(1))
+                                        ->from('despacho_ventas as dv_provincial')
+                                        ->join('despachos as d_provincial', 'd_provincial.id_despacho', '=', 'dv_provincial.id_despacho')
+                                        ->where('d_provincial.id_programacion', '=', $result->id_programacion)
+                                        ->where('d_provincial.id_tipo_servicios', '=', 2) // Solo considerar provinciales
+                                        ->whereRaw('dv_provincial.despacho_venta_cftd = dv.despacho_venta_cftd') // Comparar ventas duplicadas
+                                        ->whereRaw('dv_provincial.despacho_venta_cfnumser = dv.despacho_venta_cfnumser') // Comparar ventas duplicadas
+                                        ->whereRaw('dv_provincial.despacho_venta_cfnumdoc = dv.despacho_venta_cfnumdoc'); // Comparar ventas duplicadas
+                                })
+                                ->get();
+
+                            /* BUSCAR DESPACHOS PROVINCIALES DE LA MISMA PROGRAMACION */
+                            // Obtener todos los despachos provinciales de la misma programación
+                            $desProvinciPro = DB::table('despachos')
+                                ->where('id_programacion', '=', $result->id_programacion)
+                                ->where('id_tipo_servicios', '=', 2)
+                                ->pluck('id_despacho'); // Solo obtenemos los IDs de los despachos provinciales
+
+                            // Obtener comprobantes provinciales si existen
+                            $datProvinciales = collect(); // Inicializar como colección vacía
+
+                            if ($desProvinciPro->isNotEmpty()) {
+                                $datProvinciales = DB::table('despacho_ventas')
+                                    ->whereIn('id_despacho', $desProvinciPro) // Obtener comprobantes de todos los despachos provinciales
                                     ->get();
+                            }
 
-                                /* BUSCAR DESPACHOS PROVINCIALES DE LA MISMA PROGRAMACION */
-                                // Obtener todos los despachos provinciales de la misma programación
-                                $desProvinciPro = DB::table('despachos')
-                                    ->where('id_programacion', '=', $result->id_programacion)
-                                    ->where('id_tipo_servicios', '=', 2)
-                                    ->pluck('id_despacho'); // Solo obtenemos los IDs de los despachos provinciales
+                            // Combinar comprobantes locales y provinciales
+                            $datCombinado = $datLocales->merge($datProvinciales);
+                            $des->comprobantes = $datCombinado;
 
-                                // Obtener comprobantes provinciales si existen
-                                $datProvinciales = collect(); // Inicializar como colección vacía
-
-                                if ($desProvinciPro->isNotEmpty()) {
-                                    $datProvinciales = DB::table('despacho_ventas')
-                                        ->whereIn('id_despacho', $desProvinciPro) // Obtener comprobantes de todos los despachos provinciales
-                                        ->get();
-                                }
-
-                                // Combinar comprobantes locales y provinciales
-                                $datCombinado = $datLocales->merge($datProvinciales);
-                                $des->comprobantes = $datCombinado;
-
-                            }else{
-                                $des->comprobantes =  DB::table('despacho_ventas as dv')
+                        }else{
+                            $des->comprobantes =  DB::table('despacho_ventas as dv')
                                 ->where('dv.id_despacho','=',$des->id_despacho)
                                 ->get();
-                            }
-
-                            foreach ($des->comprobantes as $com){
-                                $precio = floatval($com->despacho_venta_cfimporte);
-                                $totalVenta+= round($precio,2);
-                            }
-                            $des->totalVentaDespacho = $totalVenta;
                         }
+
+                        foreach ($des->comprobantes as $com){
+                            $precio = floatval($com->despacho_venta_cfimporte);
+                            $totalVenta+= round($precio,2);
+                        }
+                        $des->totalVentaDespacho = $totalVenta;
                     }
-
                 }
+
             }
-            if ($conteoDesp > 0){
-                $spreadsheet = new Spreadsheet();
-                $sheet1  = $spreadsheet->getActiveSheet();
-                $sheet1->setTitle('historial_programacion');
+        }
+        if ($conteoDesp > 0){
+            $spreadsheet = new Spreadsheet();
+            $sheet1  = $spreadsheet->getActiveSheet();
+            $sheet1->setTitle('historial_programacion');
 
 
-                $mensaje = "RESULTADO DE BÚSQUEDA: ";
-                $textMeF = "";
+            $mensaje = "RESULTADO DE BÚSQUEDA: ";
+            $textMeF = "";
 //            if ($this->serie_correlativo) {
 //                $mensaje .= "Criterio: \"" . $this->serie_correlativo . "\"";
 //            }
-                if (isset($this->desde, $this->hasta)) {
-                    $mensaje .= " | Rango de fechas: " . date("d-m-Y", strtotime($this->desde)) . " al " . date("d-m-Y", strtotime($this->hasta));
-                    $textMeF = date("d-m-Y", strtotime($this->desde)) . " al " . date("d-m-Y", strtotime($this->hasta));
-                }
+            if (isset($this->desde, $this->hasta)) {
+                $mensaje .= " | Rango de fechas: " . date("d-m-Y", strtotime($this->desde)) . " al " . date("d-m-Y", strtotime($this->hasta));
+                $textMeF = date("d-m-Y", strtotime($this->desde)) . " al " . date("d-m-Y", strtotime($this->hasta));
+            }
 //            if (isset($this->estadoPro)) {
 //                $result = match ($this->estadoPro) {
 //                    'case1' => 'Aprobado',
@@ -218,194 +218,194 @@ class HistorialProgramacion extends Component
 //                };
 //                $mensaje .= " | Rango de fechas: " . date("d-m-Y", strtotime($this->desde)) . " al " . date("d-m-Y", strtotime($this->hasta));
 //            }
-                $row = 1;
-                // Configurar título
-                $sheet1->setCellValue('A'.$row, 'HISTORIAL DE PROGRAMACIONES');
-                $titleStyle = $sheet1->getStyle('A'.$row);
-                $titleStyle->getFont()->setSize(12);
-                $titleStyle->getFont()->setBold(true);
-                $sheet1->mergeCells('A'.$row.':Z'.$row);
-                $row++;
-                $sheet1->setCellValue('A'.$row, $mensaje);
-                $titleStyle = $sheet1->getStyle('A'.$row);
-                $titleStyle->getFont()->setSize(12);
-                $titleStyle->getFont()->setBold(true);
-                $sheet1->mergeCells('A'.$row.':Z'.$row);
-                $row++;
-                $sheet1->setCellValue('A'.$row, "");
-                $sheet1->mergeCells('A'.$row.':Z'.$row);
-                $row++;
-                /* --------------------------------------------------------------------------------- */
-                $sheet1->setCellValue('A'.$row, 'LIQUIDACIÓN DE GASTOS DE TRANSPORTE');
-                $titleStyle = $sheet1->getStyle('A'.$row);
-                $titleStyle->getFont()->setSize(8);
-                $cellRange = 'A'.$row.':J'.$row;
-                $sheet1->mergeCells($cellRange);
-                $rowStyle = $sheet1->getStyle($cellRange);
-                $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFE699'); // Fondo
+            $row = 1;
+            // Configurar título
+            $sheet1->setCellValue('A'.$row, 'HISTORIAL DE PROGRAMACIONES');
+            $titleStyle = $sheet1->getStyle('A'.$row);
+            $titleStyle->getFont()->setSize(12);
+            $titleStyle->getFont()->setBold(true);
+            $sheet1->mergeCells('A'.$row.':Z'.$row);
+            $row++;
+            $sheet1->setCellValue('A'.$row, $mensaje);
+            $titleStyle = $sheet1->getStyle('A'.$row);
+            $titleStyle->getFont()->setSize(12);
+            $titleStyle->getFont()->setBold(true);
+            $sheet1->mergeCells('A'.$row.':Z'.$row);
+            $row++;
+            $sheet1->setCellValue('A'.$row, "");
+            $sheet1->mergeCells('A'.$row.':Z'.$row);
+            $row++;
+            /* --------------------------------------------------------------------------------- */
+            $sheet1->setCellValue('A'.$row, 'LIQUIDACIÓN DE GASTOS DE TRANSPORTE');
+            $titleStyle = $sheet1->getStyle('A'.$row);
+            $titleStyle->getFont()->setSize(8);
+            $cellRange = 'A'.$row.':J'.$row;
+            $sheet1->mergeCells($cellRange);
+            $rowStyle = $sheet1->getStyle($cellRange);
+            $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFE699'); // Fondo
 
-                $sheet1->setCellValue('K'.$row, 'FECHA PRESENTACIÓN');
-                $titleStyle = $sheet1->getStyle('K'.$row);
-                $titleStyle->getFont()->setSize(8);
-                $cellRange = 'K'.$row.':L'.$row;
-                $sheet1->mergeCells($cellRange);
-                $rowStyle = $sheet1->getStyle($cellRange);
-                $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFC000'); // Fondo
+            $sheet1->setCellValue('K'.$row, 'FECHA PRESENTACIÓN');
+            $titleStyle = $sheet1->getStyle('K'.$row);
+            $titleStyle->getFont()->setSize(8);
+            $cellRange = 'K'.$row.':L'.$row;
+            $sheet1->mergeCells($cellRange);
+            $rowStyle = $sheet1->getStyle($cellRange);
+            $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFC000'); // Fondo
 
-                $sheet1->setCellValue('M'.$row, date('d/m/Y'));
-                $titleStyle = $sheet1->getStyle('M'.$row);
-                $titleStyle->getFont()->setSize(8);
-                $cellRange = 'M'.$row.':O'.$row;
-                $sheet1->mergeCells($cellRange);
-                $rowStyle = $sheet1->getStyle($cellRange);
-                $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFC000'); // Fondo
+            $sheet1->setCellValue('M'.$row, date('d/m/Y'));
+            $titleStyle = $sheet1->getStyle('M'.$row);
+            $titleStyle->getFont()->setSize(8);
+            $cellRange = 'M'.$row.':O'.$row;
+            $sheet1->mergeCells($cellRange);
+            $rowStyle = $sheet1->getStyle($cellRange);
+            $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFC000'); // Fondo
 
-                $sheet1->setCellValue('P'.$row, $textMeF);
-                $titleStyle = $sheet1->getStyle('P'.$row);
-                $titleStyle->getFont()->setSize(8);
-                $cellRange = 'P'.$row.':T'.$row;
-                $sheet1->mergeCells($cellRange);
-                $rowStyle = $sheet1->getStyle($cellRange);
-                $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFFF00'); // Fondo
+            $sheet1->setCellValue('P'.$row, $textMeF);
+            $titleStyle = $sheet1->getStyle('P'.$row);
+            $titleStyle->getFont()->setSize(8);
+            $cellRange = 'P'.$row.':T'.$row;
+            $sheet1->mergeCells($cellRange);
+            $rowStyle = $sheet1->getStyle($cellRange);
+            $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFFF00'); // Fondo
 
 
-                $cellRange = 'A'.$row.':T'.$row;
-                $rowStyle = $sheet1->getStyle($cellRange);
-                $rowStyle->getFont()->setSize(10);
-                $rowStyle->getFont()->setBold(true);
-                $rowStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-                $rowStyle->getBorders()->getAllBorders()->getColor()->setARGB('000000');
-                $rowStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-                $rowStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+            $cellRange = 'A'.$row.':T'.$row;
+            $rowStyle = $sheet1->getStyle($cellRange);
+            $rowStyle->getFont()->setSize(10);
+            $rowStyle->getFont()->setBold(true);
+            $rowStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+            $rowStyle->getBorders()->getAllBorders()->getColor()->setARGB('000000');
+            $rowStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            $rowStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
 
-                $row++;
+            $row++;
 
-                $sheet1->setCellValue('A'.$row, 'DATOS DEL DESPACHO');
-                $titleStyle = $sheet1->getStyle('A'.$row);
-                $titleStyle->getFont()->setSize(8);
-                $cellRange = 'A'.$row.':N'.$row;
-                $sheet1->mergeCells($cellRange);
-                $rowStyle = $sheet1->getStyle($cellRange);
-                $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('C4D79B'); // Fondo
+            $sheet1->setCellValue('A'.$row, 'DATOS DEL DESPACHO');
+            $titleStyle = $sheet1->getStyle('A'.$row);
+            $titleStyle->getFont()->setSize(8);
+            $cellRange = 'A'.$row.':N'.$row;
+            $sheet1->mergeCells($cellRange);
+            $rowStyle = $sheet1->getStyle($cellRange);
+            $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('C4D79B'); // Fondo
 
-                $sheet1->setCellValue('O'.$row, 'TRANSPORTE LOCAL');
-                $titleStyle = $sheet1->getStyle('O'.$row);
-                $titleStyle->getFont()->setSize(8);
-                $cellRange = 'O'.$row.':V'.$row;
-                $sheet1->mergeCells($cellRange);
-                $rowStyle = $sheet1->getStyle($cellRange);
-                $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('92CDDC'); // Fondo
+            $sheet1->setCellValue('O'.$row, 'TRANSPORTE LOCAL');
+            $titleStyle = $sheet1->getStyle('O'.$row);
+            $titleStyle->getFont()->setSize(8);
+            $cellRange = 'O'.$row.':V'.$row;
+            $sheet1->mergeCells($cellRange);
+            $rowStyle = $sheet1->getStyle($cellRange);
+            $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('92CDDC'); // Fondo
 
-                $sheet1->setCellValue('W'.$row, '');
-                $cellRange = 'W'.$row.':W'.$row;
-                $rowStyle = $sheet1->getStyle($cellRange);
-                $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('DDD9C4'); // Fondo
-                $rowStyle->getFont()->setBold(true); // Hacer negritas
+            $sheet1->setCellValue('W'.$row, '');
+            $cellRange = 'W'.$row.':W'.$row;
+            $rowStyle = $sheet1->getStyle($cellRange);
+            $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('DDD9C4'); // Fondo
+            $rowStyle->getFont()->setBold(true); // Hacer negritas
 
-                $sheet1->setCellValue('X'.$row, 'TRANSPORTE PROVINCIA');
-                $titleStyle = $sheet1->getStyle('X'.$row);
-                $titleStyle->getFont()->setSize(8);
-                $cellRange = 'X'.$row.':AB'.$row;
-                $sheet1->mergeCells($cellRange);
-                $rowStyle = $sheet1->getStyle($cellRange);
-                $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('E2EFDA'); // Fondo
+            $sheet1->setCellValue('X'.$row, 'TRANSPORTE PROVINCIA');
+            $titleStyle = $sheet1->getStyle('X'.$row);
+            $titleStyle->getFont()->setSize(8);
+            $cellRange = 'X'.$row.':AB'.$row;
+            $sheet1->mergeCells($cellRange);
+            $rowStyle = $sheet1->getStyle($cellRange);
+            $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('E2EFDA'); // Fondo
 
-                $cellRange = 'A'.$row.':AB'.$row;
-                $rowStyle = $sheet1->getStyle($cellRange);
-                $rowStyle->getFont()->setSize(10);
-                $rowStyle->getFont()->setBold(true);
-                $rowStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-                $rowStyle->getBorders()->getAllBorders()->getColor()->setARGB('000000');
-                $rowStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-                $rowStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+            $cellRange = 'A'.$row.':AB'.$row;
+            $rowStyle = $sheet1->getStyle($cellRange);
+            $rowStyle->getFont()->setSize(10);
+            $rowStyle->getFont()->setBold(true);
+            $rowStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+            $rowStyle->getBorders()->getAllBorders()->getColor()->setARGB('000000');
+            $rowStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            $rowStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
 
-                $row++;
+            $row++;
 
-                $sheet1->setCellValue('A'.$row, 'T');
-                $sheet1->setCellValue('B'.$row, 'CODF');
-                $sheet1->setCellValue('C'.$row, 'DOCUMENTO');
-                $sheet1->setCellValue('D'.$row, 'F . EMISION');
-                $sheet1->setCellValue('E'.$row, 'N° PRO');
-                $sheet1->setCellValue('F'.$row, 'N° RUC');
-                $sheet1->setCellValue('G'.$row, 'CLIENTE');
-                $sheet1->setCellValue('H'.$row, 'T1');
-                $sheet1->setCellValue('I'.$row, 'T2');
-                $sheet1->setCellValue('J'.$row, 'GUIA');
-                $sheet1->setCellValue('K'.$row, 'IMPORTE');
-                $sheet1->setCellValue('L'.$row, 'F. DESPACHO');
-                $sheet1->setCellValue('M'.$row, 'TIPO SERVICIO');
-                $sheet1->setCellValue('N'.$row, 'PESO');
-                $cellRange = 'A'.$row.':N'.$row;
-                $rowStyle = $sheet1->getStyle($cellRange);
-                $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('C4D79B'); // Fondo
+            $sheet1->setCellValue('A'.$row, 'T');
+            $sheet1->setCellValue('B'.$row, 'CODF');
+            $sheet1->setCellValue('C'.$row, 'DOCUMENTO');
+            $sheet1->setCellValue('D'.$row, 'F . EMISION');
+            $sheet1->setCellValue('E'.$row, 'N° PRO');
+            $sheet1->setCellValue('F'.$row, 'N° RUC');
+            $sheet1->setCellValue('G'.$row, 'CLIENTE');
+            $sheet1->setCellValue('H'.$row, 'T1');
+            $sheet1->setCellValue('I'.$row, 'T2');
+            $sheet1->setCellValue('J'.$row, 'GUIA');
+            $sheet1->setCellValue('K'.$row, 'IMPORTE');
+            $sheet1->setCellValue('L'.$row, 'F. DESPACHO');
+            $sheet1->setCellValue('M'.$row, 'TIPO SERVICIO');
+            $sheet1->setCellValue('N'.$row, 'PESO');
+            $cellRange = 'A'.$row.':N'.$row;
+            $rowStyle = $sheet1->getStyle($cellRange);
+            $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('C4D79B'); // Fondo
 //            $rowStyle->getFont()->getColor()->setARGB(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_WHITE); // color de texto
-                $rowStyle->getFont()->setBold(true); // Hacer negritas
+            $rowStyle->getFont()->setBold(true); // Hacer negritas
 
-                $sheet1->setCellValue('O'.$row, 'N° OS');
-                $sheet1->setCellValue('P'.$row, 'FLETE');
+            $sheet1->setCellValue('O'.$row, 'N° OS');
+            $sheet1->setCellValue('P'.$row, 'FLETE');
 //            $sheet1->setCellValue('Q'.$row, 'GARAJE');
-                $sheet1->mergeCells('P'.$row.':Q'.$row);
-                $sheet1->setCellValue('R'.$row, 'OTROS');
-                $sheet1->setCellValue('S'.$row, 'AYUDANTES');
-                $sheet1->setCellValue('T'.$row, 'TRANSPORTISTA');
-                $sheet1->setCellValue('U'.$row, 'FLETE TOTAL');
-                $sheet1->setCellValue('V'.$row, '%');
-                $cellRange = 'O'.$row.':V'.$row;
-                $rowStyle = $sheet1->getStyle($cellRange);
-                $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('92CDDC'); // Fondo
-                $rowStyle->getFont()->setBold(true); // Hacer negritas
+            $sheet1->mergeCells('P'.$row.':Q'.$row);
+            $sheet1->setCellValue('R'.$row, 'OTROS');
+            $sheet1->setCellValue('S'.$row, 'AYUDANTES');
+            $sheet1->setCellValue('T'.$row, 'TRANSPORTISTA');
+            $sheet1->setCellValue('U'.$row, 'FLETE TOTAL');
+            $sheet1->setCellValue('V'.$row, '%');
+            $cellRange = 'O'.$row.':V'.$row;
+            $rowStyle = $sheet1->getStyle($cellRange);
+            $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('92CDDC'); // Fondo
+            $rowStyle->getFont()->setBold(true); // Hacer negritas
 
-                $sheet1->setCellValue('W'.$row, 'N° OS');
-                $sheet1->setCellValue('X'.$row, 'TRANSPORTISTA ');
-                $sheet1->setCellValue('Y'.$row, 'DESTINO');
-                $sheet1->setCellValue('Z'.$row, 'FACTURA');
-                $sheet1->setCellValue('AA'.$row, 'FLETE TOTAL');
-                $sheet1->setCellValue('AB'.$row, '%');
-                $cellRange = 'W'.$row.':AB'.$row;
-                $rowStyle = $sheet1->getStyle($cellRange);
-                $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('DDD9C4'); // Fondo
-                $rowStyle->getFont()->setBold(true); // Hacer negritas
+            $sheet1->setCellValue('W'.$row, 'N° OS');
+            $sheet1->setCellValue('X'.$row, 'TRANSPORTISTA ');
+            $sheet1->setCellValue('Y'.$row, 'DESTINO');
+            $sheet1->setCellValue('Z'.$row, 'FACTURA');
+            $sheet1->setCellValue('AA'.$row, 'FLETE TOTAL');
+            $sheet1->setCellValue('AB'.$row, '%');
+            $cellRange = 'W'.$row.':AB'.$row;
+            $rowStyle = $sheet1->getStyle($cellRange);
+            $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('DDD9C4'); // Fondo
+            $rowStyle->getFont()->setBold(true); // Hacer negritas
 
-                $sheet1->getColumnDimension('A')->setWidth(6);
-                $sheet1->getColumnDimension('B')->setWidth(12);
-                $sheet1->getColumnDimension('C')->setWidth(15);
-                $sheet1->getColumnDimension('D')->setWidth(15);
-                $sheet1->getColumnDimension('E')->setWidth(12);
-                $sheet1->getColumnDimension('F')->setWidth(12);
-                $sheet1->getColumnDimension('G')->setWidth(60);
-                $sheet1->getColumnDimension('H')->setWidth(6);
-                $sheet1->getColumnDimension('I')->setWidth(6);
-                $sheet1->getColumnDimension('J')->setWidth(15);
-                $sheet1->getColumnDimension('K')->setWidth(15);
-                $sheet1->getColumnDimension('L')->setWidth(15);
-                $sheet1->getColumnDimension('M')->setWidth(15);
-                $sheet1->getColumnDimension('N')->setWidth(15);
-                $sheet1->getColumnDimension('O')->setWidth(12);
-                $sheet1->getColumnDimension('P')->setWidth(15);
-                $sheet1->getColumnDimension('R')->setWidth(12);
+            $sheet1->getColumnDimension('A')->setWidth(6);
+            $sheet1->getColumnDimension('B')->setWidth(12);
+            $sheet1->getColumnDimension('C')->setWidth(15);
+            $sheet1->getColumnDimension('D')->setWidth(15);
+            $sheet1->getColumnDimension('E')->setWidth(12);
+            $sheet1->getColumnDimension('F')->setWidth(12);
+            $sheet1->getColumnDimension('G')->setWidth(60);
+            $sheet1->getColumnDimension('H')->setWidth(6);
+            $sheet1->getColumnDimension('I')->setWidth(6);
+            $sheet1->getColumnDimension('J')->setWidth(15);
+            $sheet1->getColumnDimension('K')->setWidth(15);
+            $sheet1->getColumnDimension('L')->setWidth(15);
+            $sheet1->getColumnDimension('M')->setWidth(15);
+            $sheet1->getColumnDimension('N')->setWidth(15);
+            $sheet1->getColumnDimension('O')->setWidth(12);
+            $sheet1->getColumnDimension('P')->setWidth(15);
+            $sheet1->getColumnDimension('R')->setWidth(12);
 //            $sheet1->getColumnDimension('Q')->setWidth(15);
-                $sheet1->getColumnDimension('S')->setWidth(15);
-                $sheet1->getColumnDimension('T')->setWidth(25);
-                $sheet1->getColumnDimension('U')->setWidth(18);
-                $sheet1->getColumnDimension('V')->setWidth(6);
-                $sheet1->getColumnDimension('W')->setWidth(12);
-                $sheet1->getColumnDimension('X')->setWidth(25);
-                $sheet1->getColumnDimension('Y')->setWidth(18);
-                $sheet1->getColumnDimension('Z')->setWidth(25);
-                $sheet1->getColumnDimension('AA')->setWidth(18);
-                $sheet1->getColumnDimension('AB')->setWidth(6);
+            $sheet1->getColumnDimension('S')->setWidth(15);
+            $sheet1->getColumnDimension('T')->setWidth(25);
+            $sheet1->getColumnDimension('U')->setWidth(18);
+            $sheet1->getColumnDimension('V')->setWidth(6);
+            $sheet1->getColumnDimension('W')->setWidth(12);
+            $sheet1->getColumnDimension('X')->setWidth(25);
+            $sheet1->getColumnDimension('Y')->setWidth(18);
+            $sheet1->getColumnDimension('Z')->setWidth(25);
+            $sheet1->getColumnDimension('AA')->setWidth(18);
+            $sheet1->getColumnDimension('AB')->setWidth(6);
 
-                $cellRange = 'A'.$row.':Z'.$row;
-                $rowStyle = $sheet1->getStyle($cellRange);
-                $rowStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-                $rowStyle->getBorders()->getAllBorders()->getColor()->setARGB('000000');
-                $rowStyle->getFont()->setSize(10);
-                $rowStyle->getFont()->setBold(true);
+            $cellRange = 'A'.$row.':Z'.$row;
+            $rowStyle = $sheet1->getStyle($cellRange);
+            $rowStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+            $rowStyle->getBorders()->getAllBorders()->getColor()->setARGB('000000');
+            $rowStyle->getFont()->setSize(10);
+            $rowStyle->getFont()->setBold(true);
 //            $rowStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
 //            $rowStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
 
-                $row++;
-                foreach($resultado as $resPro){
+            $row++;
+            foreach($resultado as $resPro){
 //                $sheet1->setCellValue('A'.$row, $rehs->programacion_numero_correlativo);
 //
 //                $cellRange = 'A'.$row.':N'.$row;
@@ -418,379 +418,364 @@ class HistorialProgramacion extends Component
 //                $rowStyle->getBorders()->getAllBorders()->getColor()->setARGB('000000');
 //                $row++;
 
-                    foreach ($resPro->despacho as $inD => $des){
-                        if ($inD == 0){
-                            $filaPorcentajeLocal = null;
-                            $fleteFinalLocal = null;
+                foreach ($resPro->despacho as $inD => $des){
+                    if ($inD == 0){
+                        $filaPorcentajeLocal = null;
+                        $fleteFinalLocal = null;
 
-                            $fleteFinalProvin = null;
-                            $filaPorcentajeProvin = null;
+                        $fleteFinalProvin = null;
+                        $filaPorcentajeProvin = null;
 
-                            $totalPesoDespachos = 0;
-                            $importeTotalDespachos = 0;
-                            $osAnteriorMixto = null;
-                            foreach ($des->comprobantes  as $indexComprobante => $comproba){
-                                /**/
-                                // buscar si es mixto o un servicio normal
-                                $validarMixto = DB::table('despacho_ventas as dv')
-                                    ->join('despachos as d','d.id_despacho','=','dv.id_despacho')
-                                    ->where('dv.despacho_venta_cfnumser','=',$comproba->despacho_venta_cfnumser)
-                                    ->where('dv.despacho_venta_cfnumdoc','=',$comproba->despacho_venta_cfnumdoc)
-                                    ->where('dv.id_despacho','<>',$des->id_despacho)
-                                    ->where('d.id_programacion','=',$resPro->id_programacion)
-                                    ->where('d.id_tipo_servicios','=',2)->first();
+                        $totalPesoDespachos = 0;
+                        $importeTotalDespachos = 0;
+                        $osAnteriorMixto = null;
+                        foreach ($des->comprobantes  as $indexComprobante => $comproba){
+                            /**/
+                            // buscar si es mixto o un servicio normal
+                            $validarMixto = DB::table('despacho_ventas as dv')
+                                ->join('despachos as d','d.id_despacho','=','dv.id_despacho')
+                                ->where('dv.despacho_venta_cfnumser','=',$comproba->despacho_venta_cfnumser)
+                                ->where('dv.despacho_venta_cfnumdoc','=',$comproba->despacho_venta_cfnumdoc)
+                                ->where('dv.id_despacho','<>',$des->id_despacho)
+                                ->where('d.id_programacion','=',$resPro->id_programacion)
+                                ->where('d.id_tipo_servicios','=',2)->first();
 
-                                if ($validarMixto){
-                                    $typeComprop = 3;
-                                }else {
-                                    $typeComprop = $des->id_tipo_servicios;
-                                }
+                            if ($validarMixto){
+                                $typeComprop = 3;
+                            }else {
+                                $typeComprop = $des->id_tipo_servicios;
+                            }
 
-                                /**/
-                                $guia = $comproba->despacho_venta_guia;
-                                $parte1 = substr($guia, 0, 4); // T001
-                                $parte2 = substr($guia, 4);    // 0013260
+                            /**/
+                            $guia = $comproba->despacho_venta_guia;
+                            $parte1 = substr($guia, 0, 4); // T001
+                            $parte2 = substr($guia, 4);    // 0013260
 
-                                $sheet1->setCellValue('A'.$row, $comproba->despacho_venta_cftd);
-                                $sheet1->setCellValue('B'.$row, $comproba->despacho_venta_cfnumser);
-                                $sheet1->setCellValue('C'.$row, $comproba->despacho_venta_cfnumdoc);
-                                $sheet1->setCellValue('D'.$row, date('d/m/Y', strtotime($comproba->despacho_venta_grefecemision)));
-                                $sheet1->setCellValue('E'.$row, $resPro->programacion_numero_correlativo);
-                                $sheet1->setCellValue('F'.$row, $comproba->despacho_venta_cfcodcli);
-                                $sheet1->setCellValue('G'.$row, $comproba->despacho_venta_cnomcli);
-                                $sheet1->setCellValue('H'.$row, 'GS');
-                                $sheet1->setCellValue('I'.$row, $parte1);
-                                $sheet1->setCellValue('J'.$row, $parte2);
-                                $sheet1->setCellValue('K'.$row, $this->general->formatoDecimal($comproba->despacho_venta_cfimporte));
-                                $sheet1->setCellValue('L'.$row, date('d/m/Y',strtotime($resPro->programacion_fecha_aprobacion)));
+                            $sheet1->setCellValue('A'.$row, $comproba->despacho_venta_cftd);
+                            $sheet1->setCellValue('B'.$row, $comproba->despacho_venta_cfnumser);
+                            $sheet1->setCellValue('C'.$row, $comproba->despacho_venta_cfnumdoc);
+                            $sheet1->setCellValue('D'.$row, date('d/m/Y', strtotime($comproba->despacho_venta_grefecemision)));
+                            $sheet1->setCellValue('E'.$row, $resPro->programacion_numero_correlativo);
+                            $sheet1->setCellValue('F'.$row, $comproba->despacho_venta_cfcodcli);
+                            $sheet1->setCellValue('G'.$row, $comproba->despacho_venta_cnomcli);
+                            $sheet1->setCellValue('H'.$row, 'GS');
+                            $sheet1->setCellValue('I'.$row, $parte1);
+                            $sheet1->setCellValue('J'.$row, $parte2);
+                            $sheet1->setCellValue('K'.$row, $this->general->formatoDecimal($comproba->despacho_venta_cfimporte));
+                            $sheet1->setCellValue('L'.$row, date('d/m/Y',strtotime($resPro->programacion_fecha)));
 
-                                $loc = match ($typeComprop) {
-                                    1 => 'LOCAL',
-                                    2 => 'PROVINCIAL',
-                                    3 => 'MIXTO',
-                                    default => '',
-                                };
+                            $loc = match ($typeComprop) {
+                                1 => 'LOCAL',
+                                2 => 'PROVINCIAL',
+                                3 => 'MIXTO',
+                                default => '',
+                            };
 
-                                $sheet1->setCellValue('M'.$row, $loc);
-                                $cellRange = 'M'.$row.':M'.$row;
-                                $rowStyle = $sheet1->getStyle($cellRange);
-                                $rowStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-                                $rowStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                            $sheet1->setCellValue('M'.$row, $loc);
+                            $cellRange = 'M'.$row.':M'.$row;
+                            $rowStyle = $sheet1->getStyle($cellRange);
+                            $rowStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                            $rowStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
 
-                                $sheet1->setCellValue('N'.$row, $this->general->formatoDecimal($comproba->despacho_venta_total_kg));
-                                if ($indexComprobante == 0 || $indexComprobante == 1){
-                                    /* LOCAL */
-                                    if ($des->id_tipo_servicios == 1){
-                                        if ($indexComprobante == 0){
-                                            $informacionliquidacion = DB::table('liquidacion_detalles as ld')
-                                                ->join('liquidaciones as l','l.id_liquidacion','=','ld.id_liquidacion')
-                                                ->join('despachos as d','d.id_despacho','=','ld.id_despacho')
-                                                ->where('l.liquidacion_estado_aprobacion','=',1)
-                                                ->where('ld.id_despacho','=',$des->id_despacho)
-                                                ->orderBy('ld.id_liquidacion_detalle','desc')
-                                                ->orderBy('l.id_liquidacion','desc')->first();
+                            $sheet1->setCellValue('N'.$row, $this->general->formatoDecimal($comproba->despacho_venta_total_kg));
+                            if ($indexComprobante == 0 || $indexComprobante == 1){
+                                /* LOCAL */
+                                if ($des->id_tipo_servicios == 1){
+                                    if ($indexComprobante == 0) {
+                                        $informacionliquidacion = DB::table('despachos')
+                                            ->where('id_despacho', '=', $des->id_despacho)
+                                            ->orderBy('id_despacho', 'desc')->first();
 
-                                            $sheet1->setCellValue('O'.$row, $des->despacho_numero_correlativo);
+                                        $sheet1->setCellValue('O'.$row, $des->despacho_numero_correlativo);
 
-                                            if ($informacionliquidacion){
-                                                $gastos = DB::table('liquidacion_gastos')->where('id_liquidacion_detalle','=',$informacionliquidacion->id_liquidacion_detalle)->get();
-                                                if ($gastos){
-                                                    $costoTarifa = $gastos[0]->liquidacion_gasto_monto;
-                                                    $costoMano = $gastos[1]->liquidacion_gasto_monto;
-                                                    $costoOtros = $gastos[2]->liquidacion_gasto_monto;
-                                                    $pesoFinalLiquidacion = $gastos[3]->liquidacion_gasto_monto;
+                                        if ($informacionliquidacion) {
+                                            // Usamos los datos directamente de $informacionliquidacion
+                                            $costoTarifa = ($informacionliquidacion->despacho_estado_modificado == 1)
+                                                ? $informacionliquidacion->despacho_monto_modificado
+                                                : $informacionliquidacion->despacho_flete;
 
-                                                    $totalGeneralLocal = ($costoTarifa + $costoMano + $costoOtros);
+                                            $costoMano = $informacionliquidacion->despacho_ayudante ?? 0;
+                                            $costoOtros = $informacionliquidacion->despacho_gasto_otros ?? 0;
+                                            $pesoFinalLiquidacion = $informacionliquidacion->liquidacion_gasto_monto ?? 0;
 
+                                            $totalGeneralLocal = ($costoTarifa + $costoMano + $costoOtros);
 
-                                                    $sheet1->setCellValue('P'.$row, $this->general->formatoDecimal($costoTarifa));
-                                                    $sheet1->mergeCells('P'.$row.':Q'.$row);
-
-                                                    $sheet1->setCellValue('R'.$row, $this->general->formatoDecimal($costoOtros));
-//                                        $sheet1->setCellValue('Q'.$row, $costoOtros);
-
-                                                    $sheet1->setCellValue('S'.$row, $this->general->formatoDecimal($costoMano));
-                                                    $sheet1->setCellValue('T'.$row, $des->transportista_nom_comercial.' '.$informacionliquidacion->liquidacion_serie.'-'.$informacionliquidacion->liquidacion_correlativo);
-//                                        $sheet1->setCellValue('S'.$row, $des->transportista_nom_comercial.' salgo de linea aca'.$vehiT);
-                                                    $sheet1->setCellValue('U'.$row, $this->general->formatoDecimal($totalGeneralLocal));
-                                                    $sheet1->setCellValue('V'.$row, '');
-
-                                                    $fleteFinalLocal = $totalGeneralLocal;
-                                                    $filaPorcentajeLocal = $row;
-
-
-                                                }
-                                            }
-                                        }else{
-                                            /* ---------------------------------------------*/
-                                            $vehiculo = DB::table('vehiculos  as v')
-                                                ->join('tipo_vehiculos as tv','tv.id_tipo_vehiculo','=','v.id_tipo_vehiculo')
-                                                ->where('v.id_vehiculo','=',$des->id_vehiculo)->first();
-                                            $vehiT = "";
-                                            if ($vehiculo){
-                                                $vehiT = $vehiculo->tipo_vehiculo_concepto.': '.$vehiculo->vehiculo_capacidad_peso.'kg - '.$vehiculo->vehiculo_placa;
-                                            }
-                                            /* ---------------------------------------------*/
-                                            $sheet1->setCellValue('O'.$row, '');
-                                            $sheet1->setCellValue('P'.$row, "");
+                                            $sheet1->setCellValue('P'.$row, $this->general->formatoDecimal($costoTarifa));
                                             $sheet1->mergeCells('P'.$row.':Q'.$row);
-                                            $sheet1->setCellValue('R'.$row, "");
-                                            $sheet1->setCellValue('S'.$row, "");
-                                            $sheet1->setCellValue('T'.$row, $vehiT);
-                                            $sheet1->setCellValue('U'.$row, "");
+
+                                            $sheet1->setCellValue('R'.$row, $this->general->formatoDecimal($costoOtros));
+                                            $sheet1->setCellValue('S'.$row, $this->general->formatoDecimal($costoMano));
+                                            $sheet1->setCellValue('T'.$row, $des->transportista_nom_comercial.' - '.$informacionliquidacion->despacho_numero_correlativo);
+                                            $sheet1->setCellValue('U'.$row, $this->general->formatoDecimal($totalGeneralLocal));
                                             $sheet1->setCellValue('V'.$row, '');
+
+                                            $fleteFinalLocal = $totalGeneralLocal;
+                                            $filaPorcentajeLocal = $row;
                                         }
-                                    }else{
+                                    } else{
+                                        /* ---------------------------------------------*/
+                                        $vehiculo = DB::table('vehiculos  as v')
+                                            ->join('tipo_vehiculos as tv','tv.id_tipo_vehiculo','=','v.id_tipo_vehiculo')
+                                            ->where('v.id_vehiculo','=',$des->id_vehiculo)->first();
+                                        $vehiT = "";
+                                        if ($vehiculo){
+                                            $vehiT = $vehiculo->tipo_vehiculo_concepto.': '.$vehiculo->vehiculo_capacidad_peso.'kg - '.$vehiculo->vehiculo_placa;
+                                        }
+                                        /* ---------------------------------------------*/
                                         $sheet1->setCellValue('O'.$row, '');
-                                        $sheet1->setCellValue('P'.$row, '');
-                                        $sheet1->setCellValue('Q'.$row, '');
-                                        $sheet1->setCellValue('R'.$row, '');
-                                        $sheet1->setCellValue('S'.$row, '');
-                                        $sheet1->setCellValue('T'.$row, '');
-                                        $sheet1->setCellValue('U'.$row, '');
+                                        $sheet1->setCellValue('P'.$row, "");
+                                        $sheet1->mergeCells('P'.$row.':Q'.$row);
+                                        $sheet1->setCellValue('R'.$row, "");
+                                        $sheet1->setCellValue('S'.$row, "");
+                                        $sheet1->setCellValue('T'.$row, $vehiT);
+                                        $sheet1->setCellValue('U'.$row, "");
                                         $sheet1->setCellValue('V'.$row, '');
                                     }
+                                }else{
+                                    $sheet1->setCellValue('O'.$row, '');
+                                    $sheet1->setCellValue('P'.$row, '');
+                                    $sheet1->setCellValue('Q'.$row, '');
+                                    $sheet1->setCellValue('R'.$row, '');
+                                    $sheet1->setCellValue('S'.$row, '');
+                                    $sheet1->setCellValue('T'.$row, '');
+                                    $sheet1->setCellValue('U'.$row, '');
+                                    $sheet1->setCellValue('V'.$row, '');
+                                }
 
 
 
-                                    /* PROVINCIAL */
-                                    if ($des->id_tipo_servicios == 2){
-                                        if ($indexComprobante == 0){
-                                            $informacionliquidacion = DB::table('liquidacion_detalles as ld')
-                                                ->join('liquidaciones as l','l.id_liquidacion','=','ld.id_liquidacion')
-                                                ->join('despachos as d','d.id_despacho','=','ld.id_despacho')
-                                                ->where('l.liquidacion_estado_aprobacion','=',1)
-                                                ->where('ld.id_despacho','=',$des->id_despacho)
-                                                ->orderBy('ld.id_liquidacion_detalle','desc')
-                                                ->orderBy('l.id_liquidacion','desc')->first();
-                                            $sheet1->setCellValue('W'.$row, $des->despacho_numero_correlativo);
-                                            if ($informacionliquidacion){
-                                                $gastos = DB::table('liquidacion_gastos')->where('id_liquidacion_detalle','=',$informacionliquidacion->id_liquidacion_detalle)->get();
-                                                if ($gastos){
-                                                    $costoTarifa = $gastos[0]->liquidacion_gasto_monto;
-                                                    $costoMano = $gastos[1]->liquidacion_gasto_monto;
-                                                    $costoOtros = $gastos[2]->liquidacion_gasto_monto;
-                                                    $pesoFinalLiquidacion = $gastos[3]->liquidacion_gasto_monto;
+                                /* PROVINCIAL */
+                                if ($des->id_tipo_servicios == 2){
+                                    if ($indexComprobante == 0){
+                                        $informacionliquidacion = DB::table('despachos')
+                                            ->where('id_despacho', '=', $des->id_despacho)
+                                            ->orderBy('id_despacho', 'desc')->first();
+                                        $sheet1->setCellValue('W'.$row, $des->despacho_numero_correlativo);
+                                        if ($informacionliquidacion){
+                                            $costoTarifa = ($informacionliquidacion->despacho_estado_modificado == 1)
+                                                ? $informacionliquidacion->despacho_monto_modificado
+                                                : $informacionliquidacion->despacho_flete;
 
-                                                    $totalGeneralLocal = (($costoTarifa * $pesoFinalLiquidacion) + $costoMano + $costoOtros);
+                                            $costoOtros = $informacionliquidacion->despacho_gasto_otros ?? 0;
 
-                                                    $destino = "";
-                                                    if ($informacionliquidacion->id_departamento){
-                                                        $dep = DB::table('departamentos')->where('id_departamento','=',$informacionliquidacion->id_departamento)->first();
-                                                        $destino.= $dep->departamento_nombre;
-                                                    }
-                                                    if ($informacionliquidacion->id_provincia){
-                                                        $provi = DB::table('provincias')->where('id_provincia','=',$informacionliquidacion->id_provincia)->first();
-                                                        $destino.= "-".$provi->provincia_nombre;
-                                                    }
-                                                    if ($informacionliquidacion->id_distrito){
-                                                        $disti = DB::table('distritos')->where('id_distrito','=',$informacionliquidacion->id_distrito)->first();
-                                                        $destino.= "-".$disti->distrito_nombre;
-                                                    }
+                                            $totalGeneralLocalProvin = (($costoTarifa * $informacionliquidacion->despacho_peso) + $costoOtros);
 
-                                                    $sheet1->setCellValue('X'.$row, $des->transportista_nom_comercial);
-                                                    $sheet1->setCellValue('Y'.$row, $destino);
-                                                    $sheet1->setCellValue('Z'.$row, $informacionliquidacion->liquidacion_serie.'-'.$informacionliquidacion->liquidacion_correlativo);
-                                                    $sheet1->setCellValue('AA'.$row, $this->general->formatoDecimal($totalGeneralLocal));
-                                                    $sheet1->setCellValue('AB'.$row, '');
 
-                                                    $fleteFinalProvin = $totalGeneralLocal;
-                                                    $filaPorcentajeProvin = $row;
-                                                }
+                                            $destino = "";
+                                            if ($informacionliquidacion->id_departamento){
+                                                $dep = DB::table('departamentos')->where('id_departamento','=',$informacionliquidacion->id_departamento)->first();
+                                                $destino.= $dep->departamento_nombre;
                                             }
+                                            if ($informacionliquidacion->id_provincia){
+                                                $provi = DB::table('provincias')->where('id_provincia','=',$informacionliquidacion->id_provincia)->first();
+                                                $destino.= "-".$provi->provincia_nombre;
+                                            }
+                                            if ($informacionliquidacion->id_distrito){
+                                                $disti = DB::table('distritos')->where('id_distrito','=',$informacionliquidacion->id_distrito)->first();
+                                                $destino.= "-".$disti->distrito_nombre;
+                                            }
+
+                                            $sheet1->setCellValue('X'.$row, $des->transportista_nom_comercial);
+                                            $sheet1->setCellValue('Y'.$row, $destino);
+                                            $sheet1->setCellValue('Z'.$row, $informacionliquidacion->despacho_numero_correlativo);
+                                            $sheet1->setCellValue('AA'.$row, $this->general->formatoDecimal($totalGeneralLocalProvin));
+                                            $sheet1->setCellValue('AB'.$row, '');
+
+                                            $fleteFinalProvin = $totalGeneralLocalProvin;
+                                            $filaPorcentajeProvin = $row;
                                         }
-                                    }else{
+                                    }
+                                }else{
 //                                        $sheet1->setCellValue('W'.$row, '');
 //                                        $sheet1->setCellValue('X'.$row, '');
 //                                        $sheet1->setCellValue('Y'.$row, '');
 //                                        $sheet1->setCellValue('Z'.$row, '');
 //                                        $sheet1->setCellValue('AA'.$row, '');
 //                                        $sheet1->setCellValue('AB'.$row, '');
-                                    }
                                 }
-                                if ($typeComprop == 3){
+                            }
+                            if ($typeComprop == 3){
 
-                                    /*--------------------------------------------------------------------------------------- */
-                                    /* SI EN CASO LA PROGRAMACIÓN ES MIXTA LLENAR LAS OS DE PROVINCIAL */
-                                    $osMixtoProgramacion = DB::table('despachos as d')
-                                        ->join('despacho_ventas as dv','dv.id_despacho','=','d.id_despacho')
-                                        ->join('transportistas as t','t.id_transportistas','=','d.id_transportistas')
-                                        ->where('d.id_programacion','=',$resPro->id_programacion)
-                                        ->where('dv.despacho_venta_cftd','=',$comproba->despacho_venta_cftd)
-                                        ->where('dv.despacho_venta_cfnumser','=',$comproba->despacho_venta_cfnumser)
-                                        ->where('dv.despacho_venta_cfnumdoc','=',$comproba->despacho_venta_cfnumdoc)
-                                        ->where('d.id_tipo_servicios','=',2)->first();
+                                /*--------------------------------------------------------------------------------------- */
+                                /* SI EN CASO LA PROGRAMACIÓN ES MIXTA LLENAR LAS OS DE PROVINCIAL */
+                                $osMixtoProgramacion = DB::table('despachos as d')
+                                    ->join('despacho_ventas as dv','dv.id_despacho','=','d.id_despacho')
+                                    ->join('transportistas as t','t.id_transportistas','=','d.id_transportistas')
+                                    ->where('d.id_programacion','=',$resPro->id_programacion)
+                                    ->where('dv.despacho_venta_cftd','=',$comproba->despacho_venta_cftd)
+                                    ->where('dv.despacho_venta_cfnumser','=',$comproba->despacho_venta_cfnumser)
+                                    ->where('dv.despacho_venta_cfnumdoc','=',$comproba->despacho_venta_cfnumdoc)
+                                    ->where('d.id_tipo_servicios','=',2)->first();
 
 
-                                    if(!$osAnteriorMixto){ // SI ESTO ES NULO ES POR QUE AUN NO ESTA CON VALOR DE OS
+                                if(!$osAnteriorMixto){ // SI ESTO ES NULO ES POR QUE AUN NO ESTA CON VALOR DE OS
+                                    $osAnteriorMixto = $osMixtoProgramacion->despacho_numero_correlativo;
+                                    $ingreExcelMixto = true;
+                                }else{
+                                    if ($osMixtoProgramacion->despacho_numero_correlativo == $osAnteriorMixto){ // SI LA OS QUE INGRESA YA ESTA COMO VALOR EN $osAnteriorMixto ES POR QUE YA SE PUSO COMO VALOR AL PRIMERO
+                                        $ingreExcelMixto = false;
+                                    }else{
                                         $osAnteriorMixto = $osMixtoProgramacion->despacho_numero_correlativo;
                                         $ingreExcelMixto = true;
-                                    }else{
-                                        if ($osMixtoProgramacion->despacho_numero_correlativo == $osAnteriorMixto){ // SI LA OS QUE INGRESA YA ESTA COMO VALOR EN $osAnteriorMixto ES POR QUE YA SE PUSO COMO VALOR AL PRIMERO
-                                            $ingreExcelMixto = false;
-                                        }else{
-                                            $osAnteriorMixto = $osMixtoProgramacion->despacho_numero_correlativo;
-                                            $ingreExcelMixto = true;
-                                        }
-
                                     }
 
+                                }
 
 
-                                    if ($osMixtoProgramacion && $ingreExcelMixto){
+
+                                if ($osMixtoProgramacion && $ingreExcelMixto){
 //                                        $rowMixto = $row;
-                                        $totalImporteComprobanteDespachoPro = DB::table('despacho_ventas')
-                                            ->where('id_despacho','=',$osMixtoProgramacion->id_despacho)
-                                            ->where('despacho_detalle_estado_entrega','=',2)
-                                            ->sum('despacho_venta_cfimporte');
+                                    $totalImporteComprobanteDespachoPro = DB::table('despacho_ventas')
+                                        ->where('id_despacho','=',$osMixtoProgramacion->id_despacho)
+//                                            ->where('despacho_detalle_estado_entrega','=',2)
+                                        ->sum('despacho_venta_cfimporte');
 
-                                        $informacionliquidacion = DB::table('liquidacion_detalles as ld')
-                                            ->join('liquidaciones as l','l.id_liquidacion','=','ld.id_liquidacion')
-                                            ->join('despachos as d','d.id_despacho','=','ld.id_despacho')
-                                            ->where('l.liquidacion_estado_aprobacion','=',1)
-                                            ->where('ld.id_despacho','=',$osMixtoProgramacion->id_despacho)
-                                            ->orderBy('ld.id_liquidacion_detalle','desc')
-                                            ->orderBy('l.id_liquidacion','desc')->first();
+                                    $InformacionDespachoMixto = DB::table('despachos')
+                                        ->where('id_despacho','=',$osMixtoProgramacion->id_despacho)
+                                        ->orderBy('id_despacho', 'desc')->first();
 
-                                        if ($informacionliquidacion){
+                                    if ($InformacionDespachoMixto){
+                                        $costoTarifa = ($InformacionDespachoMixto->despacho_estado_modificado == 1)
+                                            ? $InformacionDespachoMixto->despacho_monto_modificado
+                                            : $InformacionDespachoMixto->despacho_flete;
 
+                                        $costoOtros = $InformacionDespachoMixto->despacho_gasto_otros ?? 0;
 
-                                            $gastos = DB::table('liquidacion_gastos')->where('id_liquidacion_detalle','=',$informacionliquidacion->id_liquidacion_detalle)->get();
-                                            if ($gastos){
+                                        $totalGeneralMixto = (($costoTarifa * $InformacionDespachoMixto->despacho_peso) + $costoOtros);
 
-
-                                                $costoTarifa = $gastos[0]->liquidacion_gasto_monto;
-                                                $costoMano = $gastos[1]->liquidacion_gasto_monto;
-                                                $costoOtros = $gastos[2]->liquidacion_gasto_monto;
-                                                $pesoFinalLiquidacion = $gastos[3]->liquidacion_gasto_monto;
-
-                                                $totalGeneralLocal = (($costoTarifa * $pesoFinalLiquidacion) + $costoMano + $costoOtros);
-
-                                                $destino = "";
-                                                if ($informacionliquidacion->id_departamento){
-                                                    $dep = DB::table('departamentos')->where('id_departamento','=',$informacionliquidacion->id_departamento)->first();
-                                                    $destino.= $dep->departamento_nombre;
-                                                }
-                                                if ($informacionliquidacion->id_provincia){
-                                                    $provi = DB::table('provincias')->where('id_provincia','=',$informacionliquidacion->id_provincia)->first();
-                                                    $destino.= "-".$provi->provincia_nombre;
-                                                }
-                                                if ($informacionliquidacion->id_distrito){
-                                                    $disti = DB::table('distritos')->where('id_distrito','=',$informacionliquidacion->id_distrito)->first();
-                                                    $destino.= "-".$disti->distrito_nombre;
-                                                }
-
-                                                $sheet1->setCellValue('W'.$row, $osMixtoProgramacion->despacho_numero_correlativo);
-                                                $sheet1->setCellValue('X'.$row, $osMixtoProgramacion->transportista_nom_comercial);
-                                                $sheet1->setCellValue('Y'.$row, $destino);
-                                                $sheet1->setCellValue('Z'.$row, $informacionliquidacion->liquidacion_serie.'-'.$informacionliquidacion->liquidacion_correlativo);
-                                                $sheet1->setCellValue('AA'.$row, $this->general->formatoDecimal($totalGeneralLocal));
-                                                $sheet1->setCellValue('AB'.$row, $this->general->formatoDecimal(($totalGeneralLocal / $totalImporteComprobanteDespachoPro) * 100));
-                                                if ($informacionliquidacion->liquidacion_detalle_comentarios){
-                                                    $sheet1->setCellValue('AC'.$row, $informacionliquidacion->liquidacion_detalle_comentarios);
-                                                    $sheet1->getColumnDimension('AC')->setWidth(15);
-                                                    $cellRange = 'AC'.$row.':AC'.$row;
-                                                    $sheet1->mergeCells($cellRange);
-                                                    $rowStyle = $sheet1->getStyle($cellRange);
-                                                    $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FABF8F'); // Fondo
-                                                    $rowStyle->getFont()->setBold(true); // Hacer negritas
-
-                                                }
-//                                                    $rowMixto++;
-                                            }
+                                        $destino = "";
+                                        if ($InformacionDespachoMixto->id_departamento){
+                                            $dep = DB::table('departamentos')->where('id_departamento','=',$InformacionDespachoMixto->id_departamento)->first();
+                                            $destino.= $dep->departamento_nombre;
                                         }
+                                        if ($InformacionDespachoMixto->id_provincia){
+                                            $provi = DB::table('provincias')->where('id_provincia','=',$InformacionDespachoMixto->id_provincia)->first();
+                                            $destino.= "-".$provi->provincia_nombre;
+                                        }
+                                        if ($InformacionDespachoMixto->id_distrito){
+                                            $disti = DB::table('distritos')->where('id_distrito','=',$InformacionDespachoMixto->id_distrito)->first();
+                                            $destino.= "-".$disti->distrito_nombre;
+                                        }
+
+                                        $sheet1->setCellValue('W'.$row, $osMixtoProgramacion->despacho_numero_correlativo);
+                                        $sheet1->setCellValue('X'.$row, $osMixtoProgramacion->transportista_nom_comercial);
+                                        $sheet1->setCellValue('Y'.$row, $destino);
+                                        $sheet1->setCellValue('Z'.$row, $InformacionDespachoMixto->despacho_numero_correlativo);
+                                        $sheet1->setCellValue('AA'.$row, $this->general->formatoDecimal($totalGeneralMixto));
+                                        $poMixto = ($totalGeneralMixto / $totalImporteComprobanteDespachoPro) * 100;
+                                        $sheet1->setCellValue('AB'.$row, $this->general->formatoDecimal($poMixto));
+//                                            if ($totalImporteComprobanteDespachoPro->liquidacion_detalle_comentarios){
+//                                                $sheet1->setCellValue('AC'.$row, $totalImporteComprobanteDespachoPro->liquidacion_detalle_comentarios);
+//                                                $sheet1->getColumnDimension('AC')->setWidth(15);
+//                                                $cellRange = 'AC'.$row.':AC'.$row;
+//                                                $sheet1->mergeCells($cellRange);
+//                                                $rowStyle = $sheet1->getStyle($cellRange);
+//                                                $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FABF8F'); // Fondo
+//                                                $rowStyle->getFont()->setBold(true); // Hacer negritas
+//
+//                                            }
                                     }
-                                    /*--------------------------------------------------------------------------------------- */
                                 }
-
-                                $cellRange = 'A'.$row.':AB'.$row;
-                                $rowStyle = $sheet1->getStyle($cellRange);
-                                $rowStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-                                $rowStyle->getBorders()->getAllBorders()->getColor()->setARGB('000000');
-                                $cellRange = 'E'.$row.':E'.$row;
-                                $rowStyle = $sheet1->getStyle($cellRange);
-//                        $rowStyle->getFont()->setSize(10);
-                                $rowStyle->getFont()->setBold(true);
-
-                                $cellRange = 'O'.$row.':Z'.$row;
-                                $rowStyle = $sheet1->getStyle($cellRange);
-//                        $rowStyle->getFont()->setBold(true);
-                                $rowStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-                                $rowStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
-                                $sheet1->mergeCells('P'.$row.':Q'.$row);
-
-                                $row++;
-                                if ($comproba->despacho_detalle_estado_entrega == 2){
-                                    $importeTotalDespachos+=$comproba->despacho_venta_cfimporte;
-                                    $totalPesoDespachos+=$comproba->despacho_venta_total_kg;
-                                }
-
+                                /*--------------------------------------------------------------------------------------- */
                             }
-                            $comentariosLiquidacion = DB::table('liquidacion_detalles')->where('id_despacho','=',$des->id_despacho)->orderBy('id_liquidacion_detalle','desc')->orderBy('id_despacho','desc')->first();
-                            $comenLi = "";
-                            if ($comentariosLiquidacion){
-                                $comenLi = $comentariosLiquidacion->liquidacion_detalle_comentarios;
-                            }
-                            $sheet1->setCellValue('A'.$row, "");
-                            $sheet1->setCellValue('B'.$row, "");
-                            $sheet1->setCellValue('C'.$row, "");
-                            $sheet1->setCellValue('D'.$row, "");
-                            $sheet1->setCellValue('E'.$row, "");
-                            $sheet1->setCellValue('F'.$row, "");
-                            if ($comenLi){
-                                $sheet1->setCellValue('G'.$row, $comenLi);
-                                $cellRange = 'G'.$row.':J'.$row;
-                                $sheet1->mergeCells($cellRange);
-                                $rowStyle = $sheet1->getStyle($cellRange);
-                                $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FABF8F'); // Fondo
-                                $rowStyle->getFont()->setBold(true); // Hacer negritas
-                            }else{
-                                $sheet1->setCellValue('G'.$row, "");
-                                $sheet1->setCellValue('H'.$row, "");
-                                $sheet1->setCellValue('I'.$row, "");
-                                $sheet1->setCellValue('J'.$row, "");
-                            }
-                            $sheet1->setCellValue('K'.$row, $this->general->formatoDecimal($importeTotalDespachos));
-                            $sheet1->setCellValue('L'.$row, "");
-                            $sheet1->setCellValue('M'.$row, "");
-                            $sheet1->setCellValue('N'.$row, $this->general->formatoDecimal($totalPesoDespachos));
-                            $cellRange = 'A'.$row.':N'.$row;
+
+                            $cellRange = 'A'.$row.':AB'.$row;
                             $rowStyle = $sheet1->getStyle($cellRange);
-                            $rowStyle->getFont()->setSize(10);
-                            $rowStyle->getFont()->setBold(true);
                             $rowStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
                             $rowStyle->getBorders()->getAllBorders()->getColor()->setARGB('000000');
+                            $cellRange = 'E'.$row.':E'.$row;
+                            $rowStyle = $sheet1->getStyle($cellRange);
+//                        $rowStyle->getFont()->setSize(10);
+                            $rowStyle->getFont()->setBold(true);
+
+                            $cellRange = 'O'.$row.':Z'.$row;
+                            $rowStyle = $sheet1->getStyle($cellRange);
+//                        $rowStyle->getFont()->setBold(true);
+                            $rowStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                            $rowStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                            $sheet1->mergeCells('P'.$row.':Q'.$row);
+
                             $row++;
-                            /* ----------------------------------------------- */
-                            if ($filaPorcentajeLocal){
+//                                if ($comproba->despacho_detalle_estado_entrega == 2){
+                            $importeTotalDespachos+=$comproba->despacho_venta_cfimporte;
+                            $totalPesoDespachos+=$comproba->despacho_venta_total_kg;
+//                                }
+
+                        }
+                        $comentariosLiquidacion = DB::table('liquidacion_detalles')->where('id_despacho','=',$des->id_despacho)->orderBy('id_liquidacion_detalle','desc')->orderBy('id_despacho','desc')->first();
+                        $comenLi = "";
+                        if ($comentariosLiquidacion){
+                            $comenLi = $comentariosLiquidacion->liquidacion_detalle_comentarios;
+                        }
+                        $sheet1->setCellValue('A'.$row, "");
+                        $sheet1->setCellValue('B'.$row, "");
+                        $sheet1->setCellValue('C'.$row, "");
+                        $sheet1->setCellValue('D'.$row, "");
+                        $sheet1->setCellValue('E'.$row, "");
+                        $sheet1->setCellValue('F'.$row, "");
+                        if ($comenLi){
+                            $sheet1->setCellValue('G'.$row, $comenLi);
+                            $cellRange = 'G'.$row.':J'.$row;
+                            $sheet1->mergeCells($cellRange);
+                            $rowStyle = $sheet1->getStyle($cellRange);
+                            $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FABF8F'); // Fondo
+                            $rowStyle->getFont()->setBold(true); // Hacer negritas
+                        }else{
+                            $sheet1->setCellValue('G'.$row, "");
+                            $sheet1->setCellValue('H'.$row, "");
+                            $sheet1->setCellValue('I'.$row, "");
+                            $sheet1->setCellValue('J'.$row, "");
+                        }
+                        $sheet1->setCellValue('K'.$row, $this->general->formatoDecimal($importeTotalDespachos));
+                        $sheet1->setCellValue('L'.$row, "");
+                        $sheet1->setCellValue('M'.$row, "");
+                        $sheet1->setCellValue('N'.$row, $this->general->formatoDecimal($totalPesoDespachos));
+                        $cellRange = 'A'.$row.':N'.$row;
+                        $rowStyle = $sheet1->getStyle($cellRange);
+                        $rowStyle->getFont()->setSize(10);
+                        $rowStyle->getFont()->setBold(true);
+                        $rowStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                        $rowStyle->getBorders()->getAllBorders()->getColor()->setARGB('000000');
+                        $row++;
+                        /* ----------------------------------------------- */
+                        if ($filaPorcentajeLocal) {
+                            if ($importeTotalDespachos != 0) {
                                 $porcentaje = (($fleteFinalLocal / $importeTotalDespachos) * 100);
                                 $porcentaje = $this->general->formatoDecimal($porcentaje);
-                                $sheet1->setCellValue('V'.$filaPorcentajeLocal, $this->general->formatoDecimal($porcentaje).'%');
+                                $sheet1->setCellValue('V'.$filaPorcentajeLocal, $this->general->formatoDecimal($porcentaje));
+                            } else {
+                                $sheet1->setCellValue('V'.$filaPorcentajeLocal, '0%');
                             }
-                            if ($filaPorcentajeProvin){
-                                $porcentaje = (($fleteFinalProvin / $importeTotalDespachos) * 100);
-                                $porcentaje = $this->general->formatoDecimal($porcentaje);
-                                $sheet1->setCellValue('AB'.$filaPorcentajeProvin, $this->general->formatoDecimal($porcentaje).'%');
-                            }
-
-                            /* ----------------------------------------------- */
-
-                            $cellRange = 'A'.$row.':N'.$row;
-                            $sheet1->mergeCells($cellRange);
-                            $row++;
                         }
 
+                        if ($filaPorcentajeProvin) {
+                            if ($importeTotalDespachos != 0) {
+                                $porcentaje = (($fleteFinalProvin / $importeTotalDespachos) * 100);
+                                $porcentaje = $this->general->formatoDecimal($porcentaje);
+                                $sheet1->setCellValue('AB'.$filaPorcentajeProvin, $this->general->formatoDecimal($porcentaje));
+                            } else {
+                                $sheet1->setCellValue('AB'.$filaPorcentajeProvin, '0%');
+                            }
+                        }
 
+                        /* ----------------------------------------------- */
 
+                        $cellRange = 'A'.$row.':N'.$row;
+                        $sheet1->mergeCells($cellRange);
+                        $row++;
                     }
+
+
+
                 }
-            }else{
-                session()->flash('error', 'Ocurrió un error: no existen despachos finalizados.');
-                return;
             }
+        }else{
+            session()->flash('error', 'Ocurrió un error: no existen despachos finalizados.');
+            return;
+        }
 
 
-            /*---------------------------*/
+        /*---------------------------*/
 //            $totalGeneralCommprobantes = 0;
 //
 //            $primeraFilaIngresadaTra = null;
@@ -806,7 +791,7 @@ class HistorialProgramacion extends Component
 //                $totalSinIGVExcelFormatted = $this->general->formatoDecimal($totalSinIGVExcel);
 //                $totalConIVCExcelFormatted = $this->general->formatoDecimal($totalConIVCExcel);
 
-                // Manejo de filas combinadas por transportista
+        // Manejo de filas combinadas por transportista
 //                if ($ultimoTransportista !== null && $ultimoTransportista !== $re->id_transportistas) {
 //                    // Si cambió el transportista, escribir el total acumulado para el anterior
 //                    $Filahasta = $row - 1; // Última fila del transportista anterior
@@ -816,10 +801,10 @@ class HistorialProgramacion extends Component
 //                    $primeraFilaIngresadaTra = $row; // Nueva fila inicial
 //                }
 
-                // Acumular el total para el transportista actual
+        // Acumular el total para el transportista actual
 //                $sumaPorTransportista += $totalConIVCExcel;
 
-                // Escribir los datos en la fila actual
+        // Escribir los datos en la fila actual
 //                $sheet1->setCellValue('A'.$row, "");
 //
 //                $sheet1->setCellValue('B'.$row, "");
@@ -838,7 +823,7 @@ class HistorialProgramacion extends Component
 //                // Alineación del encabezado
 //                $rowStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
 //                $rowStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
-                // Actualizar el transportista actual
+        // Actualizar el transportista actual
 //                if ($ultimoTransportista === null || $ultimoTransportista !== $re->id_transportistas) {
 //                    $ultimoTransportista = $re->id_transportistas;
 //                    $primeraFilaIngresadaTra = $row; // Primera fila del nuevo transportista
@@ -861,7 +846,7 @@ class HistorialProgramacion extends Component
 //                $totalGeneralCommprobantes += 0;
 //            }
 
-            // Contenido Final
+        // Contenido Final
 //            $sheet1->setCellValue('A'.$row, 'TOTAL');
 //            $sheet1->mergeCells('A'.$row.':C'.$row);
 //            $sheet1->setCellValue('D'.$row, "");
@@ -877,34 +862,34 @@ class HistorialProgramacion extends Component
 //            $rowStyle->getFont()->setBold(true);
 //            $rowStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
 //            $rowStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
-            $desde = $this->desde;
-            $hasta = $this->hasta;
-            // Formatear el nombre del archivo Excel
-            $nombre_excel = sprintf(
-                "historial_de_programacion_%s_hasta_el_%s_.xlsx",
-                date('d-m-Y', strtotime($desde)),
-                $hasta
-            );
+        $desde = $this->desde;
+        $hasta = $this->hasta;
+        // Formatear el nombre del archivo Excel
+        $nombre_excel = sprintf(
+            "historial_de_programacion_%s_hasta_el_%s_.xlsx",
+            date('d-m-Y', strtotime($desde)),
+            $hasta
+        );
 
 //            $nombre_excel = "historial_de_programacion_" . date('d-m-Y',strtotime($desde)).' hasta el ' .$hasta.'_'.'.xlsx';
-            $response = response()->stream(
-                function () use ($spreadsheet) {
-                    $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
-                    $writer->save('php://output');
-                },
-                200,
-                [
-                    'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                    'Content-Disposition' => 'attachment; filename=' . $nombre_excel,
-                ]
-            );
-            return $response;
+        $response = response()->stream(
+            function () use ($spreadsheet) {
+                $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+                $writer->save('php://output');
+            },
+            200,
+            [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Content-Disposition' => 'attachment; filename=' . $nombre_excel,
+            ]
+        );
+        return $response;
 
-        } catch (\Exception $e) {
-            $this->logs->insertarLog($e);
-            session()->flash('error', 'Ocurrió un error. Por favor, inténtelo nuevamente.');
-        }
+    } catch (\Exception $e) {
+        $this->logs->insertarLog($e);
+        session()->flash('error', 'Ocurrió un error. Por favor, inténtelo nuevamente.');
     }
+}
     public function cambiarEstadoDespachoFormulario(){
         try {
 
