@@ -20,8 +20,6 @@ class GestiontransporteController extends Controller
 
     public function transportistas(){
         try {
-
-
             return view('gestiontransporte.transportistas');
         }catch (\Exception $e){
             $this->logs->insertarLog($e);

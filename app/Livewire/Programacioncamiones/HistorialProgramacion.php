@@ -481,47 +481,40 @@ class HistorialProgramacion extends Component
                                 if ($indexComprobante == 0 || $indexComprobante == 1){
                                     /* LOCAL */
                                     if ($des->id_tipo_servicios == 1){
-                                        if ($indexComprobante == 0){
-                                            $informacionliquidacion = DB::table('liquidacion_detalles as ld')
-                                                ->join('liquidaciones as l','l.id_liquidacion','=','ld.id_liquidacion')
-                                                ->join('despachos as d','d.id_despacho','=','ld.id_despacho')
-                                                ->where('l.liquidacion_estado_aprobacion','=',1)
-                                                ->where('ld.id_despacho','=',$des->id_despacho)
-                                                ->orderBy('ld.id_liquidacion_detalle','desc')
-                                                ->orderBy('l.id_liquidacion','desc')->first();
+                                        if ($indexComprobante == 0) {
+                                            $informacionliquidacion = DB::table('despachos')
+                                                ->where('despacho_estado_aprobacion', '=', 1)
+                                                ->where('id_despacho', '=', $des->id_despacho)
+                                                ->orderBy('id_despacho', 'desc')->first();
 
                                             $sheet1->setCellValue('O'.$row, $des->despacho_numero_correlativo);
 
-                                            if ($informacionliquidacion){
-                                                $gastos = DB::table('liquidacion_gastos')->where('id_liquidacion_detalle','=',$informacionliquidacion->id_liquidacion_detalle)->get();
-                                                if ($gastos){
-                                                    $costoTarifa = $gastos[0]->liquidacion_gasto_monto;
-                                                    $costoMano = $gastos[1]->liquidacion_gasto_monto;
-                                                    $costoOtros = $gastos[2]->liquidacion_gasto_monto;
-                                                    $pesoFinalLiquidacion = $gastos[3]->liquidacion_gasto_monto;
+                                            if ($informacionliquidacion) {
+                                                // Usamos los datos directamente de $informacionliquidacion
+                                                $costoTarifa = ($informacionliquidacion->despacho_estado_modificado == 1)
+                                                    ? $informacionliquidacion->despacho_monto_modificado
+                                                    : $informacionliquidacion->despacho_flete;
 
-                                                    $totalGeneralLocal = ($costoTarifa + $costoMano + $costoOtros);
+                                                $costoMano = $informacionliquidacion->despacho_ayudante ?? 0; // Suplente por si no está definido
+                                                $costoOtros = $informacionliquidacion->despacho_gasto_otros ?? 0;
+                                                $pesoFinalLiquidacion = $informacionliquidacion->liquidacion_gasto_monto ?? 0;
 
+                                                $totalGeneralLocal = ($costoTarifa + $costoMano + $costoOtros);
 
-                                                    $sheet1->setCellValue('P'.$row, $this->general->formatoDecimal($costoTarifa));
-                                                    $sheet1->mergeCells('P'.$row.':Q'.$row);
+                                                $sheet1->setCellValue('P'.$row, $this->general->formatoDecimal($costoTarifa));
+                                                $sheet1->mergeCells('P'.$row.':Q'.$row);
 
-                                                    $sheet1->setCellValue('R'.$row, $this->general->formatoDecimal($costoOtros));
-//                                        $sheet1->setCellValue('Q'.$row, $costoOtros);
+                                                $sheet1->setCellValue('R'.$row, $this->general->formatoDecimal($costoOtros));
+                                                $sheet1->setCellValue('S'.$row, $this->general->formatoDecimal($costoMano));
+                                                $sheet1->setCellValue('T'.$row, $des->transportista_nom_comercial.' - '.$informacionliquidacion->despacho_numero_correlativo);
+                                                $sheet1->setCellValue('U'.$row, $this->general->formatoDecimal($totalGeneralLocal));
+                                                $sheet1->setCellValue('V'.$row, '');
 
-                                                    $sheet1->setCellValue('S'.$row, $this->general->formatoDecimal($costoMano));
-                                                    $sheet1->setCellValue('T'.$row, $des->transportista_nom_comercial.' '.$informacionliquidacion->liquidacion_serie.'-'.$informacionliquidacion->liquidacion_correlativo);
-//                                        $sheet1->setCellValue('S'.$row, $des->transportista_nom_comercial.' salgo de linea aca'.$vehiT);
-                                                    $sheet1->setCellValue('U'.$row, $this->general->formatoDecimal($totalGeneralLocal));
-                                                    $sheet1->setCellValue('V'.$row, '');
-
-                                                    $fleteFinalLocal = $totalGeneralLocal;
-                                                    $filaPorcentajeLocal = $row;
-
-
-                                                }
+                                                $fleteFinalLocal = $totalGeneralLocal;
+                                                $filaPorcentajeLocal = $row;
                                             }
-                                        }else{
+                                        }
+                                        else{
                                             /* ---------------------------------------------*/
                                             $vehiculo = DB::table('vehiculos  as v')
                                                 ->join('tipo_vehiculos as tv','tv.id_tipo_vehiculo','=','v.id_tipo_vehiculo')
