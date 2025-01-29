@@ -96,8 +96,12 @@ class Programacion extends Model
             $result = DB::table('programaciones as p');
             if ($tipo){
                 $result->select('p.id_programacion','p.id_users','p.id_users_programacion','p.programacion_fecha','p.programacion_estado_aprobacion','p.programacion_numero_correlativo','p.programacion_fecha_aprobacion','p.programacion_estado','p.created_at')
-                    ->join('despachos as d','d.id_programacion','=','p.id_programacion')
-                    ->where('d.despacho_estado_aprobacion','=',$tipo);
+                    ->join('despachos as d','d.id_programacion','=','p.id_programacion');
+                if ($tipo == 1){
+                    $result->whereIn('d.despacho_estado_aprobacion',[1,2,3]);
+                } else {
+                    $result->where('d.despacho_estado_aprobacion', '=', $tipo);
+                }
             }else{
                 $result->select('p.*');
             }

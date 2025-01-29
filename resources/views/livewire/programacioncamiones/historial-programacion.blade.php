@@ -275,8 +275,6 @@
             <select name="estadoPro" id="estadoPro" wire:model.live="estadoPro" class="form-select">
                 <option value="">Seleccionar</option>
                 <option value="1">Aprobado</option>
-                <option value="2">En Camino</option>
-                <option value="3">Culminado</option>
                 <option value="4">Rechazado</option>
             </select>
         </div>
