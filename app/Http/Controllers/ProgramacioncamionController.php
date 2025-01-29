@@ -24,6 +24,14 @@ class ProgramacioncamionController extends Controller
         $this->despacho_venta = new DespachoVenta();
     }
 
+    public function facturas_pre_programacion(){
+        try {
+            return view('programacion_camiones.facturas_pre_programacion');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
     public function programar_camion(){
         try {
             return view('programacion_camiones.programar_camion');
