@@ -9,6 +9,10 @@ use App\Http\Controllers\TarifarioController;
 use App\Http\Controllers\IntranetController;
 use App\Http\Controllers\ProgramacioncamionController;
 use App\Http\Controllers\LiquidacionfleteController;
+use App\Http\Controllers\GestiondocumentariaController;
+use App\Http\Controllers\ReporteController;
+use App\Http\Controllers\PdfExportController;
+
 
 route::get('/phpinfo', function(){
     phpinfo();
@@ -69,3 +73,22 @@ Route::prefix('Liquidacionflete')->middleware(['auth', 'canMenu:Liquidacionflete
     route::get('/liquidaciones_pendientes',[LiquidacionfleteController::class ,'liquidaciones_pendientes'])->name('Liquidacionflete.liquidaciones_pendientes')->middleware('verifyUserStatus')->middleware('can:liquidaciones_pendientes');
     route::get('/historial_liquidacion',[LiquidacionfleteController::class ,'historial_liquidacion'])->name('Liquidacionflete.historial_liquidacion')->middleware('verifyUserStatus')->middleware('can:historial_liquidacion');
 });
+
+
+Route::prefix('Gestiondocumentaria')->middleware(['auth', 'canMenu:Gestiondocumentaria'])->group(function () {
+    /* LIQUIDACION */
+    route::get('/nota_credito',[GestiondocumentariaController::class ,'nota_credito'])->name('Gestiondocumentaria.nota_credito')->middleware('verifyUserStatus')->middleware('can:nota_credito');
+   });
+
+Route::prefix('Gestiondocumentaria')->middleware(['auth', 'canMenu:Gestiondocumentaria'])->group(function () {
+    /* NOTACREDITO */
+    route::get('/nota_credito',[GestiondocumentariaController::class ,'nota_credito'])->name('Gestiondocumentaria.nota_credito')->middleware('verifyUserStatus')->middleware('can:nota_credito');
+    Route::get('/exportar_pdf', [GestiondocumentariaController::class, 'exportToPdf'])->name('exportar.pdf');
+});
+
+Route::prefix('Reporte')->middleware(['auth', 'canMenu:Reporte'])->group(function () {
+    /* REPORTE */
+    route::get('/ver_reporte',[ReporteController::class ,'ver_reporte'])->name('reporte.ver_reporte')->middleware('verifyUserStatus')->middleware('can:ver_reporte');
+});
+
+

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use GuzzleHttp\Client;
-class Server extends Model
+class  Server extends Model
 {
     use HasFactory;
     private $logs;
