@@ -49,7 +49,8 @@
                                 @foreach($list_nc_dv as $index => $lnc)
                                     <tr>
                                         <td>{{ $index + 1 }}</td>
-                                        <td>{{ $lnc->despacho_venta_cfimporte }}</td>
+                                        <td>{{ $lnc->despachoVenta->despacho_venta_cfimporte ?? 'N/A' }}</td>
+                                        <td>{{ $lnc->despachoVenta->despacho_venta_total_kg ?? 'N/A' }}</td>
                                         <td>{{ $lnc->nota_credito_ruc_cliente }}</td>
                                         <td>{{ $lnc->nota_credito_nombre_cliente }}</td>
                                         <td>{{ $lnc->nota_credito_motivo }}</td>

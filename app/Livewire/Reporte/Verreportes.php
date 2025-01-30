@@ -52,7 +52,7 @@ class Verreportes extends Component
     public function render()
     {
         $list_nc_dv = $this->notacredito->listar_nota_credito($this->search_nc_dv, $this->pagination_nc_dv);
-        return view('livewire.reporte.verreportes', compact('list_nc_dv'));
+        return view('livewire.reporte.verreportes');
     }
 
     public function updated($propertyName)
