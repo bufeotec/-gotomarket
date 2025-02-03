@@ -191,172 +191,36 @@
                                 </div>
                             </div>
                         @endif
-
                         <div class="row">
                             <div class="col-lg-12">
-                                {{-- Buscador --}}
+                                <!-- Buscador -->
                                 <div class="row align-items-center">
                                     <div class="col-lg-9 col-md-9 col-sm-12 mb-2">
-                                        <div class="position-relative ">
-                                            <input
-                                                type="text"
-                                                class="form-control bg-dark text-white rounded-pill ps-5 custom-placeholder"
-                                                placeholder="{{ $selectedCliente ? 'Buscar comprobante' : 'Buscar cliente' }}"
-                                                wire:model="{{ $selectedCliente ? 'searchComprobante' : 'searchCliente' }}"
-{{--                                                wire:change="{{ $selectedCliente ? 'buscar_comprobante' : 'buscar_cliente' }}"--}}
-                                                value="{{ $selectedCliente ? $searchComprobante : $searchCliente }}"
-                                                style="border: none; outline: none;"
-                                            />
+                                        <div class="position-relative">
+                                            <input type="text"
+                                                   class="form-control bg-dark text-white rounded-pill ps-5 custom-placeholder"
+                                                   placeholder="{{ $selectedCliente ? 'Buscar comprobante' : 'Buscar cliente' }}"
+                                                   wire:model="{{ $selectedCliente ? 'searchComprobante' : 'searchCliente' }}"
+                                                   value="{{ $selectedCliente ? $searchComprobante : $searchCliente }}"
+                                                   style="border: none; outline: none;"
+                                                   oninput="document.getElementById('buscarBtn').disabled = this.value.trim() === '';" />
                                             <i class="fas fa-search position-absolute"
                                                style="left: 15px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
                                         </div>
                                     </div>
                                     <div class="col-lg-3 col-md-3 col-sm-12 mb-2">
-                                        @if($selectedCliente)
-                                            <button class="btn btn-sm bg-primary text-white w-100" wire:click="buscar_comprobante" >
-                                                <i class="fa fa-search"></i> BUSCAR
-                                            </button>
-                                        @else
-                                            <button class="btn btn-sm bg-primary text-white w-100" wire:click="buscar_cliente" >
-                                                <i class="fa fa-search"></i> BUSCAR
-                                            </button>
-                                        @endif
+                                        <button id="buscarBtn"
+                                                class="btn btn-sm bg-primary text-white w-100"
+                                                wire:click="{{ $selectedCliente ? 'buscar_comprobante' : 'buscar_cliente' }}"
+                                                disabled>
+                                            <i class="fa fa-search"></i> BUSCAR
+                                        </button>
                                     </div>
                                 </div>
                                 <div class="col-lg-12 col-md-12 col-sm-12">
                                     <div class="loader mt-2" wire:loading wire:target="buscar_comprobante"></div>
                                     <div class="loader mt-2" wire:loading wire:target="buscar_cliente"></div>
                                 </div>
-
-
-
-                                @if(!$selectedCliente)
-                                    {{-- Mostrar clientes cuando no hay cliente seleccionado --}}
-                                    @if(!empty($searchCliente))
-                                        <div class="row">
-                                            <div class="col-lg-12">
-                                                <div class="contenedor-comprobante" style="max-height: 600px; overflow: auto">
-                                                    <x-table-general>
-                                                        <x-slot name="thead">
-                                                            <tr>
-                                                                <th style="font-size: 12px">Nombre del Cliente</th>
-                                                                <th style="font-size: 12px">RUC O DNI</th>
-                                                                <th style="font-size: 12px">Dirección Fiscal</th>
-                                                            </tr>
-                                                        </x-slot>
-                                                        <x-slot name="tbody">
-                                                            @if(count($filteredClientes) == 0 )
-                                                                <p>No se encontró el cliente.</p>
-                                                            @else
-                                                                @foreach($filteredClientes as $factura)
-                                                                    <tr style="cursor: pointer" wire:click="seleccionar_cliente('{{$factura->CCODCLI}}')">
-                                                                        <td style="width: 39.6%">
-                                                                            <span class="d-block tamanhoTablaComprobantes">
-                                                                                {{ $factura->CNOMCLI }}
-                                                                            </span>
-                                                                            </td>
-                                                                            <td style="width: 32.2%">
-                                                                            <span class="d-block tamanhoTablaComprobantes">
-                                                                                <b class="colorBlackComprobantes">{{ $factura->CCODCLI }}</b>
-                                                                            </span>
-                                                                            </td>
-                                                                            <td>
-                                                                            <span class="d-block tamanhoTablaComprobantes">
-                                                                                {{ $factura->CDIRCLI }}
-                                                                            </span>
-                                                                        </td>
-                                                                    </tr>
-                                                                @endforeach
-                                                            @endif
-                                                        </x-slot>
-                                                    </x-table-general>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    @endif
-                                @else
-                                    {{-- Mostrar comprobantes cuando un cliente está seleccionado --}}
-                                    <div class="row mt-3">
-                                        <div class="col-lg-12 col-md-12 col-sm-12">
-                                            <div class="contenedor-comprobante" style="max-height: 600px; overflow: auto">
-                                                <x-table-general>
-                                                    <x-slot name="thead">
-                                                        <tr>
-                                                            <th style="font-size: 12px">Serie y Correlativo / Guía</th>
-                                                            <th style="font-size: 12px">Peso y Volumen</th>
-                                                            <th style="font-size: 12px">Dirección</th>
-                                                        </tr>
-                                                    </x-slot>
-                                                    <x-slot name="tbody">
-                                                        @if(!empty($filteredComprobantes))
-                                                            @foreach($filteredComprobantes as $factura)
-                                                                @php
-                                                                    $CFTD = $factura->CFTD;
-                                                                    $CFNUMSER = $factura->CFNUMSER;
-                                                                    $CFNUMDOC = $factura->CFNUMDOC;
-                                                                    $comprobanteExiste = collect($this->selectedFacturas)->first(function ($facturaVa) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
-                                                                        return $facturaVa['CFTD'] === $CFTD
-                                                                            && $facturaVa['CFNUMSER'] === $CFNUMSER
-                                                                            && $facturaVa['CFNUMDOC'] === $CFNUMDOC;
-                                                                    });
-                                                                @endphp
-                                                                @if(!$comprobanteExiste)
-                                                                    <tr style="cursor: pointer" wire:click="seleccionar_factura_cliente('{{$factura->CFTD}}','{{ $factura->CFNUMSER }}','{{ $factura->CFNUMDOC }}')">
-                                                                        <td style="width: 39.6%">
-                                                                             <span class="tamanhoTablaComprobantes">
-                                                                                <b class="colorBlackComprobantes">{{ date('d/m/Y',strtotime($factura->GREFECEMISION)) }}</b>
-                                                                            </span>
-                                                                            <span class="d-block tamanhoTablaComprobantes">
-                                                                                {{ $factura->CFNUMSER }} - {{ $factura->CFNUMDOC }}
-                                                                            </span>
-                                                                            @php
-                                                                                $guia = $me->formatearCodigo($factura->CFTEXGUIA)
-                                                                            @endphp
-                                                                            <span class="d-block tamanhoTablaComprobantes">
-                                                                                {{ $guia}}
-                                                                            </span>
-                                                                        </td>
-                                                                        <td>
-                                                                            @php
-                                                                                $tablaPeso = "0";
-                                                                                if ($factura->total_kg){
-                                                                                    $tablaPeso = $me->formatoDecimal($factura->total_kg);
-                                                                                }
-                                                                            @endphp
-                                                                            @php
-                                                                                $tablaVolumen = "0";
-                                                                                if ($factura->total_volumen){
-                                                                                    $tablaVolumen = $me->formatoDecimal($factura->total_volumen);
-                                                                                }
-                                                                            @endphp
-                                                                            <span class="d-block tamanhoTablaComprobantes">
-                                                                                <b class="colorBlackComprobantes">{{ $tablaPeso }} kg</b>
-                                                                            </span>
-                                                                            <span class="d-block tamanhoTablaComprobantes">
-                                                                                <b class="colorBlackComprobantes">{{ $tablaVolumen }} cm³</b>
-                                                                            </span>
-                                                                        </td>
-                                                                        <td>
-                                                                            <span class="d-block tamanhoTablaComprobantes">
-                                                                                {{ $factura->LLEGADADIRECCION }} <br> UBIGEO: <b style="color: black">{{ $factura->DEPARTAMENTO }} - {{ $factura->PROVINCIA }} - {{ $factura->DISTRITO }}</b>
-                                                                            </span>
-                                                                        </td>
-                                                                    </tr>
-                                                                @endif
-                                                            @endforeach
-                                                        @else
-                                                            <tr>
-                                                                <td colspan="3">
-                                                                    <p class="text-center mb-0" style="font-size: 12px">No se encontró comprobantes.</p>
-                                                                </td>
-                                                            </tr>
-                                                        @endif
-                                                    </x-slot>
-                                                </x-table-general>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
                             </div>
                         </div>
                     </div>
