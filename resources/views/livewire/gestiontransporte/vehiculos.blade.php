@@ -18,7 +18,7 @@
 
                     <div class="col-lg-6 col-md-4 col-sm-12 mb-3">
                         <label for="id_transportistas" class="form-label">Lista de transportistas (*)</label>
-                        <select class="form-select" name="id_tipo_vehiculo" id="id_transportistas" wire:model="id_transportistas">
+                        <select class="form-select" name="id_tipo_ vehiculo" id="id_transportistas" wire:model="id_transportistas">
                             <option value="">Seleccionar...</option>
                             @foreach($listar_transportistas as $lt)
                                 <option value="{{$lt->id_transportistas}}">{{$lt->transportista_nom_comercial}}</option>

@@ -125,7 +125,7 @@ class HistorialProgramacion extends Component
                     ->join('transportistas as t','t.id_transportistas','=','d.id_transportistas')
                     ->join('tipo_servicios as ts','ts.id_tipo_servicios','=','d.id_tipo_servicios')
                     ->where('d.id_programacion','=',$result->id_programacion)
-                    ->where('d.despacho_estado_aprobacion','=',3)
+                    ->where('d.despacho_estado_aprobacion','<>',4)
 //                    ->limit(1) // solo se va a traer 1 por que primero es el primer despacho ya que  en local y provincial  es solo una OS y en mixto el primero es local y los demas provionciales pero en caso de mixto el
                     ->get();
                 if (count($result->despacho) > 0){
@@ -180,8 +180,8 @@ class HistorialProgramacion extends Component
 
                             }else{
                                 $des->comprobantes =  DB::table('despacho_ventas as dv')
-                                ->where('dv.id_despacho','=',$des->id_despacho)
-                                ->get();
+                                    ->where('dv.id_despacho','=',$des->id_despacho)
+                                    ->get();
                             }
 
                             foreach ($des->comprobantes as $com){
@@ -462,7 +462,7 @@ class HistorialProgramacion extends Component
                                 $sheet1->setCellValue('I'.$row, $parte1);
                                 $sheet1->setCellValue('J'.$row, $parte2);
                                 $sheet1->setCellValue('K'.$row, $this->general->formatoDecimal($comproba->despacho_venta_cfimporte));
-                                $sheet1->setCellValue('L'.$row, date('d/m/Y',strtotime($resPro->programacion_fecha_aprobacion)));
+                                $sheet1->setCellValue('L'.$row, date('d/m/Y',strtotime($resPro->programacion_fecha)));
 
                                 $loc = match ($typeComprop) {
                                     1 => 'LOCAL',
@@ -558,7 +558,7 @@ class HistorialProgramacion extends Component
 
                                                 $costoOtros = $informacionliquidacion->despacho_gasto_otros ?? 0;
 
-                                                $totalGeneralLocal = ($costoTarifa + $costoOtros);
+                                                $totalGeneralLocalProvin = (($costoTarifa * $informacionliquidacion->despacho_peso) + $costoOtros);
 
 
                                                 $destino = "";
@@ -578,10 +578,10 @@ class HistorialProgramacion extends Component
                                                 $sheet1->setCellValue('X'.$row, $des->transportista_nom_comercial);
                                                 $sheet1->setCellValue('Y'.$row, $destino);
                                                 $sheet1->setCellValue('Z'.$row, $informacionliquidacion->despacho_numero_correlativo);
-                                                $sheet1->setCellValue('AA'.$row, $this->general->formatoDecimal($totalGeneralLocal));
+                                                $sheet1->setCellValue('AA'.$row, $this->general->formatoDecimal($totalGeneralLocalProvin));
                                                 $sheet1->setCellValue('AB'.$row, '');
 
-                                                $fleteFinalProvin = $totalGeneralLocal;
+                                                $fleteFinalProvin = $totalGeneralLocalProvin;
                                                 $filaPorcentajeProvin = $row;
                                             }
                                         }
@@ -625,38 +625,45 @@ class HistorialProgramacion extends Component
 
                                     if ($osMixtoProgramacion && $ingreExcelMixto){
 //                                        $rowMixto = $row;
-                                        $totalImporteComprobanteDespachoPro = DB::table('despachos')
+                                        $totalImporteComprobanteDespachoPro = DB::table('despacho_ventas')
+                                            ->where('id_despacho','=',$osMixtoProgramacion->id_despacho)
+//                                            ->where('despacho_detalle_estado_entrega','=',2)
+                                            ->sum('despacho_venta_cfimporte');
+
+                                        $InformacionDespachoMixto = DB::table('despachos')
                                             ->where('id_despacho','=',$osMixtoProgramacion->id_despacho)
                                             ->orderBy('id_despacho', 'desc')->first();
 
-                                        if ($totalImporteComprobanteDespachoPro){
-                                            $costoTarifa = ($totalImporteComprobanteDespachoPro->despacho_estado_modificado == 1)
-                                                ? $totalImporteComprobanteDespachoPro->despacho_monto_modificado
-                                                : $totalImporteComprobanteDespachoPro->despacho_flete;
+                                        if ($InformacionDespachoMixto){
+                                            $costoTarifa = ($InformacionDespachoMixto->despacho_estado_modificado == 1)
+                                                ? $InformacionDespachoMixto->despacho_monto_modificado
+                                                : $InformacionDespachoMixto->despacho_flete;
 
-                                            $costoOtros = $totalImporteComprobanteDespachoPro->despacho_gasto_otros ?? 0;
+                                            $costoOtros = $InformacionDespachoMixto->despacho_gasto_otros ?? 0;
 
-                                            $totalGeneralLocal = ($costoTarifa + $costoOtros);
+                                            $totalGeneralMixto = (($costoTarifa * $InformacionDespachoMixto->despacho_peso) + $costoOtros);
 
                                             $destino = "";
-                                            if ($totalImporteComprobanteDespachoPro->id_departamento){
-                                                $dep = DB::table('departamentos')->where('id_departamento','=',$totalImporteComprobanteDespachoPro->id_departamento)->first();
+                                            if ($InformacionDespachoMixto->id_departamento){
+                                                $dep = DB::table('departamentos')->where('id_departamento','=',$InformacionDespachoMixto->id_departamento)->first();
                                                 $destino.= $dep->departamento_nombre;
                                             }
-                                            if ($totalImporteComprobanteDespachoPro->id_provincia){
-                                                $provi = DB::table('provincias')->where('id_provincia','=',$totalImporteComprobanteDespachoPro->id_provincia)->first();
+                                            if ($InformacionDespachoMixto->id_provincia){
+                                                $provi = DB::table('provincias')->where('id_provincia','=',$InformacionDespachoMixto->id_provincia)->first();
                                                 $destino.= "-".$provi->provincia_nombre;
                                             }
-                                            if ($totalImporteComprobanteDespachoPro->id_distrito){
-                                                $disti = DB::table('distritos')->where('id_distrito','=',$totalImporteComprobanteDespachoPro->id_distrito)->first();
+                                            if ($InformacionDespachoMixto->id_distrito){
+                                                $disti = DB::table('distritos')->where('id_distrito','=',$InformacionDespachoMixto->id_distrito)->first();
                                                 $destino.= "-".$disti->distrito_nombre;
                                             }
 
                                             $sheet1->setCellValue('W'.$row, $osMixtoProgramacion->despacho_numero_correlativo);
                                             $sheet1->setCellValue('X'.$row, $osMixtoProgramacion->transportista_nom_comercial);
                                             $sheet1->setCellValue('Y'.$row, $destino);
-                                            $sheet1->setCellValue('Z'.$row, $totalImporteComprobanteDespachoPro->despacho_numero_correlativo);
-                                            $sheet1->setCellValue('AA'.$row, $this->general->formatoDecimal($totalGeneralLocal));
+                                            $sheet1->setCellValue('Z'.$row, $InformacionDespachoMixto->despacho_numero_correlativo);
+                                            $sheet1->setCellValue('AA'.$row, $this->general->formatoDecimal($totalGeneralMixto));
+                                            $poMixto = $totalImporteComprobanteDespachoPro != 0 ?  ($totalGeneralMixto / $totalImporteComprobanteDespachoPro) * 100 : 0;
+                                            $sheet1->setCellValue('AB'.$row, $this->general->formatoDecimal($poMixto));
 //                                            if ($totalImporteComprobanteDespachoPro->liquidacion_detalle_comentarios){
 //                                                $sheet1->setCellValue('AC'.$row, $totalImporteComprobanteDespachoPro->liquidacion_detalle_comentarios);
 //                                                $sheet1->getColumnDimension('AC')->setWidth(15);
@@ -689,10 +696,10 @@ class HistorialProgramacion extends Component
                                 $sheet1->mergeCells('P'.$row.':Q'.$row);
 
                                 $row++;
-                                if ($comproba->despacho_detalle_estado_entrega == 2){
-                                    $importeTotalDespachos+=$comproba->despacho_venta_cfimporte;
-                                    $totalPesoDespachos+=$comproba->despacho_venta_total_kg;
-                                }
+//                                if ($comproba->despacho_detalle_estado_entrega == 2){
+                                $importeTotalDespachos+=$comproba->despacho_venta_cfimporte;
+                                $totalPesoDespachos+=$comproba->despacho_venta_total_kg;
+//                                }
 
                             }
                             $comentariosLiquidacion = DB::table('liquidacion_detalles')->where('id_despacho','=',$des->id_despacho)->orderBy('id_liquidacion_detalle','desc')->orderBy('id_despacho','desc')->first();
@@ -735,7 +742,7 @@ class HistorialProgramacion extends Component
                                 if ($importeTotalDespachos != 0) {
                                     $porcentaje = (($fleteFinalLocal / $importeTotalDespachos) * 100);
                                     $porcentaje = $this->general->formatoDecimal($porcentaje);
-                                    $sheet1->setCellValue('V'.$filaPorcentajeLocal, $this->general->formatoDecimal($porcentaje).'%');
+                                    $sheet1->setCellValue('V'.$filaPorcentajeLocal, $this->general->formatoDecimal($porcentaje));
                                 } else {
                                     $sheet1->setCellValue('V'.$filaPorcentajeLocal, '0%');
                                 }
@@ -745,7 +752,7 @@ class HistorialProgramacion extends Component
                                 if ($importeTotalDespachos != 0) {
                                     $porcentaje = (($fleteFinalProvin / $importeTotalDespachos) * 100);
                                     $porcentaje = $this->general->formatoDecimal($porcentaje);
-                                    $sheet1->setCellValue('AB'.$filaPorcentajeProvin, $this->general->formatoDecimal($porcentaje).'%');
+                                    $sheet1->setCellValue('AB'.$filaPorcentajeProvin, $this->general->formatoDecimal($porcentaje));
                                 } else {
                                     $sheet1->setCellValue('AB'.$filaPorcentajeProvin, '0%');
                                 }
@@ -784,7 +791,7 @@ class HistorialProgramacion extends Component
 //                $totalSinIGVExcelFormatted = $this->general->formatoDecimal($totalSinIGVExcel);
 //                $totalConIVCExcelFormatted = $this->general->formatoDecimal($totalConIVCExcel);
 
-                // Manejo de filas combinadas por transportista
+            // Manejo de filas combinadas por transportista
 //                if ($ultimoTransportista !== null && $ultimoTransportista !== $re->id_transportistas) {
 //                    // Si cambió el transportista, escribir el total acumulado para el anterior
 //                    $Filahasta = $row - 1; // Última fila del transportista anterior
@@ -794,10 +801,10 @@ class HistorialProgramacion extends Component
 //                    $primeraFilaIngresadaTra = $row; // Nueva fila inicial
 //                }
 
-                // Acumular el total para el transportista actual
+            // Acumular el total para el transportista actual
 //                $sumaPorTransportista += $totalConIVCExcel;
 
-                // Escribir los datos en la fila actual
+            // Escribir los datos en la fila actual
 //                $sheet1->setCellValue('A'.$row, "");
 //
 //                $sheet1->setCellValue('B'.$row, "");
@@ -816,7 +823,7 @@ class HistorialProgramacion extends Component
 //                // Alineación del encabezado
 //                $rowStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
 //                $rowStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
-                // Actualizar el transportista actual
+            // Actualizar el transportista actual
 //                if ($ultimoTransportista === null || $ultimoTransportista !== $re->id_transportistas) {
 //                    $ultimoTransportista = $re->id_transportistas;
 //                    $primeraFilaIngresadaTra = $row; // Primera fila del nuevo transportista
