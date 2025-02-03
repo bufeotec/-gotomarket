@@ -23,7 +23,6 @@
 </head>
 <body>
 <h1>Notas de Crédito</h1>
-<p>Lista de las notas de crédito registrados en el sistema.
 </p>
 <table>
     <thead>

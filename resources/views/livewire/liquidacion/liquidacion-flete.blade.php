@@ -109,11 +109,11 @@
                                 </div>
                                 <div class="col-lg-3 col-md-2 col-sm-12 mb-3">
                                     <strong class="colorgotomarket mb-2">Flete / Venta</strong>
-                                    <p>{{ $general->formatoDecimal($listar_detalle_despacho->despacho_costo_total / $listar_detalle_despacho->totalVentaDespacho) }} %</p>
+                                    <p>{{$listar_detalle_despacho->totalVentaDespacho != 0 ?  $general->formatoDecimal($listar_detalle_despacho->despacho_costo_total / $listar_detalle_despacho->totalVentaDespacho) : 0 }} %</p>
                                 </div>
                                 <div class="col-lg-3 col-md-2 col-sm-12 mb-3">
                                     <strong class="colorgotomarket mb-2">Flete / Peso</strong>
-                                    <p>{{ $general->formatoDecimal($listar_detalle_despacho->despacho_costo_total / $listar_detalle_despacho->despacho_peso) }} %</p>
+                                    <p>{{$listar_detalle_despacho->despacho_peso != 0 ? $general->formatoDecimal($listar_detalle_despacho->despacho_costo_total / $listar_detalle_despacho->despacho_peso) : 0 }} %</p>
                                 </div>
                             </div>
                         </div>
@@ -480,8 +480,12 @@
                                                                      @endif
                                                                     <td>S/ {{ $general->formatoDecimal($despachoGeneraLiquidacion) }}</td>
 
-                                                                    <td>{{ $general->formatoDecimal(($despachoGeneraLiquidacion / $totalVentaDespaDespacho) * 100) }} % </td>
-                                                                    <td>{{ $general->formatoDecimal($despachoGeneraLiquidacion / $totalPesoDespacho) }}</td>
+                                                                    <td>
+                                                                        {{ $totalVentaDespaDespacho != 0 ? $general->formatoDecimal(($despachoGeneraLiquidacion / $totalVentaDespaDespacho) * 100) : '0.00' }} %
+                                                                    </td>
+                                                                    <td>
+                                                                        {{ $totalPesoDespacho != 0 ? $general->formatoDecimal($despachoGeneraLiquidacion / $totalPesoDespacho) : '0.00' }}
+                                                                    </td>
                                                                 </tr>
                                                                 <tr>
                                                                     <td><b class="colorBlackComprobantes">Monto de Liquidación</b></td>
@@ -557,8 +561,8 @@
                                                                         }
                                                                     @endphp
                                                                     <td>S/ {{ $general->formatoDecimal($totalDespacho) }}</td>
-                                                                    <td>{{ $general->formatoDecimal(($totalDespacho / $totalVentaDespaDespacho) * 100) }} % </td>
-                                                                    <td>{{ $general->formatoDecimal($totalDespacho / $pesoFinalLi) }}</td>
+                                                                    <td>{{$totalVentaDespaDespacho != 0 ?  $general->formatoDecimal(($totalDespacho / $totalVentaDespaDespacho) * 100) : '0' }} % </td>
+                                                                    <td>{{$pesoFinalLi != 0 ? $general->formatoDecimal($totalDespacho / $pesoFinalLi) : '0' }}</td>
                                                                 </tr>
                                                                 </tbody>
                                                             </table>

@@ -117,7 +117,7 @@ class Programacion extends Model
             }
 
             $result = $result->where('p.programacion_estado_aprobacion','<>',0)
-                ->orderBy('p.programacion_numero_correlativo', 'desc')->paginate(20);
+                ->orderBy('p.programacion_fecha', 'desc')->paginate(20);
 
         }catch (\Exception $e){
             $this->logs->insertarLog($e);
@@ -134,7 +134,7 @@ class Programacion extends Model
             }
 
             $result = $result->where('p.programacion_estado_aprobacion','=',1)
-                ->orderBy('p.programacion_numero_correlativo', 'desc')->get();
+                ->orderBy('p.programacion_fecha', 'desc')->get();
 
         }catch (\Exception $e){
             $this->logs->insertarLog($e);
