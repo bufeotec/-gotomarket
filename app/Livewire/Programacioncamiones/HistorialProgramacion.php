@@ -80,6 +80,7 @@ class HistorialProgramacion extends Component
 
     public function listar_informacion_despacho($id){
         try {
+            $this->estadoComprobante = [];
             $this->listar_detalle_despacho = DB::table('despachos as d')
                 ->join('users as u','u.id_users','=','d.id_users')
                 ->where('d.id_despacho','=',$id)->first();
