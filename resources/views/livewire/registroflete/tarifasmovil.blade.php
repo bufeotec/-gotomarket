@@ -66,7 +66,7 @@
                                 <th>Tipo Vehículo</th>
                                 <th>Placa</th>
                                 <th>Tarifa</th>
-                                <th>Fecha y Hora</th>
+                                <th class="text-center">Fecha</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
@@ -80,7 +80,7 @@
                                         <td>{{ $lt->vehiculo->tipo->tipo_vehiculo_concepto ?? 'N/A' }}</td>
                                         <td>{{ $lt->vehiculo->vehiculo_placa ?? 'N/A' }}</td>
                                         <td>{{ $lt->tarifario->tarifa_monto ?? 'N/A' }}</td>
-                                        <td class="text-center">{{ $lt->updated_at ? $lt->updated_at->format('d/m/Y H:i') : '-' }}</td>
+                                        <td class="text-center">{{ $lt->updated_at ? $lt->updated_at->format('d/m/Y ') : '-' }}</td>
                                         <td>{{ $lt->vehiculo->vehiculo_estado == 0 ? 'Pendiente' : 'Aprobado' }}</td>
                                         <td>
                                             @if($lt->vehiculo->vehiculo_estado == 0) <!-- Solo muestra el botón si el estado es 0 -->
