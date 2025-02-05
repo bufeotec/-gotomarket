@@ -64,6 +64,9 @@ Route::prefix('Programacioncamion')->middleware(['auth', 'canMenu:Programacionca
     route::get('/detalle_programacion',[ProgramacioncamionController::class ,'detalle_programacion'])->name('Programacioncamion.detalle_programacion')->middleware('verifyUserStatus')->middleware('can:detalle_programacion');
     route::get('/editar_programacion',[ProgramacioncamionController::class ,'editar_programacion'])->name('Programacioncamion.editar_programacion')->middleware('verifyUserStatus')->middleware('can:editar_programacion');
     route::get('/facturas_pre_programacion',[ProgramacioncamionController::class ,'facturas_pre_programacion'])->name('Programacioncamion.facturas_pre_programacion')->middleware('verifyUserStatus')->middleware('can:facturas_pre_programacion');
+    route::get('/credito_cobranza',[ProgramacioncamionController::class ,'credito_cobranza'])->name('Programacioncamion.credito_cobranza')->middleware('verifyUserStatus')->middleware('can:credito_cobranza');
+    route::get('/facturas_aprobar',[ProgramacioncamionController::class ,'facturas_aprobar'])->name('Programacioncamion.facturas_aprobar')->middleware('verifyUserStatus')->middleware('can:facturas_aprobar');
+    route::get('/gestion_factura_programacion',[ProgramacioncamionController::class ,'gestion_factura_programacion'])->name('Programacioncamion.gestion_factura_programacion')->middleware('verifyUserStatus')->middleware('can:gestion_factura_programacion');
 });
 
 Route::prefix('Liquidacionflete')->middleware(['auth', 'canMenu:Liquidacionflete'])->group(function () {
