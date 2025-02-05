@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
+
 class Vehiculo extends Model
 {
     use HasFactory;
@@ -13,6 +14,16 @@ class Vehiculo extends Model
     protected $table = "vehiculos";
     protected $primaryKey = "id_vehiculo";
     private $logs;
+    public function transportista() {
+        return $this->belongsTo(Transportista::class, 'id_transportistas');
+    }
+    public function tipo() {
+        return $this->belongsTo(TipoVehiculo::class, 'id_tipo_vehiculo');
+    }
+    public function tarifasMovil()
+    {
+        return $this->hasMany(TarifaMovil::class, 'id_vehiculo', 'id_vehiculo');
+    }
 
     public function __construct(){
         parent::__construct();

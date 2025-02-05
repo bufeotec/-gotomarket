@@ -42,7 +42,7 @@
                         @enderror
                     </div>
 
-                    <div class="col-lg-6 col-md-4 col-sm-12 mb-3">
+                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
                         <label for="vehiculo_placa" class="form-label">Placa (*)</label>
                         <x-input-general  type="text" id="vehiculo_placa" wire:model="vehiculo_placa"/>
                         @error('vehiculo_placa')
@@ -50,10 +50,23 @@
                         @enderror
                     </div>
 
-                    <div class="col-lg-6 col-md-4 col-sm-12 mb-3">
+                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
                         <label for="vehiculo_capacidad_peso" class="form-label">Capacidad de peso (*) (en kg)</label>
                         <x-input-general  type="text" id="vehiculo_capacidad_peso" wire:model="vehiculo_capacidad_peso" onkeyup="validar_numeros(this.id)"/>
                         @error('vehiculo_capacidad_peso')
+                        <span class="message-error">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="col-lg-4 mb-3">
+                        <label for="id_tarifario" class="form-label">Tarifa</label>
+                        <select class="form-select" wire:model="id_tarifario">
+                            <option value="">Seleccionar...</option>
+                            @foreach($listar_tarifario as $ld)
+                                <option value="{{ $ld->id_tarifario }}">{{ $ld->tarifa_monto  }}</option>
+                            @endforeach
+                        </select>
+                        @error('id_tarifario')
                         <span class="message-error">{{ $message }}</span>
                         @enderror
                     </div>
@@ -82,7 +95,16 @@
                         @enderror
                     </div>
 
-                    @if($vehiculo_capacidad_volumen > 0)
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        @if (session()->has('error'))
+                            <div class="alert alert-danger alert-dismissible show fade">
+                                {{ session('error') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        @endif
+                    </div>
+
+                @if($vehiculo_capacidad_volumen > 0)
                         @php
                             $me = new \App\Models\General();
                             $capacidadVolumen = "0";
@@ -103,14 +125,6 @@
                         </div>
                     @endif
 
-                    <div class="col-lg-12 col-md-12 col-sm-12">
-                        @if (session()->has('error'))
-                            <div class="alert alert-danger alert-dismissible show fade">
-                                {{ session('error') }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        @endif
-                    </div>
 
                     <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-end">
                         <button type="button" data-bs-dismiss="modal" class="btn btn-secondary">Cerrar</button>
@@ -233,7 +247,7 @@
                                         </td>
                                         <td>
                                             <span class="font-bold badge {{$lv->vehiculo_estado == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
-                                                {{$lv->vehiculo_estado == 1 ? 'Habilitado ' : 'Desabilitado'}}
+                                                {{$lv->vehiculo_estado == 1 ? 'Aprovado ' : 'Pendiente ' }}
                                             </span>
                                         </td>
 
@@ -244,19 +258,19 @@
                                                 </x-slot>
                                             </x-btn-accion>
 
-                                            @if($lv->vehiculo_estado == 1)
-                                                <x-btn-accion class=" text-danger" wire:click="btn_disable('{{ base64_encode($lv->id_vehiculo) }}',0)" data-bs-toggle="modal" data-bs-target="#modalDeleteVehiculos">
-                                                    <x-slot name="message">
-                                                        <i class="fa-solid fa-ban"></i>
-                                                    </x-slot>
-                                                </x-btn-accion>
-                                            @else
-                                                <x-btn-accion class=" text-success" wire:click="btn_disable('{{ base64_encode($lv->id_vehiculo) }}',1)" data-bs-toggle="modal" data-bs-target="#modalDeleteVehiculos">
-                                                    <x-slot name="message">
-                                                        <i class="fa-solid fa-check"></i>
-                                                    </x-slot>
-                                                </x-btn-accion>
-                                            @endif
+{{--                                            @if($lv->vehiculo_estado == 1)--}}
+{{--                                                <x-btn-accion class=" text-danger" wire:click="btn_disable('{{ base64_encode($lv->id_vehiculo) }}',0)" data-bs-toggle="modal" data-bs-target="#modalDeleteVehiculos">--}}
+{{--                                                    <x-slot name="message">--}}
+{{--                                                        <i class="fa-solid fa-ban"></i>--}}
+{{--                                                    </x-slot>--}}
+{{--                                                </x-btn-accion>--}}
+{{--                                            @else--}}
+{{--                                                <x-btn-accion class=" text-success" wire:click="btn_disable('{{ base64_encode($lv->id_vehiculo) }}',1)" data-bs-toggle="modal" data-bs-target="#modalDeleteVehiculos">--}}
+{{--                                                    <x-slot name="message">--}}
+{{--                                                        <i class="fa-solid fa-check"></i>--}}
+{{--                                                    </x-slot>--}}
+{{--                                                </x-btn-accion>--}}
+{{--                                            @endif--}}
                                         </td>
                                     </tr>
                                     @php $conteo++; @endphp

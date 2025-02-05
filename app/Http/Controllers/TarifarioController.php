@@ -47,4 +47,12 @@ class TarifarioController extends Controller
             return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
         }
     }
+    public function tarifa_movil(){
+        try {
+            return view('registroflete.tarifa_movil');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
 }
