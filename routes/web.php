@@ -12,6 +12,7 @@ use App\Http\Controllers\LiquidacionfleteController;
 use App\Http\Controllers\GestiondocumentariaController;
 use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\PdfExportController;
+use App\Http\Controllers\TarifamovilController;
 
 
 route::get('/phpinfo', function(){
@@ -54,6 +55,7 @@ Route::prefix('Tarifario')->middleware(['auth', 'canMenu:Tarifario'])->group(fun
     route::get('/fletes',[TarifarioController::class ,'fletes'])->name('Tarifario.fletes')->middleware('verifyUserStatus')->middleware('can:fletes');
     route::get('/tarifas',[TarifarioController::class ,'tarifas'])->name('Tarifario.tarifas')->middleware('verifyUserStatus')->middleware('can:tarifas');
     route::get('/validar_tarifa',[TarifarioController::class ,'validar_tarifa'])->name('Tarifario.validar_tarifa')->middleware('verifyUserStatus')->middleware('can:validar_tarifa');
+    route::get('/tarifa_movil',[TarifarioController::class ,'tarifa_movil'])->name('Tarifario.tarifa_movil')->middleware('verifyUserStatus')->middleware('can:tarifa_movil');
 });
 
 Route::prefix('Programacioncamion')->middleware(['auth', 'canMenu:Programacioncamion'])->group(function () {
@@ -89,5 +91,6 @@ Route::prefix('Reporte')->middleware(['auth', 'canMenu:Reporte'])->group(functio
     /* REPORTE */
     route::get('/ver_reporte',[ReporteController::class ,'ver_reporte'])->name('reporte.ver_reporte')->middleware('verifyUserStatus')->middleware('can:ver_reporte');
 });
+
 
 
