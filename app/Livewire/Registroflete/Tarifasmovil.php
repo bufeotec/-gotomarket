@@ -37,7 +37,7 @@ class Tarifasmovil extends Component
         $this->desde = date('Y-m-d');
         $this->hasta = date('Y-m-d');
         $this->listar_tarifamovil = $this->fetchTarifasMovil();
-    }
+    } 
 
     public function render() {
         $listar_tarifamovil = $this->tarifammovil->listar_tarifamovil($this->searchx, $this->paginationx);
