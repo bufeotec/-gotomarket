@@ -182,6 +182,46 @@
                                                     <th style="font-size: 12px">Peso y Volumen</th>
                                                 </tr>
                                             </x-slot>
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <h6>COMPROBANTES</h6>
+                    </div>
+                    <div class="row" x-data="{ desde: @entangle('desde'), hasta: @entangle('hasta') }">
+                        <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
+                            <input type="date" name="fecha_desde" id="fecha_desde" wire:model="desde" x-model="desde" class="form-control" min="2025-01-01">
+                        </div>
+                        <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
+                            <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model="hasta" x-model="hasta" class="form-control" min="2025-01-01">
+                        </div>
+                        <div class="col-lg-9 col-md-9 col-sm-12 mb-2">
+                            <div class="position-relative">
+                                <input type="text" class="form-control bg-dark text-white rounded-pill ps-5 custom-placeholder" placeholder="Buscar comprobante" wire:model="searchFactura" style="border: none; outline: none;" />
+                                <i class="fas fa-search position-absolute" style="left: 15px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-12 mb-2">
+                            <button class="btn btn-sm bg-primary text-white w-100" wire:click="buscar_comprobantes" :disabled="!desde || !hasta">
+                                <i class="fa fa-search"></i> BUSCAR
+                            </button>
+                        </div>
+                        <div class="col-lg-12 col-md-12 col-sm-12">
+                            <div class="loader mt-2" wire:loading wire:target="buscar_comprobantes"></div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-lg-12 col-md-12 col-sm-12">
+                            <div class="contenedor-comprobante" style="max-height: 600px; overflow: auto">
+                                <x-table-general>
+                                    <x-slot name="thead">
+                                        <tr>
+                                            <th style="font-size: 12px">Serie y Correlativo / Guía</th>
+                                            <th style="font-size: 12px">Nombre del Cliente</th>
+                                            <th style="font-size: 12px">Peso y Volumen</th>
+                                        </tr>
+                                    </x-slot>
 
                                             <x-slot name="tbody">
                                                 @foreach($facturas_pre_prog_estado_tres as $factura)

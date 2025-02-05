@@ -19,39 +19,6 @@ class Notacredito extends Model
         $this->logs = new Logs();
     }
 
-    public function listar_nota_creditox($search, $pagination, $order = 'asc')
-    {
-        try {
-            $query = DB::table('nota_creditos as t')
-                ->join('despacho_ventas as dv', 't.id_despacho_venta', '=', 'dv.id_despacho_venta')
-                ->where(function($q) use ($search) {
-                    $q->where('t.nota_credito_fecha_emision', 'like', '%' . $search . '%')
-                        ->orWhere('t.nota_credito_ruc_cliente', 'like', '%' . $search . '%')
-                        ->orWhere('t.nota_credito_nombre_cliente', 'like', '%' . $search . '%')
-                        ->orWhere('t.nota_credito_motivo', 'like', '%' . $search . '%');
-                })
-                ->select(
-                    't.id_nota_credito',
-                    't.nota_credito_fecha_emision',
-                    't.nota_credito_ruc_cliente',
-                    't.nota_credito_nombre_cliente',
-                    't.nota_credito_motivo',
-                    't.nota_credito_incidente_registro',
-                    'dv.despacho_venta_cfcodcli', // RUC
-                    'dv.despacho_venta_cnomcli',  // Nombre del cliente
-                    'dv.despacho_venta_total_kg'   // Total KG
-                )
-                ->orderBy('t.id_nota_credito', $order);
-
-            // Paginación de resultados
-            return $query->paginate($pagination);
-
-        } catch (\Exception $e) {
-            $this->logs->insertarLog($e);
-            return []; // Manejo de errores
-        }
-    }
-
     public function despachoVenta()
     {
         return $this->belongsTo(DespachoVenta::class, 'id_despacho_venta', 'id_despacho_venta');
@@ -61,9 +28,9 @@ class Notacredito extends Model
     {
         try {
             $query = DB::table('nota_creditos as nc')
-                ->join('despacho_ventas as dv', 'nc.id_despachoventa', '=', 'dv.id_despacho_venta')
+                ->join('despacho_ventas as dv', 'nc.id_despacho_venta', '=', 'dv.id_despacho_venta')
                 ->where(function ($q) use ($search) {
-                    $q->where('nc.nota_credito_fecha_emision', 'like', '%' . $search . '%') // Corregido aquí
+                    $q->where('nc.created_at', 'like', '%' . $search . '%')
                     ->orWhere('nc.nota_credito_ruc_cliente', 'like', '%' . $search . '%')
                         ->orWhere('nc.nota_credito_nombre_cliente', 'like', '%' . $search . '%')
                         ->orWhere('nc.nota_credito_motivo', 'like', '%' . $search . '%')
