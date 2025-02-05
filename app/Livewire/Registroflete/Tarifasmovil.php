@@ -24,7 +24,7 @@ class Tarifasmovil extends Component
     public $hasta;
     public $id_vehiculo;
     public $id_tarifario;
-    public $id_tarifa_movil;
+//    public $id_tarifa_movil;
     public $messageDeleteTm = "";
     public $vehiculo_estado; // Estado del vehículo
 

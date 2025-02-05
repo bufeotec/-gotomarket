@@ -66,7 +66,7 @@
                                 <th>Tipo Vehículo</th>
                                 <th>Placa</th>
                                 <th>Tarifa</th>
-                                <th>Fecha y Hora</th>
+                                <th class="text-center">Fecha</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
@@ -80,18 +80,19 @@
                                         <td>{{ $lt->vehiculo->tipo->tipo_vehiculo_concepto ?? 'N/A' }}</td>
                                         <td>{{ $lt->vehiculo->vehiculo_placa ?? 'N/A' }}</td>
                                         <td>{{ $lt->tarifario->tarifa_monto ?? 'N/A' }}</td>
-                                        <td class="text-center">{{ $lt->updated_at ? $lt->updated_at->format('d/m/Y H:i') : '-' }}</td>
+                                        <td class="text-center">{{ $lt->updated_at ? $lt->updated_at->format('d/m/Y ') : '-' }}</td>
                                         <td>{{ $lt->vehiculo->vehiculo_estado == 0 ? 'Pendiente' : 'Aprobado' }}</td>
                                         <td>
                                             @if($lt->vehiculo->vehiculo_estado == 0) <!-- Solo muestra el botón si el estado es 0 -->
                                             <x-btn-accion class="text-success" wire:click="btn_disable('{{ base64_encode($lt->vehiculo->id_vehiculo) }}', 1)" data-bs-toggle="modal" data-bs-target="#modalDeleteTarifaMovil">
                                                 <x-slot name="message">
-                                                      <span class="bg-success p-2 text-white rounded">
+                                                    <span class="bg-success p-2 text-white rounded">
+                                                        <i class="fa-solid fa-check"></i>
                                                     Aprobar</span>
                                                 </x-slot>
                                             </x-btn-accion>
                                             @else
-                                                <span class="bg-primary p-2 text-white rounded">Confirmado</span>
+                                                <span class=" text-success">Confirmado</span>
                                             @endif
                                         </td>
                                     </tr>
