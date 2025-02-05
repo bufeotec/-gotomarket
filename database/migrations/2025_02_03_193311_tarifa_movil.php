@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tarifa_movil', function (Blueprint $table) {
+        Schema::create('tarifas_movil', function (Blueprint $table) {
             $table->id('id_tarifa_movil');
             $table->foreignId('id_users')->constrained('users', 'id_users');
             $table->foreignId('id_tarifario')->constrained('tarifarios', 'id_tarifario');
-            $table->tinyInteger('tarifa_movil_estado')->nullable()->comment('0 No aprovado, 2 Calidad);');
+            $table->foreignId('id_vehiculo')->constrained('vehiculos', 'id_vehiculo');
             $table->timestamps();
         });
     }
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        Schema::dropIfExists('tarifas_movil');
     }
 };

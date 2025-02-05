@@ -476,7 +476,6 @@
                                 <th>Capacidad mínima</th>
                                 <th>Capacidad máxima</th>
                                 <th>Monto de la tarifa sin IGV</th>
-                                <th>Estado de aprobación</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
@@ -507,11 +506,6 @@
                                             <small class="text-dark">
                                                 {{ $ta->id_tipo_servicio == 1 ? '/ VIAJE' : ($ta->id_tipo_servicio == 2 ? '/ kg' : '') }}
                                             </small>
-                                        </td>
-                                        <td>
-                                            <span class="font-bold badge {{$ta->tarifa_estado_aprobacion == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
-                                                {{$ta->tarifa_estado_aprobacion == 1 ? 'Aprobado' : 'Pendiente'}}
-                                            </span>
                                         </td>
                                         <td>
                                             <span class="font-bold badge {{$ta->tarifa_estado == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
