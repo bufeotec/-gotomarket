@@ -43,6 +43,12 @@ class Facturaspreprogramaciones extends Component
     }
 
     public function buscar_comprobantes(){
+        // Verificar si no hay fechas ni búsqueda
+        if (empty($this->desde) && empty($this->hasta) && empty($this->searchFactura)) {
+            session()->flash('error', 'Debe ingresar al menos una fecha o un criterio de búsqueda.');
+            return; // Salir del método
+        }
+
         // Verificar si ambas fechas están presentes
         if (!empty($this->desde) && !empty($this->hasta)) {
             // Obtener el año de las fechas 'desde' y 'hasta'
@@ -50,7 +56,7 @@ class Facturaspreprogramaciones extends Component
             $yearHasta = date('Y', strtotime($this->hasta));
 
             // Validar que los años sean 2025 o posteriores
-            if ($yearDesde < 2024 || $yearHasta < 2024) {
+            if ($yearDesde < 2025 || $yearHasta < 2025) {
                 // Mostrar un mensaje de error si los años no son válidos
                 session()->flash('error', 'Las fechas deben ser a partir de 2025.');
                 return; // Salir del método si la validación falla

@@ -32,9 +32,33 @@ class ProgramacioncamionController extends Controller
             return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
         }
     }
+    public function credito_cobranza(){
+        try {
+            return view('programacion_camiones.credito_cobranza');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
+    public function gestion_factura_programacion(){
+        try {
+            return view('programacion_camiones.gestion_factura_programacion');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
     public function programar_camion(){
         try {
             return view('programacion_camiones.programar_camion');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
+    public function facturas_aprobar(){
+        try {
+            return view('programacion_camiones.facturas_aprobar');
         }catch (\Exception $e){
             $this->logs->insertarLog($e);
             return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
