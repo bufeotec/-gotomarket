@@ -12,7 +12,7 @@ class Vehiculo extends Model
 
     protected $table = "vehiculos";
     protected $primaryKey = "id_vehiculo";
-    private $logs;
+    private $logs; 
     public function transportista() {
         return $this->belongsTo(Transportista::class, 'id_transportistas');
     }
