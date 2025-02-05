@@ -24,7 +24,7 @@ class Tarifasmovil extends Component
     public $hasta;
     public $id_vehiculo;
     public $id_tarifario;
-    public $id_tarifa_movil;
+//    public $id_tarifa_movil;
     public $messageDeleteTm = "";
     public $vehiculo_estado; // Estado del vehículo
 
@@ -37,7 +37,7 @@ class Tarifasmovil extends Component
         $this->desde = date('Y-m-d');
         $this->hasta = date('Y-m-d');
         $this->listar_tarifamovil = $this->fetchTarifasMovil();
-    } 
+    }
 
     public function render() {
         $listar_tarifamovil = $this->tarifammovil->listar_tarifamovil($this->searchx, $this->paginationx);

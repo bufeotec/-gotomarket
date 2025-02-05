@@ -86,12 +86,13 @@
                                             @if($lt->vehiculo->vehiculo_estado == 0) <!-- Solo muestra el botón si el estado es 0 -->
                                             <x-btn-accion class="text-success" wire:click="btn_disable('{{ base64_encode($lt->vehiculo->id_vehiculo) }}', 1)" data-bs-toggle="modal" data-bs-target="#modalDeleteTarifaMovil">
                                                 <x-slot name="message">
-                                                      <span class="bg-success p-2 text-white rounded">
+                                                    <span class="bg-success p-2 text-white rounded">
+                                                        <i class="fa-solid fa-check"></i>
                                                     Aprobar</span>
                                                 </x-slot>
                                             </x-btn-accion>
                                             @else
-                                                <span class="bg-primary p-2 text-white rounded">Confirmado</span>
+                                                <span class=" text-success">Confirmado</span>
                                             @endif
                                         </td>
                                     </tr>
