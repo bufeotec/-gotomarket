@@ -171,8 +171,8 @@
                                                 <h6 class="mb-1">Estado de la factura</h6>
                                                 <select class="form-select" id="estado_envio" name="estado_envio" wire:model="estado_envio">
                                                     <option value="">Seleccionar...</option>
-                                                    <option value="1">En administración</option>
-                                                    <option value="2">En manos del despachador</option>
+                                                    <option value="1">Creditos</option>
+                                                    <option value="2">Despachador</option>
                                                 </select>
                                             </div>
                                             <div class="col-lg-2">

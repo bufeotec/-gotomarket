@@ -109,62 +109,8 @@ class Local extends Component
         $this->facturas_pre_prog_estado_tres = Facturaspreprogramacion::where('fac_pre_prog_estado_aprobacion', 3)->get();
         return view('livewire.programacioncamiones.local', compact('listar_transportistas', 'listar_vehiculos', 'facturas_pre_prog_estado_dos'));
     }
-//    NUEVO
 
-    public $messagePrePro = "";
     public $id_fac_pre_prog = "";
-    public $fac_pre_prog_estado_aprobacion = "";
-    public function cambio_estado($id_factura, $estado){
-        $id = base64_decode($id_factura);
-        if ($id) {
-            $this->id_fac_pre_prog = $id;
-            $this->fac_pre_prog_estado_aprobacion = $estado;
-            $this->messagePrePro = "¿Está seguro de aceptar esta factura?";
-        }
-    }
-    public function disable_pre_pro(){
-        try {
-            if (!Gate::allows('disable_pre_pro')) {
-                session()->flash('error_pre_pro', 'No tiene permisos para cambiar los estados de este registro.');
-                return;
-            }
-            $this->validate([
-                'id_fac_pre_prog' => 'required|integer',
-                'fac_pre_prog_estado_aprobacion' => 'required|integer',
-            ], [
-                'id_fac_pre_prog.required' => 'El identificador es obligatorio.',
-                'id_fac_pre_prog.integer' => 'El identificador debe ser un número entero.',
-                'fac_pre_prog_estado_aprobacion.required' => 'El estado es obligatorio.',
-                'fac_pre_prog_estado_aprobacion.integer' => 'El estado debe ser un número entero.',
-            ]);
-            DB::beginTransaction();
-            $factura = Facturaspreprogramacion::find($this->id_fac_pre_prog);
-
-            if ($factura) {
-                $factura->fac_pre_prog_estado_aprobacion = $this->fac_pre_prog_estado_aprobacion;
-
-                if ($factura->save()) {
-                    DB::commit();
-                    $this->dispatch('hidemodalPrePro');
-                    session()->flash('success', 'Factura aprobada.');
-                } else {
-                    DB::rollBack();
-                    session()->flash('error_pre_pro', 'No se pudo cambiar el estado de la factura.');
-                }
-            } else {
-                DB::rollBack();
-                session()->flash('error_pre_pro', 'La factura no existe.');
-            }
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            $this->setErrorBag($e->validator->errors());
-        } catch (\Exception $e) {
-            DB::rollBack();
-            session()->flash('error', 'Ocurrió un error al aceptar la factura. Por favor, inténtelo nuevamente.');
-        }
-    }
-
-
-//    FIN NUEVO
     public function listar_informacion_programacion_edit(){
         $informacionPrograma = $this->programacion->informacion_id($this->id_programacion_edit);
         $informacionDespacho = $this->despacho->listar_despachos_por_programacion($this->id_programacion_edit);
