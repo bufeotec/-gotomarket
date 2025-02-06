@@ -32,20 +32,20 @@
     </x-modal-delete>
     {{-- FIN MODAL DELETE --}}
 
-    <div class="row">
-        <div class="col-lg-6 col-md-6 col-sm-12 d-flex align-items-center mb-2">
-            <div class="row align-items-center mt-2">
-                <div class="col-lg-5 col-md-2 col-sm-12 mb-2">
-                    <label for="fecha_desde" class="form-label">Desde</label>
-                    <input type="date" name="fecha_desde" id="fecha_desde" wire:model.live="desde" class="form-control">
-                </div>
-                <div class="col-lg-5 col-md-2 col-sm-12 mb-2">
-                    <label for="fecha_hasta" class="form-label">Hasta</label>
-                    <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model.live="hasta" class="form-control">
-                </div>
-            </div>
-        </div>
-    </div>
+{{--    <div class="row">--}}
+{{--        <div class="col-lg-6 col-md-6 col-sm-12 d-flex align-items-center mb-2">--}}
+{{--            <div class="row align-items-center mt-2">--}}
+{{--                <div class="col-lg-5 col-md-2 col-sm-12 mb-2">--}}
+{{--                    <label for="fecha_desde" class="form-label">Desde</label>--}}
+{{--                    <input type="date" name="fecha_desde" id="fecha_desde" wire:model.live="desde" class="form-control">--}}
+{{--                </div>--}}
+{{--                <div class="col-lg-5 col-md-2 col-sm-12 mb-2">--}}
+{{--                    <label for="fecha_hasta" class="form-label">Hasta</label>--}}
+{{--                    <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model.live="hasta" class="form-control">--}}
+{{--                </div>--}}
+{{--            </div>--}}
+{{--        </div>--}}
+{{--    </div>--}}
 
     @if (session()->has('success'))
         <div class="alert alert-success alert-dismissible fade show mt-2">
@@ -72,19 +72,19 @@
                             </tr>
                         </x-slot>
                         <x-slot name="tbody">
-                            @if($listar_tarifamovil && $listar_tarifamovil->isNotEmpty())
+                            @if(count($listar_tarifamovil) > 0)
                                 @foreach($listar_tarifamovil as $index => $lt)
                                     <tr>
                                         <td>{{ $index + 1 }}</td>
-                                        <td>{{ $lt->vehiculo->transportista->transportista_nom_comercial ?? 'N/A' }}</td>
-                                        <td>{{ $lt->vehiculo->tipo->tipo_vehiculo_concepto ?? 'N/A' }}</td>
-                                        <td>{{ $lt->vehiculo->vehiculo_placa ?? 'N/A' }}</td>
-                                        <td>{{ $lt->tarifario->tarifa_monto ?? 'N/A' }}</td>
-                                        <td class="text-center">{{ $lt->updated_at ? $lt->updated_at->format('d/m/Y') : '-' }}</td>
-                                        <td>{{ $lt->vehiculo->vehiculo_estado == 0 ? 'Pendiente' : 'Aprobado' }}</td>
+                                        <td>{{ $lt->transportista_nom_comercial ?? 'N/A' }}</td>
+                                        <td>{{ $lt->tipo_vehiculo_concepto ?? 'N/A' }}</td>
+                                        <td>{{ $lt->vehiculo_placa ?? 'N/A' }}</td>
+                                        <td>{{ $lt->tarifa_monto }}</td>
+                                        <td class="text-center">{{ $lt->updated_at  }}</td>
+                                        <td>{{ $lt->vehiculo_estado == 0 ? 'Pendiente' : 'Aprobado' }}</td>
                                         <td>
-                                            @if($lt->vehiculo->vehiculo_estado == 0)
-                                                <x-btn-accion class="text-success" wire:click="btn_disable('{{ base64_encode($lt->vehiculo->id_vehiculo) }}', 1)" data-bs-toggle="modal" data-bs-target="#modalDeleteTarifaMovil">
+                                            @if($lt->vehiculo_estado == 0)
+                                                <x-btn-accion class="text-success" wire:click="btn_disable('{{ base64_encode($lt->id_vehiculo) }}', 1)" data-bs-toggle="modal" data-bs-target="#modalDeleteTarifaMovil">
                                                     <x-slot name="message">
                                                         <span class="bg-success p-2 text-white rounded">
                                                             <i class="fa-solid fa-check"></i>
