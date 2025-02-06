@@ -61,13 +61,15 @@ class TarifaMovil extends Model
         return $result;
     }
 
-    public function listar_tarifamovil($search, $pagination, $order = 'asc')
+    public function listar_tarifamovil($search, $pagination, $order = 'asc',$desde,$hasta)
     {
         try {
             $query = DB::table('tarifas_movil as tm')
                 ->join('vehiculos as v', 'tm.id_vehiculo', '=', 'v.id_vehiculo')
                 ->join('tarifarios as t', 'tm.id_tarifario', '=', 't.id_tarifario')
-                ->select('tm.*', 'v.vehiculo_placa', 't.tarifa_monto')
+                ->join('transportistas as tra', 'tra.id_transportistas', '=', 'v.id_transportistas')
+                ->join('tipo_vehiculos as tv', 'tv.id_tipo_vehiculo', '=', 'v.id_tipo_vehiculo')
+                ->select('tm.*', 'v.vehiculo_placa', 'tv.tipo_vehiculo_concepto','v.vehiculo_estado', 't.tarifa_monto','tra.transportista_nom_comercial')
                 ->where(function ($q) use ($search) {
                     // Verifica si el valor de búsqueda no está vacío
                     if (!empty($search)) {
@@ -75,8 +77,11 @@ class TarifaMovil extends Model
                             ->orWhere('tm.id_vehiculo', 'like', '%' . $search . '%')
                             ->orWhere('tm.tarifa_movil_estado', 'like', '%' . $search . '%');
                     }
-                })
-                ->orderBy('tm.id_tarifa_movil', $order);
+                });
+//               if ($desde  && $hasta){
+//                   $query->whereBetween('tm.created_at',[$desde,$hasta]);
+//               }
+               $query->orderBy('tm.id_tarifa_movil', $order);
 
             $result = $query->paginate($pagination);
         } catch (\Exception $e) {
