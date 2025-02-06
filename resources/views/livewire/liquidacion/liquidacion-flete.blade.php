@@ -109,11 +109,25 @@
                                 </div>
                                 <div class="col-lg-3 col-md-2 col-sm-12 mb-3">
                                     <strong class="colorgotomarket mb-2">Flete / Venta</strong>
-                                    <p>{{$listar_detalle_despacho->totalVentaDespacho != 0 ?  $general->formatoDecimal($listar_detalle_despacho->despacho_costo_total / $listar_detalle_despacho->totalVentaDespacho) : 0 }} %</p>
+                                    @php
+                                        $ra = 0;
+                                        if ($listar_detalle_despacho->totalVentaDespacho != 0){
+                                            $to = ($listar_detalle_despacho->despacho_costo_total / $listar_detalle_despacho->totalVentaDespacho) * 100;
+                                            $ra = $general->formatoDecimal($to);
+                                        }
+                                    @endphp
+                                    <p>{{$ra}} %</p>
                                 </div>
                                 <div class="col-lg-3 col-md-2 col-sm-12 mb-3">
                                     <strong class="colorgotomarket mb-2">Flete / Peso</strong>
-                                    <p>{{$listar_detalle_despacho->despacho_peso != 0 ? $general->formatoDecimal($listar_detalle_despacho->despacho_costo_total / $listar_detalle_despacho->despacho_peso) : 0 }} %</p>
+                                    @php
+                                        $ra2 = 0;
+                                        if ($listar_detalle_despacho->despacho_peso  != 0){
+                                            $to = $listar_detalle_despacho->despacho_costo_total / $listar_detalle_despacho->despacho_peso;
+                                            $ra2 = $general->formatoDecimal($to);
+                                        }
+                                    @endphp
+                                    <p>{{$ra2}}</p>
                                 </div>
                             </div>
                         </div>
