@@ -72,34 +72,34 @@
                             </tr>
                         </x-slot>
                         <x-slot name="tbody">
-                            @if($listar_tarifamovil)
+                            @if($listar_tarifamovil && $listar_tarifamovil->isNotEmpty())
                                 @foreach($listar_tarifamovil as $index => $lt)
                                     <tr>
                                         <td>{{ $index + 1 }}</td>
-                                        <td>{{ $lt->vehiculo->transportista ? $lt->vehiculo->transportista->transportista_nom_comercial : 'N/A' }}</td>
+                                        <td>{{ $lt->vehiculo->transportista->transportista_nom_comercial ?? 'N/A' }}</td>
                                         <td>{{ $lt->vehiculo->tipo->tipo_vehiculo_concepto ?? 'N/A' }}</td>
                                         <td>{{ $lt->vehiculo->vehiculo_placa ?? 'N/A' }}</td>
                                         <td>{{ $lt->tarifario->tarifa_monto ?? 'N/A' }}</td>
-                                        <td class="text-center">{{ $lt->updated_at ? $lt->updated_at->format('d/m/Y ') : '-' }}</td>
+                                        <td class="text-center">{{ $lt->updated_at ? $lt->updated_at->format('d/m/Y') : '-' }}</td>
                                         <td>{{ $lt->vehiculo->vehiculo_estado == 0 ? 'Pendiente' : 'Aprobado' }}</td>
                                         <td>
-                                            @if($lt->vehiculo->vehiculo_estado == 0) <!-- Solo muestra el botón si el estado es 0 -->
-                                            <x-btn-accion class="text-success" wire:click="btn_disable('{{ base64_encode($lt->vehiculo->id_vehiculo) }}', 1)" data-bs-toggle="modal" data-bs-target="#modalDeleteTarifaMovil">
-                                                <x-slot name="message">
-                                                    <span class="bg-success p-2 text-white rounded">
-                                                        <i class="fa-solid fa-check"></i>
-                                                    Aprobar</span>
-                                                </x-slot>
-                                            </x-btn-accion>
+                                            @if($lt->vehiculo->vehiculo_estado == 0)
+                                                <x-btn-accion class="text-success" wire:click="btn_disable('{{ base64_encode($lt->vehiculo->id_vehiculo) }}', 1)" data-bs-toggle="modal" data-bs-target="#modalDeleteTarifaMovil">
+                                                    <x-slot name="message">
+                                                        <span class="bg-success p-2 text-white rounded">
+                                                            <i class="fa-solid fa-check"></i>
+                                                        Aprobar</span>
+                                                    </x-slot>
+                                                </x-btn-accion>
                                             @else
-                                                <span class=" text-success">Confirmado</span>
+                                                <span class="text-success">Confirmado</span>
                                             @endif
                                         </td>
                                     </tr>
                                 @endforeach
                             @else
                                 <tr>
-                                    <td colspan="6">No hay registros disponibles.</td>
+                                    <td colspan="8">No hay registros disponibles.</td>
                                 </tr>
                             @endif
                         </x-slot>
