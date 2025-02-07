@@ -52,7 +52,8 @@ class Liquidacion extends Model
                         ->join('despachos as d','d.id_despacho','=','ld.id_despacho')
                         ->join('programaciones as pr','pr.id_programacion','=','d.id_programacion')
                         ->join('tipo_servicios as ts','ts.id_tipo_servicios','=','d.id_tipo_servicios')
-                        ->where('ld.id_liquidacion','=',$re->id_liquidacion)->get();
+                        ->where('ld.id_liquidacion','=',$re->id_liquidacion)
+                        ->orderBy('pr.programacion_fecha', 'asc')->get();
 
                     foreach ($re->detalles as $des){
                         $des->comprobantes = DB::table('despacho_ventas as dv')

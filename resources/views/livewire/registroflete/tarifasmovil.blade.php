@@ -66,7 +66,7 @@
                                 <th>Tipo Vehículo</th>
                                 <th>Placa</th>
                                 <th>Tarifa</th>
-                                <th class="text-center">Fecha</th>
+                                <th class="text-center">Fecha/Hora Aprobación</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
