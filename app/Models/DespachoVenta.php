@@ -39,4 +39,16 @@ class DespachoVenta extends Model
         }
         return $result;
     }
+
+    public function listar_despacho_nota_credito(){
+        try {
+            $result = DB::table('despacho_ventas')
+                ->whereIn('despacho_detalle_estado_entrega', [2,3,4])
+                ->get();
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
 }

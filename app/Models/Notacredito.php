@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 class Notacredito extends Model
 {
     use HasFactory;
-    protected $table = "nota_creditos";
+    protected $table = "notas_creditos";
     protected $primaryKey = 'id_nota_credito';
 
     private $logs;
@@ -57,5 +57,25 @@ class Notacredito extends Model
         return $result;
     }
 
+    public function listar_nota_credito_activo($search,$pagination,$order = 'desc'){
+        try {
+
+            $query = DB::table('notas_creditos as nt')
+                ->join('despacho_ventas as dv', 'nt.id_despacho_venta', '=', 'dv.id_despacho_venta')
+                ->where('nt.nota_credito_estado', '=', 1)
+                ->where(function($q) use ($search) {
+                    $q->where('nt.nota_credito_motivo_descripcion', 'like', '%' . $search . '%')
+                    ->orWhere('dv.despacho_venta_cfcodcli', 'like', '%' . $search . '%')
+                    ->orWhere('dv.despacho_venta_cnomcli', 'like', '%' . $search . '%');
+                })->orderBy('nt.id_nota_credito', $order);
+
+            $result = $query->paginate($pagination);
+
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
 
 }
