@@ -377,6 +377,7 @@
                                                     type="checkbox"
                                                     class="form-check-input"
                                                     wire:model="select_despachos.{{ $despacho->id_despacho }}"
+                                                    wire:key="{{ $despacho->id_despacho }}"
                                                     {{ isset($select_despachos[$despacho->id_despacho]) ? 'checked' : '' }}
                                                     wire:click="actualizarDespacho('{{ $despacho->id_despacho }}', $event.target.checked)"
                                                 >
