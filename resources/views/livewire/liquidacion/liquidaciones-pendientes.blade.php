@@ -488,23 +488,22 @@
         </div>
     @endif
 
-    <div class="accordion mt-3" id="accordionExample" >
+    <div class="accordion mt-3" id="accordionExample">
         @if(count($resultado) > 0)
             @php $conteoGeneral = 1; @endphp
             @foreach($resultado as $index => $r)
-                <div class="accordion-item" >
+                <div class="accordion-item">
                     <h2 class="accordion-header">
                         <button class="accordion-button {{$index == 0 ? '' : 'collapsed'}}" wire:ignore.self type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne_{{$index}}" aria-expanded="true" aria-controls="collapseOne_{{$index}}">
                             #{{$conteoGeneral}} | FR : {{$r->creacion_liquidacion}} | UR : {{$r->name}} | TR : {{$r->transportista_razon_social}} | SC : {{$r->liquidacion_serie}} - {{$r->liquidacion_correlativo}}
                         </button>
                     </h2>
-                    <div id="collapseOne_{{$index}}" class="accordion-collapse collapse {{$index == 0 ? 'show' : ''}}" data-bs-parent="#accordionExample" wire:ignore.self >
-                        <div class="accordion-body" >
+                    <div id="collapseOne_{{$index}}" class="accordion-collapse collapse {{$index == 0 ? 'show' : ''}}" data-bs-parent="#accordionExample" wire:ignore.self>
+                        <div class="accordion-body">
                             <div class="row">
                                 <div class="col-lg-12 col-md-12 col-sm-12 text-end mb-4">
                                     @php
                                         $user = \Illuminate\Support\Facades\Auth::user(); // Obtiene el usuario autenticado
-                                        // Obtén el primer rol del usuario y su ID
                                         $roleId = $user->roles->first()->id ?? null;
                                     @endphp
                                     @if($roleId == 1 || $roleId == 2)
@@ -518,7 +517,6 @@
                                     @else
                                         <button class="btn btn-sm text-white bg-secondary" wire:click="agregar_comprobante({{$r->id_liquidacion}})" data-bs-toggle="modal" data-bs-target="#modalAgregarComprobante"><i class="fa-solid fa-file-circle-plus"></i> ADJUNTAR DOCUMENTO</button>
                                     @endif
-
                                 </div>
                                 @if($r->liquidacion_observaciones)
                                     <div class="col-lg-12 col-md-12 col-sm-12">
@@ -529,180 +527,151 @@
                                 <div class="col-lg-12 col-md-12 col-sm-12 table-responsive">
                                     <table class="table table-bordered">
                                         @php
-//                                            $colorMontoProgramado = "background:  #A9A9A9;color: white ";
-//                                            $colorMontoLiquidado = "background:  #32CD32;color: white ";
-//                                            $colorMontoLiquidado = "background:  #62dc62;color: white ";
                                             $colorMontoProgramado = "";
                                             $colorMontoLiquidado = "";
+                                            $sumaImporteServicio = 0; // Variable para la suma del importe del servicio por acordeón
                                         @endphp
                                         <thead>
-{{--                                            <tr>--}}
-{{--                                                <th colspan="6"></th>--}}
-{{--                                                <th colspan="6" class="text-center text-white" style="{{$colorMontoProgramado}}">--}}
-{{--                                                    Monto Programado--}}
-{{--                                                </th>--}}
-{{--                                                <th colspan="6" class="text-center text-white" style="{{$colorMontoLiquidado}}">Monto de Liquidación</th>--}}
-{{--                                            </tr>--}}
-                                            <tr>
-                                                <th>N°</th>
-                                                <th>N° OS</th>
-                                                <th>Proveedor</th>
-                                                <th>Servicio</th>
-                                                <th>Fecha de Despacho</th>
-                                                <th>Guías Asociadas</th>
-                                                <th>Total Venta Despachada</th>
-                                                <th>Peso Total</th>
-                                                <th>Importe Programado del Servicio</th>
-                                                <th>Cambio de Tarifa</th>
-{{--                                                <th>N° OS</th>--}}
-{{--                                                <th>Servicio</th>--}}
-{{--                                                <th>T. Venta Despachada</th>--}}
-{{--                                                <th>Peso Total</th>--}}
-{{--                                                <th>Importe Total del Servicio</th>--}}
-
-{{--                                                <th style="{{$colorMontoProgramado}}">Costo de Tarifa</th>--}}
-{{--                                                <th style="{{$colorMontoProgramado}}">Mano de Obra</th>--}}
-{{--                                                <th style="{{$colorMontoProgramado}}">Otros Gastos</th>--}}
-{{--                                                <th style="{{$colorMontoProgramado}}">Total Despacho</th>--}}
-{{--                                                <th style="{{$colorMontoProgramado}}">Flete / Venta</th>--}}
-{{--                                                <th style="{{$colorMontoProgramado}}">Flete / Peso</th>--}}
-
-{{--                                                <th style="{{$colorMontoLiquidado}}">Costo de Tarifa</th>--}}
-{{--                                                <th style="{{$colorMontoLiquidado}}">Mano de Obra</th>--}}
-{{--                                                <th style="{{$colorMontoLiquidado}}">Otros Gastos</th>--}}
-                                                <th style="{{$colorMontoLiquidado}}">Importe del Servicio</th>
-                                                <th style="{{$colorMontoLiquidado}}">Flete / Venta</th>
-                                                <th style="{{$colorMontoLiquidado}}">Flete / Peso</th>
-                                                <th >Acción</th>
-
-                                            </tr>
+                                        <tr>
+                                            <th>N°</th>
+                                            <th>N° OS</th>
+                                            <th>Proveedor</th>
+                                            <th>Servicio</th>
+                                            <th>Fecha de Despacho</th>
+                                            <th>Guías Asociadas</th>
+                                            <th>Total Venta Despachada</th>
+                                            <th>Peso Total</th>
+                                            <th>Importe Programado del Servicio</th>
+                                            <th>Cambio de Tarifa</th>
+                                            <th style="{{$colorMontoLiquidado}}">Importe del Servicio</th>
+                                            <th style="{{$colorMontoLiquidado}}">Flete / Venta</th>
+                                            <th style="{{$colorMontoLiquidado}}">Flete / Peso</th>
+                                            <th>Acción</th>
+                                        </tr>
                                         </thead>
                                         <tbody>
-                                            @php
-                                                $conteo = 1;
-                                            @endphp
-                                            @foreach($r->detalles as $de)
-                                                <tr >
-                                                    <th>{{$conteo}}</th>
-                                                    <th>
-                                                        {{$de->despacho_numero_correlativo}}
-{{--                                                        <a class="text-primary cursoPointer" wire:click="listar_informacion_despacho({{ $de->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">--}}
-{{--                                                           --}}
-{{--                                                        </a>--}}
-                                                    </th>
-                                                    <td>{{ $r->transportista_razon_social }}</td>
-                                                    <td>{{ $de->tipo_servicio_concepto }}</td>
-                                                    <td>{{ date('d-m-Y',strtotime($de->programacion_fecha)) }}</td>
-                                                    <td>
-                                                        @php
-                                                            $guiasComprobante = \Illuminate\Support\Facades\DB::table('despacho_ventas')->where('id_despacho', '=', $de->id_despacho)->get();
-                                                            $totalGuias = count($guiasComprobante); // Contamos las guías
-                                                        @endphp
-                                                        @foreach($guiasComprobante as $indexGuias => $g)
-                                                            @if($indexGuias <= 2)
-                                                                <a wire:click="listar_guias_despachos({{ $de->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalDetalleGuias" class="cursoPointer text-primary">
-                                                                    {{ $general->formatearCodigo($g->despacho_venta_guia) }}
-                                                                </a>
-                                                                @if($indexGuias < 2 && $indexGuias < $totalGuias - 1)
-                                                                    , <!-- Mostrar la coma solo si no es el último elemento que se va a mostrar -->
-                                                                @elseif($indexGuias == 2 && $totalGuias > 3)
-                                                                    ... <!-- Mostrar "..." si hay más guías después de las tres primeras -->
-                                                                @endif
+                                        @php
+                                            $conteo = 1;
+                                        @endphp
+                                        @foreach($r->detalles as $de)
+                                            <tr>
+                                                <th>{{$conteo}}</th>
+                                                <th>{{$de->despacho_numero_correlativo}}</th>
+                                                <td>{{ $r->transportista_razon_social }}</td>
+                                                <td>{{ $de->tipo_servicio_concepto }}</td>
+                                                <td>{{ date('d-m-Y',strtotime($de->programacion_fecha)) }}</td>
+                                                <td>
+                                                    @php
+                                                        $guiasComprobante = \Illuminate\Support\Facades\DB::table('despacho_ventas')->where('id_despacho', '=', $de->id_despacho)->get();
+                                                        $totalGuias = count($guiasComprobante); // Contamos las guías
+                                                    @endphp
+                                                    @foreach($guiasComprobante as $indexGuias => $g)
+                                                        @if($indexGuias <= 2)
+                                                            <a wire:click="listar_guias_despachos({{ $de->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalDetalleGuias" class="cursoPointer text-primary">
+                                                                {{ $general->formatearCodigo($g->despacho_venta_guia) }}
+                                                            </a>
+                                                            @if($indexGuias < 2 && $indexGuias < $totalGuias - 1)
+                                                                , <!-- Mostrar la coma solo si no es el último elemento que se va a mostrar -->
+                                                            @elseif($indexGuias == 2 && $totalGuias > 3)
+                                                                ... <!-- Mostrar "..." si hay más guías después de las tres primeras -->
                                                             @endif
-                                                        @endforeach
-                                                    </td>
-
-                                                    @php
-                                                        $totalVentaDespaDespacho = $de->totalVentaDespacho;
-                                                        if ($de->totalVentaNoEntregado){
-                                                            $totalVentaDespaDespacho = $de->totalVentaDespacho - $de->totalVentaNoEntregado;
-                                                        }
-                                                    @endphp
-                                                    <td>
-                                                        <span class="d-block">S/ {{ $general->formatoDecimal($de->totalVentaDespacho) }}</span>
-                                                        @if($de->totalVentaNoEntregado)
-                                                            <span class="d-block text-danger">S/ -{{ $general->formatoDecimal($de->totalVentaNoEntregado) }}</span>
-                                                            <b class="colorBlackComprobantes">S/ {{ $general->formatoDecimal($totalVentaDespaDespacho) }}</b>
                                                         @endif
-                                                    </td>
-                                                    @php
-                                                        $totalPesoDespacho = $de->despacho_peso;
-                                                        if ($de->totalPesoNoEntregado){
-                                                            $totalPesoDespacho = $de->despacho_peso - $de->totalPesoNoEntregado;
-                                                        }
-                                                    @endphp
-                                                    <td>
-                                                        <span class="d-block">{{ $general->formatoDecimal($de->despacho_peso) }}</span>
-                                                        @if($de->totalPesoNoEntregado)
-                                                            <span class="d-block text-danger">-{{ $general->formatoDecimal($de->totalPesoNoEntregado) }}</span>
-                                                            <b class="colorBlackComprobantes">{{ $general->formatoDecimal($totalPesoDespacho) }} kg</b>
-                                                        @endif
-                                                    </td>
-                                                    @php
-                                                        $despachoGeneraLiquidacion = 0;
-                                                        if ($de->id_tipo_servicios == 1){
-                                                            $despachoGeneraLiquidacion = $de->despacho_costo_total;
-                                                        }else{
-                                                            $despachoGeneraLiquidacion = ($de->despacho_monto_modificado * $totalPesoDespacho) + $de->despacho_ayudante + $de->despacho_gasto_otros;
-                                                        }
-                                                    @endphp
-                                                    <td>S/ {{ $general->formatoDecimal($despachoGeneraLiquidacion) }}</td>
-                                                    @php
-                                                        $styleColor = "text-danger";
-                                                        if ($de->despacho_estado_modificado == 1){
-                                                            $styleColor = "text-success";
-                                                        }
-                                                    @endphp
-                                                    <td><b class="{{$styleColor}}">{{$de->despacho_estado_modificado == 1 ? 'SI' : 'NO'}}</b></td>
-
-{{--                                                    <td style="{{$colorMontoProgramado}}">{{$de->despacho_monto_modificado ? $general->formatoDecimal($de->despacho_monto_modificado): 0}}</td>--}}
-{{--                                                    <td style="{{$colorMontoProgramado}}">{{$de->despacho_ayudante ? $general->formatoDecimal($de->despacho_ayudante): 0}}</td>--}}
-{{--                                                    <td style="{{$colorMontoProgramado}}">{{$de->despacho_gasto_otros ? $general->formatoDecimal($de->despacho_gasto_otros) : 0}}</td>--}}
-{{--                                                    <td style="{{$colorMontoProgramado}}">{{$de->despacho_costo_total ? $general->formatoDecimal($de->despacho_costo_total) : 0}}</td>--}}
-{{--                                                    <td style="{{$colorMontoProgramado}}">{{ $general->formatoDecimal($despachoGeneraLiquidacion / $totalVentaDespaDespacho) }} % </td>--}}
-{{--                                                    <td style="{{$colorMontoProgramado}}">{{ $general->formatoDecimal($despachoGeneraLiquidacion / $totalPesoDespacho) }} %</td>--}}
-
-                                                    @php
-                                                        $gastosDespachos = \Illuminate\Support\Facades\DB::table('liquidacion_gastos')->where('id_liquidacion_detalle','=',$de->id_liquidacion_detalle)->get();
-                                                        $costoTarifa = 0;
-                                                        $costoMano = 0;
-                                                        $costoOtros = 0;
-                                                        $pesoFinalLiquidacion = 0;
-                                                        if (count($gastosDespachos) >= 3){
-                                                            $costoTarifa = $gastosDespachos[0]->liquidacion_gasto_monto;
-                                                            $costoMano = $gastosDespachos[1]->liquidacion_gasto_monto;
-                                                            $costoOtros = $gastosDespachos[2]->liquidacion_gasto_monto;
-                                                            $pesoFinalLiquidacion = $gastosDespachos[3]->liquidacion_gasto_monto;
-                                                        }
-                                                    @endphp
-{{--                                                    @foreach($gastosDespachos as $fa)--}}
-{{--                                                        <td style="{{$colorMontoLiquidado}}">{{$fa->liquidacion_gasto_monto}}</td>--}}
-{{--                                                    @endforeach--}}
-                                                    @php
-                                                        $totalDespachoMontoLiquidado = 0;
-                                                        if ($de->id_tipo_servicios == 1){
-                                                            $totalDespachoMontoLiquidado = $costoTarifa + $costoMano + $costoOtros;
-                                                        }else{
-                                                            $totalDespachoMontoLiquidado = ($costoTarifa * $pesoFinalLiquidacion) + $costoMano + $costoOtros;
-                                                        }
-                                                    @endphp
-                                                    <td style="{{$colorMontoLiquidado}}">S/ {{ $general->formatoDecimal($totalDespachoMontoLiquidado) }}</td>
-                                                    <td style="{{$colorMontoLiquidado}}">{{$totalVentaDespaDespacho != 0 ? $general->formatoDecimal(($totalDespachoMontoLiquidado / $totalVentaDespaDespacho) * 100) : 0 }} % </td>
-                                                    <td style="{{$colorMontoLiquidado}}">{{$pesoFinalLiquidacion != 0 ? $general->formatoDecimal($totalDespachoMontoLiquidado / $pesoFinalLiquidacion)  : 0 }} </td>
-                                                    <td>
-                                                        <x-btn-accion class="btn btn-sm text-primary" wire:click="listar_informacion_despacho({{ $de->id_despacho }},{{ $de->id_liquidacion }})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">
-                                                            <x-slot name="message">
-                                                                <i class="fa-solid fa-eye"></i>
-                                                            </x-slot>
-                                                        </x-btn-accion>
-                                                    </td>
-                                                </tr>
+                                                    @endforeach
+                                                </td>
                                                 @php
-                                                    $conteo++;
+                                                    $totalVentaDespaDespacho = $de->totalVentaDespacho;
+                                                    if ($de->totalVentaNoEntregado){
+                                                        $totalVentaDespaDespacho = $de->totalVentaDespacho - $de->totalVentaNoEntregado;
+                                                    }
                                                 @endphp
-                                            @endforeach
+                                                <td>
+                                                    <span class="d-block">S/ {{ $general->formatoDecimal($de->totalVentaDespacho) }}</span>
+                                                    @if($de->totalVentaNoEntregado)
+                                                        <span class="d-block text-danger">S/ -{{ $general->formatoDecimal($de->totalVentaNoEntregado) }}</span>
+                                                        <b class="colorBlackComprobantes">S/ {{ $general->formatoDecimal($totalVentaDespaDespacho) }}</b>
+                                                    @endif
+                                                </td>
+                                                @php
+                                                    $totalPesoDespacho = $de->despacho_peso;
+                                                    if ($de->totalPesoNoEntregado){
+                                                        $totalPesoDespacho = $de->despacho_peso - $de->totalPesoNoEntregado;
+                                                    }
+                                                @endphp
+                                                <td>
+                                                    <span class="d-block">{{ $general->formatoDecimal($de->despacho_peso) }}</span>
+                                                    @if($de->totalPesoNoEntregado)
+                                                        <span class="d-block text-danger">-{{ $general->formatoDecimal($de->totalPesoNoEntregado) }}</span>
+                                                        <b class="colorBlackComprobantes">{{ $general->formatoDecimal($totalPesoDespacho) }} kg</b>
+                                                    @endif
+                                                </td>
+                                                @php
+                                                    $despachoGeneraLiquidacion = 0;
+                                                    if ($de->id_tipo_servicios == 1){
+                                                        $despachoGeneraLiquidacion = $de->despacho_costo_total;
+                                                    }else{
+                                                        $despachoGeneraLiquidacion = ($de->despacho_monto_modificado * $totalPesoDespacho) + $de->despacho_ayudante + $de->despacho_gasto_otros;
+                                                    }
+                                                @endphp
+                                                <td>S/ {{ $general->formatoDecimal($despachoGeneraLiquidacion) }}</td>
+                                                @php
+                                                    $styleColor = "text-danger";
+                                                    if ($de->despacho_estado_modificado == 1){
+                                                        $styleColor = "text-success";
+                                                    }
+                                                @endphp
+                                                <td><b class="{{$styleColor}}">{{$de->despacho_estado_modificado == 1 ? 'SI' : 'NO'}}</b></td>
+
+                                                @php
+                                                    $gastosDespachos = \Illuminate\Support\Facades\DB::table('liquidacion_gastos')->where('id_liquidacion_detalle','=',$de->id_liquidacion_detalle)->get();
+                                                    $costoTarifa = 0;
+                                                    $costoMano = 0;
+                                                    $costoOtros = 0;
+                                                    $pesoFinalLiquidacion = 0;
+                                                    if (count($gastosDespachos) >= 3){
+                                                        $costoTarifa = $gastosDespachos[0]->liquidacion_gasto_monto;
+                                                        $costoMano = $gastosDespachos[1]->liquidacion_gasto_monto;
+                                                        $costoOtros = $gastosDespachos[2]->liquidacion_gasto_monto;
+                                                        $pesoFinalLiquidacion = $gastosDespachos[3]->liquidacion_gasto_monto;
+                                                    }
+                                                @endphp
+
+                                                @php
+                                                    $totalDespachoMontoLiquidado = 0;
+                                                    if ($de->id_tipo_servicios == 1){
+                                                        $totalDespachoMontoLiquidado = $costoTarifa + $costoMano + $costoOtros;
+                                                    }else{
+                                                        $totalDespachoMontoLiquidado = ($costoTarifa * $pesoFinalLiquidacion) + $costoMano + $costoOtros;
+                                                    }
+                                                @endphp
+                                                <td style="{{$colorMontoLiquidado}}">S/ {{ $general->formatoDecimal($totalDespachoMontoLiquidado) }}</td>
+                                                <td style="{{$colorMontoLiquidado}}">{{$totalVentaDespaDespacho != 0 ? $general->formatoDecimal(($totalDespachoMontoLiquidado / $totalVentaDespaDespacho) * 100) : 0 }} % </td>
+                                                <td style="{{$colorMontoLiquidado}}">{{$pesoFinalLiquidacion != 0 ? $general->formatoDecimal($totalDespachoMontoLiquidado / $pesoFinalLiquidacion)  : 0 }} </td>
+                                                <td>
+                                                    <x-btn-accion class="btn btn-sm text-primary" wire:click="listar_informacion_despacho({{ $de->id_despacho }},{{ $de->id_liquidacion }})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">
+                                                        <x-slot name="message">
+                                                            <i class="fa-solid fa-eye"></i>
+                                                        </x-slot>
+                                                    </x-btn-accion>
+                                                </td>
+                                            </tr>
+                                            @php
+                                                $sumaImporteServicio += $totalDespachoMontoLiquidado; // Acumular el importe del servicio
+                                                $conteo++;
+                                            @endphp
+                                        @endforeach
                                         </tbody>
                                     </table>
+                                    <!-- Fila de suma total para -->
+                                    <div class="row">
+                                        <div class="col-lg-12 text-end mt-2">
+                                            <h5>Subtotal Factura: S/ {{ $general->formatoDecimal($sumaImporteServicio) }}</h5>
+                                            @php
+                                                $igv = $sumaImporteServicio * 0.18; // Calcula el IGV
+                                                $totalFactura = $sumaImporteServicio + $igv; // Total factura incluyendo IGV
+                                            @endphp
+                                            <h5>Factura Total (inc. IGV): S/ {{ $general->formatoDecimal($totalFactura) }}</h5>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -714,7 +683,6 @@
             <p class="text-center"> Registros Insuficientes</p>
         @endif
     </div>
-{{--    {{ $resultado->links(data: ['scrollTo' => false]) }}--}}
 </div>
 @script
     <script>

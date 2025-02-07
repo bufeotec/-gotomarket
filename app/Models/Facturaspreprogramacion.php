@@ -22,6 +22,7 @@ class Facturaspreprogramacion extends Model
         try {
             $result = DB::table('facturas_pre_programaciones')
                 ->where('fac_pre_prog_estado_aprobacion', '=', 2)
+                ->where('fac_pre_prog_estado', '=', 1)
                 ->get();
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);

@@ -18,7 +18,6 @@ class Tarifasmovil extends Component
     private $tarifammovil;
     public $searchx;
     public $paginationx = 10;
-    public $listar_tarifamovil = [];
 
     public $desde;
     public $hasta;
@@ -36,26 +35,17 @@ class Tarifasmovil extends Component
     public function mount() {
         $this->desde = date('Y-m-d');
         $this->hasta = date('Y-m-d');
-        $this->listar_tarifamovil = $this->fetchTarifasMovil();
+
     }
 
     public function render() {
-        $listar_tarifamovil = $this->tarifammovil->listar_tarifamovil($this->searchx, $this->paginationx);
+        $listar_tarifamovil = $this->tarifammovil->listar_tarifamovil($this->searchx, $this->paginationx,'asc',$this->desde,$this->hasta);
         $listar_vehiculo = $this->tarifammovil->listar_vehiculo();
         $listar_tarifario = $this->tarifammovil->listar_tarifario();
         return view('livewire.registroflete.tarifasmovil', compact('listar_vehiculo', 'listar_tarifamovil', 'listar_tarifario'));
     }
-    public function fetchTarifasMovil() {
-        return TarifaMovil::with(['vehiculo.transportista', 'vehiculo.tipo', 'tarifario'])
-            ->whereDate('created_at', '>=', $this->desde)
-            ->whereDate('created_at', '<=', $this->hasta)
-            ->get();
-    }
-    public function updated($propertyName) {
-        if ($propertyName === 'desde' || $propertyName === 'hasta') {
-            $this->listar_tarifamovil = $this->fetchTarifasMovil();
-        }
-    }
+
+
 
     public function btn_disable($id_vehiculo, $estado) {
         $id = base64_decode($id_vehiculo);
@@ -98,12 +88,10 @@ class Tarifasmovil extends Component
             $vehiculo->save();
 
             // Si el estado es 1, actualizar la fecha y hora en tarifas_movil
-            if ($this->vehiculo_estado == 1) {
-                $this->updateTarifaMovilFechaHora($this->id_vehiculo);
-            }
+            $this->updateTarifaMovilFechaHora($this->id_vehiculo);
+
 
             DB::commit();
-            $this->listar_tarifamovil = TarifaMovil::with(['vehiculo.transportista', 'vehiculo.tipo'])->get();
             $this->dispatch('hideModalDelete');
             session()->flash('success', $this->vehiculo_estado == 0 ? 'Vehículo deshabilitado correctamente.' : 'Vehículo habilitado correctamente.');
 
@@ -121,7 +109,7 @@ class Tarifasmovil extends Component
 
         if ($tarifaMovil) {
             // Si existe, actualizar la fecha y hora
-            $tarifaMovil->updated_at = now(); // Aquí se usa now()
+            $tarifaMovil->updated_at = date('Y-m-d H:i:s'); // Aquí se usa now()
             $tarifaMovil->save();
         } else {
             // Si no existe, crear un nuevo registro
