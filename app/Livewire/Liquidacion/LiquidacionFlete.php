@@ -4,6 +4,7 @@ namespace App\Livewire\Liquidacion;
 
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use App\Models\Logs;
 use App\Models\Transportista;
@@ -96,6 +97,7 @@ class LiquidacionFlete extends Component
 
     public function actualizarDespacho($idDespacho, $isChecked){
         if ($isChecked) {
+            Log::info($idDespacho);
             $despachoInfo = DB::table('despachos')->where('id_despacho','=',$idDespacho)->first();
             $despachoInfo->comprobantes = DB::table('despacho_ventas as dv')->where('id_despacho', '=', $despachoInfo->id_despacho)->get();
             $totalVenta = 0;
@@ -149,6 +151,7 @@ class LiquidacionFlete extends Component
     public function seleccion_trans(){
         $value = $this->id_transportistas;
         if ($value) {
+            $this->despachos = [];
             $queryConsult = DB::table('despachos as d')
                 ->join('programaciones as pr', 'pr.id_programacion', '=', 'd.id_programacion')
                 ->join('transportistas as t', 'd.id_transportistas', '=', 't.id_transportistas')
@@ -167,27 +170,29 @@ class LiquidacionFlete extends Component
 
             $this->despachos = $queryConsult;
 
-
-            foreach ($this->despachos as $des) {
-                $des->comprobantes = DB::table('despacho_ventas as dv')
-                    ->where('id_despacho', '=', $des->id_despacho)
-                    ->get();
-                $totalVenta = 0;
-                $totalVentaRestar = 0;
-                $totalPesoRestar = 0;
-                foreach ($des->comprobantes as $com) {
-                    $precio = floatval($com->despacho_venta_cfimporte);
-                    $pesoMenos = $com->despacho_venta_total_kg;
-                    $totalVenta += $precio;
-                    if ($com->despacho_detalle_estado_entrega == 3){
-                        $totalVentaRestar += $precio;
-                        $totalPesoRestar += $pesoMenos;
+            if (count($this->despachos) > 0) {
+                foreach ($this->despachos as $des) {
+                    $des->comprobantes = DB::table('despacho_ventas as dv')
+                        ->where('id_despacho', '=', $des->id_despacho)
+                        ->get();
+                    $totalVenta = 0;
+                    $totalVentaRestar = 0;
+                    $totalPesoRestar = 0;
+                    foreach ($des->comprobantes as $com) {
+                        $precio = floatval($com->despacho_venta_cfimporte);
+                        $pesoMenos = $com->despacho_venta_total_kg;
+                        $totalVenta += $precio;
+                        if ($com->despacho_detalle_estado_entrega == 3){
+                            $totalVentaRestar += $precio;
+                            $totalPesoRestar += $pesoMenos;
+                        }
                     }
+                    $des->totalVentaDespacho = $totalVenta;
+                    $des->totalVentaNoEntregado = $totalVentaRestar;
+                    $des->totalPesoNoEntregado = $totalPesoRestar;
                 }
-                $des->totalVentaDespacho = $totalVenta;
-                $des->totalVentaNoEntregado = $totalVentaRestar;
-                $des->totalPesoNoEntregado = $totalPesoRestar;
             }
+
         } else {
             $this->despachos = [];
         }
