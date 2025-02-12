@@ -32,6 +32,36 @@
         </x-slot>
     </x-modal-delete>
 
+    {{-- MODAL RECHAZAR FACTURA EN APROBRAR --}}
+    <x-modal-delete wire:ignore.self style="z-index: 1056;">
+        <x-slot name="id_modal">modaRecFac</x-slot>
+        <x-slot name="modalContentDelete">
+            <form wire:submit.prevent="rechazar_factura_aprobar">
+                <div class="row">
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        <h2 class="deleteTitle">{{ $messageRecFactApro }}</h2>
+                    </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12 my-3">
+                        <textarea id="fac_mov_area_motivo_rechazo" class="form-control" rows="3" wire:model="fac_mov_area_motivo_rechazo" placeholder="Ingrese motivo rechazo..."></textarea>
+                    </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        @if (session()->has('error-modal-rechazo'))
+                            <div class="alert alert-danger alert-dismissible show fade">
+                                {{ session('error-modal-rechazo') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        @endif
+                    </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-center">
+                        <button type="submit" class="btn btn-primary text-white btnDelete">SI</button>
+                        <button type="button" data-bs-dismiss="modal" class="btn btn-danger btnDelete">No</button>
+                    </div>
+                </div>
+            </form>
+        </x-slot>
+    </x-modal-delete>
+    {{-- MODAL RECHAZAR FACTURA EN APROBRAR --}}
+
     <div class="row">
         @if (session()->has('success'))
             <div class="col-lg-12 col-md-12 col-sm-12">
@@ -120,8 +150,13 @@
                                                     <td>
                                                         <x-btn-accion class="btn bg-success btn-sm text-white" wire:click="cambio_estado('{{ base64_encode($factura->id_fac_pre_prog) }}', 3)" data-bs-toggle="modal" data-bs-target="#modalPrePro">
                                                             <x-slot name="message">
-                                                                {{--                                                        <i class="fa-solid fa-circle-check"></i>--}}
                                                                 <i class="fa-solid fa-file-circle-check"></i>
+                                                            </x-slot>
+                                                        </x-btn-accion>
+
+                                                        <x-btn-accion class="btn btn-danger btn-sm text-white" wire:click="rech_fact('{{ base64_encode($factura->id_fac_pre_prog) }}')" data-bs-toggle="modal" data-bs-target="#modaRecFac">
+                                                            <x-slot name="message">
+                                                                <i class="fa-regular fa-circle-xmark"></i>
                                                             </x-slot>
                                                         </x-btn-accion>
                                                     </td>
@@ -144,6 +179,10 @@
 <script>
     $wire.on('hidemodalPrePro', () => {
         $('#modalPrePro').modal('hide');
+    });
+
+    $wire.on('hidemodaRecFac', () => {
+        $('#modaRecFac').modal('hide');
     });
 </script>
 @endscript

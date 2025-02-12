@@ -488,7 +488,13 @@ class HistorialProgramacion extends Component
                                                 ->orderBy('id_despacho', 'desc')->first();
 
                                             $sheet1->setCellValue('O'.$row, $des->despacho_numero_correlativo);
-
+                                            $vehiculo = DB::table('vehiculos  as v')
+                                                ->join('tipo_vehiculos as tv','tv.id_tipo_vehiculo','=','v.id_tipo_vehiculo')
+                                                ->where('v.id_vehiculo','=',$des->id_vehiculo)->first();
+                                            $vehiT = "";
+                                            if ($vehiculo){
+                                                $vehiT = $vehiculo->tipo_vehiculo_concepto.': '.$vehiculo->vehiculo_capacidad_peso.'kg - '.$vehiculo->vehiculo_placa;
+                                            }
                                             if ($informacionliquidacion) {
                                                 // Usamos los datos directamente de $informacionliquidacion
                                                 $costoTarifa = ($informacionliquidacion->despacho_estado_modificado == 1)
@@ -506,7 +512,7 @@ class HistorialProgramacion extends Component
 
                                                 $sheet1->setCellValue('R'.$row, $this->general->formatoDecimal($costoOtros));
                                                 $sheet1->setCellValue('S'.$row, $this->general->formatoDecimal($costoMano));
-                                                $sheet1->setCellValue('T'.$row, $des->transportista_nom_comercial.' - '.$informacionliquidacion->despacho_numero_correlativo);
+                                                $sheet1->setCellValue('T'.$row, $des->transportista_nom_comercial.' - '.$informacionliquidacion->despacho_numero_correlativo . ' - ' .$vehiT);
                                                 $sheet1->setCellValue('U'.$row, $this->general->formatoDecimal($totalGeneralLocal));
                                                 $sheet1->setCellValue('V'.$row, '');
 
@@ -515,20 +521,14 @@ class HistorialProgramacion extends Component
                                             }
                                         } else{
                                             /* ---------------------------------------------*/
-                                            $vehiculo = DB::table('vehiculos  as v')
-                                                ->join('tipo_vehiculos as tv','tv.id_tipo_vehiculo','=','v.id_tipo_vehiculo')
-                                                ->where('v.id_vehiculo','=',$des->id_vehiculo)->first();
-                                            $vehiT = "";
-                                            if ($vehiculo){
-                                                $vehiT = $vehiculo->tipo_vehiculo_concepto.': '.$vehiculo->vehiculo_capacidad_peso.'kg - '.$vehiculo->vehiculo_placa;
-                                            }
+
                                             /* ---------------------------------------------*/
                                             $sheet1->setCellValue('O'.$row, '');
                                             $sheet1->setCellValue('P'.$row, "");
                                             $sheet1->mergeCells('P'.$row.':Q'.$row);
                                             $sheet1->setCellValue('R'.$row, "");
                                             $sheet1->setCellValue('S'.$row, "");
-                                            $sheet1->setCellValue('T'.$row, $vehiT);
+                                            $sheet1->setCellValue('T'.$row, "");
                                             $sheet1->setCellValue('U'.$row, "");
                                             $sheet1->setCellValue('V'.$row, '');
                                         }

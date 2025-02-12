@@ -35,6 +35,33 @@ class Facturaspreprogramaciones extends Component
     public function mount(){
         $this->desde = null;
         $this->hasta = null;
+
+        $this->selectedFacturas = [];
+
+        // Obtener facturas preprogramadas con estado 0
+        $facturasPreProgramadas = DB::table('facturas_pre_programaciones')
+            ->where('fac_pre_prog_estado', 0)
+            ->get();
+
+        // Formatear y agregar al array selectedFacturas
+        foreach ($facturasPreProgramadas as $factura) {
+            $this->selectedFacturas[] = [
+                'CFTD' => $factura->fac_pre_prog_cftd,
+                'CFNUMSER' => $factura->fac_pre_prog_cfnumser,
+                'CFNUMDOC' => $factura->fac_pre_prog_cfnumdoc,
+                'total_kg' => $factura->fac_pre_prog_total_kg,
+                'total_volumen' => $factura->fac_pre_prog_total_volumen,
+                'CNOMCLI' => $factura->fac_pre_prog_cnomcli,
+                'CFIMPORTE' => $factura->fac_pre_prog_cfimporte,
+                'CCODCLI' => $factura->fac_pre_prog_cfcodcli,
+                'guia' => $factura->fac_pre_prog_guia,
+                'GREFECEMISION' => $factura->fac_pre_prog_grefecemision,
+                'LLEGADADIRECCION' => $factura->fac_pre_prog_direccion_llegada,
+                'DEPARTAMENTO' => $factura->fac_pre_prog_departamento,
+                'PROVINCIA' => $factura->fac_pre_prog_provincia,
+                'DISTRITO' => $factura->fac_pre_prog_distrito,
+            ];
+        }
     }
 
     public function render(){
@@ -167,54 +194,49 @@ class Facturaspreprogramaciones extends Component
                 'selectedFacturas.min' => 'Debes seleccionar al menos una factura.',
             ]);
 
-            $contadorError = 0;
             DB::beginTransaction();
+
             foreach ($this->selectedFacturas as $factura) {
-                $existe = DB::table('facturas_pre_programaciones')
-                    ->where('fac_pre_prog_cftd', $factura['CFTD'])
+                // Verificar si la factura ya existe en la tabla
+                $facturaExistente = Facturaspreprogramacion::where('fac_pre_prog_cftd', $factura['CFTD'])
                     ->where('fac_pre_prog_cfnumser', $factura['CFNUMSER'])
                     ->where('fac_pre_prog_cfnumdoc', $factura['CFNUMDOC'])
-                    ->exists();
-                if ($existe) {
-                    $contadorError++;
-                }
-            }
-            if ($contadorError > 0) {
-                session()->flash('error', "Se encontraron comprobantes duplicadas. Por favor, verifica.");
-                DB::rollBack();
-                return;
-            }
+                    ->first();
 
-            foreach ($this->selectedFacturas as $factura) {
-                // Crear una nueva instancia del modelo y guardar los datos
-                $nuevaFactura = new Facturaspreprogramacion();
-                $nuevaFactura->id_users = Auth::id();
-                $nuevaFactura->fac_pre_prog_cftd = $factura['CFTD'];
-                $nuevaFactura->fac_pre_prog_cfnumser = $factura['CFNUMSER'];
-                $nuevaFactura->fac_pre_prog_cfnumdoc = $factura['CFNUMDOC'];
-                $nuevaFactura->fac_pre_prog_factura = $factura['CFNUMSER'] . '-' . $factura['CFNUMDOC'];
-                $nuevaFactura->fac_pre_prog_grefecemision = $factura['GREFECEMISION'];
-                $nuevaFactura->fac_pre_prog_cnomcli = $factura['CNOMCLI'];
-                $nuevaFactura->fac_pre_prog_cfcodcli = $factura['CCODCLI'];
-                $nuevaFactura->fac_pre_prog_guia = $factura['guia'];
-                $nuevaFactura->fac_pre_prog_cfimporte = $factura['CFIMPORTE'];
-                $nuevaFactura->fac_pre_prog_total_kg = $factura['total_kg'];
-                $nuevaFactura->fac_pre_prog_total_volumen = $factura['total_volumen'];
-                $nuevaFactura->fac_pre_prog_direccion_llegada = $factura['LLEGADADIRECCION'];
-                $nuevaFactura->fac_pre_prog_departamento = $factura['DEPARTAMENTO'];
-                $nuevaFactura->fac_pre_prog_provincia = $factura['PROVINCIA'];
-                $nuevaFactura->fac_pre_prog_distrito = $factura['DISTRITO'];
-                $nuevaFactura->fac_pre_prog_estado_aprobacion = $this->estado_envio;
-
-                if (!$nuevaFactura->save()) {
-                    session()->flash('Error al guardar una factura.');
+                if ($facturaExistente) {
+                    // Si la factura existe, actualizar el estado
+                    $facturaExistente->fac_pre_prog_estado_aprobacion = $this->estado_envio;
+                    $facturaExistente->fac_pre_prog_estado = 1;
+                    $facturaExistente->save();
+                } else {
+                    // Si no existe, crear un nuevo registro
+                    $nuevaFactura = new Facturaspreprogramacion();
+                    $nuevaFactura->id_users = Auth::id();
+                    $nuevaFactura->fac_pre_prog_cftd = $factura['CFTD'];
+                    $nuevaFactura->fac_pre_prog_cfnumser = $factura['CFNUMSER'];
+                    $nuevaFactura->fac_pre_prog_cfnumdoc = $factura['CFNUMDOC'];
+                    $nuevaFactura->fac_pre_prog_factura = $factura['CFNUMSER'] . '-' . $factura['CFNUMDOC'];
+                    $nuevaFactura->fac_pre_prog_grefecemision = $factura['GREFECEMISION'];
+                    $nuevaFactura->fac_pre_prog_cnomcli = $factura['CNOMCLI'];
+                    $nuevaFactura->fac_pre_prog_cfcodcli = $factura['CCODCLI'];
+                    $nuevaFactura->fac_pre_prog_guia = $factura['guia'];
+                    $nuevaFactura->fac_pre_prog_cfimporte = $factura['CFIMPORTE'];
+                    $nuevaFactura->fac_pre_prog_total_kg = $factura['total_kg'];
+                    $nuevaFactura->fac_pre_prog_total_volumen = $factura['total_volumen'];
+                    $nuevaFactura->fac_pre_prog_direccion_llegada = $factura['LLEGADADIRECCION'];
+                    $nuevaFactura->fac_pre_prog_departamento = $factura['DEPARTAMENTO'];
+                    $nuevaFactura->fac_pre_prog_provincia = $factura['PROVINCIA'];
+                    $nuevaFactura->fac_pre_prog_distrito = $factura['DISTRITO'];
+                    $nuevaFactura->fac_pre_prog_estado_aprobacion = $this->estado_envio;
+                    $nuevaFactura->fac_pre_prog_estado = 1;
+                    $nuevaFactura->save();
                 }
             }
             DB::commit();
             // Limpiar las facturas seleccionadas y el estado
             $this->selectedFacturas = [];
             $this->estado_envio = null;
-            session()->flash('success', 'Facturas guardadas correctamente.');
+            session()->flash('success', 'Facturas procesadas correctamente.');
         } catch (\Exception $e) {
             DB::rollBack();
             session()->flash('error', 'Ocurrió un error al guardar las facturas: ' . $e->getMessage());
