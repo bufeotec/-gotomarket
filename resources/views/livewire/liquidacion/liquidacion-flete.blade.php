@@ -344,7 +344,6 @@
         </div>
     @endif
 
-
     <form wire:submit.prevent="guardar_liquidacion">
         <x-card-general-view>
             <x-slot name="content">
@@ -376,7 +375,9 @@
                                     @foreach($despachos as $key => $despacho)
                                         <tr class="tableHoverLiquidacion">
                                             <td>
-                                                <input type="checkbox" class="form-check-input" wire:model="select_despachos.{{ $despacho->id_despacho }}">
+                                                <input type="checkbox" class="form-check-input"
+                                                       wire:model="select_despachos.{{ $despacho->id_despacho }}"
+                                                       wire:change="actualizarSubtotal" />
                                             </td>
                                             <td>{{ $despacho->despacho_numero_correlativo }}</td>
                                             <td>{{ $despacho->transportista_nom_comercial }}</td>
@@ -421,7 +422,10 @@
                                                     ? $despacho->despacho_costo_total
                                                     : ($despacho->despacho_monto_modificado * $totalPesoDespacho) + $despacho->despacho_ayudante + $despacho->despacho_gasto_otros;
 
-                                                $subtotalImporteTotal += $despachoGeneraLiquidacion; // Suma al subtotal
+                                                // Solo suma al subtotal si el despacho está seleccionado
+                                                if (isset($select_despachos[$despacho->id_despacho])) {
+                                                    $subtotalImporteTotal += $despachoGeneraLiquidacion;
+                                                }
                                             @endphp
                                             <td>S/ {{ $general->formatoDecimal($despachoGeneraLiquidacion) }}</td>
                                             <td><b class="{{ $despacho->despacho_estado_modificado == 1 ? 'text-success' : 'text-danger' }}">{{ $despacho->despacho_estado_modificado == 1 ? 'SI' : 'NO' }}</b></td>
