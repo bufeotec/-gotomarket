@@ -331,52 +331,83 @@
         </div>
     @endif
 
-    <div class="accordion mt-3" id="accordionExample" >
+    <div class="accordion mt-3" id="accordionExample">
         @if(count($resultado) > 0)
+            {{-- Ordenar y agrupar los resultados --}}
+            @php
+                // Convertir los resultados a una colección
+                $resultadoCollection = collect($resultado->items());
+
+                // Ordenar por fecha de programación
+                $resultadoCollection = $resultadoCollection->sortBy('programacion_fecha');
+
+                // Agrupar por proveedorlocal (Mixto, Local) o Provincial
+                $groupedResultado = $resultadoCollection->groupBy(function ($item) {
+                    // Verificar si la propiedad proveedorlocal existe
+                    $proveedorlocal = property_exists($item, 'proveedorlocal') ? $item->proveedorlocal : 'Provincial';
+
+                    if ($proveedorlocal === 'Mixto' || $proveedorlocal === 'Local') {
+                        return $proveedorlocal;
+                    } else {
+                        return 'Provincial';
+                    }
+                });
+
+                // Reorganizar los grupos: Mixto y Local primero, Provincial al final
+                $sortedGroups = $groupedResultado->sortByDesc(function ($group, $key) {
+                    return $key === 'Provincial' ? 1 : 0;
+                });
+
+                // Aplanar la colección para que vuelva a ser una lista simple
+                $resultadoFinal = $sortedGroups->flatten();
+            @endphp
+
+            {{-- Mostrar los datos --}}
             @php $conteoGeneral = 1; @endphp
-            @foreach($resultado as $index => $r)
+            @foreach($resultadoFinal as $index => $r)
                 @php
                     $usuarios = "-";
                     $usuarios2 = "-";
-                    if ($r->id_users){
-                        $e = \Illuminate\Support\Facades\DB::table('users')->where('id_users','=',$r->id_users)->first();
-                        if ($e){
-                            $usuarios = $e->name.' '.$e->last_name;
+                    if ($r->id_users) {
+                        $e = \Illuminate\Support\Facades\DB::table('users')->where('id_users', '=', $r->id_users)->first();
+                        if ($e) {
+                            $usuarios = $e->name . ' ' . $e->last_name;
                         }
                     }
-                    if ($r->id_users_programacion){
-                        $e2 = \Illuminate\Support\Facades\DB::table('users')->where('id_users','=',$r->id_users_programacion)->first();
-                        if ($e2){
-                            $usuarios2 = $e->name.' '.$e->last_name;
+                    if ($r->id_users_programacion) {
+                        $e2 = \Illuminate\Support\Facades\DB::table('users')->where('id_users', '=', $r->id_users_programacion)->first();
+                        if ($e2) {
+                            $usuarios2 = $e2->name . ' ' . $e2->last_name;
                         }
                     }
                     $general = new \App\Models\General();
-                    $fe = $general->obtenerNombreFecha($r->programacion_fecha,'Date','Date');
-                    $fc = $general->obtenerNombreFecha($r->created_at,'DateTime','DateTime');
-                    $fa = $general->obtenerNombreFecha($r->programacion_fecha_aprobacion,'DateTime','DateTime');
+                    $fe = $general->obtenerNombreFecha($r->programacion_fecha, 'Date', 'Date');
+                    $fc = $general->obtenerNombreFecha($r->created_at, 'DateTime', 'DateTime');
+                    $fa = $general->obtenerNombreFecha($r->programacion_fecha_aprobacion, 'DateTime', 'DateTime');
                 @endphp
-                <div class="accordion-item" >
+                <div class="accordion-item">
                     <h2 class="accordion-header">
-                        <button class="accordion-button {{$index == 0 ? '' : 'collapsed'}}" wire:ignore.self type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne_{{$index}}" aria-expanded="true" aria-controls="collapseOne_{{$index}}">
-                            #{{$conteoGeneral}} | FD : {{$fe}} | UR : {{$usuarios}} | FC : {{$fc}} | FA : {{$fa}} | N° C : {{$r->programacion_numero_correlativo}}
+                        <button class="accordion-button {{ $index == 0 ? '' : 'collapsed' }}" wire:ignore.self type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne_{{ $index }}" aria-expanded="true" aria-controls="collapseOne_{{ $index }}">
+                            #{{ $conteoGeneral }} | FD: {{ $fe }} | UR: {{ $usuarios }} | FC: {{ $fc }} | FA: {{ $fa }} | N° C: {{ $r->programacion_numero_correlativo }}
                         </button>
                     </h2>
-                    <div id="collapseOne_{{$index}}" class="accordion-collapse collapse {{$index == 0 ? 'show' : ''}}" data-bs-parent="#accordionExample" wire:ignore.self >
-                        <div class="accordion-body" >
+                    <div id="collapseOne_{{ $index }}" class="accordion-collapse collapse {{ $index == 0 ? 'show' : '' }}" data-bs-parent="#accordionExample" wire:ignore.self>
+                        <div class="accordion-body">
                             <div class="row">
                                 @if($roleId == 1 || $roleId == 2)
                                     @php
                                         $conteoRetornar = 0;
-                                        foreach ($r->despacho as $des){
-                                            if ($des->despacho_estado_aprobacion != 1){
+                                        foreach ($r->despacho as $des) {
+                                            if ($des->despacho_estado_aprobacion != 1) {
                                                 $conteoRetornar++;
                                             }
                                         }
                                     @endphp
                                     @if($conteoRetornar == 0)
                                         <div class="col-lg-12 col-md-12 col-sm-12 text-end mb-4">
-                                            <button class="btn btn-secondary text-white btn-sm"  wire:click="retornarProgamacionApro({{$r->id_programacion}})" data-bs-toggle="modal" data-bs-target="#modalRetornarPendiente"
-                                            ><i class="fa-solid fa-arrow-left"></i> Retornar a Programaciones Pendientes</button>
+                                            <button class="btn btn-secondary text-white btn-sm" wire:click="retornarProgamacionApro({{ $r->id_programacion }})" data-bs-toggle="modal" data-bs-target="#modalRetornarPendiente">
+                                                <i class="fa-solid fa-arrow-left"></i> Retornar a Programaciones Pendientes
+                                            </button>
                                         </div>
                                     @endif
                                 @endif
@@ -394,7 +425,7 @@
                                             <th>Peso</th>
                                             <th>Llenado en Peso</th>
                                             <th>Cambio de Tarifa</th>
-                                            <th>Coso Flete</th>
+                                            <th>Costo Flete</th>
                                             <th>Flete / Venta</th>
                                             <th>Flete / Peso</th>
                                             <th>Estado Despacho</th>
@@ -408,41 +439,37 @@
                                                 <tr>
                                                     <td>
                                                         @if($des->despacho_estado_aprobacion == 1)
-                                                            <input type="checkbox"
-                                                               wire:model.live="selectedItems"
-                                                               value="{{ $des->id_despacho }}"
-                                                               id="checkbox-{{ $des->id_despacho }}"
-                                                               class="form-check-input">
+                                                            <input type="checkbox" wire:model.live="selectedItems" value="{{ $des->id_despacho }}" id="checkbox-{{ $des->id_despacho }}" class="form-check-input">
                                                         @endif
                                                     </td>
-                                                    <td>{{$conteoGeneral2}}</td>
-                                                    <td>{{$des->tipo_servicio_concepto}}</td>
-                                                    <td>{{$des->despacho_numero_correlativo}}</td>
-                                                    <td>{{$des->transportista_nom_comercial}}</td>
-                                                    <td>S/ {{$general->formatoDecimal($des->totalVentaDespacho)}}</td>
-                                                    <td>{{$des->despacho_peso}} kg</td>
+                                                    <td>{{ $conteoGeneral2 }}</td>
+                                                    <td>{{ $des->tipo_servicio_concepto }}</td>
+                                                    <td>{{ $des->despacho_numero_correlativo }}</td>
+                                                    <td>{{ $des->transportista_nom_comercial }}</td>
+                                                    <td>S/ {{ $general->formatoDecimal($des->totalVentaDespacho) }}</td>
+                                                    <td>{{ $des->despacho_peso }} kg</td>
                                                     @php
                                                         $indi = "";
-                                                        if ($des->id_vehiculo){
-                                                            $vehi = \Illuminate\Support\Facades\DB::table('vehiculos')->where('id_vehiculo','=',$des->id_vehiculo)->first();
+                                                        if ($des->id_vehiculo) {
+                                                            $vehi = \Illuminate\Support\Facades\DB::table('vehiculos')->where('id_vehiculo', '=', $des->id_vehiculo)->first();
                                                             $indi = ($des->despacho_peso / $vehi->vehiculo_capacidad_peso) * 100;
                                                             $indi = $general->formatoDecimal($indi);
-                                                        }else{
+                                                        } else {
                                                             $indi = "-";
                                                         }
                                                     @endphp
-                                                    <td style="color: {{$general->obtenerColorPorPorcentaje($indi)}}">{{ $indi > 0 ? $indi.'%' : '-' }}</td>
+                                                    <td style="color: {{ $general->obtenerColorPorPorcentaje($indi) }}">{{ $indi > 0 ? $indi . '%' : '-' }}</td>
                                                     @php
                                                         $styleColor = "text-danger";
-                                                        if ($des->despacho_estado_modificado == 1){
+                                                        if ($des->despacho_estado_modificado == 1) {
                                                             $styleColor = "text-success";
                                                         }
                                                     @endphp
-                                                    <td><b class="{{$styleColor}}">{{$des->despacho_estado_modificado == 1 ? 'SI' : 'NO'}}</b></td>
+                                                    <td><b class="{{ $styleColor }}">{{ $des->despacho_estado_modificado == 1 ? 'SI' : 'NO' }}</b></td>
                                                     <td>
-                                                        <span class="{{$des->despacho_estado_modificado == 1 ? 'text-danger' : ''}}">S/ {{$des->despacho_flete}}</span>
-                                                        <b class="{{$styleColor}}">
-                                                            {{$des->despacho_estado_modificado == 1 ? '=> S/ '.$des->despacho_monto_modificado : ''}}
+                                                        <span class="{{ $des->despacho_estado_modificado == 1 ? 'text-danger' : '' }}">S/ {{ $des->despacho_flete }}</span>
+                                                        <b class="{{ $styleColor }}">
+                                                            {{ $des->despacho_estado_modificado == 1 ? '=> S/ ' . $des->despacho_monto_modificado : '' }}
                                                         </b>
                                                     </td>
                                                     @php
@@ -452,41 +479,41 @@
                                                             $ra = $general->formatoDecimal($to);
                                                         }
                                                     @endphp
-                                                    <td>{{$ra}} %</td>
+                                                    <td>{{ $ra }} %</td>
                                                     @php
                                                         $ra2 = 0;
-                                                        if ($des->despacho_costo_total){
+                                                        if ($des->despacho_costo_total) {
                                                             $to = $des->despacho_costo_total / $des->despacho_peso;
                                                             $ra2 = $general->formatoDecimal($to);
                                                         }
                                                     @endphp
-                                                    <td>{{$ra2}}</td>
+                                                    <td>{{ $ra2 }}</td>
                                                     <td>
                                                         @php
                                                             $colorBadge = "";
-                                                            if ($des->despacho_estado_aprobacion == 1){
+                                                            if ($des->despacho_estado_aprobacion == 1) {
                                                                 $colorBadge = "bg-label-warning";
-                                                            }elseif ($des->despacho_estado_aprobacion == 2){
+                                                            } elseif ($des->despacho_estado_aprobacion == 2) {
                                                                 $colorBadge = "bg-label-primary";
-                                                            }elseif ($des->despacho_estado_aprobacion == 3){
+                                                            } elseif ($des->despacho_estado_aprobacion == 3) {
                                                                 $colorBadge = "bg-label-success";
-                                                            }else{
+                                                            } else {
                                                                 $colorBadge = "bg-label-danger";
                                                             }
                                                         @endphp
-                                                        <span class="font-bold badge  {{$colorBadge}}">
-                                                        {{$des->despacho_estado_aprobacion == 1 ? 'APROBADO ' : ''}}
-                                                            {{$des->despacho_estado_aprobacion == 2 ? 'EN CAMINO ' : ''}}
-                                                            {{$des->despacho_estado_aprobacion == 3 ? 'CULMINADO' : ''}}
-                                                            {{$des->despacho_estado_aprobacion == 4 ? 'RECHAZADO' : ''}}
-                                                    </span>
+                                                        <span class="font-bold badge {{ $colorBadge }}">
+                                                            {{ $des->despacho_estado_aprobacion == 1 ? 'APROBADO ' : '' }}
+                                                            {{ $des->despacho_estado_aprobacion == 2 ? 'EN CAMINO ' : '' }}
+                                                            {{ $des->despacho_estado_aprobacion == 3 ? 'CULMINADO' : '' }}
+                                                            {{ $des->despacho_estado_aprobacion == 4 ? 'RECHAZADO' : '' }}
+                                                        </span>
                                                     </td>
                                                     <td>
-                                                        <button class="btn btn-sm text-primary" wire:click="listar_informacion_despacho({{$des->id_despacho}})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">
+                                                        <button class="btn btn-sm text-primary" wire:click="listar_informacion_despacho({{ $des->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">
                                                             <i class="fa-solid fa-eye"></i>
                                                         </button>
                                                         @if($des->despacho_estado_aprobacion == 1)
-                                                            <button class="btn btn-sm text-warning" wire:click="cambiarEstadoDespacho({{$des->id_despacho}})" data-bs-toggle="modal" data-bs-target="#modalAprobarProgramacion">
+                                                            <button class="btn btn-sm text-warning" wire:click="cambiarEstadoDespacho({{ $des->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalAprobarProgramacion">
                                                                 <i class="fa fa-car-side"></i>
                                                             </button>
                                                         @endif
@@ -511,10 +538,14 @@
                 @php $conteoGeneral++; @endphp
             @endforeach
         @else
-            <p class="text-center"> Registros Insuficientes</p>
+            <p class="text-center">Registros Insuficientes</p>
         @endif
     </div>
 
+    {{-- Mostrar enlaces de paginación --}}
+    <div class="mt-4">
+        {{ $resultado->links() }}
+    </div>
     {{ $resultado->links(data: ['scrollTo' => false]) }}
 
     <style>
