@@ -345,7 +345,7 @@
     @endif
 
 
-    <form  wire:submit.prevent="guardar_liquidacion">
+    <form wire:submit.prevent="guardar_liquidacion">
         <x-card-general-view>
             <x-slot name="content">
                 <div class="row">
@@ -370,90 +370,64 @@
 
                             <x-slot name="tbody">
                                 @if(count($despachos) > 0)
+                                    @php
+                                        $subtotalImporteTotal = 0; // Inicializa el subtotal
+                                    @endphp
                                     @foreach($despachos as $key => $despacho)
                                         <tr class="tableHoverLiquidacion">
                                             <td>
-                                                <input
-                                                    type="checkbox"
-                                                    class="form-check-input"
-                                                    wire:model="select_despachos.{{ $despacho->id_despacho }}"
-                                                    wire:key="{{ $despacho->id_despacho }}"
-                                                    {{ isset($select_despachos[$despacho->id_despacho]) ? 'checked' : '' }}
-                                                    wire:click="actualizarDespacho('{{ $despacho->id_despacho }}', $event.target.checked)"
-                                                >
+                                                <input type="checkbox" class="form-check-input" wire:model="select_despachos.{{ $despacho->id_despacho }}">
                                             </td>
                                             <td>{{ $despacho->despacho_numero_correlativo }}</td>
                                             <td>{{ $despacho->transportista_nom_comercial }}</td>
                                             <td>{{ $despacho->tipo_servicio_concepto }}</td>
-                                            <td>{{ date('d-m-Y',strtotime($despacho->programacion_fecha))  }}</td>
+                                            <td>{{ date('d-m-Y', strtotime($despacho->programacion_fecha)) }}</td>
                                             <td>
                                                 @php
                                                     $guiasComprobante = \Illuminate\Support\Facades\DB::table('despacho_ventas')->where('id_despacho', '=', $despacho->id_despacho)->get();
-                                                    $totalGuias = count($guiasComprobante); // Contamos las guías
+                                                    $totalGuias = count($guiasComprobante);
                                                 @endphp
                                                 @foreach($guiasComprobante as $indexGuias => $g)
-                                                    @if($indexGuias <= 2)
-                                                        <a wire:click="listar_guias_despachos({{ $despacho->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalDetalleGuias" class="cursoPointer text-primary">
-                                                            {{ $general->formatearCodigo($g->despacho_venta_guia) }}
-                                                        </a>
-                                                        @if($indexGuias < 2 && $indexGuias < $totalGuias - 1)
-                                                            , <!-- Mostrar la coma solo si no es el último elemento que se va a mostrar -->
-                                                        @elseif($indexGuias == 2 && $totalGuias > 3)
-                                                            ... <!-- Mostrar "..." si hay más guías después de las tres primeras -->
-                                                        @endif
+                                                    <a wire:click="listar_guias_despachos({{ $despacho->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalDetalleGuias" class="cursoPointer text-primary">
+                                                        {{ $general->formatearCodigo($g->despacho_venta_guia) }}
+                                                    </a>
+                                                    @if($indexGuias < 2 && $indexGuias < $totalGuias - 1)
+                                                        ,
+                                                    @elseif($indexGuias == 2 && $totalGuias > 3)
+                                                        ...
                                                     @endif
                                                 @endforeach
                                             </td>
                                             <td>
                                                 @php
                                                     $totalVentaDespaDespacho = $despacho->totalVentaDespacho;
-                                                    if ($despacho->totalVentaNoEntregado){
-                                                        $totalVentaDespaDespacho = $despacho->totalVentaDespacho - $despacho->totalVentaNoEntregado;
+                                                    if ($despacho->totalVentaNoEntregado) {
+                                                        $totalVentaDespaDespacho -= $despacho->totalVentaNoEntregado;
                                                     }
                                                 @endphp
-                                                <span class="d-block">S/ {{ $general->formatoDecimal($despacho->totalVentaDespacho) }}</span>
-                                                @if($despacho->totalVentaNoEntregado)
-                                                    <span class="d-block text-danger">S/ -{{ $general->formatoDecimal($despacho->totalVentaNoEntregado) }}</span>
-                                                    <b class="colorBlackComprobantes">S/ {{ $general->formatoDecimal($totalVentaDespaDespacho) }}</b>
-                                                @endif
+                                                <span class="d-block">S/ {{ $general->formatoDecimal($totalVentaDespaDespacho) }}</span>
                                             </td>
                                             <td>
                                                 @php
                                                     $totalPesoDespacho = $despacho->despacho_peso;
-                                                    if ($despacho->totalPesoNoEntregado){
-                                                        $totalPesoDespacho = $despacho->despacho_peso - $despacho->totalPesoNoEntregado;
+                                                    if ($despacho->totalPesoNoEntregado) {
+                                                        $totalPesoDespacho -= $despacho->totalPesoNoEntregado;
                                                     }
                                                 @endphp
-                                                <span class="d-block">{{ $general->formatoDecimal($despacho->despacho_peso) }}</span>
-                                                @if($despacho->totalPesoNoEntregado)
-                                                    <span class="d-block text-danger">-{{ $general->formatoDecimal($despacho->totalPesoNoEntregado) }}</span>
-                                                    <b class="colorBlackComprobantes">{{ $general->formatoDecimal($totalPesoDespacho) }} kg</b>
-                                                @endif
+                                                <span class="d-block">{{ $general->formatoDecimal($totalPesoDespacho) }} kg</span>
                                             </td>
                                             @php
-                                                $despachoGeneraLiquidacion = 0;
-                                                if ($despacho->id_tipo_servicios == 1){
-                                                    $despachoGeneraLiquidacion = $despacho->despacho_costo_total;
-                                                }else{
-                                                    $despachoGeneraLiquidacion = ($despacho->despacho_monto_modificado * $totalPesoDespacho) + $despacho->despacho_ayudante + $despacho->despacho_gasto_otros;
-                                                }
+                                                $despachoGeneraLiquidacion = ($despacho->id_tipo_servicios == 1)
+                                                    ? $despacho->despacho_costo_total
+                                                    : ($despacho->despacho_monto_modificado * $totalPesoDespacho) + $despacho->despacho_ayudante + $despacho->despacho_gasto_otros;
+
+                                                $subtotalImporteTotal += $despachoGeneraLiquidacion; // Suma al subtotal
                                             @endphp
                                             <td>S/ {{ $general->formatoDecimal($despachoGeneraLiquidacion) }}</td>
-
-                                            @php
-                                                $styleColor = "text-danger";
-                                                if ($despacho->despacho_estado_modificado == 1){
-                                                    $styleColor = "text-success";
-                                                }
-                                            @endphp
-                                            <td><b class="{{$styleColor}}">{{$despacho->despacho_estado_modificado == 1 ? 'SI' : 'NO'}}</b></td>
+                                            <td><b class="{{ $despacho->despacho_estado_modificado == 1 ? 'text-success' : 'text-danger' }}">{{ $despacho->despacho_estado_modificado == 1 ? 'SI' : 'NO' }}</b></td>
                                             <td>
-                                                <span class="{{$despacho->despacho_estado_modificado == 1 ? 'text-danger' : ''}}">S/ {{$general->formatoDecimal($despacho->despacho_flete)}}</span>
-                                                <b class="{{$styleColor}}">
-                                                    {{$despacho->despacho_estado_modificado == 1 ? '=> S/ '.$general->formatoDecimal($despacho->despacho_monto_modificado) : ''}}
-                                                </b>
+                                                <span class="{{ $despacho->despacho_estado_modificado == 1 ? 'text-danger' : '' }}">S/ {{ $general->formatoDecimal($despacho->despacho_flete) }}</span>
                                             </td>
-
                                             <td>
                                                 <x-btn-accion class="btn btn-sm text-primary" wire:click="listar_informacion_despacho({{ $despacho->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">
                                                     <x-slot name="message">
@@ -462,146 +436,13 @@
                                                 </x-btn-accion>
                                             </td>
                                         </tr>
-                                        @if(!empty($select_despachos[$despacho->id_despacho]))
-                                            <tr>
-                                                <td colspan="12">
-                                                    <div class="px-3 row" >
-                                                        <div class="col-lg-12 col-md-12 col-sm-12">
-                                                            <table class="table ">
-                                                                <thead>
-                                                                <tr>
-                                                                    <th></th>
-                                                                    <th>Costo de Tarifa</th>
-                                                                    <th>Mano de Obra</th>
-                                                                    <th>Otros Gastos</th>
-                                                                    @if($despacho->id_tipo_servicios == 2)
-                                                                        <th>Peso Total</th>
-                                                                    @endif
-                                                                    <th>Total Despacho</th>
-                                                                    <th>Flete / Venta</th>
-                                                                    <th>Flete / Peso</th>
-                                                                </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                <tr>
-                                                                    <td><b class="colorBlackComprobantes">Monto Programado</b></td>
-                                                                    <td>S/ {{ $general->formatoDecimal($despacho->despacho_monto_modificado) }}</td>
-                                                                    <td>S/ {{ $despacho->despacho_ayudante ? $general->formatoDecimal($despacho->despacho_ayudante) : 0 }}</td>
-                                                                    <td>S/ {{ $despacho->despacho_gasto_otros ? $general->formatoDecimal($despacho->despacho_gasto_otros) : 0 }}</td>
-                                                                    @if($despacho->id_tipo_servicios == 2)
-                                                                        <td>
-                                                                            {{ $general->formatoDecimal($totalPesoDespacho) }}
-                                                                        </td>
-                                                                     @endif
-                                                                    <td>S/ {{ $general->formatoDecimal($despachoGeneraLiquidacion) }}</td>
-
-                                                                    <td>
-                                                                        {{ $totalVentaDespaDespacho != 0 ? $general->formatoDecimal(($despachoGeneraLiquidacion / $totalVentaDespaDespacho) * 100) : '0.00' }} %
-                                                                    </td>
-                                                                    <td>
-                                                                        {{ $totalPesoDespacho != 0 ? $general->formatoDecimal($despachoGeneraLiquidacion / $totalPesoDespacho) : '0.00' }}
-                                                                    </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td><b class="colorBlackComprobantes">Monto de Liquidación</b></td>
-                                                                    @php
-                                                                        $costoTarifa = isset($select_despachos[$despacho->id_despacho]['gastos']['costo_flete']['valor'])
-                                                                        ? floatval($select_despachos[$despacho->id_despacho]['gastos']['costo_flete']['valor'])
-                                                                        : 0;
-
-                                                                    $costoMano = isset($select_despachos[$despacho->id_despacho]['gastos']['mano_obra']['valor'])
-                                                                        ? floatval($select_despachos[$despacho->id_despacho]['gastos']['mano_obra']['valor'])
-                                                                        : 0;
-
-                                                                    $costoOtros = isset($select_despachos[$despacho->id_despacho]['gastos']['otros_gasto']['valor'])
-                                                                        ? floatval($select_despachos[$despacho->id_despacho]['gastos']['otros_gasto']['valor'])
-                                                                        : 0;
-
-                                                                    $pesoFinalLi = isset($select_despachos[$despacho->id_despacho]['gastos']['peso_final_kilos']['valor'])
-                                                                        ? floatval($select_despachos[$despacho->id_despacho]['gastos']['peso_final_kilos']['valor'])
-                                                                        : 0;
-
-                                                                        $mostrarItems = $despacho->id_tipo_servicios == 1 ? 3  : 4;
-                                                                        $conteoIteGa = 1;
-                                                                    @endphp
-
-                                                                    @foreach($select_despachos[$despacho->id_despacho]['gastos'] as $keyGastos => $gasto)
-                                                                        @if($conteoIteGa <= $mostrarItems)
-                                                                            <td>
-                                                                                {{--                                                                            <label for="" class="form-label">--}}
-                                                                                {{--                                                                                @switch($keyGastos)--}}
-                                                                                {{--                                                                                    @case('costo_flete')--}}
-                                                                                {{--                                                                                        Costo de Tarifa--}}
-                                                                                {{--                                                                                        @break--}}
-                                                                                {{--                                                                                    @case('mano_obra')--}}
-                                                                                {{--                                                                                        Mano de Obra--}}
-                                                                                {{--                                                                                        @break--}}
-                                                                                {{--                                                                                    @case('otros_gasto')--}}
-                                                                                {{--                                                                                        Otros Gastos--}}
-                                                                                {{--                                                                                        @break--}}
-                                                                                {{--                                                                                    @default--}}
-                                                                                {{--                                                                                        Gasto--}}
-                                                                                {{--                                                                                @endswitch--}}
-                                                                                {{--                                                                            </label>--}}
-
-                                                                                    <x-input-general
-                                                                                        type="text"
-                                                                                        name="{{ $keyGastos }}_valor"
-                                                                                        id="{{ $keyGastos }}_valor_{{ $despacho->id_despacho }}"
-                                                                                        onkeyup="validar_numeros(this.id)"
-                                                                                        wire:model.live="select_despachos.{{ $despacho->id_despacho }}.gastos.{{ $keyGastos }}.valor"
-                                                                                    />
-
-                                                                                    <textarea
-                                                                                        name="{{ $keyGastos }}_descripcion"
-                                                                                        id="{{ $keyGastos }}_descripcion_{{ $despacho->id_despacho }}"
-                                                                                        class="form-control mt-2"
-                                                                                        rows="2"
-                                                                                        wire:model="select_despachos.{{ $despacho->id_despacho }}.gastos.{{ $keyGastos }}.descripcion"
-                                                                                    ></textarea>
-                                                                            </td>
-                                                                        @endif
-
-                                                                        @php $conteoIteGa++; @endphp
-                                                                    @endforeach
-                                                                    {{--  <td>S/ {{ $general->formatoDecimal($costoTarifa) }}</td>--}}
-                                                                    {{--  <td>S/ {{ $costoMano ? $general->formatoDecimal($costoMano) : 0 }}</td>--}}
-                                                                    {{--  <td>S/ {{ $costoOtros ? $general->formatoDecimal($costoOtros) : 0 }}</td>--}}
-                                                                    @php
-                                                                        $totalDespacho = 0;
-                                                                        if ($despacho->id_tipo_servicios == 1){
-                                                                            $totalDespacho = $costoTarifa + $costoMano + $costoOtros;
-                                                                        }else{
-                                                                            $totalDespacho = ($costoTarifa * $pesoFinalLi) + $costoMano + $costoOtros;
-                                                                        }
-                                                                    @endphp
-                                                                    <td>S/ {{ $general->formatoDecimal($totalDespacho) }}</td>
-                                                                    <td>{{$totalVentaDespaDespacho != 0 ?  $general->formatoDecimal(($totalDespacho / $totalVentaDespaDespacho) * 100) : '0' }} % </td>
-                                                                    <td>{{$pesoFinalLi != 0 ? $general->formatoDecimal($totalDespacho / $pesoFinalLi) : '0' }}</td>
-                                                                </tr>
-                                                                </tbody>
-                                                            </table>
-                                                        </div>
-                                                        <div class="col-lg-12 col-md-12 col-sm-12 mt-2 mb-2">
-                                                            <label for="comentarios_{{ $despacho->id_despacho }}" class="form-label">
-                                                                <b class="colorBlackComprobantes"> Comentarios:</b>
-                                                            </label>
-                                                            <textarea
-                                                                class="form-control"
-                                                                rows="3"
-                                                                id="comentarios_{{ $despacho->id_despacho }}"
-                                                                wire:model="select_despachos.{{ $despacho->id_despacho }}.comentarios"
-                                                            ></textarea>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @endif
-
                                     @endforeach
+                                    <tr class="text-end">
+                                        <td colspan="12" class="text-end"><h5 class="text-primary">Subtotal: S/ {{ $general->formatoDecimal($subtotalImporteTotal) }}</h5></td>
+                                    </tr>
                                 @else
                                     <tr>
-                                        <td colspan="11" class="text-center">No se han encontrado resultados.</td>
+                                        <td colspan="12" class="text-center">No se han encontrado resultados.</td>
                                     </tr>
                                 @endif
                             </x-slot>
@@ -629,7 +470,6 @@
             </div>
         </div>
     </form>
-
     <style>
         .card{
             margin-bottom:0rem;

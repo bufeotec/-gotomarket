@@ -63,7 +63,7 @@
                         <select class="form-select" wire:model="id_tarifario">
                             <option value="">Seleccionar...</option>
                             @foreach($listar_tarifario as $ld)
-                                <option value="{{ $ld->id_tarifario }}">{{ $ld->tarifa_monto  }}</option>
+                                <option value="{{ $ld->id_tarifario }}">S/ {{ $ld->tarifa_monto  }}</option>
                             @endforeach
                         </select>
                         @error('id_tarifario')
@@ -247,7 +247,7 @@
                                         </td>
                                         <td>
                                             <span class="font-bold badge {{$lv->vehiculo_estado == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
-                                                {{$lv->vehiculo_estado == 1 ? 'Aprovado ' : 'Pendiente ' }}
+                                                {{$lv->vehiculo_estado == 1 ? 'Aprobado ' : 'Pendiente ' }}
                                             </span>
                                         </td>
 

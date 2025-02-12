@@ -17,4 +17,16 @@ class Provincia extends Model
         parent::__construct();
         $this->logs = new Logs();
     }
+
+    public function lista_provincia(){
+        try {
+
+            $result = Provincia::get();
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
 }
