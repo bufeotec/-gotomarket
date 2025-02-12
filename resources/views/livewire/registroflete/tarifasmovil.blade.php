@@ -3,7 +3,7 @@
         $general = new \App\Models\General();
     @endphp
 
-    {{-- MODAL DELETE --}}
+{{--     MODAL DELETE--}}
     <x-modal-delete wire:ignore.self>
         <x-slot name="id_modal">modalDeleteTarifaMovil</x-slot>
         <x-slot name="modalContentDelete">
@@ -30,22 +30,18 @@
             </form>
         </x-slot>
     </x-modal-delete>
-    {{-- FIN MODAL DELETE --}}
+{{--     FIN MODAL DELETE--}}
 
-{{--    <div class="row">--}}
-{{--        <div class="col-lg-6 col-md-6 col-sm-12 d-flex align-items-center mb-2">--}}
-{{--            <div class="row align-items-center mt-2">--}}
-{{--                <div class="col-lg-5 col-md-2 col-sm-12 mb-2">--}}
-{{--                    <label for="fecha_desde" class="form-label">Desde</label>--}}
-{{--                    <input type="date" name="fecha_desde" id="fecha_desde" wire:model.live="desde" class="form-control">--}}
-{{--                </div>--}}
-{{--                <div class="col-lg-5 col-md-2 col-sm-12 mb-2">--}}
-{{--                    <label for="fecha_hasta" class="form-label">Hasta</label>--}}
-{{--                    <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model.live="hasta" class="form-control">--}}
-{{--                </div>--}}
-{{--            </div>--}}
-{{--        </div>--}}
-{{--    </div>--}}
+    <div class="row">
+        <div class="col-lg-6 col-md-6 col-sm-12 d-flex align-items-center mb-2">
+            <div class="row align-items-center mt-2">
+                <div class="col-lg-12 col-md-6 col-sm-12 d-flex align-items-center mb-2">
+                    <input type="text" class="form-control w-50 me-4"  wire:model.live="searchx" placeholder="Buscar">
+                    <x-select-filter wire:model.live="paginationx" />
+                </div>
+            </div>
+        </div>
+    </div>
 
     @if (session()->has('success'))
         <div class="alert alert-success alert-dismissible fade show mt-2">
@@ -79,8 +75,8 @@
                                         <td>{{ $lt->transportista_nom_comercial ?? 'N/A' }}</td>
                                         <td>{{ $lt->tipo_vehiculo_concepto ?? 'N/A' }}</td>
                                         <td>{{ $lt->vehiculo_placa ?? 'N/A' }}</td>
-                                        <td>{{ $lt->tarifa_monto }}</td>
-                                        <td class="text-center">{{ $lt->updated_at  }}</td>
+                                        <td>S/ {{ $lt->tarifa_monto }}</td>
+                                        <td class="text-center"> {{ $lt->updated_at ? \Carbon\Carbon::parse($lt->updated_at)->format('j M. Y /\ h:i a') : '---' }}</td>
                                         <td>{{ $lt->vehiculo_estado == 0 ? 'Pendiente' : 'Aprobado' }}</td>
                                         <td>
                                             @if($lt->vehiculo_estado == 0)
