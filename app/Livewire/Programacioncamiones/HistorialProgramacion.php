@@ -419,6 +419,7 @@ class HistorialProgramacion extends Component
 
                     foreach ($resPro->despacho as $inD => $des){
                         if ($inD == 0){
+                            $des->comprobantes = collect($des->comprobantes)->sortBy('despacho_venta_grefecemision')->values();
                             $filaPorcentajeLocal = null;
                             $fleteFinalLocal = null;
 
@@ -437,7 +438,8 @@ class HistorialProgramacion extends Component
                                     ->where('dv.despacho_venta_cfnumdoc','=',$comproba->despacho_venta_cfnumdoc)
                                     ->where('dv.id_despacho','<>',$des->id_despacho)
                                     ->where('d.id_programacion','=',$resPro->id_programacion)
-                                    ->where('d.id_tipo_servicios','=',2)->first();
+                                    ->where('d.id_tipo_servicios','=',2)
+                                    ->first();
 
                                 if ($validarMixto){
                                     $typeComprop = 3;
@@ -511,10 +513,13 @@ class HistorialProgramacion extends Component
                                                 $sheet1->mergeCells('P'.$rowO_W.':Q'.$rowO_W);
                                                 $sheet1->setCellValue('R'.$rowO_W, $this->general->formatoDecimal($costoOtros));
                                                 $sheet1->setCellValue('S'.$rowO_W, $this->general->formatoDecimal($costoMano));
-                                                $sheet1->setCellValue('T'.$rowO_W, $des->transportista_nom_comercial.' - '.$informacionliquidacion->despacho_numero_correlativo);
+                                                $sheet1->setCellValue('T'.$rowO_W, $des->transportista_nom_comercial);
                                                 $sheet1->setCellValue('U'.$rowO_W, $fac_pro);
                                                 $sheet1->setCellValue('V'.$rowO_W, $this->general->formatoDecimal($totalGeneralLocal));
                                                 $sheet1->setCellValue('W'.$rowO_W, '');
+
+                                                $fleteFinalLocal = $totalGeneralLocal;
+                                                $filaPorcentajeLocal = $rowO_W;
 
                                                 $rowO_W++; // Incrementamos solo para O-W
 
