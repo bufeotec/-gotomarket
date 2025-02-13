@@ -680,6 +680,7 @@
                 @php $conteoGeneral++; @endphp
             @endforeach
         @else
+{{--            --}}
             <p class="text-center"> Registros Insuficientes</p>
         @endif
     </div>

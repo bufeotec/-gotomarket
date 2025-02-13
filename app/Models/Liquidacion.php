@@ -83,6 +83,7 @@ class Liquidacion extends Model
         }
         return $result;
     }
+//
 //    public function listar_liquidacion_aprobadas_excel($search,$desde, $hasta)
 //    {
 //        try {
