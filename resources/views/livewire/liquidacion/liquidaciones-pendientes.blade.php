@@ -490,8 +490,13 @@
 
     <div class="accordion mt-3" id="accordionExample">
         @if(count($resultado) > 0)
+            {{-- Ordenar los resultados por fecha de creación (de la más antigua a la más reciente) --}}
+            @php
+                $resultadoOrdenado = collect($resultado)->sortBy('creacion_liquidacion');
+            @endphp
+
             @php $conteoGeneral = 1; @endphp
-            @foreach($resultado as $index => $r)
+            @foreach($resultadoOrdenado as $index => $r)
                 <div class="accordion-item">
                     <h2 class="accordion-header">
                         <button class="accordion-button {{$index == 0 ? '' : 'collapsed'}}" wire:ignore.self type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne_{{$index}}" aria-expanded="true" aria-controls="collapseOne_{{$index}}">
@@ -608,7 +613,7 @@
                                                     $despachoGeneraLiquidacion = 0;
                                                     if ($de->id_tipo_servicios == 1){
                                                         $despachoGeneraLiquidacion = $de->despacho_costo_total;
-                                                    }else{
+                                                    } else {
                                                         $despachoGeneraLiquidacion = ($de->despacho_monto_modificado * $totalPesoDespacho) + $de->despacho_ayudante + $de->despacho_gasto_otros;
                                                     }
                                                 @endphp
@@ -639,7 +644,7 @@
                                                     $totalDespachoMontoLiquidado = 0;
                                                     if ($de->id_tipo_servicios == 1){
                                                         $totalDespachoMontoLiquidado = $costoTarifa + $costoMano + $costoOtros;
-                                                    }else{
+                                                    } else {
                                                         $totalDespachoMontoLiquidado = ($costoTarifa * $pesoFinalLiquidacion) + $costoMano + $costoOtros;
                                                     }
                                                 @endphp
@@ -676,14 +681,12 @@
                             </div>
                         </div>
                     </div>
+                    @php $conteoGeneral++; @endphp
+                    @endforeach
+                    @else
+                        <p class="text-center"> Registros Insuficientes</p>
+                    @endif
                 </div>
-                @php $conteoGeneral++; @endphp
-            @endforeach
-        @else
-{{--            --}}
-            <p class="text-center"> Registros Insuficientes</p>
-        @endif
-    </div>
 </div>
 @script
     <script>
