@@ -17,4 +17,16 @@ class Distrito extends Model
         parent::__construct();
         $this->logs = new Logs();
     }
+
+    public function lista_distrito(){
+        try {
+
+            $result = Distrito::get();
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
 }

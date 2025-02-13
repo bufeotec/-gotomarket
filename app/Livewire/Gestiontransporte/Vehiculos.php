@@ -343,6 +343,7 @@ class Vehiculos extends Component
                     $vehiculo_update->vehiculo_ancho = $this->vehiculo_ancho;
                     $vehiculo_update->vehiculo_largo = $this->vehiculo_largo;
                     $vehiculo_update->vehiculo_alto = $this->vehiculo_alto;
+                    $vehiculo_update->vehiculo_estado = 0;
                     $vehiculo_update->vehiculo_capacidad_volumen = $this->vehiculo_capacidad_volumen;
 
                     // Guardar cambios en el vehículo
