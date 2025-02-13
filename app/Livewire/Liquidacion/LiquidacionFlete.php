@@ -148,31 +148,6 @@ class LiquidacionFlete extends Component
         }
     }
 
-    public function actualizarSubtotal()
-    {
-        $this->subtotalImporteTotal = 0;
-
-        foreach ($this->select_despachos as $id_despacho => $selected) {
-            if ($selected) {
-                $despacho = Despacho::find($id_despacho);
-                $totalVentaDespaDespacho = $despacho->totalVentaDespacho;
-                if ($despacho->totalVentaNoEntregado) {
-                    $totalVentaDespaDespacho -= $despacho->totalVentaNoEntregado;
-                }
-                $totalPesoDespacho = $despacho->despacho_peso;
-                if ($despacho->totalPesoNoEntregado) {
-                    $totalPesoDespacho -= $despacho->totalPesoNoEntregado;
-                }
-
-                $despachoGeneraLiquidacion = ($despacho->id_tipo_servicios == 1)
-                    ? $despacho->despacho_costo_total
-                    : ($despacho->despacho_monto_modificado * $totalPesoDespacho) + $despacho->despacho_ayudante + $despacho->despacho_gasto_otros;
-
-                $this->subtotalImporteTotal += $despachoGeneraLiquidacion;
-            }
-        }
-    }
-
     public function seleccion_trans(){
         $value = $this->id_transportistas;
         if ($value) {

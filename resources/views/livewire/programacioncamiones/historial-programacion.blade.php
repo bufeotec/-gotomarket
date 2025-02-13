@@ -338,7 +338,7 @@
                 // Convertir los resultados a una colección
                 $resultadoCollection = collect($resultado->items());
 
-                // Ordenar por fecha de programación
+                // Ordenar por fecha de programación (de la más antigua a la más reciente)
                 $resultadoCollection = $resultadoCollection->sortBy('programacion_fecha');
 
                 // Agrupar por proveedorlocal (Mixto, Local) o Provincial
