@@ -44,7 +44,7 @@ class Facturasaprobar extends Component
     }
     public function disable_pre_pro(){
         try {
-            if (!Gate::allows('disable_pre_pro')) {
+            if (!Gate::allows('disable_pre_prog')) {
                 session()->flash('error_pre_pro', 'No tiene permisos para cambiar los estados de este registro.');
                 return;
             }
