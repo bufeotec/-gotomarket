@@ -16,14 +16,14 @@ class Tarifasmovil extends Component
 {
     private $logs;
     private $tarifammovil;
-    public $searchx;
+    public $searchx = '';
     public $paginationx = 10;
-
-    public $desde;
-    public $hasta;
+//
+//    public $desde;
+//    public $hasta;
     public $id_vehiculo;
     public $id_tarifario;
-//    public $id_tarifa_movil;
+
     public $messageDeleteTm = "";
     public $vehiculo_estado; // Estado del vehículo
 
@@ -39,7 +39,7 @@ class Tarifasmovil extends Component
     }
 
     public function render() {
-        $listar_tarifamovil = $this->tarifammovil->listar_tarifamovil($this->searchx, $this->paginationx,'asc',$this->desde,$this->hasta);
+        $listar_tarifamovil = $this->tarifammovil->listar_tarifamovil($this->searchx, $this->paginationx,'desc');
         $listar_vehiculo = $this->tarifammovil->listar_vehiculo();
         $listar_tarifario = $this->tarifammovil->listar_tarifario();
         return view('livewire.registroflete.tarifasmovil', compact('listar_vehiculo', 'listar_tarifamovil', 'listar_tarifario'));
@@ -121,50 +121,5 @@ class Tarifasmovil extends Component
             ]);
         }
     }
-
-
-
-//    public function disable_tm() {
-//        try {
-//            if (!Gate::allows('disable_tm')) {
-//                session()->flash('error_delete', 'No tiene permisos para cambiar los estados de este registro.');
-//                return;
-//            }
-//
-//            $this->validate([
-//                'id_vehiculo' => 'required|integer',
-//                'vehiculo_estado' => 'required|integer',
-//            ], [
-//                'id_vehiculo.required' => 'El identificador es obligatorio.',
-//                'id_vehiculo.integer' => 'El identificador debe ser un número entero.',
-//                'vehiculo_estado.required' => 'El estado es obligatorio.',
-//                'vehiculo_estado.integer' => 'El estado debe ser un número entero.',
-//            ]);
-//
-//            DB::beginTransaction();
-//
-//            // Obtener el vehículo
-//            $vehiculo = Vehiculo::find($this->id_vehiculo);
-//            if (!$vehiculo) {
-//                session()->flash('error_delete', 'Registro de vehículo no encontrado.');
-//                return;
-//            }
-//
-//            // Cambiar el estado del vehículo
-//            $vehiculo->vehiculo_estado = $this->vehiculo_estado; // Ahora se usa vehiculo_estado
-//            $vehiculo->save();
-//
-//            DB::commit();
-//            $this->dispatch('hideModalDelete');
-//            session()->flash('success', $this->vehiculo_estado == 0 ? 'Vehículo deshabilitado correctamente.' : 'Vehículo habilitado correctamente.');
-//
-//        } catch (\Illuminate\Validation\ValidationException $e) {
-//            $this->setErrorBag($e->validator->errors());
-//        } catch (\Exception $e) {
-//            DB::rollBack();
-//            $this->logs->insertarLog($e);
-//            session()->flash('error', 'Ocurrió un error al guardar el registro. Por favor, inténtelo nuevamente.');
-//        }
-//    }
 
 }

@@ -5,7 +5,7 @@
 
     {{-- AGREGAR COMENTARIO --}}
     <x-modal-general  wire:ignore.self >
-{{--        <x-slot name="tama">modal-lg</x-slot>--}}
+        {{--        <x-slot name="tama">modal-lg</x-slot>--}}
         <x-slot name="id_modal">modalComentarioLiquidacion</x-slot>
         <x-slot name="titleModal">Gestionar Observación</x-slot>
         <x-slot name="modalContent">
@@ -142,22 +142,22 @@
                             </div>
                             <div class="row">
                                 @php
-                                        $totalVentaDespaDespachoModal = $listar_detalle_despacho->totalVentaDespacho;
-                                       if ($listar_detalle_despacho->totalVentaNoEntregado){
-                                           $totalVentaDespaDespachoModal = $listar_detalle_despacho->totalVentaDespacho - $listar_detalle_despacho->totalVentaNoEntregado;
-                                       }
+                                    $totalVentaDespaDespachoModal = $listar_detalle_despacho->totalVentaDespacho;
+                                   if ($listar_detalle_despacho->totalVentaNoEntregado){
+                                       $totalVentaDespaDespachoModal = $listar_detalle_despacho->totalVentaDespacho - $listar_detalle_despacho->totalVentaNoEntregado;
+                                   }
 
-                                       $totalPesoDespachoModal = $listar_detalle_despacho->despacho_peso;
-                                       if ($listar_detalle_despacho->totalPesoNoEntregado){
-                                          $totalPesoDespachoModal = $listar_detalle_despacho->despacho_peso - $listar_detalle_despacho->totalPesoNoEntregado;
-                                       }
+                                   $totalPesoDespachoModal = $listar_detalle_despacho->despacho_peso;
+                                   if ($listar_detalle_despacho->totalPesoNoEntregado){
+                                      $totalPesoDespachoModal = $listar_detalle_despacho->despacho_peso - $listar_detalle_despacho->totalPesoNoEntregado;
+                                   }
 
-                                      $despachoGeneraLiquidacionModal = 0;
-                                      if ($listar_detalle_despacho->id_tipo_servicios == 1){
-                                          $despachoGeneraLiquidacionModal = $listar_detalle_despacho->despacho_costo_total;
-                                      }else{
-                                          $despachoGeneraLiquidacionModal = ($listar_detalle_despacho->despacho_monto_modificado * $totalPesoDespachoModal) + $listar_detalle_despacho->despacho_ayudante + $listar_detalle_despacho->despacho_gasto_otros;
-                                      }
+                                  $despachoGeneraLiquidacionModal = 0;
+                                  if ($listar_detalle_despacho->id_tipo_servicios == 1){
+                                      $despachoGeneraLiquidacionModal = $listar_detalle_despacho->despacho_costo_total;
+                                  }else{
+                                      $despachoGeneraLiquidacionModal = ($listar_detalle_despacho->despacho_monto_modificado * $totalPesoDespachoModal) + $listar_detalle_despacho->despacho_ayudante + $listar_detalle_despacho->despacho_gasto_otros;
+                                  }
                                 @endphp
                                 <div class="col-lg-12 col-md-12 col-sm-12">
                                     <div class="row">
@@ -488,10 +488,15 @@
         </div>
     @endif
 
+    @php
+        // ORDENAR POR FECHA
+        $resultadoOrdenado = collect($resultado)->sortBy('creacion_liquidacion');
+    @endphp
+
     <div class="accordion mt-3" id="accordionExample">
-        @if(count($resultado) > 0)
+        @if(count($resultadoOrdenado) > 0)
             @php $conteoGeneral = 1; @endphp
-            @foreach($resultado as $index => $r)
+            @foreach($resultadoOrdenado as $index => $r)
                 <div class="accordion-item">
                     <h2 class="accordion-header">
                         <button class="accordion-button {{$index == 0 ? '' : 'collapsed'}}" wire:ignore.self type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne_{{$index}}" aria-expanded="true" aria-controls="collapseOne_{{$index}}">
@@ -676,24 +681,24 @@
                             </div>
                         </div>
                     </div>
+                    @php $conteoGeneral++; @endphp
+                    @endforeach
+                    @else
+                        <p class="text-center"> Registros Insuficientes</p>
+                    @endif
                 </div>
-                @php $conteoGeneral++; @endphp
-            @endforeach
-        @else
-            <p class="text-center"> Registros Insuficientes</p>
-        @endif
     </div>
 </div>
 @script
-    <script>
-        $wire.on('hideModal', () => {
-            $('#modalAgregarComprobante').modal('hide');
-        });
-        $wire.on('hideModalDeleteA', () => {
-            $('#modalAprobarLiquidacion').modal('hide');
-        });
-        $wire.on('hideModalLiquidacionOb', () => {
-            $('#modalComentarioLiquidacion').modal('hide');
-        });
-    </script>
+<script>
+    $wire.on('hideModal', () => {
+        $('#modalAgregarComprobante').modal('hide');
+    });
+    $wire.on('hideModalDeleteA', () => {
+        $('#modalAprobarLiquidacion').modal('hide');
+    });
+    $wire.on('hideModalLiquidacionOb', () => {
+        $('#modalComentarioLiquidacion').modal('hide');
+    });
+</script>
 @endscript
