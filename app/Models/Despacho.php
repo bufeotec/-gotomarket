@@ -61,4 +61,54 @@ class Despacho extends Model
         return $corr;
     }
 
+    public function listar_despachos_camino_aprobar($search, $pagination, $order = 'desc'){
+        try {
+            $query = DB::table('despachos as d')
+                ->join('transportistas as t', 'd.id_transportistas', '=', 't.id_transportistas')
+                ->leftJoin('despacho_ventas as dv', 'd.id_despacho', '=', 'dv.id_despacho')
+                ->select(
+                    'd.*',
+                    't.transportista_razon_social',
+                    DB::raw('SUM(ROUND(CAST(dv.despacho_venta_cfimporte AS FLOAT), 2)) as totalVentaDespacho')
+                )
+                ->where('d.despacho_estado_aprobar_camino', '=', 0)
+                ->where(function ($q) use ($search) {
+                    $q->where('d.despacho_peso', 'like', '%' . $search . '%')
+                        ->orWhere('d.despacho_numero_correlativo', 'like', '%' . $search . '%');
+                })
+                ->groupBy('d.id_despacho', 't.transportista_razon_social')
+                ->orderBy('d.id_despacho', $order);
+
+            $result = $query->paginate($pagination);
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = collect();
+        }
+
+        return $result;
+    }
+
+    public function listar_programaciones_historial_programacion($search = '', $pagination = 10, $order = 'asc'){
+        try {
+            $query = DB::table('despachos as d')
+                ->join('transportistas as t', 't.id_transportistas', '=', 'd.id_transportistas')
+                ->join('tipo_servicios as ts', 'ts.id_tipo_servicios', '=', 'd.id_tipo_servicios')
+                ->where('d.despacho_estado_aprobar_entregado', '=', 0)
+                ->where(function($q) use ($search) {
+                    $q->where('d.despacho_numero_correlativo', 'like', '%' . $search . '%')
+                        ->orWhere('t.transportista_nom_comercial', 'like', '%' . $search . '%');
+                })
+                ->orderBy('d.id_despacho', $order);
+
+            $result = $query->paginate($pagination);
+
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
+
+
 }
