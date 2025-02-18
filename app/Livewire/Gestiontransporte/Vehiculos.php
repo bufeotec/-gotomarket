@@ -354,11 +354,17 @@ class Vehiculos extends Component
                     }
 
                     // Actualizar la tabla tarifas_movil
-                    DB::table('tarifas_movil')
-                        ->where('id_vehiculo', $this->id_vehiculo) // Asegúrate de que estás usando el ID correcto
-                        ->update([
-                            'id_tarifario' => $this->id_tarifario, // ID de la tarifa seleccionada
-                        ]);
+//                    DB::table('tarifas_movil')
+//                        ->where('id_vehiculo', $this->id_vehiculo) // Asegúrate de que estás usando el ID correcto
+//                        ->update([
+//                            'id_tarifario' => $this->id_tarifario, // ID de la tarifa seleccionada
+//                        ]);
+                    DB::table('tarifas_movil')->insert([
+                        'id_vehiculo' => $this->id_vehiculo,
+                        'id_tarifario' => $this->id_tarifario,
+                        'created_at' => now(),
+                        'id_users' => Auth::id(),
+                    ]);
 
                     DB::commit();
                     $this->dispatch('hideModal');

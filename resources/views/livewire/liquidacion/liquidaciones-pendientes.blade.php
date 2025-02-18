@@ -490,14 +490,14 @@
 
     @php
         // ORDENAR POR FECHA
-        $resultadoOrdenado = collect($resultado)->sortBy('creacion_liquidacion');
+//        $resultadoOrdenado = collect($resultado)->sortBy('creacion_liquidacion');
     @endphp
 
     <div class="accordion mt-3" id="accordionExample">
-        @if(count($resultadoOrdenado) > 0)
+        @if(count($resultado) > 0)
             @php $conteoGeneral = 1; @endphp
-            @foreach($resultadoOrdenado as $index => $r)
-                <div class="accordion-item">
+            @foreach($resultado as $index => $r)
+                <div class="accordion-item" were:key="{{$r->id_liquidacion}}">
                     <h2 class="accordion-header">
                         <button class="accordion-button {{$index == 0 ? '' : 'collapsed'}}" wire:ignore.self type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne_{{$index}}" aria-expanded="true" aria-controls="collapseOne_{{$index}}">
                             #{{$conteoGeneral}} | FR : {{$r->creacion_liquidacion}} | UR : {{$r->name}} | TR : {{$r->transportista_razon_social}} | SC : {{$r->liquidacion_serie}} - {{$r->liquidacion_correlativo}}
