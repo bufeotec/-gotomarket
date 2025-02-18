@@ -3,6 +3,7 @@
 namespace App\Livewire\Programacioncamiones;
 
 use App\Models\General;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -16,6 +17,7 @@ use App\Models\Programacion;
 use App\Models\Despacho;
 use App\Models\DespachoVenta;
 use App\Models\Facturaspreprogramacion;
+use App\Models\Historialdespachoventa;
 
 
 class Local extends Component
@@ -29,6 +31,7 @@ class Local extends Component
     private $despachoventa;
     private $general;
     private $facpreprog;
+    private $historialdespachoventa;
     public function __construct(){
         $this->logs = new Logs();
         $this->server = new Server();
@@ -39,6 +42,7 @@ class Local extends Component
         $this->despachoventa = new DespachoVenta();
         $this->general = new General();
         $this->facpreprog = new Facturaspreprogramacion();
+        $this->historialdespachoventa = new Historialdespachoventa();
     }
     public $searchFactura = "";
     public $filteredFacturas = [];
@@ -258,6 +262,10 @@ class Local extends Component
         $this->pesoTotal += $factura->fac_pre_prog_total_kg;
         $this->volumenTotal += $factura->fac_pre_prog_total_volumen;
 
+        $importes = $factura->fac_pre_prog_cfimporte;
+        $importe = floatval($importes);
+        $this->importeTotalVenta += $importe;
+
         // Actualizar lista de vehículos sugeridos
         $this->listar_vehiculos_lo();
         $this->validarVehiculoSeleccionado();
@@ -472,6 +480,20 @@ class Local extends Component
                 return;
             }
             $ultimoDespacho = DB::table('despachos')->where('despacho_microtime','=',$microtimeCread)->first();
+            // Guardar en el historial de despachos
+            $historialDespacho = new Historialdespachoventa();
+            $historialDespacho->id_programacion = $programacionCreada->id_programacion;
+            $historialDespacho->id_despacho = $ultimoDespacho->id_despacho;
+            $historialDespacho->programacion_estado_aprobacion = 0;
+            // Guardar el estado de aprobación de la programación en el historial
+            $historialDespacho->despacho_estado_aprobacion = ($this->id_programacion_edit && $this->id_despacho_edit) ? 6 : 0;
+            $historialDespacho->his_desp_vent_fecha = Carbon::now('America/Lima');
+            if (!$historialDespacho->save()) {
+                DB::rollBack();
+                session()->flash('error', 'Ocurrió un error al guardar el historial del despacho.');
+                return;
+            }
+
             // Guardar facturas seleccionadas en despacho_ventas
             foreach ($this->selectedFacturas as $factura) {
                 $despachoVenta = new DespachoVenta();

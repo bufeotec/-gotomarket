@@ -9,6 +9,8 @@ use App\Models\Logs;
 use App\Models\TipoServicio;
 use App\Models\Server;
 use App\Models\Facturaspreprogramacion;
+use App\Models\Historialpreprogramacion;
+use Carbon\Carbon;
 
 class Facturaspreprogramaciones extends Component
 {
@@ -16,11 +18,13 @@ class Facturaspreprogramaciones extends Component
     private $tiposervicio;
     private $server;
     private $facpreprog;
+    private $historialpreprogramacion;
     public function __construct(){
         $this->logs = new Logs();
         $this->tiposervicio = new TipoServicio();
         $this->server = new Server();
         $this->facpreprog = new Facturaspreprogramacion();
+        $this->historialpreprogramacion = new Historialpreprogramacion();
     }
     public $selectedFacturas = [];
     public $filteredFacturas = [];
@@ -207,7 +211,17 @@ class Facturaspreprogramaciones extends Component
                     // Si la factura existe, actualizar el estado
                     $facturaExistente->fac_pre_prog_estado_aprobacion = $this->estado_envio;
                     $facturaExistente->fac_pre_prog_estado = 1;
+                    $facturaExistente->fac_pre_prog_fecha = Carbon::now('America/Lima');
                     $facturaExistente->save();
+
+                    // Guardar en la tabla historial_pre_programacion
+                    $historial = new Historialpreprogramacion();
+                    $historial->id_fac_pre_prog = $facturaExistente->id_fac_pre_prog;
+                    $historial->fac_pre_prog_cfnumdoc = $facturaExistente->fac_pre_prog_cfnumdoc;
+                    $historial->fac_pre_prog_estado_aprobacion = $facturaExistente->fac_pre_prog_estado_aprobacion;
+                    $historial->fac_pre_prog_estado = $facturaExistente->fac_pre_prog_estado;
+                    $historial->his_pre_progr_fecha_hora = Carbon::now('America/Lima');
+                    $historial->save();
                 } else {
                     // Si no existe, crear un nuevo registro
                     $nuevaFactura = new Facturaspreprogramacion();
@@ -229,7 +243,17 @@ class Facturaspreprogramaciones extends Component
                     $nuevaFactura->fac_pre_prog_distrito = $factura['DISTRITO'];
                     $nuevaFactura->fac_pre_prog_estado_aprobacion = $this->estado_envio;
                     $nuevaFactura->fac_pre_prog_estado = 1;
+                    $nuevaFactura->fac_pre_prog_fecha = Carbon::now('America/Lima');
                     $nuevaFactura->save();
+
+                    // Guardar en la tabla historial_pre_programacion
+                    $historial = new Historialpreprogramacion();
+                    $historial->id_fac_pre_prog = $nuevaFactura->id_fac_pre_prog;
+                    $historial->fac_pre_prog_cfnumdoc = $nuevaFactura->fac_pre_prog_cfnumdoc;
+                    $historial->fac_pre_prog_estado_aprobacion = $nuevaFactura->fac_pre_prog_estado_aprobacion;
+                    $historial->fac_pre_prog_estado = $nuevaFactura->fac_pre_prog_estado;
+                    $historial->his_pre_progr_fecha_hora = Carbon::now('America/Lima');
+                    $historial->save();
                 }
             }
             DB::commit();

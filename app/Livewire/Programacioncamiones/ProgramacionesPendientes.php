@@ -7,6 +7,7 @@ use App\Models\General;
 use App\Models\Logs;
 use App\Models\Programacion;
 use App\Models\Transportista;
+use App\Models\Historialdespachoventa;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -29,12 +30,14 @@ class ProgramacionesPendientes extends Component
     private $programacion;
     private $despacho;
     private $general;
+    private $historialdespachoventa;
     public function __construct()
     {
         $this->logs = new Logs();
         $this->programacion = new Programacion();
         $this->despacho = new Despacho();
         $this->general = new General();
+        $this->historialdespachoventa = new Historialdespachoventa();
     }
     public function mount()
     {
@@ -133,6 +136,18 @@ class ProgramacionesPendientes extends Component
                     if (!$updateDespacho->save()){
                         DB::rollBack();
                         session()->flash('error_delete', 'No se pudo aprobar los despachos relacionados a la programación.');
+                        return;
+                    }
+                    // Guardar historial de cambios
+                    $historialDespacho = new Historialdespachoventa();
+                    $historialDespacho->id_despacho = $des->id_despacho;
+                    $historialDespacho->id_programacion = $this->id_progr;
+                    $historialDespacho->programacion_estado_aprobacion = $this->estadoPro;
+                    $historialDespacho->despacho_estado_aprobacion = $this->estadoPro;
+                    $historialDespacho->his_desp_vent_fecha = Carbon::now('America/Lima');
+                    if (!$historialDespacho->save()) {
+                        DB::rollBack();
+                        session()->flash('error_delete', 'No se pudo guardar el historial del despacho.');
                         return;
                     }
                 }
