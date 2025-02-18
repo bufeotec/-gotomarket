@@ -167,7 +167,7 @@
                                                             <td>{{$general->formatoDecimal($ta->despacho_venta_total_kg)}} Kg</td>
                                                             @if($listar_detalle_despacho->despacho_estado_aprobacion == 2 || $listar_detalle_despacho->despacho_estado_aprobacion == 3)
                                                                 <td>
-                                                                    @if($listar_detalle_despacho->despacho_estado_aprobacion == 2)
+                                                                    @if($listar_detalle_despacho->despacho_estado_aprobacion == 2 && !in_array($ta->despacho_detalle_estado_entrega, [2, 3, 4]) )
                                                                         <select
                                                                             name="estadoComprobante[{{ $indexComprobantes }}]"
                                                                             class="form-control form-select"
@@ -338,7 +338,7 @@
                 // Convertir los resultados a una colección
                 $resultadoCollection = collect($resultado->items());
 
-                // Ordenar por fecha de programación
+                // Ordenar por fecha de programación (de la más antigua a la más reciente)
                 $resultadoCollection = $resultadoCollection->sortBy('programacion_fecha');
 
                 // Agrupar por proveedorlocal (Mixto, Local) o Provincial

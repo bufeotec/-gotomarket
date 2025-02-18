@@ -90,7 +90,9 @@ class HistorialProgramacion extends Component
             if ($this->listar_detalle_despacho){
                 $this->listar_detalle_despacho->comprobantes = DB::table('despacho_ventas')->where('id_despacho','=',$id)->get();
                 foreach ($this->listar_detalle_despacho->comprobantes as $comp){
-                    $this->estadoComprobante[$comp->id_despacho_venta] = 2;
+                    if (!in_array($comp->despacho_detalle_estado_entrega, [2, 3, 4])){
+                        $this->estadoComprobante[$comp->id_despacho_venta] = 2;
+                    }
                 }
             }
         }catch (\Exception $e){
@@ -951,37 +953,17 @@ class HistorialProgramacion extends Component
                     $updateDespacho = Despacho::find($select);
                     $updateDespacho->despacho_estado_aprobacion = 2;
                     if ($updateDespacho->save()){
-                        $existeComprobanteCamino = DB::table('despacho_ventas')
-                            ->where('id_despacho', $select)
-                            ->update(['despacho_detalle_estado_entrega'=>1]);
-
-                        // Obtener los comprobantes actualizados para crear el historial
-                        $comprobantes = DB::table('despacho_ventas')
-                            ->where('id_despacho', $select)
-                            ->get();
-
-                        // Crear registro en historial para cada comprobante
-                        foreach ($comprobantes as $comprobante) {
-                            $historialDespacho = new Historialdespachoventa();
-                            $historialDespacho->id_despacho = $select;
-                            $historialDespacho->id_despacho_venta = $comprobante->id_despacho_venta;
-                            $historialDespacho->despacho_venta_cfnumdoc = $comprobante->despacho_venta_cfnumdoc;
-                            $historialDespacho->despacho_estado_aprobacion = 2;
-                            $historialDespacho->despacho_detalle_estado_entrega = 1;
-                            $historialDespacho->his_desp_vent_fecha = Carbon::now('America/Lima');
-
-                            if (!$historialDespacho->save()) {
-                                DB::rollBack();
-                                session()->flash('error_delete', 'Error al guardar el historial del despacho.');
-                                return;
+                        $existeComprobanteCamino = DB::table('despacho_ventas')->where('id_despacho', $select)->get();
+                        foreach ($existeComprobanteCamino as $e){
+                            // Verificar si el estado no es 2, 3 ni 4
+                            if (!in_array($e->despacho_detalle_estado_entrega, [2, 3, 4])) {
+                                DB::table('despacho_ventas')->where('id_despacho_venta', $e->id_despacho_venta)->update(['despacho_detalle_estado_entrega' => 1]);
                             }
                         }
-
-                        if (!$existeComprobanteCamino){
-                            DB::rollBack();
-                            session()->flash('error_delete', 'No se pudo cambiar los estados de los comprobantes a "En Camino".');
-                            return;
-                        }
+                    }else{
+                        DB::rollBack();
+                        session()->flash('error_delete', 'No se pudo cambiar los estados de los despachos a "En Camino".');
+                        return;
                     }
                 }
                 DB::commit();
@@ -1000,36 +982,16 @@ class HistorialProgramacion extends Component
                 $updateDespacho = Despacho::find($this->id_despacho);
                 $updateDespacho->despacho_estado_aprobacion = 2;
                 if ($updateDespacho->save()){
-                    $existeComprobanteCamino = DB::table('despacho_ventas')
-                        ->where('id_despacho', $this->id_despacho)
-                        ->update(['despacho_detalle_estado_entrega'=>1]);
-
-                    if ($existeComprobanteCamino){
-                        // Obtener los comprobantes actualizados para crear el historial
-                        $comprobantes = DB::table('despacho_ventas')
-                            ->where('id_despacho', $this->id_despacho)
-                            ->get();
-
-                        // Crear registro en historial para cada comprobante
-                        foreach ($comprobantes as $comprobante) {
-                            $historialDespacho = new Historialdespachoventa();
-                            $historialDespacho->id_despacho = $this->id_despacho;
-                            $historialDespacho->id_despacho_venta = $comprobante->id_despacho_venta;
-                            $historialDespacho->despacho_venta_cfnumdoc = $comprobante->despacho_venta_cfnumdoc;
-                            $historialDespacho->despacho_estado_aprobacion = 2;
-                            $historialDespacho->his_desp_vent_fecha = Carbon::now('America/Lima');
-
-                            if (!$historialDespacho->save()) {
-                                DB::rollBack();
-                                session()->flash('error_delete', 'Error al guardar el historial del despacho.');
-                                return;
-                            }
+                    $existeComprobanteCamino = DB::table('despacho_ventas')->where('id_despacho', $this->id_despacho)->get();
+                    foreach ($existeComprobanteCamino as $e){
+                        // Verificar si el estado no es 2, 3 ni 4
+                        if (!in_array($e->despacho_detalle_estado_entrega, [2, 3, 4])) {
+                            DB::table('despacho_ventas')->where('id_despacho_venta', $e->id_despacho_venta)->update(['despacho_detalle_estado_entrega' => 1]);
                         }
-
-                        DB::commit();
-                        $this->dispatch('hideModalDelete');
-                        session()->flash('success', 'Despacho en camino.');
                     }
+                    DB::commit();
+                    $this->dispatch('hideModalDelete');
+                    session()->flash('success', 'Despacho en camino.');
                 }else{
                     DB::rollBack();
                     session()->flash('error_delete', 'No se pudo cambiar el estado del despacho a "En Camino".');
@@ -1082,49 +1044,81 @@ class HistorialProgramacion extends Component
     }
     public function cambiarEstadoComprobante(){
         try {
+            // $estado sebe contener el valor del select
             if (!Gate::allows('cambiar_estado_comprobante')) {
                 session()->flash('errorComprobante', 'No tiene permisos para poder cambiar el estado del comprobante.');
                 return;
             }
 
             DB::beginTransaction();
+            foreach ($this->estadoComprobante as $id_comprobante => $estado){
+                $informacionDespachoVenta = DB::table('despacho_ventas as dv')
+                    ->join('despachos as d','d.id_despacho','=','dv.id_despacho')
+                    ->join('programaciones as p','p.id_programacion','=','d.id_programacion')
+                    ->where('d.id_tipo_servicios','=',1)
+                    ->where('dv.id_despacho_venta','=',$id_comprobante)
+                    ->first();
 
-            $id_despacho = $this->listar_detalle_despacho->id_despacho;
-
-            foreach ($this->estadoComprobante as $id_comprobante => $estado) {
-                // Validar estado permitido
+                // Validar cada estado
                 if (!in_array((int)$estado, [2, 3])) {
                     DB::rollBack();
                     session()->flash('errorComprobante', 'Estado inválido seleccionado.');
                     return;
                 }
-
                 $comprobante = DespachoVenta::find($id_comprobante);
                 if (!$comprobante) {
                     DB::rollBack();
                     session()->flash('errorComprobante', 'Comprobante no encontrado.');
                     return;
                 }
-
-                // Guardar el estado anterior antes de actualizar
-                $estado_anterior = $comprobante->despacho_detalle_estado_entrega;
-
                 // Actualizar el estado del comprobante
-                $comprobante->despacho_detalle_estado_entrega = (int)$estado;
-                $comprobante->save();
+                $es = (int)$estado;
+                $comprobante->despacho_detalle_estado_entrega = $es;
+                if ($comprobante->save()){
+                    if ($es == 3 && $informacionDespachoVenta){
+                        $comprobanteProvincialProgramacion = DB::table('despacho_ventas as dv')
+                            ->join('despachos as d','d.id_despacho','=','dv.id_despacho')
+                            ->join('programaciones as p','p.id_programacion','=','d.id_programacion')
+                            ->where('p.id_programacion','=',$informacionDespachoVenta->id_programacion)
+                            ->where('d.id_tipo_servicios','=',2)
+                            ->where('dv.despacho_venta_guia','=',$informacionDespachoVenta->despacho_venta_guia)
+                            ->where('dv.despacho_venta_cfnumser','=',$informacionDespachoVenta->despacho_venta_cfnumser)
+                            ->where('dv.despacho_venta_cfnumdoc','=',$informacionDespachoVenta->despacho_venta_cfnumdoc)
+                            ->first();
 
-                // Registrar en el historial
-                $historial = new Historialdespachoventa();
-                $historial->id_despacho = $id_despacho;
-                $historial->id_despacho_venta = $comprobante->id_despacho_venta;
-                $historial->despacho_venta_cfnumdoc = $comprobante->despacho_venta_cfnumdoc;
-                $historial->despacho_detalle_estado_entrega = $estado;
-                $historial->despacho_estado_aprobacion = 3; // Estado final del despacho
-                $historial->his_desp_vent_fecha = now(); // Fecha actual
-                $historial->save();
+                        if ($comprobanteProvincialProgramacion){
+                            $comprobanteProvi = DespachoVenta::find($comprobanteProvincialProgramacion->id_despacho_venta);
+                            if (!$comprobanteProvi) {
+                                DB::rollBack();
+                                session()->flash('errorComprobante', 'Comprobante no encontrado.');
+                                return;
+                            }
+                            $ress = DB::table('despacho_ventas')->where('id_despacho_venta','=',$comprobanteProvincialProgramacion->id_despacho_venta)
+                                ->update(['despacho_detalle_estado_entrega'=>3]);
+                            if ($ress == 1){
+                                // si el provincial no hay otros comprobantes poner como culminado.
+                                $conteDe = DB::table('despacho_ventas')->where('id_despacho','=',$comprobanteProvincialProgramacion->id_despacho)->count();
+                                $conteDeEstadoEntrega = DB::table('despacho_ventas')->where('id_despacho','=',$comprobanteProvincialProgramacion->id_despacho)
+                                    ->where('despacho_detalle_estado_entrega','=',3)->count();
+                                // si todos los despachos detalles ($conteDeEstadoEntrega) esta como no entregados cambiar el despacho como culminado
+                                if ($conteDe == $conteDeEstadoEntrega){
+                                    DB::table('despachos')->where('id_despacho','=',$comprobanteProvincialProgramacion->id_despacho)->update(['despacho_estado_aprobacion'=>3]);
+                                }
+                            }else{
+                                DB::rollBack();
+                                session()->flash('errorComprobante', 'Ocurrió un error al cambiar el estado.');
+                                return;
+                            }
+                        }
+                    }
+                }else{
+                    DB::rollBack();
+                    session()->flash('errorComprobante', 'Ocurrió un error al cambiar el estado.');
+                    return;
+                }
             }
 
-            // Actualizar el estado del despacho
+            $id_despacho = $this->listar_detalle_despacho->id_despacho;
             Despacho::where('id_despacho', $id_despacho)->update(['despacho_estado_aprobacion' => 3]);
 
             DB::commit();
