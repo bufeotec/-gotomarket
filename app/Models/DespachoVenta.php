@@ -28,12 +28,14 @@ class DespachoVenta extends Model
         return $result;
     }
 
-    public function listar_facturas_estado_cinco(){
+    public function listar_facturas_estado_cinco() {
         try {
-            $result = DB::table('despacho_ventas')
-                ->where('despacho_detalle_estado_entrega','=',5)
+            $result = DB::table('notas_creditos as nc')
+                ->join('despacho_ventas as dv', 'nc.id_despacho_venta', '=', 'dv.id_despacho_venta')
+                ->where('nc.nota_credito_estado', '=', 1)
+                ->select('dv.id_despacho_venta', 'dv.despacho_venta_factura')
                 ->get();
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             $this->logs->insertarLog($e);
             $result = [];
         }
