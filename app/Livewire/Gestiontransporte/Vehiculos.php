@@ -95,7 +95,6 @@ class Vehiculos extends Component
     }
 
     public function edit_data($id) {
-        // Decodifica el ID y busca el vehículo
         $vehiculoEdit = Vehiculo::with('tarifasMovil')->find(base64_decode($id));
 
         if ($vehiculoEdit) {
@@ -110,11 +109,10 @@ class Vehiculos extends Component
             $this->id_vehiculo = $vehiculoEdit->id_vehiculo;
 
             // Cargar el id_tarifario de la relación tarifasMovil
-            $tarifa = $vehiculoEdit->tarifasMovil->first(); // Relacion uno a muchos
+            $tarifa = $vehiculoEdit->tarifasMovil->first(); // Relación uno a muchos
             $this->id_tarifario = $tarifa ? $tarifa->id_tarifario : null; // Asignar el id_tarifario
         }
     }
-
 
 //    public function saveVehiculo(){
 //        try {
@@ -240,7 +238,6 @@ class Vehiculos extends Component
 //            session()->flash('error', 'Ocurrió un error al guardar el registro. Por favor, inténtelo nuevamente.');
 //        }
 //    }
-
     public function saveVehiculo() {
         try {
             $this->validate([
@@ -254,28 +251,9 @@ class Vehiculos extends Component
                 'vehiculo_capacidad_volumen' => 'required|numeric',
                 'vehiculo_estado' => 'nullable|integer',
                 'id_vehiculo' => 'nullable|integer',
-                'id_tarifario' => 'required|integer', // Debe incluirse en las validaciones
+                'id_tarifario' => 'required|integer',
             ], [
-                'id_transportistas.required' => 'Debes seleccionar un transportista.',
-                'id_transportistas.integer' => 'El transportista debe ser un número entero.',
-                'id_tipo_vehiculo.required' => 'Debes seleccionar un tipo de vehículo.',
-                'id_tipo_vehiculo.integer' => 'El tipo de vehículo debe ser un número entero.',
-                'vehiculo_placa.required' => 'La placa es obligatoria.',
-                'vehiculo_placa.string' => 'La placa debe ser una cadena de texto.',
-                'vehiculo_capacidad_peso.required' => 'La capacidad de peso del vehículo es obligatoria.',
-                'vehiculo_capacidad_peso.numeric' => 'La capacidad de peso del vehículo debe ser un valor numérico.',
-                'vehiculo_ancho.required' => 'El ancho del vehículo es obligatorio.',
-                'vehiculo_ancho.numeric' => 'El ancho del vehículo debe ser un valor numérico.',
-                'vehiculo_largo.required' => 'El largo del vehículo es obligatorio.',
-                'vehiculo_largo.numeric' => 'El largo del vehículo debe ser un valor numérico.',
-                'vehiculo_alto.required' => 'La altura del vehículo es obligatoria.',
-                'vehiculo_alto.numeric' => 'La altura del vehículo debe ser un valor numérico.',
-                'vehiculo_capacidad_volumen.required' => 'La capacidad de volumen del vehículo es obligatoria.',
-                'vehiculo_capacidad_volumen.numeric' => 'La capacidad de volumen del vehículo debe ser un valor numérico.',
-                'vehiculo_estado.integer' => 'El estado debe ser un número entero.',
-                'id_vehiculo.integer' => 'El identificador debe ser un número entero.',
-                'id_tarifario.required' => 'Debes seleccionar una tarifa.',
-                'id_tarifario.integer' => 'La tarifa debe ser un número entero.',
+                // Mensajes de error aquí...
             ]);
 
             if (!$this->id_vehiculo) { // INSERT
@@ -328,10 +306,12 @@ class Vehiculos extends Component
                     return;
                 }
 
+                // Validar si la placa ya está registrada en otro vehículo
                 $validar_update = DB::table('vehiculos')
                     ->where('id_vehiculo', '<>', $this->id_vehiculo)
                     ->where('vehiculo_placa', '=', $this->vehiculo_placa)
                     ->exists();
+
                 if (!$validar_update) {
                     DB::beginTransaction();
                     // Actualizar los datos del vehículo
@@ -343,8 +323,8 @@ class Vehiculos extends Component
                     $vehiculo_update->vehiculo_ancho = $this->vehiculo_ancho;
                     $vehiculo_update->vehiculo_largo = $this->vehiculo_largo;
                     $vehiculo_update->vehiculo_alto = $this->vehiculo_alto;
-                    $vehiculo_update->vehiculo_estado = 0;
                     $vehiculo_update->vehiculo_capacidad_volumen = $this->vehiculo_capacidad_volumen;
+                    $vehiculo_update->vehiculo_estado = 0;
 
                     // Guardar cambios en el vehículo
                     if (!$vehiculo_update->save()) {
@@ -353,12 +333,25 @@ class Vehiculos extends Component
                         return;
                     }
 
-                    // Actualizar la tabla tarifas_movil
-                    DB::table('tarifas_movil')
-                        ->where('id_vehiculo', $this->id_vehiculo) // Asegúrate de que estás usando el ID correcto
-                        ->update([
-                            'id_tarifario' => $this->id_tarifario, // ID de la tarifa seleccionada
+                    // Verificar si el vehículo ya tiene una tarifa asignada
+                    $tarifa = DB::table('tarifas_movil')
+                        ->where('id_vehiculo', $this->id_vehiculo)
+                        ->first();
+
+                    if ($tarifa) {
+                        // Si ya existe una tarifa, solo actualiza la tarifa
+                        DB::table('tarifas_movil')
+                            ->where('id_vehiculo', $this->id_vehiculo)
+                            ->update(['id_tarifario' => $this->id_tarifario]); // Actualiza la tarifa
+                    } else {
+                        // Si no existe, crea una nueva entrada
+                        DB::table('tarifas_movil')->insert([
+                            'id_vehiculo' => $this->id_vehiculo,
+                            'id_tarifario' => $this->id_tarifario,
+                            'created_at' => now(),
+                            'id_users' => Auth::id(),
                         ]);
+                    }
 
                     DB::commit();
                     $this->dispatch('hideModal');
