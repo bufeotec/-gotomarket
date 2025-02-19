@@ -100,5 +100,13 @@ Route::prefix('Reporte')->middleware(['auth', 'canMenu:Reporte'])->group(functio
     route::get('/ver_reporte',[ReporteController::class ,'ver_reporte'])->name('reporte.ver_reporte')->middleware('verifyUserStatus')->middleware('can:ver_reporte');
 });
 
+Route::prefix('Gestionvendedor')->middleware(['auth', 'canMenu:Gestionvendedor'])->group(function () {
+    /* FLETES - TARIFARIOS */
+    route::get('/vendedor',[GestionvendedorController::class ,'vendedor'])->name('Gestionvendedor.vendedor')->middleware('verifyUserStatus')->middleware('can:vendedor');
+    route::get('/aprobar_camino',[GestionvendedorController::class ,'aprobar_camino'])->name('Gestionvendedor.aprobar_camino')->middleware('verifyUserStatus')->middleware('can:aprobar_camino');
+    route::get('/aprobar_entregado',[GestionvendedorController::class ,'aprobar_entregado'])->name('Gestionvendedor.aprobar_entregado')->middleware('verifyUserStatus')->middleware('can:aprobar_entregado');
+    route::get('/tracking',[GestionvendedorController::class ,'tracking'])->name('Gestionvendedor.tracking')->middleware('verifyUserStatus')->middleware('can:tracking');
+});
+
 
 

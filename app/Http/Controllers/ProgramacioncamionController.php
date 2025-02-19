@@ -124,14 +124,14 @@ class ProgramacioncamionController extends Controller
             return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
         }
     }
-    public function notas_credito(){
-        try {
-            return view('programacion_camiones.notas_credito');
-        }catch (\Exception $e){
-            $this->logs->insertarLog($e);
-            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
-        }
-    }
+//    public function notas_credito(){
+//        try {
+//            return view('programacion_camiones.notas_credito');
+//        }catch (\Exception $e){
+//            $this->logs->insertarLog($e);
+//            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+//        }
+//    }
     public function refacturacion(){
         try {
             return view('programacion_camiones.refacturacion');
