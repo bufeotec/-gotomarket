@@ -11,6 +11,8 @@ use App\Models\Facturamovimientoarea;
 use App\Models\Facturaspreprogramacion;
 use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
+use App\Models\Historialpreprogramacion;
+use Carbon\Carbon;
 
 class Facturasaprobar extends Component
 {
@@ -18,10 +20,12 @@ class Facturasaprobar extends Component
     private $logs;
     private $facpreprog;
     private $facmovarea;
+    private $historialpreprogramacion;
     public function __construct(){
         $this->logs = new Logs();
         $this->facpreprog = new Facturaspreprogramacion();
         $this->facmovarea = new Facturamovimientoarea();
+        $this->historialpreprogramacion = new Historialpreprogramacion();
     }
     public $messagePrePro = "";
     public $id_fac_pre_prog = "";
@@ -64,6 +68,15 @@ class Facturasaprobar extends Component
                 $factura->fac_pre_prog_estado_aprobacion = $this->fac_pre_prog_estado_aprobacion;
 
                 if ($factura->save()) {
+                    // Guardar en historial_pre_programacion
+                    $historial = new Historialpreprogramacion();
+                    $historial->id_fac_pre_prog = $this->id_fac_pre_prog;
+                    $historial->fac_pre_prog_cfnumdoc = $factura->fac_pre_prog_cfnumdoc;
+                    $historial->fac_pre_prog_estado_aprobacion = $this->fac_pre_prog_estado_aprobacion;
+                    $historial->fac_pre_prog_estado = 1;
+                    $historial->his_pre_progr_fecha_hora = Carbon::now('America/Lima');
+                    $historial->save();
+
                     DB::commit();
                     $this->dispatch('hidemodalPrePro');
                     session()->flash('success', 'Factura aprobada.');
@@ -124,6 +137,15 @@ class Facturasaprobar extends Component
 
                 // Guardar cambios en la factura preprogramada
                 if ($facturaPreprogramada->save()) {
+                    // Registrar en historial_pre_programacion
+                    $historial = new Historialpreprogramacion();
+                    $historial->id_fac_pre_prog = $this->id_fac_pre_prog;
+                    $historial->fac_pre_prog_cfnumdoc = $facturaPreprogramada->fac_pre_prog_cfnumdoc;
+                    $historial->fac_pre_prog_estado_aprobacion = 6;
+                    $historial->fac_pre_prog_estado = 1;
+                    $historial->his_pre_progr_fecha_hora = Carbon::now('America/Lima');
+                    $historial->save();
+
                     // Crear un nuevo registro en la tabla facturas_movimientos_areas
                     $movimientoArea = new Facturamovimientoarea();
                     $movimientoArea->id_users_responsable = Auth::id();
