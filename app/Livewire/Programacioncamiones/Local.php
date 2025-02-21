@@ -18,6 +18,7 @@ use App\Models\Despacho;
 use App\Models\DespachoVenta;
 use App\Models\Facturaspreprogramacion;
 use App\Models\Historialdespachoventa;
+use App\Models\Historialpreprogramacion;
 
 
 class Local extends Component
@@ -32,6 +33,7 @@ class Local extends Component
     private $general;
     private $facpreprog;
     private $historialdespachoventa;
+    private $historialpreprogramacion;
     public function __construct(){
         $this->logs = new Logs();
         $this->server = new Server();
@@ -43,6 +45,7 @@ class Local extends Component
         $this->general = new General();
         $this->facpreprog = new Facturaspreprogramacion();
         $this->historialdespachoventa = new Historialdespachoventa();
+        $this->historialpreprogramacion = new Historialpreprogramacion();
     }
     public $searchFactura = "";
     public $filteredFacturas = [];
@@ -523,10 +526,41 @@ class Local extends Component
                     return;
                 }
             }
+
             $idsFacturas = array_column($this->selectedFacturas, 'id_fac_pre_prog');
+            // Obtener los datos de las facturas antes de la actualización
+            $facturas = DB::table('facturas_pre_programaciones')
+                ->whereIn('id_fac_pre_prog', $idsFacturas)
+                ->get();
+            // Actualizar el estado de aprobación
             DB::table('facturas_pre_programaciones')
                 ->whereIn('id_fac_pre_prog', $idsFacturas)
                 ->update(['fac_pre_prog_estado_aprobacion' => 4]);
+            // Registrar en historial_pre_programacion
+            foreach ($facturas as $factura) {
+                $historial = new Historialpreprogramacion();
+                $historial->id_fac_pre_prog = $factura->id_fac_pre_prog;
+                $historial->fac_pre_prog_cfnumdoc = $factura->fac_pre_prog_cfnumdoc;
+                $historial->fac_pre_prog_estado_aprobacion = 4;
+                $historial->fac_pre_prog_estado = 1;
+                $historial->his_pre_progr_fecha_hora = Carbon::now('America/Lima');
+                $historial->save();
+            }
+
+            // Buscar el registro en la tabla facturas_mov
+            $facturaMov = DB::table('facturas_mov')
+                ->where('id_fac_pre_prog', $this->selectedFacturas)
+                ->get();
+
+            if ($facturaMov) {
+                // Si existe, actualizar los campos
+                DB::table('facturas_mov')
+                    ->where('id_fac_pre_prog', $this->selectedFacturas)
+                    ->update([
+                        'fac_acept_ges_fac' => Carbon::now('America/Lima'),
+                        'fac_despacho' => Carbon::now('America/Lima'),
+                    ]);
+            }
             DB::commit();
 
             if ($this->id_programacion_edit && $this->id_despacho_edit){

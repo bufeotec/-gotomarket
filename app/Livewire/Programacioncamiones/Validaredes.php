@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
+use App\Models\Historialpreprogramacion;
 
 class Validaredes extends Component
 {
@@ -19,10 +20,12 @@ class Validaredes extends Component
     private $logs;
     private $facpreprog;
     private $facmovarea;
+    private $historialpreprogramacion;
     public function __construct(){
         $this->logs = new Logs();
         $this->facpreprog = new Facturaspreprogramacion();
         $this->facmovarea = new Facturamovimientoarea();
+        $this->historialpreprogramacion = new Historialpreprogramacion();
     }
     public $messagePrePro = "";
     public $id_fac_pre_prog = "";
@@ -65,6 +68,15 @@ class Validaredes extends Component
                 $factura->fac_pre_prog_estado_aprobacion = $this->fac_pre_prog_estado_aprobacion;
 
                 if ($factura->save()) {
+                    // Registrar en historial_pre_programacion
+                    $historial = new Historialpreprogramacion();
+                    $historial->id_fac_pre_prog = $this->id_fac_pre_prog;
+                    $historial->fac_pre_prog_cfnumdoc = $factura->fac_pre_prog_cfnumdoc;
+                    $historial->fac_pre_prog_estado_aprobacion = $this->fac_pre_prog_estado_aprobacion;
+                    $historial->fac_pre_prog_estado = 1;
+                    $historial->his_pre_progr_fecha_hora = Carbon::now('America/Lima');
+                    $historial->save();
+
                     // Buscar el registro en la tabla facturas_mov
                     $facturaMov = DB::table('facturas_mov')
                         ->where('id_fac_pre_prog', $this->id_fac_pre_prog) // Asegúrate de usar el campo correcto

@@ -6,7 +6,7 @@
     <script src="{{asset('js/select2/dist/js/select2.min.js')}}"></script>
 
     <div class="page-heading">
-        <x-navegation-view text="Lista de en camino." />
+        <x-navegation-view text="Estado y Seguimiento de Comprobantes." />
 
         @livewire('gestionvendedor.trackings')
 

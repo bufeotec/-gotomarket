@@ -309,7 +309,7 @@ class Creditoscobranzas extends Component
                     $historial = new Historialpreprogramacion();
                     $historial->id_fac_pre_prog = $this->id_fac_pre_prog;
                     $historial->fac_pre_prog_cfnumdoc = $facturaPreprogramada->fac_pre_prog_cfnumdoc;
-                    $historial->fac_pre_prog_estado_aprobacion = 2;
+                    $historial->fac_pre_prog_estado_aprobacion = 6;
                     $historial->fac_pre_prog_estado = 1;
                     $historial->his_pre_progr_fecha_hora = Carbon::now('America/Lima');
                     $historial->save();
