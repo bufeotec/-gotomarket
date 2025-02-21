@@ -14,6 +14,8 @@ use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\PdfExportController;
 use App\Http\Controllers\TarifamovilController;
 use App\Http\Controllers\GestionvendedorController;
+//use App\Http\Controllers\TarifamovilController;
+use App\Http\Controllers\PedidoController;
 
 
 route::get('/phpinfo', function(){

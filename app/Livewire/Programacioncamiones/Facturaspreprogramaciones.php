@@ -37,8 +37,8 @@ class Facturaspreprogramaciones extends Component
     public $hasta;
     public $estado_envio = "";
     public function mount(){
-        $this->desde = null;
-        $this->hasta = null;
+        $this->desde = date('Y-m-d');
+        $this->hasta = date('Y-m-d');
 
         $this->selectedFacturas = [];
 
@@ -72,6 +72,7 @@ class Facturaspreprogramaciones extends Component
         $listar_tipo_servicios = $this->tiposervicio->listar_tipo_servicios();
         return view('livewire.programacioncamiones.facturaspreprogramaciones', compact('listar_tipo_servicios'));
     }
+
 
     public function buscar_comprobantes(){
         // Verificar si no hay fechas ni búsqueda
@@ -185,7 +186,7 @@ class Facturaspreprogramaciones extends Component
         }
     }
 
-    public function guardarFacturas(){
+    public function guardarFacturas() {
         try {
             // Validar que haya facturas seleccionadas y un estado seleccionado
             $this->validate([
@@ -254,7 +255,13 @@ class Facturaspreprogramaciones extends Component
                     $historial->fac_pre_prog_estado = $nuevaFactura->fac_pre_prog_estado;
                     $historial->his_pre_progr_fecha_hora = Carbon::now('America/Lima');
                     $historial->save();
-                }
+
+                }    // Insertar en facturas_mov
+                DB::table('facturas_mov')->insert([
+                    'id_fac_pre_prog' => $nuevaFactura->id_fac_pre_prog, // Usar el ID de la nueva factura creada
+                    'fac_envio_valpago' => Carbon::now('America/Lima'), // Establecer la fecha de envío
+                    'id_users_responsable' => Auth::id(), // Asignar el ID del usuario responsable
+                ]);
             }
             DB::commit();
             // Limpiar las facturas seleccionadas y el estado
@@ -266,5 +273,24 @@ class Facturaspreprogramaciones extends Component
             session()->flash('error', 'Ocurrió un error al guardar las facturas: ' . $e->getMessage());
         }
     }
+    public $errorMessage;
 
+    public function listar_detallesf($cftd, $cfnumser, $cfnumdoc) {
+        try {
+            $this->detalleFactura = Factura::where('fac_pre_prog_cftd', $cftd)
+                ->where('fac_pre_prog_cfnumser', $cfnumser)
+                ->where('fac_pre_prog_cfnumdoc', $cfnumdoc)
+                ->first();
+
+            if (!$this->detalleFactura) {
+                $this->errorMessage = "No se encontró la factura con los parámetros especificados.";
+            } else {
+                $this->errorMessage = null; // Restablecer el mensaje si se encontró la factura
+            }
+
+        } catch (\Exception $e) {
+            $this->errorMessage = "Ocurrió un error al intentar obtener la factura.";
+            $this->logs->insertarLog($e);
+        }
+    }
 }

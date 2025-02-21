@@ -971,8 +971,8 @@ class HistorialProgramacion extends Component
                             $historialDespacho->id_despacho = $select;
                             $historialDespacho->id_despacho_venta = $comprobante->id_despacho_venta;
                             $historialDespacho->despacho_venta_cfnumdoc = $comprobante->despacho_venta_cfnumdoc;
-                            $historialDespacho->despacho_estado_aprobacion = 2;
                             $historialDespacho->despacho_detalle_estado_entrega = 1;
+                            $historialDespacho->despacho_estado_aprobacion = 2;
                             $historialDespacho->his_desp_vent_fecha = Carbon::now('America/Lima');
 
                             if (!$historialDespacho->save()) {
@@ -1022,6 +1022,7 @@ class HistorialProgramacion extends Component
                         $historialDespacho->id_despacho = $this->id_despacho;
                         $historialDespacho->id_despacho_venta = $comprobante->id_despacho_venta;
                         $historialDespacho->despacho_venta_cfnumdoc = $comprobante->despacho_venta_cfnumdoc;
+                        $historialDespacho->despacho_detalle_estado_entrega = 1;
                         $historialDespacho->despacho_estado_aprobacion = 2;
                         $historialDespacho->his_desp_vent_fecha = Carbon::now('America/Lima');
 

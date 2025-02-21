@@ -497,7 +497,7 @@
         @if(count($resultado) > 0)
             @php $conteoGeneral = 1; @endphp
             @foreach($resultado as $index => $r)
-                <div class="accordion-item" were:key="{{$r->id_liquidacion}}">
+                <div were:key="{{$r->id_liquidacion}}" class="accordion-item">
                     <h2 class="accordion-header">
                         <button class="accordion-button {{$index == 0 ? '' : 'collapsed'}}" wire:ignore.self type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne_{{$index}}" aria-expanded="true" aria-controls="collapseOne_{{$index}}">
                             #{{$conteoGeneral}} | FR : {{$r->creacion_liquidacion}} | UR : {{$r->name}} | TR : {{$r->transportista_razon_social}} | SC : {{$r->liquidacion_serie}} - {{$r->liquidacion_correlativo}}
@@ -516,7 +516,7 @@
                                         <button class="btn btn-sm text-white bg-warning" wire:click="gestionObservacionLiquidacion({{$r->id_liquidacion}})" data-bs-toggle="modal" data-bs-target="#modalComentarioLiquidacion"><i class="fa fa-eye"></i> OBSERVAR</button>
                                         <button class="btn btn-sm text-white bg-danger" wire:click="cambiarEstadoLiquidacion({{$r->id_liquidacion}},2)" data-bs-toggle="modal" data-bs-target="#modalAprobarLiquidacion"><i class="fa fa-x"></i> RECHAZAR</button>
                                     @endif
-                                    <a class="btn btn-sm text-white bg-primary" href="{{route('Liquidacionflete.editar_liquidacion',['data'=>base64_encode($r->id_liquidacion)])}}"><i class="fa-solid fa-pencil"></i> EDITAR</a>
+                                    <a class="btn btn-sm text-white bg-primary" href="{{route('Despachotransporte.editar_liquidaciones',['data'=>base64_encode($r->id_liquidacion)])}}"><i class="fa-solid fa-pencil"></i> EDITAR</a>
                                     @if(file_exists($r->liquidacion_ruta_comprobante))
                                         <a class="btn btn-sm text-white bg-secondary" href="{{asset($r->liquidacion_ruta_comprobante)}}" target="_blank"><i class="fa-solid fa-eye"></i> VER DOCUMENTO</a>
                                     @else

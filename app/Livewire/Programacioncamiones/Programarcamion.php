@@ -3,6 +3,7 @@
 namespace App\Livewire\Programacioncamiones;
 
 use App\Models\Tarifario;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use App\Models\Logs;
@@ -680,6 +681,20 @@ class Programarcamion extends Component
                         return;
                     }
                 }
+            }
+            // Buscar el registro en la tabla facturas_mov
+            $facturaMov = DB::table('facturas_mov')
+                ->where('id_fac_pre_prog', $this->id_fac_pre_prog) // Asegúrate de usar el campo correcto
+                ->first();
+
+            if ($facturaMov) {
+                // Si existe, actualizar los campos
+                DB::table('facturas_mov')
+                    ->where('id_fac_pre_prog', $this->id_fac_pre_prog)
+                    ->update([
+                        'fac_acept_ges_fac' => Carbon::now('America/Lima'), // Actualiza con la fecha actual
+                        'fac_despacho' => Carbon::now('America/Lima'), // Actualiza con la fecha actual
+                    ]);
             }
             DB::commit();
             session()->flash('success', 'Registro guardado correctamente.');

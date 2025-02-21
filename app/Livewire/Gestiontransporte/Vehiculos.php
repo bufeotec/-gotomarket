@@ -95,7 +95,6 @@ class Vehiculos extends Component
     }
 
     public function edit_data($id) {
-        // Decodifica el ID y busca el vehículo
         $vehiculoEdit = Vehiculo::with('tarifasMovil')->find(base64_decode($id));
 
         if ($vehiculoEdit) {
@@ -110,11 +109,10 @@ class Vehiculos extends Component
             $this->id_vehiculo = $vehiculoEdit->id_vehiculo;
 
             // Cargar el id_tarifario de la relación tarifasMovil
-            $tarifa = $vehiculoEdit->tarifasMovil->first(); // Relacion uno a muchos
+            $tarifa = $vehiculoEdit->tarifasMovil->first(); // Relación uno a muchos
             $this->id_tarifario = $tarifa ? $tarifa->id_tarifario : null; // Asignar el id_tarifario
         }
     }
-
 
 //    public function saveVehiculo(){
 //        try {
@@ -240,7 +238,6 @@ class Vehiculos extends Component
 //            session()->flash('error', 'Ocurrió un error al guardar el registro. Por favor, inténtelo nuevamente.');
 //        }
 //    }
-
     public function saveVehiculo() {
         try {
             $this->validate([
@@ -254,7 +251,7 @@ class Vehiculos extends Component
                 'vehiculo_capacidad_volumen' => 'required|numeric',
                 'vehiculo_estado' => 'nullable|integer',
                 'id_vehiculo' => 'nullable|integer',
-                'id_tarifario' => 'required|integer', // Debe incluirse en las validaciones
+                'id_tarifario' => 'required|integer',
             ], [
                 'id_transportistas.required' => 'Debes seleccionar un transportista.',
                 'id_transportistas.integer' => 'El transportista debe ser un número entero.',
@@ -328,10 +325,12 @@ class Vehiculos extends Component
                     return;
                 }
 
+                // Validar si la placa ya está registrada en otro vehículo
                 $validar_update = DB::table('vehiculos')
                     ->where('id_vehiculo', '<>', $this->id_vehiculo)
                     ->where('vehiculo_placa', '=', $this->vehiculo_placa)
                     ->exists();
+
                 if (!$validar_update) {
                     DB::beginTransaction();
                     // Actualizar los datos del vehículo
@@ -343,8 +342,8 @@ class Vehiculos extends Component
                     $vehiculo_update->vehiculo_ancho = $this->vehiculo_ancho;
                     $vehiculo_update->vehiculo_largo = $this->vehiculo_largo;
                     $vehiculo_update->vehiculo_alto = $this->vehiculo_alto;
-                    $vehiculo_update->vehiculo_estado = 0;
                     $vehiculo_update->vehiculo_capacidad_volumen = $this->vehiculo_capacidad_volumen;
+                    $vehiculo_update->vehiculo_estado = 0;
 
                     // Guardar cambios en el vehículo
                     if (!$vehiculo_update->save()) {
@@ -359,12 +358,32 @@ class Vehiculos extends Component
 //                        ->update([
 //                            'id_tarifario' => $this->id_tarifario, // ID de la tarifa seleccionada
 //                        ]);
-                    DB::table('tarifas_movil')->insert([
-                        'id_vehiculo' => $this->id_vehiculo,
-                        'id_tarifario' => $this->id_tarifario,
-                        'created_at' => now(),
-                        'id_users' => Auth::id(),
-                    ]);
+//                    DB::table('tarifas_movil')->insert([
+//                        'id_vehiculo' => $this->id_vehiculo,
+//                        'id_tarifario' => $this->id_tarifario,
+//                        'created_at' => now(),
+//                        'id_users' => Auth::id(),
+//                    ]);
+
+                    // Verificar si el vehículo ya tiene una tarifa asignada
+                    $tarifa = DB::table('tarifas_movil')
+                        ->where('id_vehiculo', $this->id_vehiculo)
+                        ->first();
+
+                    if ($tarifa) {
+                        // Si ya existe una tarifa, solo actualiza la tarifa
+                        DB::table('tarifas_movil')
+                            ->where('id_vehiculo', $this->id_vehiculo)
+                            ->update(['id_tarifario' => $this->id_tarifario]); // Actualiza la tarifa
+                    } else {
+                        // Si no existe, crea una nueva entrada
+                        DB::table('tarifas_movil')->insert([
+                            'id_vehiculo' => $this->id_vehiculo,
+                            'id_tarifario' => $this->id_tarifario,
+                            'created_at' => now(),
+                            'id_users' => Auth::id(),
+                        ]);
+                    }
 
                     DB::commit();
                     $this->dispatch('hideModal');

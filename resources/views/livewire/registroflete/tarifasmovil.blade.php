@@ -76,15 +76,24 @@
                                         <td>{{ $lt->tipo_vehiculo_concepto ?? 'N/A' }}</td>
                                         <td>{{ $lt->vehiculo_placa ?? 'N/A' }}</td>
                                         <td>S/ {{ $lt->tarifa_monto }}</td>
-                                        <td class="text-center"> {{ $lt->updated_at ? \Carbon\Carbon::parse($lt->updated_at)->format('j M. Y /\ h:i a') : '---' }}</td>
+                                        <td class="text-center">
+                                            @if($lt->vehiculo_estado == 0)
+                                                --- <!-- Ocultar fecha si está pendiente -->
+                                            @elseif($lt->vehiculo_estado == 1)
+                                                {{ $lt->updated_at ? \Carbon\Carbon::parse($lt->updated_at)->format('j M. Y /\ h:i a') : '---' }} <!-- Mostrar fecha de aprobación cuando está confirmado -->
+                                            @else
+                                                ---
+                                            @endif
+                                        </td>
                                         <td>{{ $lt->vehiculo_estado == 0 ? 'Pendiente' : 'Aprobado' }}</td>
                                         <td>
                                             @if($lt->vehiculo_estado == 0)
                                                 <x-btn-accion class="text-success" wire:click="btn_disable('{{ base64_encode($lt->id_vehiculo) }}', 1)" data-bs-toggle="modal" data-bs-target="#modalDeleteTarifaMovil">
                                                     <x-slot name="message">
-                                                        <span class="bg-success p-2 text-white rounded">
-                                                            <i class="fa-solid fa-check"></i>
-                                                        Aprobar</span>
+                                <span class="bg-success p-2 text-white rounded">
+                                    <i class="fa-solid fa-check"></i>
+                                    Aprobar
+                                </span>
                                                     </x-slot>
                                                 </x-btn-accion>
                                             @else

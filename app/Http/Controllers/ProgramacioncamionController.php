@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Despacho;
 use App\Models\DespachoVenta;
 use App\Models\Programacion;
+use App\Models\Facturaspreprogramacion;
 use Illuminate\Http\Request;
 use App\Models\Logs;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +16,7 @@ class ProgramacioncamionController extends Controller
     private $programacion;
     private $despacho;
     private $despacho_venta;
+    private $facturapreprogramacion;
 
     public function __construct()
     {
@@ -22,6 +24,7 @@ class ProgramacioncamionController extends Controller
         $this->programacion = new Programacion();
         $this->despacho = new Despacho();
         $this->despacho_venta = new DespachoVenta();
+        $this->facturapreprogramacion = new Facturaspreprogramacion();
     }
 
     public function facturas_pre_programacion(){
@@ -140,4 +143,82 @@ class ProgramacioncamionController extends Controller
             return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
         }
     }
+
+    public function facturacion(){
+        try {
+            return view('programacion_camiones.facturacion');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
+
+    public function validaredes(){
+        try {
+            return view('programacion_camiones.validaredes');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
+
+
+    public function vendedor(){
+        try {
+            $user = auth()->user();
+            $id_transportistas = $user->id_transportistas;
+            $id_users = $user->id_users; // Obtener el ID del usuario autenticado
+
+            return view('gestionvendedor.vendedor', compact('id_transportistas', 'id_users'));
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
+
+    public function aprobar_camino(){
+        try {
+            return view('gestionvendedor.aprobar_camino');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
+
+    public function aprobar_entregado(){
+        try {
+            return view('gestionvendedor.aprobar_entregado');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
+
+    public function tracking(){
+        try {
+            return view('gestionvendedor.tracking');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
+
+    public function vistatracking(){
+        try {
+            $data = json_decode(base64_decode(request()->get('data')), true);
+
+            if ($data && isset($data['id'])) {
+                $id_fac = $data['id'];
+                $num_doc = $data['numdoc'];
+
+                $informacion_fac = $this->facturapreprogramacion->listar_fac_pre_prog_x_id($id_fac);
+
+                return view('gestionvendedor.vistatracking', compact('informacion_fac', 'num_doc'));
+            }
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
+
 }

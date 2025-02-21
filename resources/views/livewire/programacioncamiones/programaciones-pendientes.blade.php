@@ -277,7 +277,7 @@
                                     <button class="btn btn-sm text-white bg-success" wire:click="cambiarEstadoProgramacion({{$r->id_programacion}},1)" data-bs-toggle="modal" data-bs-target="#modalAprobarProgramacion"><i class="fa-solid fa-check"></i> APROBAR</button>
                                     <button class="btn btn-sm text-white bg-danger" wire:click="cambiarEstadoProgramacion({{$r->id_programacion}},4)" data-bs-toggle="modal" data-bs-target="#modalAprobarProgramacion"><i class="fa fa-x"></i> RECHAZAR</button>
                                 @endif
-                                <a class="btn btn-sm text-white bg-primary" href="{{route('Programacioncamion.editar_programacion',['data'=>base64_encode($r->id_programacion)])}}"><i class="fa-solid fa-pencil"></i> EDITAR</a>
+                                <a class="btn btn-sm text-white bg-primary" href="{{route('Despachotransporte.editar_programaciones',['data'=>base64_encode($r->id_programacion)])}}"><i class="fa-solid fa-pencil"></i> EDITAR</a>
                             </div>
                             <div class="col-lg-12 col-md-12 col-sm-12 table-responsive">
                                 <table class="table">
