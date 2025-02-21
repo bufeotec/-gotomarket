@@ -53,4 +53,41 @@ class DespachoVenta extends Model
         }
         return $result;
     }
+
+    public function listar_comprobantes($search, $pagination, $order = 'desc'){
+        try {
+            // Mapeo de términos de búsqueda a valores de estado
+            $estadoMapping = [
+                'creditos' => 1,
+                'programar' => 2,
+                'programado' => 3,
+                'ruta' => 4
+            ];
+
+            // Convertir el término de búsqueda a su valor correspondiente si existe en el mapeo
+            $estadoValue = $estadoMapping[strtoupper($search)] ?? null;
+
+            $query = DB::table('facturas_pre_programaciones')
+                ->where(function ($q) use ($search, $estadoValue) {
+                    $q->where('fac_pre_prog_cnomcli', 'like', '%' . $search . '%')
+                        ->orWhere('fac_pre_prog_cfcodcli', 'like', '%' . $search . '%')
+                        ->orWhere('fac_pre_prog_grefecemision', 'like', '%' . $search . '%');
+
+                    // Si el término de búsqueda coincide con un estado, filtrar por el campo correspondiente
+                    if (!is_null($estadoValue)) {
+                        $q->orWhere('fac_pre_prog_estado_aprobacion', $estadoValue);
+                    }
+                })
+                ->orderBy('id_fac_pre_prog', $order);
+
+            $result = $query->paginate($pagination);
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+
+        return $result;
+    }
+
 }
