@@ -91,18 +91,24 @@
             <div class="card">
                 <div class="card-body">
                     <div class="row mb-2">
-                        <h6>FACTURAS POR APROBRAR</h6>
+                        <h6>DOCUMENTO PENDIENTE POR APROBAR</h6>
                     </div>
                     <div class="row">
-                        <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
+                        <div class="col-lg-4 col-md-6 col-sm-12 mb-2">
                             <input type="date" name="fecha_desde" id="fecha_desde" wire:model.live="desde" class="form-control" min="2025-01-01">
                         </div>
-                        <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
+                        <div class="col-lg-4 col-md-6 col-sm-12 mb-2">
                             <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model.live="hasta" class="form-control" min="2025-01-01">
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-12 mb-2 mt-1">
+                            <button class="btn btn-sm bg-primary text-white w-100" wire:click="buscar_comprobantes" >
+                                <i class="fa fa-search"></i> BUSCAR
+                            </button>
                         </div>
                         <div class="col-lg-12 col-md-12 col-sm-12">
                             <div class="loader mt-2" wire:loading wire:target="buscar_comprobantes"></div>
                         </div>
+
                     </div>
                     <div class="row mt-3">
                         <div class="col-lg-12 col-md-12 col-sm-12">
@@ -110,10 +116,12 @@
                                 <x-table-general>
                                     <x-slot name="thead">
                                         <tr>
-                                            <th style="font-size: 12px">Serie y Correlativo / Guía</th>
+                                            <th style="font-size: 12px">Serie  / Guía</th>
+                                            <th style="font-size: 12px">Fecha Emisión</th>
+                                            <th style="font-size: 12px">Importe sin IGV</th>
                                             <th style="font-size: 12px">Nombre del Cliente</th>
                                             <th style="font-size: 12px">Peso y Volumen</th>
-                                            <th style="font-size: 12px">Check</th>
+                                            <th style="font-size: 12px">Acciones</th>
                                         </tr>
                                     </x-slot>
 
@@ -132,7 +140,7 @@
                                                 @endphp
                                                 @if(!$comprobanteExiste)
                                                     <tr style="cursor: pointer">
-                                                        <td colspan="4" style="padding: 0px">
+                                                        <td colspan="6" style="padding: 0px">
                                                             <table class="table">
                                                                 <tbody>
                                                                 <tr>
@@ -148,6 +156,16 @@
                                                                         @endphp
                                                                         <span class="d-block tamanhoTablaComprobantes">
                                                                                 {{ $guia }}
+                                                                            </span>
+                                                                    </td>
+                                                                    <td style="width: 32.2%">
+                                                                            <span class="d-block tamanhoTablaComprobantes">
+                                                                                {{$me->obtenerNombreFecha($factura->fac_pre_prog_grefecemision,'DateTime','Date')}}
+                                                                            </span>
+                                                                    </td>
+                                                                    <td style="width: 32.2%">
+                                                                            <span class="d-block tamanhoTablaComprobantes">
+                                                                                {{ $me->formatoDecimal($factura->fac_pre_prog_cfimporte ?? 0)}} <!-- Cambiado -->
                                                                             </span>
                                                                     </td>
                                                                     <td style="width: 32.2%">
@@ -178,19 +196,19 @@
                                                                     <td>
                                                                         <x-btn-accion class="btn btn-success btn-sm text-white" wire:click="pre_mot_cre('{{ base64_encode($factura->id_fac_pre_prog) }}')" data-bs-toggle="modal" data-bs-target="#modalMotCre">
                                                                             <x-slot name="message">
-                                                                                <i class="fa-regular fa-circle-check"></i>
+                                                                                <i class="fa-solid fa-check"></i>
                                                                             </x-slot>
                                                                         </x-btn-accion>
 
-                                                                        <x-btn-accion class="btn btn-danger btn-sm text-white" wire:click="rech_mot_cre('{{ base64_encode($factura->id_fac_pre_prog) }}')" data-bs-toggle="modal" data-bs-target="#modalMotReCre">
-                                                                            <x-slot name="message">
-                                                                                <i class="fa-regular fa-circle-xmark"></i>
-                                                                            </x-slot>
-                                                                        </x-btn-accion>
+{{--                                                                        <x-btn-accion class="btn btn-danger btn-sm text-white" wire:click="rech_mot_cre('{{ base64_encode($factura->id_fac_pre_prog) }}')" data-bs-toggle="modal" data-bs-target="#modalMotReCre">--}}
+{{--                                                                            <x-slot name="message">--}}
+{{--                                                                                <i class="fa-regular fa-circle-xmark"></i>--}}
+{{--                                                                            </x-slot>--}}
+{{--                                                                        </x-btn-accion>--}}
                                                                     </td>
                                                                 </tr>
                                                                 <tr style="border-top: 2px solid transparent;">
-                                                                    <td colspan="4" style="padding-top: 0">
+                                                                    <td colspan="6" style="padding-top: 0">
                                                                             <span class="d-block tamanhoTablaComprobantes">
                                                                                 {{ $factura->fac_pre_prog_direccion_llegada }} <br> UBIGEO: <b class="colorBlackComprobantes">{{ $factura->fac_pre_prog_departamento }} - {{ $factura->fac_pre_prog_provincia }} - {{ $factura->fac_pre_prog_distrito }}</b>
                                                                             </span>
@@ -233,7 +251,7 @@
                                     <div class="row align-items-center">
                                         <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
                                             <div class="d-flex justify-content-between align-items-center">
-                                                <h6 class="mb-0">Facturas Aprobadas</h6>
+                                                <h6 class="mb-0">Facturas Recepcionadas</h6>
                                             </div>
                                         </div>
                                     </div>
@@ -301,7 +319,7 @@
                                                         <td>
                                                             <x-btn-accion class="btn btn-success btn-sm text-white" wire:click="enviar_fac_apro('{{ base64_encode($factura->id_fac_pre_prog) }}')" data-bs-toggle="modal" data-bs-target="#modalFacApro">
                                                                 <x-slot name="message">
-                                                                    <i class="fa-regular fa-paper-plane"></i>
+                                                                    <i class="fa-solid fa-check"></i>
                                                                 </x-slot>
                                                             </x-btn-accion>
                                                         </td>

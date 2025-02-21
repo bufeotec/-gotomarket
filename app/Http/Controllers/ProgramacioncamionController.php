@@ -132,4 +132,24 @@ class ProgramacioncamionController extends Controller
             return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
         }
     }
+
+    public function facturacion(){
+        try {
+            return view('programacion_camiones.facturacion');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
+
+    public function validaredes(){
+        try {
+            return view('programacion_camiones.validaredes');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
+
+
 }
