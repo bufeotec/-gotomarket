@@ -166,13 +166,13 @@ class Creditoscobranzas extends Component
                             ->where('id_fac_pre_prog', $this->id_fac_pre_prog)
                             ->update([
                                 'fac_acept_valpago' => Carbon::now('America/Lima'), // Actualiza con la fecha actual
+//                                'fac_envio_est_fac' => Carbon::now('America/Lima'), // Actualiza con la fecha actual
                             ]);
                     } else {
                         // Si no existe, crear un nuevo registro
                         DB::table('facturas_mov')->insert([
                             'id_fac_pre_prog' => $this->id_fac_pre_prog,
                             'fac_acept_valpago' => Carbon::now('America/Lima'), // Establecer la fecha de aceptación
-                            'fac_envio_valpago' => Carbon::now('America/Lima'), // Establecer la fecha de envío
                             'id_users_responsable' => Auth::id(), // Asignar el ID del usuario responsable
                         ]);
                     }
@@ -329,7 +329,8 @@ class Creditoscobranzas extends Component
                         // Si no existe, crear un nuevo registro
                         DB::table('facturas_mov')->insert([
                             'id_fac_pre_prog' => $this->id_fac_pre_prog,
-                            'fac_envio_est_fac' => Carbon::now('America/Lima'), // Establecer la fecha de aceptación
+                            'fac_acept_valpago' => Carbon::now('America/Lima'), // Establecer la fecha de aceptación
+                            'fac_envio_valpago' => Carbon::now('America/Lima'), // Establecer la fecha de envío
                             'id_users_responsable' => Auth::id(), // Asignar el ID del usuario responsable
                         ]);
                     }

@@ -12,7 +12,9 @@ use App\Http\Controllers\LiquidacionfleteController;
 use App\Http\Controllers\GestiondocumentariaController;
 use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\PdfExportController;
-use App\Http\Controllers\TarifamovilController;
+//use App\Http\Controllers\TarifamovilController;
+use App\Http\Controllers\PedidoController;
+use App\Http\Controllers\GestionvendedorController;
 
 
 route::get('/phpinfo', function(){
@@ -63,8 +65,17 @@ Route::prefix('Programacioncamion')->middleware(['auth', 'canMenu:Programacionca
     route::get('/programar_camion',[ProgramacioncamionController::class ,'programar_camion'])->name('Programacioncamion.programar_camion')->middleware('verifyUserStatus')->middleware('can:programar_camion');
     route::get('/programacion_pendientes',[ProgramacioncamionController::class ,'programacion_pendientes'])->name('Programacioncamion.programacion_pendientes')->middleware('verifyUserStatus')->middleware('can:programacion_pendientes');
     route::get('/historial_programacion',[ProgramacioncamionController::class ,'historial_programacion'])->name('Programacioncamion.historial_programacion')->middleware('verifyUserStatus')->middleware('can:historial_programacion');
+    route::get('/facturas_pre_programacion',[ProgramacioncamionController::class ,'facturas_pre_programacion'])->name('Programacioncamion.facturas_pre_programacion')->middleware('verifyUserStatus')->middleware('can:facturas_pre_programacion');
+    route::get('/credito_cobranza',[ProgramacioncamionController::class ,'credito_cobranza'])->name('Programacioncamion.credito_cobranza')->middleware('verifyUserStatus')->middleware('can:credito_cobranza');
+    route::get('/facturas_aprobar',[ProgramacioncamionController::class ,'facturas_aprobar'])->name('Programacioncamion.facturas_aprobar')->middleware('verifyUserStatus')->middleware('can:facturas_aprobar');
+    route::get('/gestion_factura_programacion',[ProgramacioncamionController::class ,'gestion_factura_programacion'])->name('Programacioncamion.gestion_factura_programacion')->middleware('verifyUserStatus')->middleware('can:gestion_factura_programacion');
+    route::get('/notas_credito',[ProgramacioncamionController::class ,'notas_credito'])->name('Programacioncamion.notas_credito')->middleware('verifyUserStatus')->middleware('can:notas_credito');
+    route::get('/facturas_aprobar',[ProgramacioncamionController::class ,'facturas_aprobar'])->name('Programacioncamion.facturas_aprobar')->middleware('verifyUserStatus')->middleware('can:facturas_aprobar');
+    route::get('/gestion_factura_programacion',[ProgramacioncamionController::class ,'gestion_factura_programacion'])->name('Programacioncamion.gestion_factura_programacion')->middleware('verifyUserStatus')->middleware('can:gestion_factura_programacion');
     route::get('/detalle_programacion',[ProgramacioncamionController::class ,'detalle_programacion'])->name('Programacioncamion.detalle_programacion')->middleware('verifyUserStatus')->middleware('can:detalle_programacion');
     route::get('/editar_programacion',[ProgramacioncamionController::class ,'editar_programacion'])->name('Programacioncamion.editar_programacion')->middleware('verifyUserStatus')->middleware('can:editar_programacion');
+    route::get('/facturacion',[ProgramacioncamionController::class ,'facturacion'])->name('Programacioncamion.facturacion')->middleware('verifyUserStatus')->middleware('can:facturacion');
+    route::get('/validaredes',[ProgramacioncamionController::class ,'validaredes'])->name('Programacioncamion.validaredes')->middleware('verifyUserStatus')->middleware('can:validaredes');
 });
 
 Route::prefix('Liquidacionflete')->middleware(['auth', 'canMenu:Liquidacionflete'])->group(function () {
@@ -92,5 +103,16 @@ Route::prefix('Reporte')->middleware(['auth', 'canMenu:Reporte'])->group(functio
     route::get('/ver_reporte',[ReporteController::class ,'ver_reporte'])->name('reporte.ver_reporte')->middleware('verifyUserStatus')->middleware('can:ver_reporte');
 });
 
+Route::prefix('Pedido')->middleware(['auth', 'canMenu:Pedido'])->group(function () {
+    /* PEDIDOS */
+    route::get('/pedidos',[PedidoController::class ,'pedidos'])->name('Pedido.pedidos')->middleware('verifyUserStatus')->middleware('can:pedidos');
+});
 
+Route::prefix('Gestionvendedor')->middleware(['auth', 'canMenu:Gestionvendedor'])->group(function () {
+    /* FLETES - TARIFARIOS */
+    route::get('/vendedor',[GestionvendedorController::class ,'vendedor'])->name('Gestionvendedor.vendedor')->middleware('verifyUserStatus')->middleware('can:vendedor');
+    route::get('/aprobar_camino',[GestionvendedorController::class ,'aprobar_camino'])->name('Gestionvendedor.aprobar_camino')->middleware('verifyUserStatus')->middleware('can:aprobar_camino');
+    route::get('/aprobar_entregado',[GestionvendedorController::class ,'aprobar_entregado'])->name('Gestionvendedor.aprobar_entregado')->middleware('verifyUserStatus')->middleware('can:aprobar_entregado');
+    route::get('/tracking',[GestionvendedorController::class ,'tracking'])->name('Gestionvendedor.tracking')->middleware('verifyUserStatus')->middleware('can:tracking');
+});
 

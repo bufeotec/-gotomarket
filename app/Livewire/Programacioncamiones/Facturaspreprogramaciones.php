@@ -186,88 +186,6 @@ class Facturaspreprogramaciones extends Component
         }
     }
 
-//    public function guardarFacturas() {
-//        try {
-//            // Validar que haya facturas seleccionadas y un estado seleccionado
-//            $this->validate([
-//                'estado_envio' => 'required|integer',
-//                'selectedFacturas' => 'required|array|min:1',
-//            ], [
-//                'estado_envio.required' => 'Debes seleccionar un estado.',
-//                'estado_envio.integer' => 'El estado seleccionado no es válido.',
-//                'selectedFacturas.required' => 'Debes seleccionar al menos una factura.',
-//                'selectedFacturas.min' => 'Debes seleccionar al menos una factura.',
-//            ]);
-//
-//            DB::beginTransaction();
-//
-//            foreach ($this->selectedFacturas as $factura) {
-//                // Verificar si la factura ya existe en la tabla
-//                $facturaExistente = Facturaspreprogramacion::where('fac_pre_prog_cftd', $factura['CFTD'])
-//                    ->where('fac_pre_prog_cfnumser', $factura['CFNUMSER'])
-//                    ->where('fac_pre_prog_cfnumdoc', $factura['CFNUMDOC'])
-//                    ->first();
-//
-//                if ($facturaExistente) {
-//                    // Si la factura existe, actualizar el estado
-//                    $facturaExistente->fac_pre_prog_estado_aprobacion = $this->estado_envio;
-//                    $facturaExistente->fac_pre_prog_estado = 1;
-//                    $facturaExistente->fac_pre_prog_fecha = Carbon::now('America/Lima');
-//                    $facturaExistente->save();
-//
-//                    // Guardar en la tabla historial_pre_programacion
-//                    $historial = new Historialpreprogramacion();
-//                    $historial->id_fac_pre_prog = $facturaExistente->id_fac_pre_prog;
-//                    $historial->fac_pre_prog_cfnumdoc = $facturaExistente->fac_pre_prog_cfnumdoc;
-//                    $historial->fac_pre_prog_estado_aprobacion = $facturaExistente->fac_pre_prog_estado_aprobacion;
-//                    $historial->fac_pre_prog_estado = $facturaExistente->fac_pre_prog_estado;
-//                    $historial->his_pre_progr_fecha_hora = Carbon::now('America/Lima');
-//                    $historial->save();
-//                } else {
-//                    // Si no existe, crear un nuevo registro
-//                    $nuevaFactura = new Facturaspreprogramacion();
-//                    $nuevaFactura->id_users = Auth::id();
-//                    $nuevaFactura->fac_pre_prog_cftd = $factura['CFTD'];
-//                    $nuevaFactura->fac_pre_prog_cfnumser = $factura['CFNUMSER'];
-//                    $nuevaFactura->fac_pre_prog_cfnumdoc = $factura['CFNUMDOC'];
-//                    $nuevaFactura->fac_pre_prog_factura = $factura['CFNUMSER'] . '-' . $factura['CFNUMDOC'];
-//                    $nuevaFactura->fac_pre_prog_grefecemision = $factura['GREFECEMISION'];
-//                    $nuevaFactura->fac_pre_prog_cnomcli = $factura['CNOMCLI'];
-//                    $nuevaFactura->fac_pre_prog_cfcodcli = $factura['CCODCLI'];
-//                    $nuevaFactura->fac_pre_prog_guia = $factura['guia'];
-//                    $nuevaFactura->fac_pre_prog_cfimporte = $factura['CFIMPORTE'];
-//                    $nuevaFactura->fac_pre_prog_total_kg = $factura['total_kg'];
-//                    $nuevaFactura->fac_pre_prog_total_volumen = $factura['total_volumen'];
-//                    $nuevaFactura->fac_pre_prog_direccion_llegada = $factura['LLEGADADIRECCION'];
-//                    $nuevaFactura->fac_pre_prog_departamento = $factura['DEPARTAMENTO'];
-//                    $nuevaFactura->fac_pre_prog_provincia = $factura['PROVINCIA'];
-//                    $nuevaFactura->fac_pre_prog_distrito = $factura['DISTRITO'];
-//                    $nuevaFactura->fac_pre_prog_estado_aprobacion = $this->estado_envio;
-//                    $nuevaFactura->fac_pre_prog_estado = 1;
-//                    $nuevaFactura->fac_pre_prog_fecha = Carbon::now('America/Lima');
-//                    $nuevaFactura->save();
-//
-//                    // Guardar en la tabla historial_pre_programacion
-//                    $historial = new Historialpreprogramacion();
-//                    $historial->id_fac_pre_prog = $nuevaFactura->id_fac_pre_prog;
-//                    $historial->fac_pre_prog_cfnumdoc = $nuevaFactura->fac_pre_prog_cfnumdoc;
-//                    $historial->fac_pre_prog_estado_aprobacion = $nuevaFactura->fac_pre_prog_estado_aprobacion;
-//                    $historial->fac_pre_prog_estado = $nuevaFactura->fac_pre_prog_estado;
-//                    $historial->his_pre_progr_fecha_hora = Carbon::now('America/Lima');
-//                    $historial->save();
-//
-//                }
-//            }
-//            DB::commit();
-//            // Limpiar las facturas seleccionadas y el estado
-//            $this->selectedFacturas = [];
-//            $this->estado_envio = null;
-//            session()->flash('success', 'Facturas procesadas correctamente.');
-//        } catch (\Exception $e) {
-//            DB::rollBack();
-//            session()->flash('error', 'Ocurrió un error al guardar las facturas: ' . $e->getMessage());
-//        }
-//    }
     public function guardarFacturas() {
         try {
             // Validar que haya facturas seleccionadas y un estado seleccionado
@@ -305,12 +223,6 @@ class Facturaspreprogramaciones extends Component
                     $historial->fac_pre_prog_estado = $facturaExistente->fac_pre_prog_estado;
                     $historial->his_pre_progr_fecha_hora = Carbon::now('America/Lima');
                     $historial->save();
-
-                    DB::table('facturas_mov')->insert([
-                        'id_fac_pre_prog' =>  $facturaExistente->id_fac_pre_prog, // Usar el ID de la nueva factura creada
-                        'fac_envio_valpago' => Carbon::now('America/Lima'), // Establecer la fecha de envío
-                        'id_users_responsable' => Auth::id(), // Asignar el ID del usuario responsable
-                    ]);
                 } else {
                     // Si no existe, crear un nuevo registro
                     $nuevaFactura = new Facturaspreprogramacion();
@@ -344,7 +256,12 @@ class Facturaspreprogramaciones extends Component
                     $historial->his_pre_progr_fecha_hora = Carbon::now('America/Lima');
                     $historial->save();
 
-                }
+                }    // Insertar en facturas_mov
+                DB::table('facturas_mov')->insert([
+                    'id_fac_pre_prog' => $nuevaFactura->id_fac_pre_prog, // Usar el ID de la nueva factura creada
+                    'fac_envio_valpago' => Carbon::now('America/Lima'), // Establecer la fecha de envío
+                    'id_users_responsable' => Auth::id(), // Asignar el ID del usuario responsable
+                ]);
             }
             DB::commit();
             // Limpiar las facturas seleccionadas y el estado
@@ -353,7 +270,6 @@ class Facturaspreprogramaciones extends Component
             session()->flash('success', 'Facturas procesadas correctamente.');
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Error al guardar facturas: ' . $e->getMessage()); // Log para ver detalles
             session()->flash('error', 'Ocurrió un error al guardar las facturas: ' . $e->getMessage());
         }
     }

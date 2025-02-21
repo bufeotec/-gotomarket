@@ -84,7 +84,8 @@ class Facturacion extends Component
                         // Si no existe, crear un nuevo registro
                         DB::table('facturas_mov')->insert([
                             'id_fac_pre_prog' => $this->id_fac_pre_prog,
-                            'fac_envio_est_fac' => Carbon::now('America/Lima'),
+                            'fac_acept_est_fac' => Carbon::now('America/Lima'),
+                            'fac_envio_val_rec' => Carbon::now('America/Lima'),
 //                            'fac_envio_val_rec' => Carbon::now('America/Lima'), // Actualiza con la fecha actual
                             'id_users_responsable' => Auth::id(), // Asignar el ID del usuario responsable
                         ]);
