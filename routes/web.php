@@ -16,6 +16,7 @@ use App\Http\Controllers\TarifamovilController;
 use App\Http\Controllers\GestionvendedorController;
 //use App\Http\Controllers\TarifamovilController;
 use App\Http\Controllers\PedidoController;
+use App\Http\Controllers\DespachotransporteController;
 
 
 route::get('/phpinfo', function(){
