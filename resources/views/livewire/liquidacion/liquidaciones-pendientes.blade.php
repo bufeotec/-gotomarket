@@ -516,7 +516,7 @@
                                         <button class="btn btn-sm text-white bg-warning" wire:click="gestionObservacionLiquidacion({{$r->id_liquidacion}})" data-bs-toggle="modal" data-bs-target="#modalComentarioLiquidacion"><i class="fa fa-eye"></i> OBSERVAR</button>
                                         <button class="btn btn-sm text-white bg-danger" wire:click="cambiarEstadoLiquidacion({{$r->id_liquidacion}},2)" data-bs-toggle="modal" data-bs-target="#modalAprobarLiquidacion"><i class="fa fa-x"></i> RECHAZAR</button>
                                     @endif
-                                    <a class="btn btn-sm text-white bg-primary" href="{{route('Liquidacionflete.editar_liquidacion',['data'=>base64_encode($r->id_liquidacion)])}}"><i class="fa-solid fa-pencil"></i> EDITAR</a>
+                                    <a class="btn btn-sm text-white bg-primary" href="{{route('Despachotransporte.editar_liquidaciones',['data'=>base64_encode($r->id_liquidacion)])}}"><i class="fa-solid fa-pencil"></i> EDITAR</a>
                                     @if(file_exists($r->liquidacion_ruta_comprobante))
                                         <a class="btn btn-sm text-white bg-secondary" href="{{asset($r->liquidacion_ruta_comprobante)}}" target="_blank"><i class="fa-solid fa-eye"></i> VER DOCUMENTO</a>
                                     @else

@@ -431,7 +431,7 @@ class LiquidacionFlete extends Component
             }
             DB::commit();
             if ($this->id_liquidacion_edit){
-                return redirect()->route('Liquidacionflete.liquidaciones_pendientes')->with('success', '¡Registro actualizado correctamente!');
+                return redirect()->route('Despachotransporte.aprobar_fletes')->with('success', '¡Registro actualizado correctamente!');
             }else{
                 session()->flash('success', 'Liquidación guardada correctamente.');
                 $this->limpiar_campos_liquidacion();
