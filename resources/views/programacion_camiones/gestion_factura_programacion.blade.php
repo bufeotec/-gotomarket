@@ -10,20 +10,20 @@
     </div>
 
     <div class="row">
-        <div class="col-lg-6 col-md-6 col-sm-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4>Facturas por Aprobar</h4>
-                </div>
-                <div class="card-body">
-                    <div class="d-flex justify-content-end">
-                        <a href="{{route('Programacioncamion.facturas_aprobar')}}" class="btn btn-success">Ingresar</a>
-                    </div>
-                </div>
-            </div>
-        </div>
+{{--        <div class="col-lg-6 col-md-6 col-sm-12">--}}
+{{--            <div class="card">--}}
+{{--                <div class="card-header">--}}
+{{--                    <h4>Facturas por Aprobar</h4>--}}
+{{--                </div>--}}
+{{--                <div class="card-body">--}}
+{{--                    <div class="d-flex justify-content-end">--}}
+{{--                        <a href="{{route('Programacioncamion.facturas_aprobar')}}" class="btn btn-success">Ingresar</a>--}}
+{{--                    </div>--}}
+{{--                </div>--}}
+{{--            </div>--}}
+{{--        </div>--}}
 
-        <div class="col-lg-6 col-md-6 col-sm-12">
+        <div class="col-lg-12 col-md-6 col-sm-12">
             <div class="card">
                 <div class="card-header">
                     <h4>Programación Camiones</h4>

@@ -42,6 +42,19 @@ class Facturaspreprogramacion extends Model
         }
         return $result;
     }
+    public function listar_facturas_pre_programacion_estadox(){
+        try {
+            $result = DB::table('facturas_pre_programaciones')
+                ->where('fac_pre_prog_estado_aprobacion', '=', 6)
+                ->where('fac_pre_prog_estado', '=', 1)
+                ->get();
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
+
 
     public function listar_fac_pre_prog_x_id($id){
         try {

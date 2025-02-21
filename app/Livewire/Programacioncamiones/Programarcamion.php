@@ -3,6 +3,7 @@
 namespace App\Livewire\Programacioncamiones;
 
 use App\Models\Tarifario;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use App\Models\Logs;
@@ -679,6 +680,20 @@ class Programarcamion extends Component
                         session()->flash('error', "Error al guardar la factura local: {$factura['serie']}.");
                         return;
                     }
+                }
+            }
+            if (!empty($this->id_fac_mov)) {
+                $facturaMov = DB::table('facturas_mov')
+                    ->where('id_fac_mov', $this->id_fac_mov)
+                    ->first();
+
+                if ($facturaMov) {
+                    DB::table('facturas_mov')
+                        ->where('id_fac_mov', $this->id_fac_mov)
+                        ->update([
+                            'fac_acept_ges_fac' => Carbon::now('America/Lima'),
+                            'fac_despacho' => Carbon::now('America/Lima'),
+                        ]);
                 }
             }
             DB::commit();

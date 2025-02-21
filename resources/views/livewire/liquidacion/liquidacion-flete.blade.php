@@ -371,6 +371,7 @@
                                 @if(count($despachos) > 0)
                                     @php
                                         $subtotal = 0; // Inicializar el subtotal
+                                        $totalLiquidacion = 0; // Inicializar el total de liquidación
                                     @endphp
                                     @foreach($despachos as $key => $despacho)
                                         @php
@@ -391,6 +392,31 @@
                                             // Sumar al subtotal si el despacho está seleccionado
                                             if (isset($select_despachos[$despacho->id_despacho])) {
                                                 $subtotal += $despachoGeneraLiquidacion;
+
+                                                // Calcular el total de liquidación
+                                                $costoTarifa = isset($select_despachos[$despacho->id_despacho]['gastos']['costo_flete']['valor'])
+                                                    ? floatval($select_despachos[$despacho->id_despacho]['gastos']['costo_flete']['valor'])
+                                                    : 0;
+
+                                                $costoMano = isset($select_despachos[$despacho->id_despacho]['gastos']['mano_obra']['valor'])
+                                                    ? floatval($select_despachos[$despacho->id_despacho]['gastos']['mano_obra']['valor'])
+                                                    : 0;
+
+                                                $costoOtros = isset($select_despachos[$despacho->id_despacho]['gastos']['otros_gasto']['valor'])
+                                                    ? floatval($select_despachos[$despacho->id_despacho]['gastos']['otros_gasto']['valor'])
+                                                    : 0;
+
+                                                $pesoFinalLi = isset($select_despachos[$despacho->id_despacho]['gastos']['peso_final_kilos']['valor'])
+                                                    ? floatval($select_despachos[$despacho->id_despacho]['gastos']['peso_final_kilos']['valor'])
+                                                    : 0;
+
+                                                if ($despacho->id_tipo_servicios == 1) {
+                                                    $totalDespacho = $costoTarifa + $costoMano + $costoOtros;
+                                                } else {
+                                                    $totalDespacho = ($costoTarifa * $pesoFinalLi) + $costoMano + $costoOtros;
+                                                }
+
+                                                $totalLiquidacion += $totalDespacho; // Sumar al total de liquidación
                                             }
                                         @endphp
                                         <tr class="tableHoverLiquidacion">
@@ -513,20 +539,20 @@
                                                                     <td><b class="colorBlackComprobantes">Monto de Liquidación</b></td>
                                                                     @php
                                                                         $costoTarifa = isset($select_despachos[$despacho->id_despacho]['gastos']['costo_flete']['valor'])
-                                                                        ? floatval($select_despachos[$despacho->id_despacho]['gastos']['costo_flete']['valor'])
-                                                                        : 0;
+                                                                            ? floatval($select_despachos[$despacho->id_despacho]['gastos']['costo_flete']['valor'])
+                                                                            : 0;
 
-                                                                    $costoMano = isset($select_despachos[$despacho->id_despacho]['gastos']['mano_obra']['valor'])
-                                                                        ? floatval($select_despachos[$despacho->id_despacho]['gastos']['mano_obra']['valor'])
-                                                                        : 0;
+                                                                        $costoMano = isset($select_despachos[$despacho->id_despacho]['gastos']['mano_obra']['valor'])
+                                                                            ? floatval($select_despachos[$despacho->id_despacho]['gastos']['mano_obra']['valor'])
+                                                                            : 0;
 
-                                                                    $costoOtros = isset($select_despachos[$despacho->id_despacho]['gastos']['otros_gasto']['valor'])
-                                                                        ? floatval($select_despachos[$despacho->id_despacho]['gastos']['otros_gasto']['valor'])
-                                                                        : 0;
+                                                                        $costoOtros = isset($select_despachos[$despacho->id_despacho]['gastos']['otros_gasto']['valor'])
+                                                                            ? floatval($select_despachos[$despacho->id_despacho]['gastos']['otros_gasto']['valor'])
+                                                                            : 0;
 
-                                                                    $pesoFinalLi = isset($select_despachos[$despacho->id_despacho]['gastos']['peso_final_kilos']['valor'])
-                                                                        ? floatval($select_despachos[$despacho->id_despacho]['gastos']['peso_final_kilos']['valor'])
-                                                                        : 0;
+                                                                        $pesoFinalLi = isset($select_despachos[$despacho->id_despacho]['gastos']['peso_final_kilos']['valor'])
+                                                                            ? floatval($select_despachos[$despacho->id_despacho]['gastos']['peso_final_kilos']['valor'])
+                                                                            : 0;
 
                                                                         $mostrarItems = $despacho->id_tipo_servicios == 1 ? 3  : 4;
                                                                         $conteoIteGa = 1;
@@ -555,14 +581,6 @@
 
                                                                         @php $conteoIteGa++; @endphp
                                                                     @endforeach
-                                                                    @php
-                                                                        $totalDespacho = 0;
-                                                                        if ($despacho->id_tipo_servicios == 1) {
-                                                                            $totalDespacho = $costoTarifa + $costoMano + $costoOtros;
-                                                                        } else {
-                                                                            $totalDespacho = ($costoTarifa * $pesoFinalLi) + $costoMano + $costoOtros;
-                                                                        }
-                                                                    @endphp
                                                                     <td>S/ {{ $general->formatoDecimal($totalDespacho) }}</td>
                                                                     <td>{{ $totalVentaDespaDespacho != 0 ? $general->formatoDecimal(($totalDespacho / $totalVentaDespaDespacho) * 100) : '0' }} %</td>
                                                                     <td>{{ $pesoFinalLi != 0 ? $general->formatoDecimal($totalDespacho / $pesoFinalLi) : '0' }}</td>
@@ -588,7 +606,7 @@
                                     @endforeach
                                     <tr class="text-end">
                                         <td colspan="12" class="text-end">
-                                            <h5 class="text-primary">Subtotal: S/ {{ $general->formatoDecimal($subtotal) }}</h5>
+                                            <h5 class="text-primary">Subtotal: S/ {{ $general->formatoDecimal($totalLiquidacion) }}</h5>
                                         </td>
                                     </tr>
                                 @else

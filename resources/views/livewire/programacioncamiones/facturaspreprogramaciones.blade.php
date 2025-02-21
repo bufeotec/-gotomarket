@@ -2,6 +2,67 @@
     @php
         $me = new \App\Models\General();
     @endphp
+    {{--    MODAL DETALLE --}}
+    <x-modal-general wire:ignore.self>
+        <x-slot name="tama">modal-xl</x-slot>
+        <x-slot name="id_modal">modalDetalleFactura</x-slot>
+        <x-slot name="titleModal">Detalles de Comprobantes Seleccionadas</x-slot>
+        <x-slot name="modalContent">
+            <div class="modal-body">
+                <h6>Detalles de Comprobantes</h6>
+                <hr>
+                @if(count($selectedFacturas) > 0)
+                    <x-table-general>
+                        <x-slot name="thead">
+                            <tr>
+                                <th>Serie / Guía</th>
+                                <th>F. Emisión</th>
+                                <th>Importe sin IGV</th>
+                                <th>Nombre Cliente</th>
+                                <th>Dirección</th>
+                            </tr>
+                        </x-slot>
+                        <x-slot name="tbody">
+                            @foreach($selectedFacturas as $factura)
+                                <tr>
+                                    <td>
+                                    <span class="d-block tamanhoTablaComprobantes">
+                                        {{ $factura['CFNUMSER'] }} - {{ $factura['CFNUMDOC'] }}
+                                    </span>
+                                    </td>
+                                    <td>
+                                        @php
+                                            $feFor = $me->obtenerNombreFecha($factura['GREFECEMISION'],'DateTime','Date');
+                                        @endphp
+                                        <span class="d-block tamanhoTablaComprobantes">{{ $feFor }}</span>
+                                    </td>
+                                    <td>
+                                    <span class="d-block tamanhoTablaComprobantes">
+                                        <b class="colorBlackComprobantes">{{ $me->formatoDecimal($factura['CFIMPORTE']) }}</b>
+                                    </span>
+                                    </td>
+                                    <td>
+                                        <span class="d-block tamanhoTablaComprobantes">{{ $factura['CNOMCLI'] }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="d-block tamanhoTablaComprobantes">{{ $factura['LLEGADADIRECCION'] }}</span>
+                                        <br>
+                                        <span class="d-block tamanhoTablaComprobantes" style="color: black;font-weight: bold">
+                                        {{ $factura['DEPARTAMENTO'] }} - {{ $factura['PROVINCIA'] }} - {{ $factura['DISTRITO'] }}
+                                    </span>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </x-slot>
+                    </x-table-general>
+                @else
+                    <p>No hay comprobantes seleccionadas.</p>
+                @endif
+            </div>
+        </x-slot>
+    </x-modal-general>
+    {{--    FIN MODAL DETALLE --}}
+
     <div class="row">
         @if (session()->has('success'))
             <div class="col-lg-12 col-md-12 col-sm-12">
@@ -19,7 +80,7 @@
                 </div>
             </div>
         @endif
-        <div class="col-lg-5">
+        <div class="col-lg-6">
             <div class="card">
                 <div class="card-body">
                     <div class="row mb-2">
@@ -153,7 +214,7 @@
             </div>
         </div>
 
-        <div class="col-lg-7">
+        <div class="col-lg-6">
             <div class="row">
                 <div class="col-lg-12">
                     <div class="card">
@@ -172,7 +233,7 @@
                                                 <select class="form-select" id="estado_envio" name="estado_envio" wire:model="estado_envio">
                                                     <option value="">Seleccionar...</option>
                                                     <option value="1">Creditos</option>
-                                                    <option value="2">Despachador</option>
+                                                    <option value="2">Despacho</option>
                                                 </select>
                                             </div>
                                             <div class="col-lg-2">
@@ -193,7 +254,7 @@
                                                     <th class="">F. Emisión</th>
                                                     <th class="">Importe sin IGV</th>
                                                     <th class="">Nombre Cliente</th>
-                                                    <th class="">Peso y Volumen</th>
+{{--                                                    <th class="">Peso y Volumen</th>--}}
                                                     <th class="">Dirección</th>
                                                     <th class="">Acciones</th>
                                                 </tr>
@@ -240,26 +301,26 @@
                                                             {{ $factura['CNOMCLI'] }}
                                                         </span>
                                                         </td>
-                                                        @php
-                                                            $pesoTabla = "0";
-                                                            if ($factura['total_kg']){
-                                                                $pesoTabla = $me->formatoDecimal($factura['total_kg']);
-                                                            }
-                                                        @endphp
-                                                        @php
-                                                            $volumenTabla = "0";
-                                                            if ($factura['total_volumen']){
-                                                                $volumenTabla = $me->formatoDecimal($factura['total_volumen']);
-                                                            }
-                                                        @endphp
-                                                        <td>
-                                                        <span class="d-block tamanhoTablaComprobantes">
-                                                           <b class="colorBlackComprobantes">{{ $pesoTabla }}  kg</b>
-                                                        </span>
-                                                            <span class="d-block tamanhoTablaComprobantes">
-                                                            <b class="colorBlackComprobantes">{{ $volumenTabla }} cm³</b>
-                                                        </span>
-                                                        </td>
+{{--                                                        @php--}}
+{{--                                                            $pesoTabla = "0";--}}
+{{--                                                            if ($factura['total_kg']){--}}
+{{--                                                                $pesoTabla = $me->formatoDecimal($factura['total_kg']);--}}
+{{--                                                            }--}}
+{{--                                                        @endphp--}}
+{{--                                                        @php--}}
+{{--                                                            $volumenTabla = "0";--}}
+{{--                                                            if ($factura['total_volumen']){--}}
+{{--                                                                $volumenTabla = $me->formatoDecimal($factura['total_volumen']);--}}
+{{--                                                            }--}}
+{{--                                                        @endphp--}}
+{{--                                                        <td>--}}
+{{--                                                        <span class="d-block tamanhoTablaComprobantes">--}}
+{{--                                                           <b class="colorBlackComprobantes">{{ $pesoTabla }}  kg</b>--}}
+{{--                                                        </span>--}}
+{{--                                                            <span class="d-block tamanhoTablaComprobantes">--}}
+{{--                                                            <b class="colorBlackComprobantes">{{ $volumenTabla }} cm³</b>--}}
+{{--                                                        </span>--}}
+{{--                                                        </td>--}}
                                                         <td>
                                                         <span class="d-block tamanhoTablaComprobantes">
                                                              {{ $factura['LLEGADADIRECCION'] }}
@@ -270,8 +331,12 @@
                                                         </span>
                                                         </td>
                                                         <td>
-                                                            <a href="#" wire:click.prevent="eliminarFacturaSeleccionada('{{$factura['CFTD']}}','{{ $factura['CFNUMSER'] }}','{{ $factura['CFNUMDOC'] }}')" class="btn btn-danger btn-sm text-white">
+                                                            <a href="#" wire:click.prevent="eliminarFacturaSeleccionada('{{$factura['CFTD']}}','{{ $factura['CFNUMSER'] }}','{{ $factura['CFNUMDOC'] }}')" class="btn btn-danger btn-sm text-white m-1">
                                                                 <i class="fas fa-trash-alt"></i>
+                                                            </a>
+
+                                                            <a href="#" wire:click="listar_detallesf({{$factura['CFTD']}}','{{ $factura['CFNUMSER'] }}','{{ $factura['CFNUMDOC'] }})" class="btn btn-sm btn-primary text-white m-1" data-bs-toggle="modal" data-bs-target="#modalDetalleFactura">
+                                                                <i class="fas fa-eye"></i>
                                                             </a>
                                                         </td>
                                                     </tr>
@@ -294,5 +359,4 @@
             </div>
         </div>
     </div>
-
 </div>
