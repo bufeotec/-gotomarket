@@ -30,31 +30,41 @@
                         <!-- ETAPAS -->
                         <div class="row justify-content-center text-center mt-3">
                             <div class="col-lg-2 col-md-4 col-sm-12">
-                                <img src="{{ asset('assets/images/tracking/comprobante_check.png') }}" alt="Pre Programación" class="tracking-img">
-                                <p class="fw-bold {{ $etapaActual >= 1 ? 'text-dark' : 'text-muted' }}">PRE PROGRAMACIÓN</p>
+                                <img src="{{ asset('assets/images/tracking/creditos.png') }}" alt="Pre Programación" class="tracking-img">
+                                <p class="fw-bold {{ $etapaActual >= 1 ? 'text-dark' : 'text-muted' }}">EN CREDITOS</p>
                             </div>
                             <div class="col-lg-2 col-md-4 col-sm-12">
-                                <img src="{{ asset('assets/images/tracking/creditos.png') }}" alt="En Despacho" class="tracking-img">
-                                <p class="fw-bold {{ $etapaActual >= 2 ? 'text-dark' : 'text-muted' }}">EN CREDITOS</p>
+                                <img src="{{ asset('assets/images/tracking/despacho_por_aprobar.png') }}" alt="En Despacho" class="tracking-img">
+                                <p class="fw-bold {{ $etapaActual >= 2 ? 'text-dark' : 'text-muted' }}">POR PROGRAMAR</p>
                             </div>
                             <div class="col-lg-2 col-md-4 col-sm-12">
                                 <img src="{{ asset('assets/images/tracking/despacho_aprobado.png') }}" alt="Despacho Entregado" class="tracking-img">
-                                <p class="fw-bold {{ $etapaActual >= 3 ? 'text-dark' : 'text-muted' }}">COMPROBANTE EN DESPACHO</p>
+                                <p class="fw-bold {{ $etapaActual >= 3 ? 'text-dark' : 'text-muted' }}">PROGRAMADO</p>
                             </div>
                             <div class="col-lg-2 col-md-4 col-sm-12">
-                                <img src="{{ asset('assets/images/tracking/comprobante_entregado.png') }}" alt="Despacho Entregado" class="tracking-img">
-                                <p class="fw-bold {{ $etapaActual >= 3 ? 'text-dark' : 'text-muted' }}">COMPROBANTE DESPACHADO</p>
+                                <img src="{{ asset('assets/images/tracking/comprobante_en_camino.png') }}" alt="Despacho Entregado" class="tracking-img">
+                                <p class="fw-bold {{ $etapaActual >= 4 ? 'text-dark' : 'text-muted' }}">EN RUTA</p>
                             </div>
                             <div class="col-lg-2 col-md-4 col-sm-12">
-                                <img src="{{ asset('assets/images/tracking/comprobante_entregado.png') }}" alt="Despacho Entregado" class="tracking-img">
-                                <p class="fw-bold {{ $etapaActual >= 3 ? 'text-dark' : 'text-muted' }}">COMPRBANTE ENTREGADO</p>
+                                @php
+                                    $comprobanteNoEntregado = collect($mensajeEstadoEtapa3 ?? [])->contains(fn($mensaje) => str_contains($mensaje, 'Estado: Comprobante no entregado.'));
+                                @endphp
+
+                                @if ($comprobanteNoEntregado)
+                                    <img src="{{ asset('assets/images/tracking/comprobante_no_entregado.png') }}" alt="Comprobante No Entregado" class="tracking-img">
+                                    <p class="fw-bold text-dark">COMPROBANTE NO ENTREGADO</p>
+                                @else
+                                    <img src="{{ asset('assets/images/tracking/comprobante_entregado.png') }}" alt="Comprobante Entregado" class="tracking-img">
+                                    <p class="fw-bold {{ $etapaActual >= 5 ? 'text-dark' : 'text-muted' }}">COMPROBANTE ENTREGADO</p>
+                                @endif
                             </div>
+
                         </div>
 
                         <!-- Línea de progreso con círculos -->
                         <div class="d-flex justify-content-center position-relative">
                             <div class="progress-line mt-4">
-                                <div class="progress-bar" style="width: {{ $etapaActual * 20 }}%;"></div>
+                                <div class="progress-bar" style="width: {{ ($etapaActual - 1) * 25 }}%;"></div>
 
                                 <!-- Círculo 1 -->
                                 <div class="tracking-circle {{ $etapaActual >= 1 ? 'circle-green' : 'circle-gray' }}" style="left: 0%;"></div>
@@ -70,81 +80,21 @@
                         </div>
 
                         <!-- Mensajes y Estados -->
-                        <div class="row mt-4">
-                            <!-- Etapa 1 -->
-                            @if ($estadoMensaje || $mensajeEtapa1)
-                                <div class="col-lg-12 d-flex justify-content-center">
-                                    <div class="card">
-                                        <div class="card-body">
-                                            @if ($estadoMensaje)
-                                                @foreach ($estadoMensaje as $mensaje)
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="timeline-circle"></div>
-                                                        <p class="ms-2 mt-3"><b>{{ $mensaje }}</b></p>
-                                                    </div>
-                                                @endforeach
-                                            @endif
-                                            @if ($mensajeEtapa1)
-                                                <div class="d-flex align-items-center">
-                                                    <div class="timeline-circle"></div>
-                                                    <p class="ms-2 mt-3"><b>{{ $mensajeEtapa1 }}</b></p>
-                                                </div>
-                                            @endif
-                                        </div>
+                        @if (!empty($mensajesCompletos))
+                            <div class="col-lg-12 d-flex justify-content-center mt-3">
+                                <div class="ard">
+                                    <div class="card-body">
+                                        @foreach ($mensajesCompletos as $mensaje)
+                                            <div class="d-flex align-items-center">
+                                                <div class="timeline-circle"></div>
+                                                <p class="ms-2 mt-3"><b>{{ $mensaje }}</b></p>
+                                            </div>
+                                        @endforeach
                                     </div>
                                 </div>
-                            @endif
+                            </div>
+                        @endif
 
-                            <!-- Etapa 2 -->
-                            @if ($mensajeEstadoFacturaEtapa2 || !empty($mensajeEstadoEtapa2) || $mensajeEtapa2)
-                                <div class="col-lg-12 d-flex justify-content-center">
-                                    <div class="card">
-                                        <div class="card-body">
-                                            @if ($mensajeEstadoFacturaEtapa2)
-                                                <div class="d-flex align-items-center">
-                                                    <div class="timeline-circle"></div>
-                                                    <p class="ms-2 mt-3"><b>{{ $mensajeEstadoFacturaEtapa2 }}</b></p>
-                                                </div>
-                                            @endif
-                                            @foreach ($mensajeEstadoEtapa2 as $mensaje)
-                                                <div class="d-flex align-items-center">
-                                                    <div class="timeline-circle"></div>
-                                                    <p class="ms-2 mt-3"><b>{{ $mensaje }}</b></p>
-                                                </div>
-                                            @endforeach
-                                            @if ($mensajeEtapa2)
-                                                <div class="d-flex align-items-center">
-                                                    <div class="timeline-circle"></div>
-                                                    <p class="ms-2 mt-3"><b>{{ $mensajeEtapa2 }}</b></p>
-                                                </div>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
-
-                            <!-- Etapa 3 -->
-                            @if (!empty($mensajeEstadoEtapa3) || $mensajeEtapa3)
-                                <div class="col-lg-12 d-flex justify-content-center">
-                                    <div class="card">
-                                        <div class="card-body">
-                                            @foreach ($mensajeEstadoEtapa3 as $mensaje)
-                                                <div class="d-flex align-items-center">
-                                                    <div class="timeline-circle"></div>
-                                                    <p class="ms-2 mt-3"><b>{{ $mensaje }}</b></p>
-                                                </div>
-                                            @endforeach
-                                            @if ($mensajeEtapa3)
-                                                <div class="d-flex align-items-center">
-                                                    <div class="timeline-circle"></div>
-                                                    <p class="ms-2 mt-3"><b>{{ $mensajeEtapa3 }}</b></p>
-                                                </div>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
-                        </div>
                     </div>
                 </div>
             </x-slot>

@@ -47,6 +47,7 @@ class Vistatrackings extends Component
     public $mensajeEstadoEtapa1;
     public $mensajeEstadoEtapa2 = [];
     public $mensajeEstadoEtapa3 = [];
+    public $mensajesCompletos = [];
     public $mensajeEstadoFacturaEtapa2;
     public $etapaActual;
     public $codigoEncontrado = false;
@@ -106,11 +107,10 @@ class Vistatrackings extends Component
             $this->codigoEncontrado = true;
             $this->etapaActual = 1; // Establece la etapa real
             $this->etapaMostrada = 1; // Se establece en etapa 1 por defecto
-            $this->mensajeEtapa1 = $this->general->obtenerNombreFecha($preProgramado->fac_pre_prog_fecha, 'DateTime', 'DateTime') . ' | ' . "El comprobante está en pre-programación.";
 
             // Buscar el historial de cambios de estado en la tabla historial_pre_programacion
             $historial = Historialpreprogramacion::where('fac_pre_prog_cfnumdoc', $numdoc)
-                ->orderBy('his_pre_progr_fecha_hora', 'desc')
+                ->orderBy('his_pre_progr_fecha_hora', 'asc')
                 ->get();
 
             if ($historial->isNotEmpty()) {
@@ -127,22 +127,28 @@ class Vistatrackings extends Component
                     // Mostrar el estado de aprobación según el valor de fac_pre_prog_estado_aprobacion
                     switch ($estado) {
                         case 1:
-                            $this->estadoMensaje[] = $fechaHora . ' | ' . "Estado: Comprobante en revición.";
+                            $this->estadoMensaje[] = $fechaHora . ' | ' . "Estado: Comprobante en creditos.";
+                            $this->etapaActual = 1; // EN CREDITOS
                             break;
                         case 2:
-                            $this->estadoMensaje[] = $fechaHora . ' | ' . "Estado: Enviado a despacho.";
+                            $this->estadoMensaje[] = $fechaHora . ' | ' . "Estado: Enviado a despachador.";
+                            $this->etapaActual = 2; // POR PROGRAMAR
                             break;
                         case 3:
                             $this->estadoMensaje[] = $fechaHora . ' | ' . "Estado: Listo para despachar.";
+                            $this->etapaActual = 2; // POR PROGRAMAR
                             break;
                         case 4:
-                            $this->estadoMensaje[] = $fechaHora . ' | ' . "Estado: Comprobante despachada.";
+                            $this->estadoMensaje[] = $fechaHora . ' | ' . "Estado: Comprobante despachado.";
+                            $this->etapaActual = 3; // PROGRAMADO
                             break;
                         case 5:
-                            $this->estadoMensaje[] = $fechaHora . ' | ' . "Estado: Aceptado por Créditos, pronto será enviado a despacho.";
+                            $this->estadoMensaje[] = $fechaHora . ' | ' . "Estado: Aceptado por Créditos.";
+                            $this->etapaActual = 1; // EN CREDITOS
                             break;
                         case 6:
-                            $this->estadoMensaje[] = $fechaHora . ' | ' . "Estado: Enviado a creditos y cobranzas.";
+                            $this->estadoMensaje[] = $fechaHora . ' | ' . "Estado: Comprobante gestionado en facturación.";
+                            $this->etapaActual = 3; // PROGRAMADO
                             break;
                     }
                 }
@@ -156,11 +162,10 @@ class Vistatrackings extends Component
             $this->codigoEncontrado = true;
             $this->etapaActual = 2; // Etapa 2
             $this->etapaMostrada = 2;
-            $this->mensajeEtapa2 = $this->general->obtenerNombreFecha($despachoVenta->created_at, 'DateTime', 'DateTime') . ' | ' . "El comprobante ingresado fue programado para un despacho.";
 
             // Buscar el historial en la tabla historial_despachos_ventas
             $historialDespachoVenta = Historialdespachoventa::where('id_despacho', $despachoVenta->id_despacho)
-                ->orderBy('his_desp_vent_fecha', 'desc')
+                ->orderBy('his_desp_vent_fecha', 'asc')
                 ->get();
 
             if ($historialDespachoVenta->isNotEmpty()) {
@@ -182,20 +187,8 @@ class Vistatrackings extends Component
                             case 1:
                                 $this->mensajeEstadoEtapa2[] = $fechaHora . ' | ' . "Estado: Programación aprobada.";
                                 break;
-                            case 2:
-                                $this->mensajeEstadoEtapa2[] = $fechaHora . ' | ' . "Estado: Despacho en camino.";
-                                break;
                         }
                     }
-                }
-
-                // Acceder al primer registro y verificar el estado de entrega
-                $primerRegistro = $historialDespachoVenta->first();
-
-                if ($primerRegistro && $primerRegistro->despacho_detalle_estado_entrega == 1) {
-                    $this->mensajeEstadoFacturaEtapa2 = $this->general->obtenerNombreFecha($primerRegistro->his_desp_vent_fecha, 'DateTime', 'DateTime') . ' | ' . "Estado: Factura en tránsito.";
-                } else {
-                    $this->mensajeEstadoFacturaEtapa2 = null; // No mostrar mensaje si no cumple la condición
                 }
             }
         }
@@ -203,36 +196,53 @@ class Vistatrackings extends Component
         // Buscar en la tabla historial_despacho_ventas (ETAPA 3)
         $historialDespachoVentaEtapa3 = Historialdespachoventa::where('despacho_venta_cfnumdoc', $numdoc)
             ->whereNotNull('despacho_detalle_estado_entrega') // Solo registros con estado de entrega
-            ->orderBy('his_desp_vent_fecha', 'desc')
+            ->orderBy('his_desp_vent_fecha', 'asc')
             ->get();
 
         if ($historialDespachoVentaEtapa3->isNotEmpty()) {
             $this->codigoEncontrado = true;
-            $this->etapaActual = 3;
-            $this->etapaMostrada = 3;
+            $this->etapaActual = 4;
+            $this->etapaMostrada = 4;
+
+            // Variable auxiliar para almacenar "Factura en tránsito."
+            $facturaEnTransito = null;
+            $estadosEntregaMostrados = []; // Evitar duplicados
 
             foreach ($historialDespachoVentaEtapa3 as $registro) {
                 $fechaHora = $this->general->obtenerNombreFecha($registro->his_desp_vent_fecha, 'DateTime', 'DateTime');
                 $estadoEntrega = $registro->despacho_detalle_estado_entrega;
 
-                switch ($estadoEntrega) {
-                    case 2:
-                        $this->mensajeEstadoEtapa3[] = $fechaHora . ' | ' . "Estado: Comprobante entregado.";
-                        break;
-                    case 3:
-                        $this->mensajeEstadoEtapa3[] = $fechaHora . ' | ' . "Estado: Comprobante no entregado.";
-                        break;
-                    case 4:
-                        $this->mensajeEstadoEtapa3[] = $fechaHora . ' | ' . "Estado: Comprobante rechazado.";
-                        break;
+                // Si el estado es "Factura en tránsito.", lo guardamos en una variable temporal
+                if ($estadoEntrega == 1) {
+                    $facturaEnTransito = $fechaHora . ' | ' . "Estado: Factura en tránsito.";
+                    continue;
+                }
+
+                // Construir clave única para evitar estados duplicados
+                $claveUnica = $fechaHora . '|' . $estadoEntrega;
+
+                // Solo agregar si no ha sido registrado antes
+                if (!in_array($claveUnica, $estadosEntregaMostrados)) {
+                    $estadosEntregaMostrados[] = $claveUnica; // Registrar el estado
+
+                    switch ($estadoEntrega) {
+                        case 2:
+                            $this->mensajeEstadoEtapa3[] = $fechaHora . ' | ' . "Estado: Comprobante entregado.";
+                            $this->etapaActual = 5;
+                            break;
+                        case 3:
+                            $this->mensajeEstadoEtapa3[] = $fechaHora . ' | ' . "Estado: Comprobante no entregado.";
+                            break;
+                        case 4:
+                            $this->mensajeEstadoEtapa3[] = $fechaHora . ' | ' . "Estado: Comprobante rechazado.";
+                            break;
+                    }
                 }
             }
 
-            // Mostrar mensaje de etapa 3 solo si el estado de entrega es 2, 3 o 4
-            if (in_array($historialDespachoVentaEtapa3->first()->despacho_detalle_estado_entrega, [2, 3, 4])) {
-                $this->mensajeEtapa3 = $this->general->obtenerNombreFecha($historialDespachoVentaEtapa3->first()->his_desp_vent_fecha, 'DateTime', 'DateTime') . ' | ' . "El despacho fue culminado.";
-            } else {
-                $this->mensajeEtapa3 = null; // No mostrar mensaje si no cumple la condición
+            // Agregar "Factura en tránsito." antes de los estados de entrega si existe
+            if ($facturaEnTransito) {
+                array_unshift($this->mensajeEstadoEtapa3, $facturaEnTransito);
             }
         }
 
@@ -256,6 +266,23 @@ class Vistatrackings extends Component
             session()->flash('success', 'Comprobante identificado en el sistema.');
         } else {
             session()->flash('error', 'No hay registros para el comprobante ingresado.');
+        }
+
+        // Unir todos los mensajes en un solo array
+        $this->mensajesCompletos = array_merge(
+            $this->estadoMensaje ?? [],
+            $this->mensajeEstadoEtapa2 ?? [],
+            $this->mensajeEstadoEtapa3 ?? []
+        );
+        // Agregar los mensajes individuales si existen
+        if ($this->mensajeEtapa1) {
+            $this->mensajesCompletos[] = $this->mensajeEtapa1;
+        }
+        if ($this->mensajeEstadoFacturaEtapa2) {
+            $this->mensajesCompletos[] = $this->mensajeEstadoFacturaEtapa2;
+        }
+        if ($this->mensajeEtapa3) {
+            $this->mensajesCompletos[] = $this->mensajeEtapa3;
         }
     }
 }
