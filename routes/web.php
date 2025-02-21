@@ -13,6 +13,7 @@ use App\Http\Controllers\GestiondocumentariaController;
 use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\PdfExportController;
 use App\Http\Controllers\TarifamovilController;
+use App\Http\Controllers\GestionvendedorController;
 
 
 route::get('/phpinfo', function(){
@@ -108,5 +109,24 @@ Route::prefix('Gestionvendedor')->middleware(['auth', 'canMenu:Gestionvendedor']
     route::get('/tracking',[GestionvendedorController::class ,'tracking'])->name('Gestionvendedor.tracking')->middleware('verifyUserStatus')->middleware('can:tracking');
 });
 
+//DESPACHO Y TRANSPORTISTA
+Route::prefix('Despachotransporte')->middleware(['auth', 'canMenu:Despachotransporte'])->group(function () {
+    /*  */
+    route::get('/registrar_transportista',[DespachotransporteController::class ,'registrar_transportista'])->name('Despachotransporte.registrar_transportista')->middleware('verifyUserStatus')->middleware('can:registrar_transportista');
+    route::get('/registrar_vehiculos',[DespachotransporteController::class ,'registrar_vehiculos'])->name('Despachotransporte.registrar_vehiculos')->middleware('verifyUserStatus')->middleware('can:registrar_vehiculos');
+    route::get('/validar_vehiculo',[DespachotransporteController::class ,'validar_vehiculo'])->name('Despachotransporte.validar_vehiculo')->middleware('verifyUserStatus')->middleware('can:validar_vehiculo');
+    route::get('/registrar_tarifas',[DespachotransporteController::class ,'registrar_tarifas'])->name('Despachotransporte.registrar_tarifas')->middleware('verifyUserStatus')->middleware('can:registrar_tarifas');
+    route::get('/validar_tarifas',[DespachotransporteController::class ,'validar_tarifas'])->name('Despachotransporte.validar_tarifas')->middleware('verifyUserStatus')->middleware('can:validar_tarifas');
+    route::get('/programar_despachos',[DespachotransporteController::class ,'programar_despachos'])->name('Despachotransporte.programar_despachos')->middleware('verifyUserStatus')->middleware('can:programar_despachos');
+    route::get('/registrar_servicio_transporte',[DespachotransporteController::class ,'registrar_servicio_transporte'])->name('Despachotransporte.registrar_servicio_transporte')->middleware('verifyUserStatus')->middleware('can:registrar_servicio_transporte');
+    route::get('/aprobar_programacion_despacho',[DespachotransporteController::class ,'aprobar_programacion_despacho'])->name('Despachotransporte.aprobar_programacion_despacho')->middleware('verifyUserStatus')->middleware('can:aprobar_programacion_despacho');
+    route::get('/reporte_programacion_despacho',[DespachotransporteController::class ,'reporte_programacion_despacho'])->name('Despachotransporte.reporte_programacion_despacho')->middleware('verifyUserStatus')->middleware('can:reporte_programacion_despacho');
+    route::get('/reporte_gestion_despacho',[DespachotransporteController::class ,'reporte_gestion_despacho'])->name('Despachotransporte.reporte_gestion_despacho')->middleware('verifyUserStatus')->middleware('can:reporte_gestion_despacho');
+    route::get('/liquidar_fletes',[DespachotransporteController::class ,'liquidar_fletes'])->name('Despachotransporte.liquidar_fletes')->middleware('verifyUserStatus')->middleware('can:liquidar_fletes');
+    route::get('/aprobar_fletes',[DespachotransporteController::class ,'aprobar_fletes'])->name('Despachotransporte.aprobar_fletes')->middleware('verifyUserStatus')->middleware('can:aprobar_fletes');
+    route::get('/reporte_flete_aprobados',[DespachotransporteController::class ,'reporte_flete_aprobados'])->name('Despachotransporte.reporte_flete_aprobados')->middleware('verifyUserStatus')->middleware('can:reporte_flete_aprobados');
 
+    route::get('/editar_liquidaciones',[DespachotransporteController::class ,'editar_liquidaciones'])->name('Despachotransporte.editar_liquidaciones')->middleware('verifyUserStatus')->middleware('can:editar_liquidaciones');
+    route::get('/editar_programaciones',[DespachotransporteController::class ,'editar_programaciones'])->name('Despachotransporte.editar_programaciones')->middleware('verifyUserStatus')->middleware('can:editar_programaciones');
+});
 
