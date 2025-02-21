@@ -68,6 +68,15 @@ class DespachotransporteController extends Controller
         }
     }
 
+    public function validar_vehiculo(){
+        try {
+            return view('registroflete.tarifa_movil');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
+
     public function programar_despachos(){
         try {
             return view('programacion_camiones.programar_camion');
