@@ -547,24 +547,25 @@ class Local extends Component
                 $historial->save();
             }
 
-            // Buscar el registro en la tabla facturas_mov
-            $facturaMov = DB::table('facturas_mov')
-                ->where('id_fac_pre_prog', $this->selectedFacturas)
-                ->get();
-
-            if ($facturaMov) {
-                // Si existe, actualizar los campos
-                DB::table('facturas_mov')
+            // Solo actualizar facturas_mov si NO se está editando
+            if (!$this->id_programacion_edit && !$this->id_despacho_edit) {
+                $facturaMov = DB::table('facturas_mov')
                     ->where('id_fac_pre_prog', $this->selectedFacturas)
-                    ->update([
-                        'fac_acept_ges_fac' => Carbon::now('America/Lima'),
-                        'fac_despacho' => Carbon::now('America/Lima'),
-                    ]);
+                    ->get();
+
+                if ($facturaMov->isNotEmpty()) {
+                    DB::table('facturas_mov')
+                        ->where('id_fac_pre_prog', $this->selectedFacturas)
+                        ->update([
+                            'fac_acept_ges_fac' => Carbon::now('America/Lima'),
+                            'fac_despacho' => Carbon::now('America/Lima'),
+                        ]);
+                }
             }
             DB::commit();
 
             if ($this->id_programacion_edit && $this->id_despacho_edit){
-                return redirect()->route('Programacioncamion.programacion_pendientes')->with('success', '¡Registro actualizado correctamente!');
+                return redirect()->route('Despachotransporte.aprobar_programacion_despacho')->with('success', '¡Registro actualizado correctamente!');
             }else{
                 session()->flash('success', 'Registro guardado correctamente.');
                 $this->reiniciar_campos();
