@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Logs;
 use App\Models\Notacredito;
+use App\Models\Facturaspreprogramacion;
 use PDF;
 use Illuminate\Http\Request;
 
@@ -11,10 +12,13 @@ class GestiondocumentariaController extends Controller
 {
     private $logs;
     private $notacredito;
+    private $facturapreprogramacion;
+
     public function __construct()
     {
         $this->logs = new Logs();
         $this->notacredito = new Notacredito();
+        $this->facturapreprogramacion = new Facturaspreprogramacion();
     }
 
     public function nota_credito(){
