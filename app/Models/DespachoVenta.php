@@ -42,11 +42,17 @@ class DespachoVenta extends Model
         return $result;
     }
 
-    public function listar_despacho_nota_credito(){
+    public function listar_despacho_nota_credito($id_despacho_venta = null){
         try {
-            $result = DB::table('despacho_ventas')
-                ->whereIn('despacho_detalle_estado_entrega', [2,3,4])
-                ->get();
+            $query = DB::table('despacho_ventas')
+                ->whereIn('despacho_detalle_estado_entrega', [2,3,4]);
+
+            // Si estamos editando y hay un despacho ya guardado, incluirlo en la lista
+            if (!is_null($id_despacho_venta)) {
+                $query->orWhere('id_despacho_venta', $id_despacho_venta);
+            }
+
+            $result = $query->get();
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);
             $result = [];

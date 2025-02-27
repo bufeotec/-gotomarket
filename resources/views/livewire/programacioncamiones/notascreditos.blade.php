@@ -2,7 +2,7 @@
     @php
         $general = new \App\Models\General();
     @endphp
-    {{--    MODAL REGISTRO TRANSPORTISTAS--}}
+    {{--    MODAL REGISTRO NOTA CREDITO--}}
     <x-modal-general  wire:ignore.self >
         <x-slot name="id_modal">modalNotaCredito</x-slot>
         <x-slot name="tama">modal-lg</x-slot>
@@ -16,10 +16,15 @@
                     </div>
                     <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
                         <label for="id_despacho_venta" class="form-label">Lista de facturas</label>
-                        <select class="form-select" name="id_despacho_venta vehiculo" id="id_despacho_venta" wire:model="id_despacho_venta">
+                        <select class="form-select" name="id_despacho_venta" id="id_despacho_venta"
+                                wire:model="id_despacho_venta"
+                                @if($id_nota_credito) disabled @endif>
                             <option value="">Seleccionar...</option>
                             @foreach($fac_despacho as $fd)
-                                <option value="{{$fd->id_despacho_venta}}">{{$fd->despacho_venta_factura}} - {{$fd->despacho_venta_cnomcli}}</option>
+                                <option value="{{ $fd->id_despacho_venta }}"
+                                    {{ $fd->id_despacho_venta == $id_despacho_venta ? 'selected' : '' }}>
+                                    {{ $fd->despacho_venta_factura }} - {{ $fd->despacho_venta_cnomcli }}
+                                </option>
                             @endforeach
                         </select>
                         @error('id_despacho_venta')
@@ -67,25 +72,23 @@
             </form>
         </x-slot>
     </x-modal-general>
-    {{--    FIN MODAL REGISTRO TRANSPORTISTAS--}}
+    {{--    FIN MODAL REGISTRO NOTA CREDITO--}}
 
-    {{--    MODAL DELETE--}}
+{{--    MODAL CAMBIAR ESTADO APROBACION--}}
     <x-modal-delete  wire:ignore.self >
-        <x-slot name="id_modal">modalDeleteNotacredito</x-slot>
+        <x-slot name="id_modal">modalCambioEstado</x-slot>
         <x-slot name="modalContentDelete">
-            <form wire:submit.prevent="disable_transportistas">
+            <form wire:submit.prevent="cambiar_estado_aprobacion">
                 <div class="row">
                     <div class="col-lg-12 col-md-12 col-sm-12">
-{{--                        <h2 class="deleteTitle">{{$messageDeleteTranspor}}</h2>--}}
+                        <h2 class="deleteTitle">{{$messageNotCret}}</h2>
                     </div>
                     <div class="col-lg-12 col-md-12 col-sm-12">
-                        @error('id_transportistas') <span class="message-error">{{ $message }}</span> @enderror
+                        @error('id_nota_credito') <span class="message-error">{{ $message }}</span> @enderror
 
-                        @error('transportista_estado') <span class="message-error">{{ $message }}</span> @enderror
-
-                        @if (session()->has('error_delete'))
+                        @if (session()->has('error_pre_pro'))
                             <div class="alert alert-danger alert-dismissible show fade">
-                                {{ session('error_delete') }}
+                                {{ session('error_pre_pro') }}
                                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                             </div>
                         @endif
@@ -98,7 +101,7 @@
             </form>
         </x-slot>
     </x-modal-delete>
-    {{--    FIN MODAL DELETE--}}
+{{--    MODAL FIN CAMBIAR ESTADO APROBACION--}}
 
     <div class="row">
         <div class="col-lg-6 col-md-6 col-sm-12 d-flex align-items-center mb-2">
@@ -121,6 +124,14 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
+    @if (session()->has('error'))
+        <div class="col-lg-12 col-md-12 col-sm-12">
+            <div class="alert alert-danger alert-dismissible show fade mt-2">
+                {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    @endif
 
     <x-card-general-view>
         <x-slot name="content">
@@ -137,7 +148,8 @@
                                 <th>RUC</th>
                                 <th>Nombre del cliente</th>
                                 <th>Importe sin IGV</th>
-{{--                                <th>Acciones</th>--}}
+                                <th>Estado</th>
+                                <th>Acciones</th>
                             </tr>
                         </x-slot>
 
@@ -162,6 +174,30 @@
                                         <td>{{$lnc->despacho_venta_cfcodcli}}</td>
                                         <td>{{$lnc->despacho_venta_cnomcli}}</td>
                                         <td>{{$general->formatoDecimal($lnc->despacho_venta_cfimporte)}}</td>
+                                        <td>
+                                            <span class="font-bold badge {{$lnc->nota_credito_estado_aprobacion == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
+                                                {{$lnc->nota_credito_estado_aprobacion == 1 ? 'Aprobado ' : 'Pendiente ' }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <x-btn-accion class="text-primary"  wire:click="edit_data('{{ base64_encode($lnc->id_nota_credito) }}')" data-bs-toggle="modal" data-bs-target="#modalNotaCredito">
+                                                <x-slot name="message">
+                                                    <i class="fa-solid fa-pen-to-square"></i>
+                                                </x-slot>
+                                            </x-btn-accion>
+                                            @php
+                                                $user = \Illuminate\Support\Facades\Auth::user();
+                                                $roleId = $user->roles->first()->id ?? null;
+                                            @endphp
+
+                                            @if($lnc->nota_credito_estado_aprobacion == 0 && in_array($roleId, [1, 2]))
+                                                <x-btn-accion class="text-success m-2" wire:click="cambio_estado('{{ base64_encode($lnc->id_nota_credito) }}')" data-bs-toggle="modal" data-bs-target="#modalCambioEstado">
+                                                    <x-slot name="message">
+                                                        <i class="fa-solid fa-check"></i>
+                                                    </x-slot>
+                                                </x-btn-accion>
+                                            @endif
+                                        </td>
                                     </tr>
                                     @php $conteo++; @endphp
                                 @endforeach
@@ -187,7 +223,7 @@
         $('#modalNotaCredito').modal('hide');
     });
     $wire.on('hideModalDelete', () => {
-        $('#modalDeleteTransportistas').modal('hide');
+        $('#modalCambioEstado').modal('hide');
     });
 </script>
 @endscript

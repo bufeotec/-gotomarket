@@ -257,4 +257,16 @@ class Vehiculo extends Model
         }
         return $result;
     }
+
+    public function listar_vehiculos_activos(){
+        try {
+            $result = DB::table('vehiculos')
+                ->where('vehiculo_estado', '=', 1)
+                ->get();
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
 }

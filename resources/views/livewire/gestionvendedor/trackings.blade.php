@@ -54,7 +54,7 @@
                                             {{ $estado[$me->fac_pre_prog_estado_aprobacion] ?? 'Desconocido' }}
                                         </td>
                                         <td>
-                                            <a href="{{ route('Gestionvendedor.vistatracking', ['data' => base64_encode(json_encode(['id' => $me->id_fac_pre_prog, 'numdoc' => $me->fac_pre_prog_cfnumdoc]))]) }}"
+                                            <a href="{{ route('Programacioncamion.vistatracking', ['data' => base64_encode(json_encode(['id' => $me->id_fac_pre_prog, 'numdoc' => $me->fac_pre_prog_cfnumdoc]))]) }}"
                                                target="_blank"
                                                class="btn text-primary">
                                                 <i class="fa-solid fa-eye"></i>
