@@ -131,18 +131,21 @@ class Repcondoc extends Model
             $query = DB::table('facturas_pre_programaciones as fp')
                 ->join('facturas_mov as fm', 'fp.id_fac_pre_prog', '=', 'fm.id_fac_pre_prog')
                 ->select('fp.*',
+                    'fm.fac_envio_valpago',
                     'fm.fac_acept_valpago',
+                    'fm.fac_envio_est_fac',
                     'fm.fac_acept_est_fac',
+                    'fm.fac_envio_val_rec',
                     'fm.fac_acept_val_rec',
+                    'fm.fac_env_ges_fac',
                     'fm.fac_acept_ges_fac',
-                    'fm.fac_despacho',
-                    'fm.fac_envio_valpago')
+                    'fm.fac_despacho')
                 ->where('fp.fac_pre_prog_estado', '=', 1)
 
-             ->where(function($q) use ($search) {
-                 $q->where('fp.fac_pre_prog_factura', 'like', '%' . $search . '%')
-                     ->orWhere('fp.fac_pre_prog_cfcodcli', 'like', '%' . $search . '%');
-             });
+                ->where(function($q) use ($search) {
+                    $q->where('fp.fac_pre_prog_factura', 'like', '%' . $search . '%')
+                        ->orWhere('fp.fac_pre_prog_cfcodcli', 'like', '%' . $search . '%');
+                });
 
             if ($desde && $hasta) {
                 $query->whereBetween('fp.created_at', [$desde, $hasta]);
