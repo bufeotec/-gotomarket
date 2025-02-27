@@ -86,6 +86,15 @@ class DespachotransporteController extends Controller
         }
     }
 
+    public function registrar_servicio_transporte(){
+        try {
+            return view('despachotransporte.registrar_servicio_transporte');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
+
     public function aprobar_programacion_despacho(){
         try {
             return view('programacion_camiones.programacion_pendientes');

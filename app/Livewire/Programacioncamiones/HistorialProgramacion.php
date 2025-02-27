@@ -7,6 +7,7 @@ use App\Models\DespachoVenta;
 use App\Models\General;
 use App\Models\Logs;
 use App\Models\Programacion;
+use App\Models\Serviciotransporte;
 use App\Models\Transportista;
 use App\Models\Historialdespachoventa;
 use Carbon\Carbon;
@@ -30,7 +31,10 @@ class HistorialProgramacion extends Component
     public $listar_detalle_despacho = [];
     public $id_despacho = "";
     public $estadoPro = "";
+    public $id_serv_transpt = "";
+    public $serv_transpt_estado_aprobacion = "";
     public $id_programacionRetorno = "";
+    public $serv_transpt_entrega = "";
     // Atributo público para almacenar los checkboxes seleccionados
     public $selectedItems = [];
     public $estadoComprobante = [];
@@ -40,6 +44,7 @@ class HistorialProgramacion extends Component
     private $despacho;
     private $general;
     private $historialdespachoventa;
+    private $serviciotransporte;
     public function __construct()
     {
         $this->logs = new Logs();
@@ -47,38 +52,62 @@ class HistorialProgramacion extends Component
         $this->despacho = new Despacho();
         $this->general = new General();
         $this->historialdespachoventa = new Historialdespachoventa();
+        $this->serviciotransporte = new Serviciotransporte();
     }
     public function mount()
     {
         $this->desde = Carbon::today()->toDateString(); // Fecha actual
         $this->hasta = Carbon::today()->addDays(6)->toDateString(); // Fecha 6 días después de la actual
     }
+    public $serviciosTransportes = [];
 
     public function render()
     {
-        $resultado = $this->programacion->listar_programaciones_historial_programacion($this->desde,$this->hasta,$this->serie_correlativo,$this->estadoPro);
-        foreach($resultado as $rehs){
+        // Lógica existente para obtener $resultado
+        $resultado = $this->programacion->listar_programaciones_historial_programacion($this->desde, $this->hasta, $this->serie_correlativo, $this->estadoPro);
+
+        foreach ($resultado as $rehs) {
             $rehs->despacho = DB::table('despachos as d')
-                ->join('transportistas as t','t.id_transportistas','=','d.id_transportistas')
-                ->join('tipo_servicios as ts','ts.id_tipo_servicios','=','d.id_tipo_servicios')
-                ->where('d.id_programacion','=',$rehs->id_programacion)
+                ->join('transportistas as t', 't.id_transportistas', '=', 'd.id_transportistas')
+                ->join('tipo_servicios as ts', 'ts.id_tipo_servicios', '=', 'd.id_tipo_servicios')
+                ->where('d.id_programacion', '=', $rehs->id_programacion)
                 ->get();
-            foreach ($rehs->despacho as $des){
+
+            foreach ($rehs->despacho as $des) {
                 $totalVenta = 0;
-                $des->comprobantes =  DB::table('despacho_ventas as dv')
-                    ->where('dv.id_despacho','=',$des->id_despacho)
+                $des->comprobantes = DB::table('despacho_ventas as dv')
+                    ->where('dv.id_despacho', '=', $des->id_despacho)
                     ->get();
-                foreach ($des->comprobantes as $com){
+
+                foreach ($des->comprobantes as $com) {
                     $precio = floatval($com->despacho_venta_cfimporte);
-                    $totalVenta+= round($precio,2);
+                    $totalVenta += round($precio, 2);
                 }
                 $des->totalVentaDespacho = $totalVenta;
             }
         }
 
+        // Nueva lógica para obtener datos de servicios_transportes
+        $query = DB::table('servicios_transportes')
+            ->where('serv_transpt_estado', 1)
+            ->whereBetween('serv_transpt_fecha_creacion', [$this->desde, $this->hasta]);
+        // Si no se ha seleccionado un tipo, por defecto muestra 1,2,3
+        if (empty($this->estadoPro)) {
+            $query->whereIn('serv_transpt_estado_aprobacion', [1, 2, 3]);
+        } else {
+            // Si se selecciona un tipo, usa whereIn si es un array, de lo contrario usa where normal
+            if (is_array($this->estadoPro)) {
+                $query->whereIn('serv_transpt_estado_aprobacion', $this->estadoPro);
+            } else {
+                $query->where('serv_transpt_estado_aprobacion', $this->estadoPro);
+            }
+        }
+        // Obtener los resultados ordenados
+        $this->serviciosTransportes = $query->orderBy('serv_transpt_fecha_creacion', 'desc')->get();
+
         $roleId = auth()->user()->roles->first()->id ?? null;
 
-        return view('livewire.programacioncamiones.historial-programacion',compact('resultado','roleId'));
+        return view('livewire.programacioncamiones.historial-programacion', compact('resultado', 'roleId'));
     }
 
     public function listar_informacion_despacho($id){
@@ -1184,6 +1213,349 @@ class HistorialProgramacion extends Component
             DB::rollBack();
             $this->logs->insertarLog($e);
             session()->flash('errorComprobante', 'Ocurrió un error al cambiar el estado del registro. Por favor, inténtelo nuevamente.');
+        }
+    }
+
+    public function cambiarEstadoServicioTr($id){
+        if ($id) {
+            $this->id_serv_transpt = $id;
+        }
+    }
+
+    public function cambiarEstadoSerCamino(){
+        try {
+            if (!Gate::allows('servicio_transp_camino')) {
+                session()->flash('error_delete', 'No tiene permisos para aprobar o rechazar este servicio de transporte.');
+                return;
+            }
+
+            $this->validate([
+                'id_serv_transpt' => 'required|integer',
+            ], [
+                'id_serv_transpt.required' => 'El identificador es obligatorio.',
+                'id_serv_transpt.integer' => 'El identificador debe ser un número entero.',
+            ]);
+
+            DB::beginTransaction();
+
+            // Buscar el servicio de transporte
+            $servicio_transp_update = Serviciotransporte::find($this->id_serv_transpt);
+
+            if (!$servicio_transp_update) {
+                DB::rollBack();
+                session()->flash('error_delete', 'El servicio de transporte no fue encontrado.');
+                return;
+            }
+
+            // Cambiar el estado a "en camino" (2)
+            $servicio_transp_update->serv_transpt_estado_aprobacion = 2;
+
+            if ($servicio_transp_update->save()) {
+                DB::commit();
+                $this->dispatch('hideModalDeleteCamino');
+                session()->flash('success', 'El servicio de transporte ha sido marcado como "en camino".');
+            } else {
+                DB::rollBack();
+                session()->flash('error_delete', 'No se pudo cambiar el estado del servicio de transporte.');
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error al cambiar el estado del registro. Por favor, inténtelo nuevamente.');
+        }
+    }
+
+    public function cambiarConfirmarEntregaSer(){
+        try {
+            if (!Gate::allows('servicio_transp_entrega')) {
+                session()->flash('error_delete', 'No tiene permisos para aprobar o rechazar este servicio de transporte.');
+                return;
+            }
+
+            $this->validate([
+                'id_serv_transpt' => 'required|integer',
+                'serv_transpt_entrega' => 'required|in:1,2',
+            ], [
+                'id_serv_transpt.required' => 'El identificador es obligatorio.',
+                'id_serv_transpt.integer' => 'El identificador debe ser un número entero.',
+                'serv_transpt_entrega.required' => 'Debe seleccionar una opción de entrega.',
+                'serv_transpt_entrega.in' => 'La opción de entrega no es válida.',
+            ]);
+
+            DB::beginTransaction();
+
+            // Buscar el servicio de transporte
+            $servicio_transp_update = Serviciotransporte::find($this->id_serv_transpt);
+
+            if (!$servicio_transp_update) {
+                DB::rollBack();
+                session()->flash('error_delete', 'El servicio de transporte no fue encontrado.');
+                return;
+            }
+
+            // Actualizar el estado y el campo de entrega
+            $servicio_transp_update->serv_transpt_estado_aprobacion = 3;
+            $servicio_transp_update->serv_transpt_entrega = $this->serv_transpt_entrega;
+
+            if ($servicio_transp_update->save()) {
+                DB::commit();
+                $this->dispatch('hideModalDeleteEntrega');
+                session()->flash('success', 'El servicio de transporte ha sido marcado como culminado.');
+            } else {
+                DB::rollBack();
+                session()->flash('error_delete', 'No se pudo cambiar el estado del servicio de transporte.');
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error al cambiar el estado del registro. Por favor, inténtelo nuevamente.');
+        }
+    }
+
+    public function generar_excel_servicio_transporte()
+    {
+        try {
+            if (!Gate::allows('generar_excel_servicio_transporte')) {
+                session()->flash('error', 'No tiene permisos para generar el reporte en excel.');
+                return;
+            }
+
+            // Obtener los datos de servicios_transportes
+            $serviciosTransportes = DB::table('servicios_transportes')
+                ->where('serv_transpt_estado', 1) // Solo registros activos
+                ->whereBetween('serv_transpt_fecha_creacion', [$this->desde, $this->hasta])
+                ->whereIn('serv_transpt_estado_aprobacion', [1, 2, 3]) // Aprobado, En Camino, Entregado
+                ->orderBy('serv_transpt_fecha_creacion', 'desc')
+                ->get();
+
+            // Crear un nuevo archivo de Excel
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle('Servicios Transporte');
+
+            // FILA 1
+            $row = 1;
+            $sheet->setCellValue('A' . $row, 'HISTORIAL DE SERVICIO DE TRANSPORTE');
+            $titleStyle = $sheet->getStyle('A' . $row);
+            $titleStyle->getFont()->setSize(14); // Tamaño de fuente más grande
+            $titleStyle->getFont()->setBold(true); // Texto en negrita
+            $sheet->mergeCells('A' . $row . ':N' . $row); // Combinar celdas de A a Z
+            $row++;
+//          FILA 2
+            $sheet->setCellValue('A' . $row, 'RESULTADO DE BUSQUEDA: Rango de fecha: ' . date("d-m-Y", strtotime($this->desde)) . ' al ' . date("d-m-Y", strtotime($this->hasta)));
+            $subtitleStyle = $sheet->getStyle('A' . $row);
+            $subtitleStyle->getFont()->setSize(12); // Tamaño de fuente
+            $subtitleStyle->getFont()->setBold(true); // Texto en negrita
+            $sheet->mergeCells('A' . $row . ':N' . $row); // Combinar celdas de A a Z
+            $row++;
+//          FILA 3
+            $sheet->setCellValue('A'.$row, "");
+            $sheet->mergeCells('A'.$row.':N'.$row);
+            $row++;
+//          FILA 4
+            $sheet->setCellValue('A'.$row, 'SERVICIO DE TRANSPORTE');
+            $titleStyle = $sheet->getStyle('A'.$row);
+            $titleStyle->getFont()->setSize(8);
+            $cellRange = 'A'.$row.':D'.$row;
+            $sheet->mergeCells($cellRange);
+            $rowStyle = $sheet->getStyle($cellRange);
+            $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFE699');
+
+            $sheet->setCellValue('E'.$row, 'FECHA PRESENTACIÓN');
+            $titleStyle = $sheet->getStyle('E'.$row);
+            $titleStyle->getFont()->setSize(8);
+            $cellRange = 'E'.$row.':H'.$row;
+            $sheet->mergeCells($cellRange);
+            $rowStyle = $sheet->getStyle($cellRange);
+            $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFC000'); // Fondo
+
+            $sheet->setCellValue('I'.$row, date('d/m/Y'));
+            $titleStyle = $sheet->getStyle('I'.$row);
+            $titleStyle->getFont()->setSize(8);
+            $cellRange = 'I'.$row.':K'.$row;
+            $sheet->mergeCells($cellRange);
+            $rowStyle = $sheet->getStyle($cellRange);
+            $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFC000'); // Fondo
+
+            $sheet->setCellValue('L'.$row, date("d-m-Y", strtotime($this->desde)) . ' al ' . date("d-m-Y", strtotime($this->hasta)));
+            $titleStyle = $sheet->getStyle('L'.$row);
+            $titleStyle->getFont()->setSize(8);
+            $cellRange = 'L'.$row.':N'.$row;
+            $sheet->mergeCells($cellRange);
+            $rowStyle = $sheet->getStyle($cellRange);
+            $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFFF00'); // Fondo
+
+            $cellRange = 'A'.$row.':N'.$row;
+            $rowStyle = $sheet->getStyle($cellRange);
+            $rowStyle->getFont()->setSize(10);
+            $rowStyle->getFont()->setBold(true);
+            $rowStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+            $rowStyle->getBorders()->getAllBorders()->getColor()->setARGB('000000');
+            $rowStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            $rowStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+            $row++;
+//          FILA 5
+            $sheet->setCellValue('A'.$row, 'DATOS DEL SERVICIO TRANSPORTE');
+            $titleStyle = $sheet->getStyle('A'.$row);
+            $titleStyle->getFont()->setSize(8);
+            $cellRange = 'A'.$row.':N'.$row;
+            $sheet->mergeCells($cellRange);
+            $rowStyle = $sheet->getStyle($cellRange);
+            $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('C4D79B'); // Fondo
+            $cellRange = 'A'.$row.':N'.$row;
+
+            $rowStyle = $sheet->getStyle($cellRange);
+            $rowStyle->getFont()->setSize(10);
+            $rowStyle->getFont()->setBold(true);
+            $rowStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+            $rowStyle->getBorders()->getAllBorders()->getColor()->setARGB('000000');
+            $rowStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            $rowStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+            $row++;
+
+//           FILA 6
+            $sheet->setCellValue('E'.$row, 'REMITENTE');
+            $titleStyle = $sheet->getStyle('E'.$row);
+            $titleStyle->getFont()->setSize(8);
+            $cellRange = 'E'.$row.':G'.$row;
+            $sheet->mergeCells($cellRange);
+            $rowStyle = $sheet->getStyle($cellRange);
+            $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('C4D79B'); // Fondo
+
+            $sheet->setCellValue('H'.$row, 'DESTINATARIO');
+            $titleStyle = $sheet->getStyle('H'.$row);
+            $titleStyle->getFont()->setSize(8);
+            $cellRange = 'H'.$row.':J'.$row;
+            $sheet->mergeCells($cellRange);
+            $rowStyle = $sheet->getStyle($cellRange);
+            $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('C4D79B'); // Fondo
+
+            $cellRange = 'A'.$row.':N'.$row;
+            $rowStyle = $sheet->getStyle($cellRange);
+            $rowStyle->getFont()->setSize(10);
+            $rowStyle->getFont()->setBold(true);
+            $rowStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+            $rowStyle->getBorders()->getAllBorders()->getColor()->setARGB('000000');
+            $rowStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            $rowStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+            $cellRangeNoUsed1 = 'A' . $row . ':D' . $row; // Desde A hasta D
+            $cellRangeNoUsed2 = 'K' . $row . ':N' . $row; // Desde K hasta P
+
+            $styleNoUsed = $sheet->getStyle($cellRangeNoUsed1);
+            $styleNoUsed->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE); // Sin bordes
+            $styleNoUsed->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_NONE); // Sin fondo
+
+            $styleNoUsed = $sheet->getStyle($cellRangeNoUsed2);
+            $styleNoUsed->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE); // Sin bordes
+            $styleNoUsed->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_NONE);
+            $row++;
+//            FILA 7
+            $sheet->setCellValue('A' . $row, 'Código');
+            $sheet->setCellValue('B' . $row, 'N° OS');
+            $sheet->setCellValue('C' . $row, 'Motivo');
+            $sheet->setCellValue('D' . $row, 'Detalle Motivo');
+            $sheet->setCellValue('E' . $row, 'RUC');
+            $sheet->setCellValue('F' . $row, 'Razón socail');
+            $sheet->setCellValue('G' . $row, 'Dirección');
+            $sheet->setCellValue('H' . $row, 'RUC');
+            $sheet->setCellValue('I' . $row, 'Razón socail');
+            $sheet->setCellValue('J' . $row, 'Dirección');
+            $sheet->setCellValue('K' . $row, 'Peso');
+            $sheet->setCellValue('L' . $row, 'Volumen');
+            $sheet->setCellValue('M' . $row, 'Estado Aprobación');
+            $sheet->setCellValue('N' . $row, 'Estado Entrega');
+
+            // Estilo para los encabezados de la tabla
+            $headerStyle = $sheet->getStyle('A' . $row . ':N' . $row);
+            $headerStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID); // Fondo sólido
+            $headerStyle->getFill()->getStartColor()->setARGB('FFD3D3D3'); // Color gris claro
+            $headerStyle->getFont()->setBold(true);
+
+            $sheet->getColumnDimension('A')->setWidth(6);
+            $sheet->getColumnDimension('B')->setWidth(12);
+            $sheet->getColumnDimension('C')->setWidth(15);
+            $sheet->getColumnDimension('D')->setWidth(20);
+            $sheet->getColumnDimension('E')->setWidth(12);
+            $sheet->getColumnDimension('F')->setWidth(12);
+            $sheet->getColumnDimension('G')->setWidth(60);
+            $sheet->getColumnDimension('H')->setWidth(6);
+            $sheet->getColumnDimension('I')->setWidth(6);
+            $sheet->getColumnDimension('J')->setWidth(15);
+            $sheet->getColumnDimension('K')->setWidth(15);
+            $sheet->getColumnDimension('L')->setWidth(15);
+            $sheet->getColumnDimension('M')->setWidth(20);
+            $sheet->getColumnDimension('N')->setWidth(15);
+
+            $cellRange = 'A'.$row.':N'.$row;
+            $rowStyle = $sheet->getStyle($cellRange);
+            $rowStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+            $rowStyle->getBorders()->getAllBorders()->getColor()->setARGB('000000');
+            $rowStyle->getFont()->setSize(10);
+            $rowStyle->getFont()->setBold(true);
+
+            // Llenar la tabla con los datos
+            $row++; // Comenzar en la cuarta fila
+            foreach ($serviciosTransportes as $servicio) {
+                $cellRange = 'A' . $row . ':N' . $row; // Definir el rango de la fila actual
+
+                $sheet->setCellValue('A' . $row, $servicio->serv_transpt_codigo);
+                $sheet->setCellValue('B' . $row, $servicio->serv_transpt_codigo_os);
+                $sheet->setCellValue('C' . $row, $servicio->serv_transpt_motivo);
+                $sheet->setCellValue('D' . $row, $servicio->serv_transpt_detalle_motivo);
+                $sheet->setCellValue('E' . $row, $servicio->serv_transpt_remitente_ruc);
+                $sheet->setCellValue('F' . $row, $servicio->serv_transpt_remitente_razon_social);
+                $sheet->setCellValue('G' . $row, $servicio->serv_transpt_remitente_direccion);
+                $sheet->setCellValue('H' . $row, $servicio->serv_transpt_destinatario_ruc);
+                $sheet->setCellValue('I' . $row, $servicio->serv_transpt_destinatario_razon_social);
+                $sheet->setCellValue('J' . $row, $servicio->serv_transpt_destinatario_direccion);
+                $sheet->setCellValue('K' . $row, $this->general->formatoDecimal($servicio->serv_transpt_peso));
+                $sheet->setCellValue('L' . $row, $this->general->formatoDecimal($servicio->serv_transpt_volumen));
+
+                // Estado de aprobación
+                $estadoAprobacion = '';
+                if ($servicio->serv_transpt_estado_aprobacion == 1) {
+                    $estadoAprobacion = 'APROBADO';
+                } elseif ($servicio->serv_transpt_estado_aprobacion == 2) {
+                    $estadoAprobacion = 'EN CAMINO';
+                } elseif ($servicio->serv_transpt_estado_aprobacion == 3) {
+                    $estadoAprobacion = 'CULMINADO';
+                }
+                $sheet->setCellValue('M' . $row, $estadoAprobacion);
+
+                // Estado de entrega
+                $estadoEntrega = '';
+                if ($servicio->serv_transpt_entrega == 1) {
+                    $estadoEntrega = 'ENTREGADO';
+                } elseif ($servicio->serv_transpt_entrega == 2) {
+                    $estadoEntrega = 'NO ENTREGADO';
+                }
+                $sheet->setCellValue('N' . $row, $estadoEntrega);
+
+                // Aplicar bordes a la fila actual para que parezca una tabla
+                $rowStyle = $sheet->getStyle($cellRange);
+                $rowStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                $rowStyle->getBorders()->getAllBorders()->getColor()->setARGB('000000');
+
+                $row++; // Pasar a la siguiente fila
+            }
+            // Ajustar el ancho de las columnas automáticamente
+            foreach (range('A', 'N') as $column) {
+                $sheet->getColumnDimension($column)->setAutoSize(true);
+            }
+
+            // Guardar el archivo en un archivo temporal
+            $fileName = 'servicios_transporte_' . now()->format('Ymd_His') . '.xlsx';
+            $tempFilePath = sys_get_temp_dir() . '/' . $fileName;
+
+            // Usar el writer de PhpSpreadsheet para guardar el archivo
+            $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+            $writer->save($tempFilePath);
+
+            // Descargar el archivo
+            return response()->download($tempFilePath, $fileName)->deleteFileAfterSend(true);
+        } catch (\Exception $e) {
+            session()->flash('error', 'Ocurrió un error al generar el reporte en Excel: ' . $e->getMessage());
+            return;
         }
     }
 

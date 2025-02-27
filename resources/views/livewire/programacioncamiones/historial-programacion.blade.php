@@ -288,7 +288,12 @@
         </div>
         @if(count($resultado) > 0)
             <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-                <button class="btn btn-success text-white mt-4" wire:click="generar_excel_historial_programacion" wire:loading.attr="disabled"><i class="fa-solid fa-file-excel"></i> Generar Reporte</button>
+                <button class="btn btn-success text-white mt-4" wire:click="generar_excel_historial_programacion" wire:loading.attr="disabled"><i class="fa-solid fa-file-excel"></i> Exportar Programación</button>
+            </div>
+        @endif
+        @if(count($serviciosTransportes) > 0)
+            <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
+                <button class="btn btn-success text-white mt-4" wire:click="generar_excel_servicio_transporte" wire:loading.attr="disabled"><i class="fa-solid fa-file-excel"></i> Exportar Servicios</button>
             </div>
         @endif
         @if(count($selectedItems) > 0)
@@ -327,6 +332,9 @@
             </div>
             <div class="col-lg col-md-3 col-sm-3 mb-1">
                 <h6 class="m-0">N° C : Número Correlativo</h6>
+            </div>
+            <div class="col-lg-12 mt-4">
+                <h5>Programación de despacho: </h5>
             </div>
         </div>
     @endif
@@ -542,6 +550,179 @@
         @endif
     </div>
 
+{{--    MODAL CAMBIO DE ESTADO EN CAMINO SERVICIO TRANSPORTE--}}
+    <x-modal-delete  wire:ignore.self >
+        <x-slot name="id_modal">modalSerCamino</x-slot>
+        <x-slot name="modalContentDelete">
+            <form wire:submit.prevent="cambiarEstadoSerCamino">
+                <div class="row">
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        <h2 class="deleteTitle">¿Confirma que desea cambiar el estado  a "En Camino"?</h2>
+                    </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        @error('id_serv_transpt') <span class="message-error">{{ $message }}</span> @enderror
+                        @error('serv_transpt_estado_aprobacion') <span class="message-error">{{ $message }}</span> @enderror
+                        @if (session()->has('error_delete'))
+                            <div class="alert alert-danger alert-dismissible show fade">
+                                {{ session('error_delete') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        @endif
+                    </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-center">
+                        <button type="submit" class="btn btn-primary text-white btnDelete">SI</button>
+                        <button type="button" data-bs-dismiss="modal" class="btn btn-danger btnDelete">No</button>
+                    </div>
+                </div>
+            </form>
+        </x-slot>
+    </x-modal-delete>
+
+{{--    MODAL CONFIRMAR ENTREGA--}}
+    <x-modal-delete  wire:ignore.self >
+        <x-slot name="id_modal">modalServEntrega</x-slot>
+        <x-slot name="modalContentDelete">
+            <form wire:submit.prevent="cambiarConfirmarEntregaSer">
+                <div class="row">
+                    <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                        <h2 class="deleteTitle">¿Confirma entrega del servicio de transporte?</h2>
+                    </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        @error('id_serv_transpt') <span class="message-error">{{ $message }}</span> @enderror
+                        @if (session()->has('error_delete'))
+                            <div class="alert alert-danger alert-dismissible show fade">
+                                {{ session('error_delete') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        @endif
+                    </div>
+                    <div class="col-lg-6">
+                        <select class="form-control form-select" wire:model="serv_transpt_entrega">
+                            <option value="">Seleccionar...</option>
+                            <option value="1">Entregado</option>
+                            <option value="2">No entregado</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-6 text-center">
+                        <button class="btn text-white bg-primary" type="submit">Guardar</button>
+                    </div>
+                </div>
+            </form>
+        </x-slot>
+    </x-modal-delete>
+
+    @if(count($serviciosTransportes) > 0)
+        <div class="row mt-3">
+            <div class="col-lg-12 mt-4">
+                <h5>Servicio de transporte: </h5>
+            </div>
+        </div>
+    @endif
+    <div class="accordion mt-3" id="accordionServiciosTransportes">
+        @if(count($serviciosTransportes) > 0)
+            @foreach($serviciosTransportes as $index => $servicio)
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button {{ $index == 0 ? '' : 'collapsed' }}" wire:ignore.self type="button" data-bs-toggle="collapse" data-bs-target="#collapseServicio_{{ $index }}" aria-expanded="true" aria-controls="collapseServicio_{{ $index }}">
+                            Servicio #{{ $servicio->id_serv_transpt }} | Fecha: {{ $servicio->serv_transpt_fecha_creacion }}
+                        </button>
+                    </h2>
+                    <div id="collapseServicio_{{ $index }}" class="accordion-collapse collapse {{ $index == 0 ? 'show' : '' }}" data-bs-parent="#accordionServiciosTransportes" wire:ignore.self>
+                        <div class="accordion-body">
+                            <div class="row">
+                                <div class="col-lg-12 col-md-12 col-sm-12 table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                        <tr style="background: #f5f5f9">
+                                            <th>Código</th>
+                                            <th>Orden Servicio</th>
+                                            <th>Motivo</th>
+                                            <th>Detalle Motivo</th>
+                                            <th>Remitente</th>
+                                            <th>Destinatario</th>
+                                            <th>Peso</th>
+                                            <th>Volumen</th>
+                                            <th>Estado Servicio</th>
+                                            @if($servicio->serv_transpt_estado_aprobacion != 3)
+                                                <th>Acciones</th>
+                                            @else
+                                                <th>Estado Entrega</th>
+                                            @endif
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr>
+                                            <td>{{$servicio->serv_transpt_codigo}}</td>
+                                            <td>{{$servicio->serv_transpt_codigo_os}}</td>
+                                            <td>{{$servicio->serv_transpt_motivo}}</td>
+                                            <td>{{$servicio->serv_transpt_detalle_motivo}}</td>
+                                            <td>
+                                                {{ $servicio->serv_transpt_remitente_ruc }} <br><br>
+                                                {{ $servicio->serv_transpt_remitente_razon_social }} <br><br>
+                                                {{ $servicio->serv_transpt_remitente_direccion }}
+                                            </td>
+                                            <td>
+                                                {{ $servicio->serv_transpt_destinatario_ruc }} <br><br>
+                                                {{ $servicio->serv_transpt_destinatario_razon_social }} <br><br>
+                                                {{ $servicio->serv_transpt_destinatario_direccion }}
+                                            </td>
+                                            <td>{{$general->formatoDecimal($servicio->serv_transpt_peso)}} <b>(kg)</b></td>
+                                            <td>{{$general->formatoDecimal($servicio->serv_transpt_volumen)}} <b>(cm³)</b></td>
+                                            <td>
+                                                @php
+                                                    $colorSerTr = "";
+                                                    if ($servicio->serv_transpt_estado_aprobacion == 1) {
+                                                        $colorSerTr = "bg-label-warning";
+                                                    } elseif ($servicio->serv_transpt_estado_aprobacion == 2) {
+                                                        $colorSerTr = "bg-label-primary";
+                                                    } elseif ($servicio->serv_transpt_estado_aprobacion == 3) {
+                                                        $colorSerTr = "bg-label-success";
+                                                    } else {
+                                                        $colorSerTr = "bg-label-danger";
+                                                    }
+                                                @endphp
+                                                <span class="font-bold badge {{ $colorSerTr }}">
+                                                    {{ $servicio->serv_transpt_estado_aprobacion == 1 ? 'APROBADO ' : '' }}
+                                                    {{ $servicio->serv_transpt_estado_aprobacion == 2 ? 'EN CAMINO ' : '' }}
+                                                    {{ $servicio->serv_transpt_estado_aprobacion == 3 ? 'CULMINADO' : '' }}
+                                                    {{ $servicio->serv_transpt_estado_aprobacion == 4 ? 'RECHAZADO' : '' }}
+                                                </span>
+                                            </td>
+
+
+                                            @if($servicio->serv_transpt_estado_aprobacion != 3)
+                                                <td>
+                                                    @if($servicio->serv_transpt_estado_aprobacion == 1)
+                                                        <button class="btn btn-sm text-warning" wire:click="cambiarEstadoServicioTr({{ $servicio->id_serv_transpt }})" data-bs-toggle="modal" data-bs-target="#modalSerCamino">
+                                                            <i class="fa fa-car-side"></i>
+                                                        </button>
+                                                    @elseif($servicio->serv_transpt_estado_aprobacion == 2)
+                                                        <button class="btn text-primary" wire:click="cambiarEstadoServicioTr({{ $servicio->id_serv_transpt }})" data-bs-toggle="modal" data-bs-target="#modalServEntrega">
+                                                            <i class="fa-solid fa-clipboard-check"></i>
+                                                        </button>
+                                                    @endif
+                                                </td>
+                                            @else
+                                                <td>
+                                                    <span class="font-bold badge {{$servicio->serv_transpt_entrega == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
+                                                        {{$servicio->serv_transpt_entrega == 1 ? 'Entregado ' : 'No Entregado'}}
+                                                    </span>
+                                                </td>
+                                            @endif
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        @else
+            <p class="text-center">No hay servicios de transporte para mostrar.</p>
+        @endif
+    </div>
+
     {{-- Mostrar enlaces de paginación --}}
     <div class="mt-4">
         {{ $resultado->links() }}
@@ -569,12 +750,17 @@
 </div>
 @script
 <script>
-
     $wire.on('hideModalDelete', () => {
         $('#modalAprobarProgramacion').modal('hide');
     });
     $wire.on('hideModalDeleteRetornar', () => {
         $('#modalRetornarPendiente').modal('hide');
+    });
+    $wire.on('hideModalDeleteCamino', () => {
+        $('#modalSerCamino').modal('hide');
+    });
+    $wire.on('hideModalDeleteEntrega', () => {
+        $('#modalServEntrega').modal('hide');
     });
 </script>
 @endscript

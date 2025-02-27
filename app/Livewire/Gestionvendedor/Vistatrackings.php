@@ -55,6 +55,8 @@ class Vistatrackings extends Component
     public $botonSiguienteVisible = true;
     public $botonAnteriorVisible;
     public $etapaMostrada;
+    public $facturas = [];
+    public $facturasRelacionadas = [];
 
     public function render(){
         return view('livewire.gestionvendedor.vistatrackings');
@@ -96,9 +98,19 @@ class Vistatrackings extends Component
         $this->mensajeEstadoEtapa3 = []; // Inicializar como array vacío
         $this->codigoEncontrado = false;
         $this->botonDeshabilitado = false;
+        $this->facturas = [];
 
         // Utilizar $this->fac_pre_prog_cfnumdoc en lugar de $this->search_compro
         $numdoc = $this->fac_pre_prog_cfnumdoc;
+
+        $preProg = Facturaspreprogramacion::where('fac_pre_prog_cfnumdoc', $numdoc)->first();
+
+        if ($preProg) {
+            $this->facturas = [$preProg->toArray()]; // Convertir en array dentro de otro array
+        } else {
+            $this->facturas = []; // Asegurar que facturas sea un array vacío
+            session()->flash('error', 'No hay registros para el comprobante ingresado.');
+        }
 
         // Buscar en la tabla facturas_pre_programaciones (ETAPA 1)
         $preProgramado = Facturaspreprogramacion::where('fac_pre_prog_cfnumdoc', $numdoc)->first();
@@ -244,6 +256,15 @@ class Vistatrackings extends Component
             if ($facturaEnTransito) {
                 array_unshift($this->mensajeEstadoEtapa3, $facturaEnTransito);
             }
+        }
+
+//        FACTURAS RELACIONADAS
+        if ($despachoVenta) {
+            $facturasRelacionadas = DespachoVenta::where('id_despacho', $despachoVenta->id_despacho)
+                ->where('despacho_venta_cfnumdoc', '!=', $numdoc) // Excluir la factura actual
+                ->get(['despacho_venta_cfnumdoc', 'despacho_venta_guia', 'despacho_venta_cfimporte', 'despacho_venta_total_kg']);
+
+            $this->facturasRelacionadas = $facturasRelacionadas->toArray(); // Almacenar en una propiedad para la vista
         }
 
         // Si no está en pre-programación pero sí en despacho, mostrar mensaje específico
