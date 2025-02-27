@@ -230,4 +230,34 @@ class ProgramacioncamionController extends Controller
         }
     }
 
+    public function reporte_control_documentario(){
+        try {
+            return view('programacion_camiones.reporte_control_documentario');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
+
+    public function reporte_ventas_indicadores(){
+        try {
+            return view('programacion_camiones.reporte_ventas_indicadores');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
+
+    public function reporte_estados_factura(){
+        try {
+            return view('programacion_camiones.reporte_estados_factura');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
+
+//    hola
+
+
 }
