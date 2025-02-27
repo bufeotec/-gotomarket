@@ -213,4 +213,13 @@ class ProgramacioncamionController extends Controller
         }
     }
 
+    public function registrar_guias_remision(){
+        try {
+            return view('programacion_camiones.registrar_guias_remision');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
+
 }

@@ -197,6 +197,40 @@
         </x-slot>
     </x-modal-delete>
 
+{{--    MODAL APROBAR / RECHAZAR SERVICIO TRANSPORTE--}}
+    <x-modal-delete  wire:ignore.self >
+        <x-slot name="id_modal">modalAprobarServicioTransp</x-slot>
+        <x-slot name="modalContentDelete">
+            <form wire:submit.prevent="cambiarEstadoServicioTranspFormulario">
+                <div class="row">
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        @if($serv_transpt_estado_aprobacion == 1)
+                            <h2 class="deleteTitle">¿Está seguro de aprobar este servicio transporte?</h2>
+                        @else
+                            <h2 class="deleteTitle">¿Está seguro de rechazar esta servicio transporte?</h2>
+                        @endif
+                    </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        @error('id_serv_transpt') <span class="message-error">{{ $message }}</span> @enderror
+
+                        @error('serv_transpt_estado_aprobacion') <span class="message-error">{{ $message }}</span> @enderror
+
+                        @if (session()->has('error_delete'))
+                            <div class="alert alert-danger alert-dismissible show fade">
+                                {{ session('error_delete') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        @endif
+                    </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-center">
+                        <button type="submit" class="btn btn-primary text-white btnDelete">SI</button>
+                        <button type="button" data-bs-dismiss="modal" class="btn btn-danger btnDelete">No</button>
+                    </div>
+                </div>
+            </form>
+        </x-slot>
+    </x-modal-delete>
+
 
 
     <div class="row align-items-center mt-2">
@@ -209,7 +243,7 @@
             <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model.live="hasta" class="form-control">
         </div>
         <div class="col-lg-12 col-md-12 col-sm-12">
-            <p>Actualmente, hay <b class="colorgotomarket">{{$conteoProgramacionesPend}}</b> programaciones pendientes.</p>
+            <p>Actualmente, hay <b class="colorgotomarket">{{$conteoProgramacionesPend}}</b> programaciones pendientes y <b class="colorgotomarket">{{$conteoServicioTransporte}}</b> servicios transportes pendientes.</p>
         </div>
     </div>
     @if (session()->has('success'))
@@ -232,6 +266,9 @@
             </div>
             <div class="col-lg col-md-3 col-sm-3 mb-1">
                 <h6 class="m-0">E : Estado</h6>
+            </div>
+            <div class="col-lg-12 mt-4">
+                <h5>Programación de despacho: </h5>
             </div>
         </div>
     @endif
@@ -372,6 +409,75 @@
         @endforeach
     </div>
 
+    @if(count($serviciosTransporte) > 0)
+        <div class="row mt-3">
+            <div class="col-lg-12 mt-4">
+                <h5>Servicio de transporte: </h5>
+            </div>
+        </div>
+    @endif
+    <div class="accordion" id="accordionServicios">
+        @foreach($serviciosTransporte as $index => $servicio)
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button {{$index == 0 ? '' : 'collapsed'}}" type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#collapseServicio_{{$index}}"
+                            aria-expanded="false">
+                        #{{$loop->iteration}} | UR: {{$servicio->name}} {{$servicio->last_name}}
+                        | FC: {{$general->obtenerNombreFecha($servicio->serv_transpt_fecha_creacion,'DateTime','DateTime')}}
+                    </button>
+                </h2>
+                <div id="collapseServicio_{{$index}}"
+                     class="accordion-collapse collapse {{$index == 0 ? 'show' : ''}}"
+                     data-bs-parent="#accordionServicios">
+                    <div class="accordion-body">
+                        <div class="row">
+                            <div class="col-12 text-end mb-3">
+                                <button class="btn btn-sm text-white bg-success" wire:click="cambiarEstadoServicioTransp({{$servicio->id_serv_transpt}},1)" data-bs-toggle="modal" data-bs-target="#modalAprobarServicioTransp"><i class="fa-solid fa-check"></i> APROBAR</button>
+                                <button class="btn btn-sm text-white bg-danger" wire:click="cambiarEstadoServicioTransp({{$servicio->id_serv_transpt}},4)" data-bs-toggle="modal" data-bs-target="#modalAprobarServicioTransp"><i class="fa fa-x"></i> RECHAZAR</button>
+                            </div>
+                            <div class="col-12">
+                                <table class="table">
+                                    <thead>
+                                    <tr style="background: #f5f5f9">
+                                        <th>Codigo</th>
+                                        <th>Motivo</th>
+                                        <th>Detalle Motivo</th>
+                                        <th>Remitente</th>
+                                        <th>Destinatario</th>
+                                        <th>Peso</th>
+                                        <th>Volumen</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr>
+                                        <td>{{$servicio->serv_transpt_codigo}}</td>
+                                        <td>{{$servicio->serv_transpt_motivo}}</td>
+                                        <td>{{$servicio->serv_transpt_detalle_motivo}}</td>
+                                        <td>
+                                            {{ $servicio->serv_transpt_remitente_ruc }} <br><br>
+                                            {{ $servicio->serv_transpt_remitente_razon_social }} <br><br>
+                                            {{ $servicio->serv_transpt_remitente_direccion }}
+                                        </td>
+                                        <td>
+                                            {{ $servicio->serv_transpt_destinatario_ruc }} <br><br>
+                                            {{ $servicio->serv_transpt_destinatario_razon_social }} <br><br>
+                                            {{ $servicio->serv_transpt_destinatario_direccion }}
+                                        </td>
+                                        <td>{{$general->formatoDecimal($servicio->serv_transpt_peso)}} <b>(kg)</b></td>
+                                        <td>{{$general->formatoDecimal($servicio->serv_transpt_volumen)}} <b>(cm³)</b></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    </div>
+
     {{ $resultado->links(data: ['scrollTo' => false]) }}
 
     <style>
@@ -398,6 +504,10 @@
 
     $wire.on('hideModalDelete', () => {
         $('#modalAprobarProgramacion').modal('hide');
+    });
+
+    $wire.on('hideModalDeleteSerTr', () => {
+        $('#modalAprobarServicioTransp').modal('hide');
     });
 </script>
 @endscript

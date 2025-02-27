@@ -1,4 +1,7 @@
 <div>
+    @php
+        $me = new \App\Models\General();
+    @endphp
     @if (session()->has('success'))
         <div class="col-lg-12 col-md-12 col-sm-12">
             <div class="alert alert-success alert-dismissible show fade mt-2">
@@ -16,6 +19,18 @@
         </div>
     @endif
 
+    {{--    MODAL DETALLES FACTURAS --}}
+    <x-modal-general  wire:ignore.self >
+        <x-slot name="id_modal">modalDetallesFact</x-slot>
+        <x-slot name="titleModal">Detalles de la factura</x-slot>
+        <x-slot name="tama">modal-lg</x-slot>
+        <x-slot name="modalContent">
+            <div class="row">
+
+            </div>
+        </x-slot>
+    </x-modal-general>
+
         <x-card-general-view>
             <x-slot name="content">
                 <div class="row">
@@ -26,7 +41,7 @@
                             </a>
                         </div>
                     </div>
-                    <div class="col-lg-12 col-md-12 col-sm-12 m-3">
+                    <div class="col-lg-12 col-md-12 col-sm-12 m3">
                         <!-- ETAPAS -->
                         <div class="row justify-content-center text-center mt-3">
                             <div class="col-lg-2 col-md-4 col-sm-12">
@@ -94,6 +109,75 @@
                                 </div>
                             </div>
                         @endif
+
+                        <div class="col-lg-12 p-3">
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <h6 class="mb-2">
+                                        Información de la Facturas
+                                    </h6>
+                                    <x-table-general>
+                                        <x-slot name="thead">
+                                            <tr>
+                                                <th>Factura</th>
+                                                <th>Guía</th>
+                                                <th>Monto</th>
+                                                <th>Ver detalle</th>
+                                            </tr>
+                                        </x-slot>
+
+                                        <x-slot name="tbody">
+                                            @foreach($facturas as $f)
+                                                <tr>
+                                                    <td>{{ $f['fac_pre_prog_cfnumdoc'] }}</td>
+                                                    <td>{{ $f['fac_pre_prog_guia'] }}</td>
+                                                    <td>{{ $me->formatoDecimal($f['fac_pre_prog_cfimporte']) }}</td>
+                                                    <td class="text-center">
+                                                        <x-btn-accion class="text-primary"  data-bs-toggle="modal" data-bs-target="#modalDetallesFact">
+                                                            <x-slot name="message">
+                                                                <i class="fa-solid fa-eye"></i>
+                                                            </x-slot>
+                                                        </x-btn-accion>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </x-slot>
+                                    </x-table-general>
+                                </div>
+                                <div class="col-lg-6">
+                                    <h6 class="mb-2">
+                                        Facturas relacionadas
+                                    </h6>
+                                    <x-table-general>
+                                        <x-slot name="thead">
+                                            <tr>
+                                                <th>Factura</th>
+                                                <th>Guía</th>
+                                                <th>Monto</th>
+                                                <th>Peso Kilos</th>
+                                            </tr>
+                                        </x-slot>
+
+                                        <x-slot name="tbody">
+                                            @if (!empty($facturasRelacionadas))
+                                                @foreach ($facturasRelacionadas as $fr)
+                                                    <tr>
+                                                        <td>{{ $fr['despacho_venta_cfnumdoc'] }}</td>
+                                                        <td>{{ $fr['despacho_venta_guia'] }}</td>
+                                                        <td>{{ $me->formatoDecimal($fr['despacho_venta_cfimporte']) }}</td>
+                                                        <td>{{ $me->formatoDecimal($fr['despacho_venta_total_kg']) }} kg</td>
+                                                    </tr>
+                                                @endforeach
+                                            @else
+                                                <tr>
+                                                    <td colspan="4" class="text-center">No hay facturas relacionadas.</td>
+                                                </tr>
+                                            @endif
+                                        </x-slot>
+                                    </x-table-general>
+                                </div>
+                            </div>
+                        </div>
 
                     </div>
                 </div>
