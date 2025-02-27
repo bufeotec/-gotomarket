@@ -69,6 +69,17 @@ class Facturaspreprogramaciones extends Component
     }
 
     public function render(){
+        $fechadesde = '2023-01-01'; // Fecha de inicio (formato YYYY-MM-DD)
+        $fechahasta = '2025-02-21'; // Fecha de fin (formato YYYY-MM-DD)
+        $documento_guia = $this->server->obtenerDocumentosRemision($fechadesde,$fechahasta);
+//
+//        $serie = 'F001';
+//        $numero = '0015272';
+//        $detalle_guia = $this->server->obtenerDetalleRemision($serie,$numero);
+
+
+
+
         $listar_tipo_servicios = $this->tiposervicio->listar_tipo_servicios();
         return view('livewire.programacioncamiones.facturaspreprogramaciones', compact('listar_tipo_servicios'));
     }

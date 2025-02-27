@@ -2,12 +2,21 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class Repcondoc extends Model
 //hola
 {
+    use HasFactory;
+
+    private $logs;
+    public function __construct()
+    {
+        parent::__construct();
+        $this->logs = new Logs();
+    }
     public function listar_datos($desde, $hasta, $pagination)
     {
         try {

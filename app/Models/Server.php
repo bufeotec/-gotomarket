@@ -72,35 +72,35 @@ class  Server extends Model
         return $result;
     }
     public function listar_clientes($search){
-        try {
-            $result =  array();
-            $client = new \GuzzleHttp\Client();
-            $url = "http://127.0.0.1/api_goto/public/api/v1/list_local_receipts";
+    try {
+        $result =  array();
+        $client = new \GuzzleHttp\Client();
+        $url = "http://127.0.0.1/api_goto/public/api/v1/list_local_receipts";
 //            $url = "http://161.132.173.106:8081/api_goto/public/api/v1/list_customers";
 
-            // Enviar la solicitud POST con los parámetros proporcionados
-            $response = $client->post($url, [
-                'form_params' => [
-                    'buscar' => $search,
-                ],
-            ]);
+        // Enviar la solicitud POST con los parámetros proporcionados
+        $response = $client->post($url, [
+            'form_params' => [
+                'buscar' => $search,
+            ],
+        ]);
 
-            // Procesar la respuesta
-            $body = $response->getBody()->getContents();
-            $responseData = json_decode($body);
-            if ($responseData->code === 200){
+        // Procesar la respuesta
+        $body = $response->getBody()->getContents();
+        $responseData = json_decode($body);
+        if ($responseData->code === 200){
 
 //                $result = $responseData->data;
-                $result = collect($responseData->data);
+            $result = collect($responseData->data);
 
-            }
-
-            }catch (\Exception $e){
-            $this->logs->insertarLog($e);
-            $result = [];
         }
-        return $result;
+
+    }catch (\Exception $e){
+        $this->logs->insertarLog($e);
+        $result = [];
     }
+    return $result;
+}
     public function listar_comprobantes_por_cliente($codigo_cliente,$search,$desde, $hasta){
         try {
             $result =  array();
@@ -157,6 +157,73 @@ class  Server extends Model
             $this->logs->insertarLog($e);
             $result = [];
         }
+        return $result;
+    }
+
+    public function obtenerDocumentosRemision($fechadesde,$fechahasta){
+        try {
+            $result = array();
+            $client = new \GuzzleHttp\Client();
+            $url = "http://127.0.0.1/api_goto/public/api/v1/list_r_documents"; // Asegúrate de que esta ruta existe en tu API
+//            $url = "http://161.132.173.106:8081/api_goto/public/api/v1/list_r_documents";
+
+
+            $response = $client->post($url, [
+                'form_params' => [
+                    'desde' => $fechadesde,
+                    'hasta' => $fechahasta,
+                ],
+            ]);
+//            // Enviar solicitud GET sin parámetros
+//            $response = $client->post($url);
+
+            // Procesar la respuesta
+            $body = $response->getBody()->getContents();
+            $responseData = json_decode($body);
+
+
+            if ($responseData->code === 200){
+                $result = collect($responseData->data);
+            }
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+
+        return $result;
+    }
+    public function obtenerDetalleRemision($serie,$numero){
+        try {
+            $result = array();
+            $client = new \GuzzleHttp\Client();
+//            $url = "http://127.0.0.1/api_goto/public/api/v1/list_r_documents"; // Asegúrate de que esta ruta existe en tu API
+            $url = "http://161.132.173.106:8081/api_goto/public/api/v1/list_local_receipts";
+
+
+            $response = $client->post($url, [
+                'form_params' => [
+                    'serie' => $serie,
+                    'numero' => $numero,
+                ],
+            ]);
+//            // Enviar solicitud GET sin parámetros
+//            $response = $client->post($url);
+
+            // Procesar la respuesta
+            $body = $response->getBody()->getContents();
+            $responseData = json_decode($body);
+
+
+            if ($responseData->code === 200){
+                $result = collect($responseData->data);
+            }
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+
         return $result;
     }
 }
