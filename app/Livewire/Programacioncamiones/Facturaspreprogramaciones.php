@@ -258,7 +258,7 @@ class Facturaspreprogramaciones extends Component
 
                 }    // Insertar en facturas_mov
                 DB::table('facturas_mov')->insert([
-                    'id_fac_pre_prog' => $nuevaFactura->id_fac_pre_prog, // Usar el ID de la nueva factura creada
+                    'id_fac_pre_prog' => $historial->id_fac_pre_prog, // Usar el ID de la nueva factura creada
                     'fac_envio_valpago' => Carbon::now('America/Lima'), // Establecer la fecha de envío
                     'id_users_responsable' => Auth::id(), // Asignar el ID del usuario responsable
                 ]);
