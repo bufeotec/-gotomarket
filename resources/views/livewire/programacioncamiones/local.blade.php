@@ -238,6 +238,11 @@
                 </div>
             </div>
         </div>
+            <div wire:loading wire:target="seleccionarFactura" class="overlay__eliminar">
+                <div class="spinner__container__eliminar">
+                    <div class="spinner__eliminar"></div>
+                </div>
+            </div>
 
         <div class="col-lg-7">
 

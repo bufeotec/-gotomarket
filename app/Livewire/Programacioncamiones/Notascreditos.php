@@ -31,12 +31,14 @@ class Notascreditos extends Component
     public $nota_credito_motivo_descripcion = "";
     public $nota_credito_estado = "";
     public $messageNotCret;
+    public $despacho_venta;
+    public $search_factura = "";
+    protected $listeners = ['refreshComponent' => 'render'];
 
     public function render(){
         $fac_despacho = $this->despachoventa->listar_despacho_nota_credito($this->id_despacho_venta);
         $listar_nota_credito = $this->notacredito->listar_nota_credito_activo($this->search_nota_credito, $this->pagination_nota_credito);
-
-        return view('livewire.programacioncamiones.notascreditos', compact('fac_despacho', 'listar_nota_credito'));
+        return view('livewire.programacioncamiones.notascreditos', compact('listar_nota_credito', 'fac_despacho'));
     }
 
     public function clear_form_nota_credito(){
@@ -53,6 +55,8 @@ class Notascreditos extends Component
             $this->nota_credito_motivo = $notaCredEdit->nota_credito_motivo;
             $this->nota_credito_motivo_descripcion = $notaCredEdit->nota_credito_motivo_descripcion;
             $this->id_nota_credito = $notaCredEdit->id_nota_credito;
+
+            $this->dispatch('updateSelect2', value: $notaCredEdit->id_despacho_venta);
         }
     }
 
