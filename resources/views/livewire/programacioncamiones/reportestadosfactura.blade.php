@@ -38,11 +38,14 @@
                                     <th>Factura</th>
                                     <th>RUC</th>
                                     <th>Nombre del Cliente</th>
-                                    <th>F. Emisión de Comprobante</th>
-                                    <th>F. Validación de Pago</th>
-                                    <th>F/G. Estado de Factura</th>
-                                    <th>F. Validación Despacho</th>
-                                    <th>F. Programación de Despacho</th>
+                                    <th>F. Emisión de Envío Comprobante</th>
+                                    <th>F. Validación de Pago Recibido</th>
+                                    <th>F/G. Estado de Factura Enviado</th>
+                                    <th>F/G. Estado de Factura Recibido</th>
+                                    <th>F. Validación Despacho Enviado</th>
+                                    <th>F. Validación Despacho Recibido</th>
+                                    <th>F. Programación de Despacho Enviado</th>
+                                    <th>F. Programación de Despacho Recibido</th>
                                     <th>F. Despacho</th>
                                 </tr>
                             </x-slot>
@@ -59,22 +62,31 @@
                                         <td>{{$ld->fac_pre_prog_cfcodcli}}</td>
                                         <td>{{$ld->fac_pre_prog_cnomcli}}</td>
                                         <td class="text-center">
-                                            {{ $ld->fac_envio_valpago ? \Carbon\Carbon::parse($ld->fac_envio_valpago)->format('d M Y') : '-' }}
+                                            {{ $ld->fac_envio_valpago ? \Carbon\Carbon::parse($ld->fac_envio_valpago)->format('d M Y - h:i a') : '-' }}
                                         </td>
                                         <td class="text-center">
-                                            {{ $ld->fac_acept_valpago ? \Carbon\Carbon::parse($ld->fac_acept_valpago)->format('d M Y') : '-' }}
+                                            {{ $ld->fac_acept_valpago ? \Carbon\Carbon::parse($ld->fac_acept_valpago)->format('d M Y - h:i a') : '-' }}
                                         </td>
                                         <td class="text-center">
-                                            {{ $ld->fac_acept_est_fac ? \Carbon\Carbon::parse($ld->fac_acept_est_fac)->format('d M Y') : '-' }}
+                                            {{ $ld->fac_envio_est_fac ? \Carbon\Carbon::parse($ld->fac_envio_est_fac)->format('d M Y - h:i a') : '-' }}
                                         </td>
                                         <td class="text-center">
-                                            {{ $ld->fac_acept_val_rec ? \Carbon\Carbon::parse($ld->fac_acept_val_rec)->format('d M Y') : '-' }}
+                                            {{ $ld->fac_acept_est_fac ? \Carbon\Carbon::parse($ld->fac_acept_est_fac)->format('d M Y - h:i a') : '-' }}
                                         </td>
                                         <td class="text-center">
-                                            {{ $ld->fac_acept_ges_fac ? \Carbon\Carbon::parse($ld->fac_acept_ges_fac)->format('d M Y') : '-' }}
+                                            {{ $ld->fac_envio_val_rec ? \Carbon\Carbon::parse($ld->fac_envio_val_rec)->format('d M Y - h:i a') : '-' }}
                                         </td>
                                         <td class="text-center">
-                                            {{ $ld->fac_despacho ? \Carbon\Carbon::parse($ld->fac_despacho)->format('d M Y') : '-' }}
+                                            {{ $ld->fac_acept_val_rec ? \Carbon\Carbon::parse($ld->fac_acept_val_rec)->format('d M Y - h:i a') : '-' }}
+                                        </td>
+                                        <td class="text-center">
+                                            {{ $ld->fac_env_ges_fac ? \Carbon\Carbon::parse($ld->fac_env_ges_fac)->format('d M Y - h:i a') : '-' }}
+                                        </td>
+                                        <td class="text-center">
+                                            {{ $ld->fac_acept_ges_fac ? \Carbon\Carbon::parse($ld->fac_acept_ges_fac)->format('d M Y - h:i a') : '-' }}
+                                        </td>
+                                        <td class="text-center">
+                                            {{ $ld->fac_despacho ? \Carbon\Carbon::parse($ld->fac_despacho)->format('d M Y - h:i a') : '-' }}
                                         </td>
                                     </tr>
                                     @php $conteo++; @endphp
