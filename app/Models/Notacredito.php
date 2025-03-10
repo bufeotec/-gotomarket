@@ -60,14 +60,14 @@ class Notacredito extends Model
     public function listar_nota_credito_activo($search,$pagination,$order = 'desc'){
         try {
 
-            $query = DB::table('notas_creditos as nt')
-                ->join('despacho_ventas as dv', 'nt.id_despacho_venta', '=', 'dv.id_despacho_venta')
-                ->where('nt.nota_credito_estado', '=', 1)
+            $query = DB::table('notas_creditos_guias')
+//                ->join('despacho_ventas as dv', 'nt.id_despacho_venta', '=', 'dv.id_despacho_venta')
+//                ->where('nt.nota_credito_estado', '=', 1)
                 ->where(function($q) use ($search) {
-                    $q->where('nt.nota_credito_motivo_descripcion', 'like', '%' . $search . '%')
-                    ->orWhere('dv.despacho_venta_cfcodcli', 'like', '%' . $search . '%')
-                    ->orWhere('dv.despacho_venta_cnomcli', 'like', '%' . $search . '%');
-                })->orderBy('nt.id_nota_credito', $order);
+                    $q->where('not_cre_guia_num_doc', 'like', '%' . $search . '%')
+                    ->orWhere('not_cre_guia_codigo_cliente', 'like', '%' . $search . '%')
+                    ->orWhere('not_cre_guia_nombre_cliente', 'like', '%' . $search . '%');
+                })->orderBy('id_nota_credito_guia', $order);
 
             $result = $query->paginate($pagination);
 
