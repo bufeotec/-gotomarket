@@ -9,8 +9,8 @@ use Illuminate\Support\Facades\DB;
 class Facturaspreprogramacion extends Model
 {
     use HasFactory;
-    protected $table = "facturas_pre_programaciones";
-    protected $primaryKey = "id_fac_pre_prog";
+    protected $table = "guias";
+    protected $primaryKey = "id_guia";
 
     private $logs;
     public function __construct(){
@@ -62,6 +62,18 @@ class Facturaspreprogramacion extends Model
                 ->where('id_fac_pre_prog','=',$id)
                 ->first();
 
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
+    public function listar_guia_existente($serie,$num){
+        try {
+            $result = DB::table('guias')
+                ->where('guia_serie','=',$serie)
+                ->where('guia_numero','=',$num)
+                ->first();
         }catch (\Exception $e){
             $this->logs->insertarLog($e);
             $result = [];

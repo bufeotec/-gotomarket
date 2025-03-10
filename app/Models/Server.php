@@ -160,18 +160,18 @@ class  Server extends Model
         return $result;
     }
 
-    public function obtenerDocumentosRemision($fechadesde,$fechahasta){
+    public function obtenerDocumentosRemision($desde,$hasta){
         try {
             $result = array();
             $client = new \GuzzleHttp\Client();
-            $url = "http://127.0.0.1/api_goto/public/api/v1/list_r_documents"; // Asegúrate de que esta ruta existe en tu API
+            $url = "http://127.0.0.1/api_goto/public/api/v1/list_r_documents";
 //            $url = "http://161.132.173.106:8081/api_goto/public/api/v1/list_r_documents";
 
 
             $response = $client->post($url, [
                 'form_params' => [
-                    'desde' => $fechadesde,
-                    'hasta' => $fechahasta,
+                    'desde' => $desde,
+                    'hasta' => $hasta,
                 ],
             ]);
 //            // Enviar solicitud GET sin parámetros
@@ -181,6 +181,37 @@ class  Server extends Model
             $body = $response->getBody()->getContents();
             $responseData = json_decode($body);
 
+            if ($responseData->code === 200){
+                $result = collect($responseData->data);
+            }
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+
+        return $result;
+    }
+    public function listar_notas_credito_ss(){
+        try {
+            $result = array();
+            $client = new \GuzzleHttp\Client();
+            $url = "http://127.0.0.1/api_goto/public/api/v1/list_nc_ss";
+//            $url = "http://161.132.173.106:8081/api_goto/public/api/v1/list_nc_ss";
+
+
+//            $response = $client->post($url, [
+//                'form_params' => [
+////                    'desde' => $desde,
+////                    'hasta' => $hasta,
+//                ],
+//            ]);
+//            // Enviar solicitud GET sin parámetros
+            $response = $client->post($url);
+
+            // Procesar la respuesta
+            $body = $response->getBody()->getContents();
+            $responseData = json_decode($body);
 
             if ($responseData->code === 200){
                 $result = collect($responseData->data);
