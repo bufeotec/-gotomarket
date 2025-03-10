@@ -23,9 +23,14 @@
                             </div>
                         @endif
                     </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12 mt-3" id="fechaHoraContainer" style="display: none;">
+                        <label for="fmanual">Modificar fecha y hora:</label>
+                        <input type="datetime-local" id="fmanual" wire:model="fmanual" wire:change="actualizarMensaje" class="form-control">
+                    </div>
+
                     <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-center">
-                        <button type="submit" class="btn btn-primary text-white btnDelete">SI</button>
-                        <button type="button" data-bs-dismiss="modal" class="btn btn-danger btnDelete">No</button>
+                        <button type="submit" class="btn btn-primary text-white btnDelete">ENVIAR</button>
+                        <button type="button" class="btn btn-success btnDelete" id="btnEditar">EDITAR</button>
                     </div>
                 </div>
             </form>
@@ -92,12 +97,13 @@
                                 <x-table-general id="facturasPreProgTable">
                                     <x-slot name="thead">
                                         <tr>
-                                            <th>Serie / Factura</th>
+                                            <th>Guía</th>
                                             <th>F. Emisión</th>
+                                            <th>Factura</th>
                                             <th>Importe sin IGV</th>
-                                            <th>Nombre Cliente</th>
-                                            <th>Peso y Volumen</th>
+                                            <th>Cliente</th>
                                             <th>Dirección</th>
+                                            <th>Peso y Volumen</th>
                                             <th>Fecha/Hora Recibida</th>
                                             <th>Acciones</th>
                                         </tr>
@@ -107,7 +113,7 @@
                                             <tr>
                                                 <td>
                                                 <span class="d-block tamanhoTablaComprobantes">
-                                                    {{ $factura->fac_pre_prog_cfnumser }} - {{ $factura->fac_pre_prog_cfnumdoc }}
+                                                    {{ $factura->fac_pre_prog_cfnumdoc }}
                                                 </span>
                                                 </td>
                                                 <td>
@@ -116,6 +122,11 @@
                                                     @endphp
                                                     <span class="d-block tamanhoTablaComprobantes">
                                                     {{ $fechaEmision }}
+                                                </span>
+                                                </td>
+                                                <td>
+                                                <span class="d-block tamanhoTablaComprobantes">
+                                                    {{ $factura->fac_pre_prog_cfnumser }} - {{ $factura->fac_pre_prog_cfnumdoc }}
                                                 </span>
                                                 </td>
                                                 <td>
@@ -133,19 +144,19 @@
                                                 </td>
                                                 <td>
                                                 <span class="d-block tamanhoTablaComprobantes">
-                                                    <b class="colorBlackComprobantes">{{ number_format($factura->fac_pre_prog_total_kg, 2, '.', ',') }} kg</b>
-                                                </span>
-                                                    <span class="d-block tamanhoTablaComprobantes">
-                                                    <b class="colorBlackComprobantes">{{ number_format($factura->fac_pre_prog_total_volumen, 2, '.', ',') }} cm³</b>
-                                                </span>
-                                                </td>
-                                                <td>
-                                                <span class="d-block tamanhoTablaComprobantes">
                                                     {{ $factura->fac_pre_prog_direccion_llegada }}
                                                 </span>
                                                     <br>
                                                     <span class="d-block tamanhoTablaComprobantes" style="color: black;font-weight: bold">
                                                     {{ $factura->fac_pre_prog_departamento }} - {{ $factura->fac_pre_prog_provincia }} - {{ $factura->fac_pre_prog_distrito }}
+                                                </span>
+                                                </td>
+                                                <td>
+                                                <span class="d-block tamanhoTablaComprobantes">
+                                                    <b class="colorBlackComprobantes">{{ number_format($factura->fac_pre_prog_total_kg, 2, '.', ',') }} kg</b>
+                                                </span>
+                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                    <b class="colorBlackComprobantes">{{ number_format($factura->fac_pre_prog_total_volumen, 2, '.', ',') }} cm³</b>
                                                 </span>
                                                 </td>
                                                 <td>
@@ -189,6 +200,15 @@
 
     $wire.on('hidemodaRecFac', () => {
         $('#modaRecFac').modal('hide');
+    });
+
+    document.getElementById("btnEditar").addEventListener("click", function() {
+        let container = document.getElementById("fechaHoraContainer");
+        let inputFecha = document.getElementById("fmanual");
+
+        // Mostrar el contenedor con el label y el input
+        container.style.display = "block";
+        inputFecha.focus();
     });
 </script>
 @endscript

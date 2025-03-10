@@ -10,5 +10,4 @@ class Reportecontroldocumentario extends Component
     {
         return view('livewire.programacioncamiones.reportecontroldocumentario');
     }
-//    hola
 }

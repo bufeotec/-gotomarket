@@ -3,7 +3,7 @@
         $general = new \App\Models\General();
     @endphp
     {{--    MODAL REGISTRO NOTA CREDITO--}}
-    <x-modal-general  wire:ignore.self >
+    <x-modal-general wire:ignore.self>
         <x-slot name="id_modal">modalNotaCredito</x-slot>
         <x-slot name="tama">modal-lg</x-slot>
         <x-slot name="titleModal">Gestionar Nota de Credito</x-slot>
@@ -14,19 +14,33 @@
                         <small class="text-primary">Información de la nota de credito</small>
                         <hr class="mb-0">
                     </div>
+
+                    <!-- Campo para mostrar el select o el h6 -->
                     <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
                         <label for="id_despacho_venta" class="form-label">Lista de facturas</label>
-                        <select class="form-select" name="id_despacho_venta" id="id_despacho_venta"
-                                wire:model="id_despacho_venta"
-                                @if($id_nota_credito) disabled @endif>
-                            <option value="">Seleccionar...</option>
-                            @foreach($fac_despacho as $fd)
-                                <option value="{{ $fd->id_despacho_venta }}"
-                                    {{ $fd->id_despacho_venta == $id_despacho_venta ? 'selected' : '' }}>
-                                    {{ $fd->despacho_venta_factura }} - {{ $fd->despacho_venta_cnomcli }}
-                                </option>
-                            @endforeach
-                        </select>
+                        @if (!$id_nota_credito)
+                            <!-- Mostrar el select cuando se está creando un nuevo registro -->
+                            <div wire:ignore>
+                                <select class="form-control form-select form-select-sm" name="id_despacho_venta" id="id_despacho_venta" wire:model.live="id_despacho_venta">
+                                    <option value="">Seleccionar...</option>
+                                    @foreach($fac_despacho as $fd)
+                                        <option value="{{ $fd->id_despacho_venta }}" {{ $fd->id_despacho_venta == $id_despacho_venta ? 'selected' : '' }}>
+                                            {{ $fd->despacho_venta_factura }} - {{ $fd->despacho_venta_cnomcli }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        @else
+                            <!-- Mostrar el h6 cuando se está editando un registro -->
+                            @php
+                                $factura = $fac_despacho->firstWhere('id_despacho_venta', $id_despacho_venta);
+                            @endphp
+                            @if ($factura)
+                                <h6>{{ $factura->despacho_venta_factura }} - {{ $factura->despacho_venta_cnomcli }}</h6>
+                            @else
+                                <h6 class="text-danger">Factura no encontrada</h6>
+                            @endif
+                        @endif
                         @error('id_despacho_venta')
                         <span class="message-error">{{ $message }}</span>
                         @enderror
@@ -34,7 +48,7 @@
 
                     <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
                         <label for="nota_credito_motivo" class="form-label">Código de motivo</label>
-                        <select class="form-select" name="nota_credito_motivo vehiculo" id="nota_credito_motivo" wire:model="nota_credito_motivo">
+                        <select class="form-select" name="nota_credito_motivo" id="nota_credito_motivo" wire:model="nota_credito_motivo">
                             <option value="">Seleccionar...</option>
                             <option value="1">1 - Devolución</option>
                             <option value="2">2 - Calidad</option>
@@ -50,7 +64,7 @@
                     <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
                         <label for="nota_credito_motivo_descripcion" class="form-label">Motivo descripción</label>
                         <textarea class="form-control" id="nota_credito_motivo_descripcion" name="nota_credito_motivo_descripcion" wire:model="nota_credito_motivo_descripcion" rows="4"></textarea>
-                        @error('nota_credito_motivo')
+                        @error('nota_credito_motivo_descripcion')
                         <span class="message-error">{{ $message }}</span>
                         @enderror
                     </div>
@@ -215,7 +229,48 @@
         </x-slot>
     </x-card-general-view>
     {{ $listar_nota_credito->links(data: ['scrollTo' => false]) }}
+
 </div>
+
+<script src="{{ asset('select2/dist/js/select2.min.js') }}"></script>
+<script>
+    function initSelect2() {
+        $('#id_despacho_venta').select2({
+            width: '100%',
+            allowClear: true,
+            placeholder: 'Seleccionar...',
+            minimumResultsForSearch: 1,
+            dropdownParent: $('#id_despacho_venta').parent(),
+            language: {
+                noResults: function() {
+                    return "No se encontraron resultados.";
+                }
+            }
+        });
+
+        // Escuchar el cambio de valor y actualizar el modelo de Livewire
+        $('#id_despacho_venta').on('change', function () {
+        @this.set('id_despacho_venta', $(this).val());
+        });
+    }
+
+    $(document).ready(function() {
+        initSelect2();
+    });
+
+    document.addEventListener('livewire:load', function () {
+        Livewire.hook('message.processed', (message, component) => {
+            initSelect2(); // Re-inicializar Select2 después de cada actualización de Livewire
+        });
+
+        // Escuchar el evento para actualizar Select2
+        Livewire.on('updateSelect2', (value) => {
+            $('#id_despacho_venta').val(value).trigger('change');
+        });
+    });
+</script>
+
+
 
 @script
 <script>

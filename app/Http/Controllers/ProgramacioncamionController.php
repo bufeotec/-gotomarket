@@ -257,7 +257,4 @@ class ProgramacioncamionController extends Controller
         }
     }
 
-//    hola
-
-
 }

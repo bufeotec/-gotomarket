@@ -32,6 +32,7 @@ class Validaredes extends Component
     public $fac_pre_prog_estado_aprobacion = "";
     public $fac_mov_area_motivo_rechazo = "";
     public $messageRecFactApro;
+    public $fmanual;
 
     public function render(){
         $facturas_pre_prog_estado_dos = $this->facpreprog->listar_facturas_pre_programacion_estado_dos();
@@ -39,13 +40,27 @@ class Validaredes extends Component
     }
 
     public function cambio_estado($id_factura, $estado){
+        $this->fmanual = '';
         $id = base64_decode($id_factura);
         if ($id) {
             $this->id_fac_pre_prog = $id;
             $this->fac_pre_prog_estado_aprobacion = $estado;
-            $this->messagePrePro = "¿Está seguro de aceptar esta factura?";
+            $fhactual = Carbon::now('America/Lima')->format('d/m/Y - h:i a');
+
+            $this->messagePrePro = "¿Estás seguro de enviar con fecha $fhactual?";
         }
     }
+    public function actualizarMensaje()
+    {
+        // Si hay una fecha y hora manual, usarla; de lo contrario, usar la fecha y hora actual
+        $fechaHora = $this->fmanual
+            ? Carbon::parse($this->fmanual, 'America/Lima')->format('d/m/Y - h:i a')
+            : Carbon::now('America/Lima')->format('d/m/Y - h:i a');
+
+        // Actualizar el mensaje con la nueva fecha y hora
+        $this->messagePrePro = "¿Estás seguro de enviar con fecha $fechaHora?";
+    }
+
     public function disable_pre_pro(){
         try {
             if (!Gate::allows('disable_pre_pro')) {
@@ -87,15 +102,15 @@ class Validaredes extends Component
                         DB::table('facturas_mov')
                             ->where('id_fac_pre_prog', $this->id_fac_pre_prog)
                             ->update([
-                                'fac_acept_val_rec' => Carbon::now('America/Lima'), // Actualiza con la fecha actual
-                                'fac_env_ges_fac' => Carbon::now('America/Lima'), // Actualiza con la fecha actual
+                                'fac_acept_val_rec' => $this->fmanual ? Carbon::parse($this->fmanual, 'America/Lima') : Carbon::now('America/Lima'),
+                                'fac_env_ges_fac' => $this->fmanual ? Carbon::parse($this->fmanual, 'America/Lima') : Carbon::now('America/Lima'),
                             ]);
                     } else {
                         // Si no existe, crear un nuevo registro
                         DB::table('facturas_mov')->insert([
                             'id_fac_pre_prog' => $this->id_fac_pre_prog,
-                            'fac_acept_val_rec' => Carbon::now('America/Lima'),
-                            'fac_env_ges_fac' => Carbon::now('America/Lima'),
+                            'fac_acept_val_rec' => $this->fmanual ? Carbon::parse($this->fmanual, 'America/Lima') : Carbon::now('America/Lima'),
+                            'fac_env_ges_fac' => $this->fmanual ? Carbon::parse($this->fmanual, 'America/Lima') : Carbon::now('America/Lima'),
 //                            'fac_envio_val_rec' => Carbon::now('America/Lima'), // Actualiza con la fecha actual
                             'id_users_responsable' => Auth::id(), // Asignar el ID del usuario responsable
                         ]);
