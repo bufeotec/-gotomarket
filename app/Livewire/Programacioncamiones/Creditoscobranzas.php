@@ -39,13 +39,14 @@ class Creditoscobranzas extends Component
     public $messageMotReCre;
     public $fac_mov_area_motivo_rechazo = "";
     public $messageFacApro;
+    public $fechaHoraManual2 = "";
+    public $fechaHoraManual3 = "";
 
     public function mount(){
 //        $this->desde = date('Y-m-d');
 //        $this->hasta =  date('Y-m-d');
         $this->buscar_comprobantes();
     }
-
     public function render(){
         $this->facturasCreditoAprobadas = DB::table('facturas_pre_programaciones')
             ->where('fac_pre_prog_estado_aprobacion', 5)
@@ -53,7 +54,6 @@ class Creditoscobranzas extends Component
 
         return view('livewire.programacioncamiones.creditoscobranzas');
     }
-
     public function buscar_comprobantes(){
         // Construir la consulta base
         $query = DB::table('facturas_pre_programaciones')
@@ -69,63 +69,16 @@ class Creditoscobranzas extends Component
         // Obtener los resultados de la consulta
         $this->filteredFacturas = $query->get();
     }
-
     public function pre_mot_cre($id_fac){
+        $this->fechaHoraManual3 = '';
         $id = base64_decode($id_fac);
         $this->fac_pre_pro_motivo_credito = "";
         if ($id) {
             $this->id_fac_pre_prog = $id;
-            $this->messageMotCre = "¿Está seguro de aceptar esta factura?";
+            $fechaHoraActual3 = Carbon::now('America/Lima')->format('d/m/Y - h:i a');
+            $this->messageMotCre = "¿Está seguro de aceptar esta Guía con fecha $fechaHoraActual3?";
         }
     }
-
-//    public function aceptar_fac_credito(){
-//        try {
-//            // Verifica permisos
-//            if (!Gate::allows('aceptar_fac_credito')) {
-//                session()->flash('error', 'No tiene permisos para cambiar los estados del menú.');
-//                return;
-//            }
-//
-//            // Iniciar transacción
-//            DB::beginTransaction();
-//
-//            // Buscar la factura preprogramada por su ID
-//            $facturaPreprogramada = Facturaspreprogramacion::find($this->id_fac_pre_prog);
-//
-//            if ($facturaPreprogramada) {
-//                // Actualizar el estado de aprobación a 5
-//                $facturaPreprogramada->fac_pre_prog_estado_aprobacion = 5;
-//
-//                // Guardar los cambios
-//                if ($facturaPreprogramada->save()) {
-//                    // Registrar en historial_pre_programacion
-//                    $historial = new Historialpreprogramacion();
-//                    $historial->id_fac_pre_prog = $this->id_fac_pre_prog;
-//                    $historial->fac_pre_prog_cfnumdoc = $facturaPreprogramada->fac_pre_prog_cfnumdoc;
-//                    $historial->fac_pre_prog_estado_aprobacion = 5;
-//                    $historial->fac_pre_prog_estado = 1;
-//                    $historial->his_pre_progr_fecha_hora = Carbon::now('America/Lima');
-//                    $historial->save();
-//
-//                    DB::commit();
-//                    session()->flash('success', 'Factura preprogramada aprobada correctamente.');
-//                    $this->dispatch('hidemodalMotCre');
-//                    $this->buscar_comprobantes();
-//                } else {
-//                    DB::rollBack();
-//                    session()->flash('error', 'No se pudo actualizar el estado de la factura preprogramada.');
-//                }
-//            } else {
-//                DB::rollBack();
-//                session()->flash('error', 'No se encontró la factura preprogramada.');
-//            }
-//        } catch (\Exception $e) {
-//            DB::rollBack();
-//            $this->logs->insertarLog($e);
-//            session()->flash('error', 'Ocurrió un error al aprobar la factura preprogramada.');
-//        }
-//    }
     public function aceptar_fac_credito(){
         try {
             // Verifica permisos
@@ -165,14 +118,14 @@ class Creditoscobranzas extends Component
                         DB::table('facturas_mov')
                             ->where('id_fac_pre_prog', $this->id_fac_pre_prog)
                             ->update([
-                                'fac_acept_valpago' => Carbon::now('America/Lima'), // Actualiza con la fecha actual
+                                'fac_acept_valpago' =>  $this->fechaHoraManual3 ? Carbon::parse($this->fechaHoraManual3, 'America/Lima') : Carbon::now('America/Lima'),
 //                                'fac_envio_est_fac' => Carbon::now('America/Lima'), // Actualiza con la fecha actual
                             ]);
                     } else {
                         // Si no existe, crear un nuevo registro
                         DB::table('facturas_mov')->insert([
                             'id_fac_pre_prog' => $this->id_fac_pre_prog,
-                            'fac_acept_valpago' => Carbon::now('America/Lima'), // Establecer la fecha de aceptación
+                            'fac_acept_valpago' =>  $this->fechaHoraManual3 ? Carbon::parse($this->fechaHoraManual3, 'America/Lima') : Carbon::now('America/Lima'),
                             'id_users_responsable' => Auth::id(), // Asignar el ID del usuario responsable
                         ]);
                     }
@@ -195,96 +148,38 @@ class Creditoscobranzas extends Component
             session()->flash('error', 'Ocurrió un error al aprobar la factura preprogramada.');
         }
     }
-    public function rech_mot_cre($id_fac){
-        $id = base64_decode($id_fac);
-        $this->fac_mov_area_motivo_rechazo = "";
-        if ($id) {
-            $this->id_fac_pre_prog = $id;
-            $this->fac_mov_area_motivo_rechazo = "";
-            $this->messageMotReCre = "¿Está seguro de rechazar esta factura?";
-        }
-    }
 
-    public function rechazar_fac_credito(){
-        try {
-            // Verifica permisos
-            if (!Gate::allows('rechazar_fac_credito')) {
-                session()->flash('error', 'No tiene permisos para cambiar los estados del menú.');
-                return;
-            }
-
-            // Verificar si el motivo de rechazo está vacío
-            if (empty($this->fac_mov_area_motivo_rechazo)) {
-                session()->flash('error-modal-rechazo', 'Debe ingresar un motivo de rechazo.');
-                return;
-            }
-
-            // Validar que el motivo de rechazo no esté vacío
-            $this->validate([
-                'fac_mov_area_motivo_rechazo' => 'required|string',
-            ]);
-
-            // Iniciar transacción
-            DB::beginTransaction();
-
-            // Buscar la factura preprogramada por su ID
-            $facturaPreprogramada = Facturaspreprogramacion::find($this->id_fac_pre_prog);
-
-            if ($facturaPreprogramada) {
-                // Actualizar el estado de aprobación a 0 (rechazado)
-                $facturaPreprogramada->fac_pre_prog_estado = 0;
-
-                // Guardar cambios en la factura preprogramada
-                if ($facturaPreprogramada->save()) {
-                    // Guardar en historial_pre_programacion
-                    $historial = new Historialpreprogramacion();
-                    $historial->id_fac_pre_prog = $this->id_fac_pre_prog;
-                    $historial->fac_pre_prog_cfnumdoc = $facturaPreprogramada->fac_pre_prog_cfnumdoc;
-                    $historial->fac_pre_prog_estado = 0;
-                    $historial->his_pre_progr_fecha_hora = Carbon::now('America/Lima');
-                    $historial->save();
-
-                    // Crear un nuevo registro en la tabla facturas_movimientos_areas
-                    $movimientoArea = new Facturamovimientoarea();
-                    $movimientoArea->id_users_responsable = Auth::id();
-                    $movimientoArea->id_fac_pre_prog = $this->id_fac_pre_prog;
-                    $movimientoArea->fac_mov_area_motivo_rechazo = $this->fac_mov_area_motivo_rechazo;
-                    $movimientoArea->fac_mov_area_fecha = now()->toDateString();
-                    $movimientoArea->fac_mov_area_hora = now()->toTimeString();
-
-                    if ($movimientoArea->save()) {
-                        DB::commit();
-                        session()->flash('success', 'Factura preprogramada rechazada correctamente.');
-                        $this->dispatch('hidemodalMotReCre');
-                        $this->buscar_comprobantes();
-                    } else {
-                        DB::rollBack();
-                        session()->flash('error', 'No se pudo guardar el motivo de rechazo.');
-                    }
-                } else {
-                    DB::rollBack();
-                    session()->flash('error', 'No se pudo actualizar el estado de la factura preprogramada.');
-                }
-            } else {
-                DB::rollBack();
-                session()->flash('error', 'No se encontró la factura preprogramada.');
-            }
-        } catch (\Exception $e) {
-            DB::rollBack();
-            $this->logs->insertarLog($e);
-            session()->flash('error', 'Ocurrió un error al rechazar la factura preprogramada.');
-        }
-    }
-
+//Documentos seleccionados
     public function enviar_fac_apro($id_fac){
+        $this->fechaHoraManual2 = '';
         $id = base64_decode($id_fac);
         $this->fac_pre_pro_motivo_credito = "";
         if ($id) {
             $this->id_fac_pre_prog = $id;
-            $this->messageFacApro = "¿Está seguro de enviar a estados de facturación?";
+            $fechaHoraActual2 = Carbon::now('America/Lima')->format('d/m/Y - h:i a');
+            $this->messageFacApro = "¿Está seguro de enviar a estados de facturación con fecha $fechaHoraActual2?";
         }
     }
+    public function actualizarMensaje()
+    {
+        // Si hay una fecha y hora manual, usarla; de lo contrario, usar la fecha y hora actual
+        $fechaHora = $this->fechaHoraManual2
+            ? Carbon::parse($this->fechaHoraManual2, 'America/Lima')->format('d/m/Y - h:i a')
+            : Carbon::now('America/Lima')->format('d/m/Y - h:i a');
 
+        // Actualizar el mensaje con la nueva fecha y hora
+        $this->messageFacApro = "¿Estás seguro de enviar con fecha $fechaHora?";
+    }
+    public function actualizarMensaje2()
+    {
+        // Si hay una fecha y hora manual, usarla; de lo contrario, usar la fecha y hora actual
+        $fhora = $this->fechaHoraManual3
+            ? Carbon::parse($this->fechaHoraManual3, 'America/Lima')->format('d/m/Y - h:i a')
+            : Carbon::now('America/Lima')->format('d/m/Y - h:i a');
+
+        // Actualizar el mensaje con la nueva fecha y hora
+        $this->messageMotCre = "¿Estás seguro de enviar con fecha $fhora?";
+    }
     public function enviar_facturas_aprobrar(){
         try {
             // Verifica permisos
@@ -323,14 +218,14 @@ class Creditoscobranzas extends Component
                         DB::table('facturas_mov')
                             ->where('id_fac_pre_prog', $this->id_fac_pre_prog)
                             ->update([
-                                'fac_envio_est_fac' => Carbon::now('America/Lima'), // Actualiza con la fecha actual
+                                'fac_envio_est_fac' =>  $this->fechaHoraManual2 ? Carbon::parse($this->fechaHoraManual2, 'America/Lima') : Carbon::now('America/Lima'),
                             ]);
                     } else {
                         // Si no existe, crear un nuevo registro
                         DB::table('facturas_mov')->insert([
                             'id_fac_pre_prog' => $this->id_fac_pre_prog,
-                            'fac_acept_valpago' => Carbon::now('America/Lima'), // Establecer la fecha de aceptación
-                            'fac_envio_valpago' => Carbon::now('America/Lima'), // Establecer la fecha de envío
+                            'fac_acept_valpago' => $this->fechaHoraManual2 ? Carbon::parse($this->fechaHoraManual2, 'America/Lima') : Carbon::now('America/Lima'),
+                            'fac_envio_valpago' =>  $this->fechaHoraManual2 ? Carbon::parse($this->fechaHoraManual2, 'America/Lima') : Carbon::now('America/Lima'),
                             'id_users_responsable' => Auth::id(), // Asignar el ID del usuario responsable
                         ]);
                     }

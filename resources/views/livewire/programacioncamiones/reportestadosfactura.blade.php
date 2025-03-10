@@ -31,21 +31,21 @@
             <x-slot name="content">
                 <div class="row">
                     <div class="col-lg-12 col-md-12 col-sm-12">
-                        <x-table-general>
+                        <x-table-general style="font-size: small">
                             <x-slot name="thead">
                                 <tr>
                                     <th>N°</th>
                                     <th>Factura</th>
                                     <th>RUC</th>
-                                    <th>Nombre del Cliente</th>
-                                    <th>F. Emisión de Envío Comprobante</th>
-                                    <th>F. Validación de Pago Recibido</th>
-                                    <th>F/G. Estado de Factura Enviado</th>
-                                    <th>F/G. Estado de Factura Recibido</th>
-                                    <th>F. Validación Despacho Enviado</th>
-                                    <th>F. Validación Despacho Recibido</th>
-                                    <th>F. Programación de Despacho Enviado</th>
-                                    <th>F. Programación de Despacho Recibido</th>
+                                    <th>Cliente</th>
+                                    <th>F. Emisión de Comprobante</th>
+                                    <th>Recib. Validación de Pago </th>
+                                    <th>Env. Estado de Factura</th>
+                                    <th>Recib. Estado de Factura</th>
+                                    <th>Env. Validación Despacho</th>
+                                    <th>Recib. Validación Despacho</th>
+                                    <th>Env. Prog. de Despacho</th>
+                                    <th>Recib. Prog. de Despacho</th>
                                     <th>F. Despacho</th>
                                 </tr>
                             </x-slot>
