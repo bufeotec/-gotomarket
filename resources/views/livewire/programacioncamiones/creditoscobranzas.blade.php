@@ -11,9 +11,14 @@
                     <div class="col-lg-12 col-md-12 col-sm-12">
                         <h2 class="deleteTitle">{{ $messageMotCre }}</h2>
                     </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12 mt-3" id="fechaHoraContainer3" style="display: none;">
+                        <label for="fechaHoraManual3">Modificar fecha y hora:</label>
+                        <input type="datetime-local" id="fechaHoraManual3" wire:model="fechaHoraManual3" wire:change="actualizarMensaje2" class="form-control">
+                    </div>
+
                     <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-center">
-                        <button type="submit" class="btn btn-primary text-white btnDelete">SI</button>
-                        <button type="button" data-bs-dismiss="modal" class="btn btn-danger btnDelete">No</button>
+                        <button type="submit" class="btn btn-primary text-white btnDelete">ENVIAR</button>
+                        <button type="button" class="btn btn-success btnDelete" id="btnEdit">EDITAR</button>
                     </div>
                 </div>
             </form>
@@ -60,9 +65,14 @@
                     <div class="col-lg-12 col-md-12 col-sm-12">
                         <h2 class="deleteTitle">{{ $messageFacApro }}</h2>
                     </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12 mt-3" id="fechaHoraContainer" style="display: none;">
+                        <label for="fechaHoraManual2">Modificar fecha y hora:</label>
+                        <input type="datetime-local" id="fechaHoraManual2" wire:model="fechaHoraManual2" wire:change="actualizarMensaje" class="form-control">
+                    </div>
+
                     <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-center">
-                        <button type="submit" class="btn btn-primary text-white btnDelete">SI</button>
-                        <button type="button" data-bs-dismiss="modal" class="btn btn-danger btnDelete">No</button>
+                        <button type="submit" class="btn btn-primary text-white btnDelete">ENVIAR</button>
+                        <button type="button" class="btn btn-success btnDelete" id="btnEditar">EDITAR</button>
                     </div>
                 </div>
             </form>
@@ -352,6 +362,23 @@
 
     $wire.on('hidemodalFacApro', () => {
         $('#modalFacApro').modal('hide');
+    });
+    document.getElementById("btnEdit").addEventListener("click", function() {
+        let container = document.getElementById("fechaHoraContainer3");
+        let inputFecha = document.getElementById("fechaHoraManual3");
+
+        // Mostrar el contenedor con el label y el input
+        container.style.display = "block";
+        inputFecha.focus();
+    });
+
+    document.getElementById("btnEditar").addEventListener("click", function() {
+        let container = document.getElementById("fechaHoraContainer");
+        let inputFecha = document.getElementById("fechaHoraManual2");
+
+        // Mostrar el contenedor con el label y el input
+        container.style.display = "block";
+        inputFecha.focus();
     });
 </script>
 @endscript

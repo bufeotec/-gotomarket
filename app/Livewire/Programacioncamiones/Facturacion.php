@@ -28,6 +28,7 @@ class Facturacion extends Component
         $this->historialpreprogramacion = new Historialpreprogramacion();
     }
     public $messagePrePro = "";
+    public $fechaHoraManual = "";
     public $id_fac_pre_prog = "";
     public $fac_pre_prog_estado_aprobacion = "";
     public $fac_mov_area_motivo_rechazo = "";
@@ -38,15 +39,29 @@ class Facturacion extends Component
         return view('livewire.programacioncamiones.facturacion', compact('facturas_pre_prog_estadox'));
     }
     public function cambio_estado($id_factura, $estado){
+        $this->fechaHoraManual = '';
         $id = base64_decode($id_factura);
         if ($id) {
             $this->id_fac_pre_prog = $id;
             $this->fac_pre_prog_estado_aprobacion = $estado;
-            $this->messagePrePro = "¿Está seguro de realizar este cambio?";
+
+            // Obtener la fecha y hora actual
+            $fechaHoraActual = Carbon::now('America/Lima')->format('d/m/Y - h:i a');
+
+            // Actualizar el mensaje con la fecha y hora actual
+            $this->messagePrePro = "¿Estás seguro de enviar con fecha $fechaHoraActual?";
         }
     }
+    public function actualizarMensaje()
+    {
+        // Si hay una fecha y hora manual, usarla; de lo contrario, usar la fecha y hora actual
+        $fechaHora = $this->fechaHoraManual
+            ? Carbon::parse($this->fechaHoraManual, 'America/Lima')->format('d/m/Y - h:i a')
+            : Carbon::now('America/Lima')->format('d/m/Y - h:i a');
 
-
+        // Actualizar el mensaje con la nueva fecha y hora
+        $this->messagePrePro = "¿Estás seguro de enviar con fecha $fechaHora?";
+    }
     public function disable_pre_pro(){
         try {
             if (!Gate::allows('disable_pre_pro')) {
@@ -56,11 +71,13 @@ class Facturacion extends Component
             $this->validate([
                 'id_fac_pre_prog' => 'required|integer',
                 'fac_pre_prog_estado_aprobacion' => 'required|integer',
+                'fechaHoraManual' => 'nullable|date',
             ], [
                 'id_fac_pre_prog.required' => 'El identificador es obligatorio.',
                 'id_fac_pre_prog.integer' => 'El identificador debe ser un número entero.',
                 'fac_pre_prog_estado_aprobacion.required' => 'El estado es obligatorio.',
                 'fac_pre_prog_estado_aprobacion.integer' => 'El estado debe ser un número entero.',
+                'fechaHoraManual.date' => 'La fecha y hora manual debe ser una fecha válida.',
             ]);
             DB::beginTransaction();
             $factura = Facturaspreprogramacion::find($this->id_fac_pre_prog);
@@ -75,7 +92,9 @@ class Facturacion extends Component
                     $historial->fac_pre_prog_cfnumdoc = $factura->fac_pre_prog_cfnumdoc;
                     $historial->fac_pre_prog_estado_aprobacion = $this->fac_pre_prog_estado_aprobacion;
                     $historial->fac_pre_prog_estado = 1;
-                    $historial->his_pre_progr_fecha_hora = Carbon::now('America/Lima');
+
+                    // Usar la fecha y hora manual si está presente, de lo contrario usar la fecha y hora actual
+                    $historial->his_pre_progr_fecha_hora = $this->fechaHoraManual ? Carbon::parse($this->fechaHoraManual, 'America/Lima') : Carbon::now('America/Lima');
                     $historial->save();
 
                     // Buscar el registro en la tabla facturas_mov
@@ -88,16 +107,15 @@ class Facturacion extends Component
                         DB::table('facturas_mov')
                             ->where('id_fac_pre_prog', $this->id_fac_pre_prog)
                             ->update([
-                                'fac_acept_est_fac' => Carbon::now('America/Lima'), // Actualiza con la fecha actual
-                                'fac_envio_val_rec' => Carbon::now('America/Lima'), // Actualiza con la fecha actual
+                                'fac_acept_est_fac' => $this->fechaHoraManual ? Carbon::parse($this->fechaHoraManual, 'America/Lima') : Carbon::now('America/Lima'),
+                                'fac_envio_val_rec' => $this->fechaHoraManual ? Carbon::parse($this->fechaHoraManual, 'America/Lima') : Carbon::now('America/Lima'),
                             ]);
                     } else {
                         // Si no existe, crear un nuevo registro
                         DB::table('facturas_mov')->insert([
                             'id_fac_pre_prog' => $this->id_fac_pre_prog,
-                            'fac_acept_est_fac' => Carbon::now('America/Lima'),
-                            'fac_envio_val_rec' => Carbon::now('America/Lima'),
-//                            'fac_envio_val_rec' => Carbon::now('America/Lima'), // Actualiza con la fecha actual
+                            'fac_acept_est_fac' => $this->fechaHoraManual ? Carbon::parse($this->fechaHoraManual, 'America/Lima') : Carbon::now('America/Lima'),
+                            'fac_envio_val_rec' => $this->fechaHoraManual ? Carbon::parse($this->fechaHoraManual, 'America/Lima') : Carbon::now('America/Lima'),
                             'id_users_responsable' => Auth::id(), // Asignar el ID del usuario responsable
                         ]);
                     }

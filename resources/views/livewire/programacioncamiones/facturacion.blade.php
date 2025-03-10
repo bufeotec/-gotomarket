@@ -2,20 +2,18 @@
     @php
         $me = new \App\Models\General();
     @endphp
-    {{--    MODAL CAMBIAR ESTA PRE PROGRAMACION--}}
-    <x-modal-delete  wire:ignore.self >
+    {{--    MODAL CAMBIAR ESTADO PRE PROGRAMACION--}}
+    <x-modal-delete wire:ignore.self>
         <x-slot name="id_modal">modalPrePro</x-slot>
         <x-slot name="modalContentDelete">
             <form wire:submit.prevent="disable_pre_pro">
                 <div class="row">
                     <div class="col-lg-12 col-md-12 col-sm-12">
-                        <h2 class="deleteTitle">{{$messagePrePro}}</h2>
+                        <h2 class="deleteTitle">{{ $messagePrePro }}</h2>
                     </div>
                     <div class="col-lg-12 col-md-12 col-sm-12">
                         @error('id_fac_pre_prog') <span class="message-error">{{ $message }}</span> @enderror
-
                         @error('fac_pre_prog_estado_aprobacion') <span class="message-error">{{ $message }}</span> @enderror
-
                         @if (session()->has('error_pre_pro'))
                             <div class="alert alert-danger alert-dismissible show fade">
                                 {{ session('error_pre_pro') }}
@@ -23,15 +21,19 @@
                             </div>
                         @endif
                     </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12 mt-3" id="fechaHoraContainer" style="display: none;">
+                        <label for="fechaHoraManual">Modificar fecha y hora:</label>
+                        <input type="datetime-local" id="fechaHoraManual" wire:model="fechaHoraManual" wire:change="actualizarMensaje" class="form-control">
+                    </div>
+
                     <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-center">
-                        <button type="submit" class="btn btn-primary text-white btnDelete">SI</button>
-                        <button type="button" data-bs-dismiss="modal" class="btn btn-danger btnDelete">No</button>
+                        <button type="submit" class="btn btn-primary text-white btnDelete">ENVIAR</button>
+                        <button type="button" class="btn btn-success btnDelete" id="btnEditar">EDITAR</button>
                     </div>
                 </div>
             </form>
         </x-slot>
     </x-modal-delete>
-
     {{-- MODAL RECHAZAR FACTURA EN APROBRAR --}}
     <x-modal-delete wire:ignore.self style="z-index: 1056;">
         <x-slot name="id_modal">modaRecFac</x-slot>
@@ -92,12 +94,13 @@
                                 <x-table-general id="facturasPreProgTable">
                                     <x-slot name="thead">
                                         <tr>
-                                            <th>Serie / Factura</th>
+                                            <th>Guía</th>
                                             <th>F. Emisión</th>
+                                            <th>Factura</th>
                                             <th>Importe sin IGV</th>
-                                            <th>Nombre Cliente</th>
-                                            <th>Peso y Volumen</th>
+                                            <th>Cliente</th>
                                             <th>Dirección</th>
+                                            <th>Peso y Volumen</th>
                                             <th>Fecha/Hora Recibida</th>
                                             <th>Acciones</th>
                                         </tr>
@@ -107,7 +110,7 @@
                                             <tr>
                                                 <td>
                                                 <span class="d-block tamanhoTablaComprobantes">
-                                                    {{ $factura->fac_pre_prog_cfnumser }} - {{ $factura->fac_pre_prog_cfnumdoc }}
+                                                    {{ $factura->fac_pre_prog_cfnumdoc }}
                                                 </span>
                                                 </td>
                                                 <td>
@@ -118,6 +121,11 @@
                                                     {{ $fechaEmision }}
                                                 </span>
                                                 </td>
+                                                <td>
+                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                    {{ $factura->fac_pre_prog_cfnumser }} - {{ $factura->fac_pre_prog_cfnumdoc }}
+                                                </span>
+                                               </td>
                                                 <td>
                                                     @php
                                                         $importe = number_format($factura->fac_pre_prog_cfimporte, 2, '.', ',');
@@ -133,14 +141,6 @@
                                                 </td>
                                                 <td>
                                                 <span class="d-block tamanhoTablaComprobantes">
-                                                    <b class="colorBlackComprobantes">{{ number_format($factura->fac_pre_prog_total_kg, 2, '.', ',') }} kg</b>
-                                                </span>
-                                                    <span class="d-block tamanhoTablaComprobantes">
-                                                    <b class="colorBlackComprobantes">{{ number_format($factura->fac_pre_prog_total_volumen, 2, '.', ',') }} cm³</b>
-                                                </span>
-                                                </td>
-                                                <td>
-                                                <span class="d-block tamanhoTablaComprobantes">
                                                     {{ $factura->fac_pre_prog_direccion_llegada }}
                                                 </span>
                                                     <br>
@@ -150,34 +150,23 @@
                                                 </td>
                                                 <td>
                                                 <span class="d-block tamanhoTablaComprobantes">
+                                                    <b class="colorBlackComprobantes">{{ number_format($factura->fac_pre_prog_total_kg, 2, '.', ',') }} kg</b>
+                                                </span>
+                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                    <b class="colorBlackComprobantes">{{ number_format($factura->fac_pre_prog_total_volumen, 2, '.', ',') }} cm³</b>
+                                                </span>
+                                                </td>
+                                                <td>
+                                                <span class="d-block tamanhoTablaComprobantes">
                                                     {{date('d/m/Y - h:i A', strtotime($factura->updated_at)) }}
                                                 </span>
                                                 </td>
                                                 <td>
-{{--                                                    <select id="estadoSelect" class="form-select form-select-sm" aria-label="Seleccionar Estado">--}}
-{{--                                                        <option value="1">Administración</option>--}}
-{{--                                                        <option value="2">Validar Recibo</option>--}}
-{{--                                                        <option value="3">Listo para despachar</option>--}}
-{{--                                                    </select>--}}
-{{--                                                    <x-btn-accion class="btn bg-success btn-sm text-white"--}}
-{{--                                                                  wire:click="cambio_estado('{{ base64_encode($factura->id_fac_pre_prog) }}', document.getElementById('estadoSelect').value)"--}}
-{{--                                                                  data-bs-toggle="modal"--}}
-{{--                                                                  data-bs-target="#modalPrePro">--}}
-{{--                                                        <x-slot name="message">--}}
-{{--                                                            <i class="fa-solid fa-check"></i>--}}
-{{--                                                        </x-slot>--}}
-{{--                                                    </x-btn-accion>--}}
                                                     <x-btn-accion class="btn bg-success btn-sm text-white" wire:click="cambio_estado('{{ base64_encode($factura->id_fac_pre_prog) }}', 2)" data-bs-toggle="modal" data-bs-target="#modalPrePro">
                                                         <x-slot name="message">
                                                             <i class="fa-solid fa-check"></i>
                                                         </x-slot>
                                                     </x-btn-accion>
-
-{{--                                                    <x-btn-accion class="btn btn-danger btn-sm text-white" wire:click="rech_fact('{{ base64_encode($factura->id_fac_pre_prog) }}')" data-bs-toggle="modal" data-bs-target="#modaRecFac">--}}
-{{--                                                        <x-slot name="message">--}}
-{{--                                                            <i class="fa-regular fa-circle-xmark"></i>--}}
-{{--                                                        </x-slot>--}}
-{{--                                                    </x-btn-accion>--}}
                                                 </td>
                                             </tr>
                                         @endforeach
@@ -202,6 +191,15 @@
 
     $wire.on('hidemodaRecFac', () => {
         $('#modaRecFac').modal('hide');
+    });
+
+    document.getElementById("btnEditar").addEventListener("click", function() {
+        let container = document.getElementById("fechaHoraContainer");
+        let inputFecha = document.getElementById("fechaHoraManual");
+
+        // Mostrar el contenedor con el label y el input
+        container.style.display = "block";
+        inputFecha.focus();
     });
 </script>
 @endscript

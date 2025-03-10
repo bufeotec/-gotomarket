@@ -23,13 +23,12 @@ class Reportestadosfactura extends Component
 
     public function mount()
     {
+        $this->hasta = date('Y-m-d');
         $this->desde = date('Y-m-d');
-        $this->hasta = date('Y-m-d', strtotime('+1 day'));
     }
     public function render()
     {
         $listar_datos = $this->repcondoc->listar_dt($this->search, $this->pagination,$this->desde,$this->hasta,$this->order ='desc');
         return view('livewire.programacioncamiones.reportestadosfactura', compact('listar_datos'));
     }
-//    hola
 }
