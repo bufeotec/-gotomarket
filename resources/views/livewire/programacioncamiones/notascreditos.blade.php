@@ -129,7 +129,7 @@
                     <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
                         <div class="row">
                             <div class="col-lg-12 col-md-12 col-sm-12 m-3">
-                                <label class="mb-2">Guía seleccionada</label>
+                                <label class="mb-2">Notas Seleccionadas</label>
                                 @if (!empty($selectedGuias))
                                     @foreach ($selectedGuias as $factura)
                                         <div class="d-flex justify-content-between align-items-center mb-3">

@@ -104,7 +104,6 @@ class Facturaspreprogramaciones extends Component
             $this->filteredGuias = [];
         }
     }
-
     public function seleccionarGuia($SERIE, $NUMERO) {
         if (!is_array($this->selectedGuias)) {
             $this->selectedGuias = [];
@@ -170,7 +169,6 @@ class Facturaspreprogramaciones extends Component
             }
         }
     }
-
     public function guardarGuias() {
         try {
             DB::beginTransaction();
