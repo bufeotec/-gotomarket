@@ -41,7 +41,6 @@ class Facturaspreprogramaciones extends Component
     public function mount(){
         $this->desde = date('Y-01-01');
         $this->hasta = date('Y-m-d');
-
         $this->selectedGuias = [];
 
         // Obtener facturas preprogramadas con estado 0
@@ -104,13 +103,15 @@ class Facturaspreprogramaciones extends Component
             $this->filteredGuias = [];
         }
     }
-    public function seleccionarGuia($SERIE, $NUMERO) {
+    public function seleccionarGuia($NRO_DOC) {
+        // Asegúrate de que $selectedGuias sea un array
         if (!is_array($this->selectedGuias)) {
             $this->selectedGuias = [];
         }
 
-        $comprobanteExiste = collect($this->selectedGuias)->first(function ($guia) use ($SERIE, $NUMERO) {
-            return isset($guia->SERIE, $guia->NUMERO) && $guia->SERIE === $SERIE && $guia->NUMERO === $NUMERO;
+        // Verifica si la guía ya está seleccionada
+        $comprobanteExiste = collect($this->selectedGuias)->first(function ($guia) use ($NRO_DOC) {
+            return isset($guia['NRO_DOC']) && $guia['NRO_DOC'] === $NRO_DOC;
         });
 
         if ($comprobanteExiste) {
@@ -118,83 +119,139 @@ class Facturaspreprogramaciones extends Component
             return;
         }
 
-        $guia = collect($this->filteredGuias)->first(function ($guia_) use ($SERIE, $NUMERO) {
-            return $guia_->SERIE === $SERIE && $guia_->NUMERO === $NUMERO;
+        // Busca la guía en $filteredGuias
+        $guia = collect($this->filteredGuias)->first(function ($guia_) use ($NRO_DOC) {
+            return $guia_->NRO_DOC === $NRO_DOC;
         });
 
-        $this->selectedGuias[] = (object) [
-            'SERIE' => $SERIE,
-            'NUMERO' => $NUMERO,
-            'PESO' => $guia->PESO,
-            'VOLUMEN' => $guia->VOLUMEN,
-            'NOMBRE_CLIENTE' => $guia->{'NOMBRE CLIENTE'},
-            'IMPORTE' => 0,
-            'RUC_CLIENTE' => $guia->{'RUC CLIENTE'},
-            'FECHA_EMISION' => $guia->{'FECHA EMISION'},
-            'DIRECCION_LLEGADA' => $guia->{'DIRECCION LLEGADA'},
-            'DEPARTAMENTO_LLEGADA' => $guia->{'DEPARTAMENTO LLEGADA'},
-            'PROVINCIA_LLEGADA' => $guia->{'PROVINCIA LLEGADA'},
-            'DISTRITO_LLEGADA' => $guia->{'DISTRITO LLEGADA'},
-        ];
+        if ($guia) {
+            // Agrega la guía a $selectedGuias
+            $this->selectedGuias[] = [
+                'NRO_DOC' => $guia->NRO_DOC,
+                'PESO_G' => $guia->PESO_G,
+                'VOLUMEN_TOTAL_CM3' => $guia->VOLUMEN_TOTAL_CM3,
+                'NOMBRE_CLIENTE' => $guia->NOMBRE_CLIENTE,
+                'IMPORTE_TOTAL' => $guia->IMPORTE_TOTAL,
+                'RUC_CLIENTE' => $guia->RUC_CLIENTE,
+                'FECHA_EMISION' => $guia->FECHA_EMISION,
+                'DIRECCION_ENTREGA' => $guia->DIRECCION_ENTREGA,
+                'DEPARTAMENTO' => $guia->DEPARTAMENTO,
+                'PROVINCIA' => $guia->PROVINCIA,
+                'DISTRITO' => $guia->DISTRITO,
+            ];
 
-
-        $this->filteredGuias = collect($this->filteredGuias)->reject(function ($guia_) use ($SERIE, $NUMERO) {
-            return $guia_->SERIE === $SERIE && $guia_->NUMERO === $NUMERO;
-        })->values();
+            // Elimina la guía de $filteredGuias
+            $this->filteredGuias = collect($this->filteredGuias)->reject(function ($guia_) use ($NRO_DOC) {
+                return $guia_->NRO_DOC === $NRO_DOC;
+            })->values();
+        }
     }
-    public function eliminarFacturaSeleccionada($CFTD, $CFNUMSER, $CFNUMDOC){
-        // Encuentra la factura en las seleccionadas
-        $factura = collect($this->selectedFacturas)->first(function ($f) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
-            return $f['CFTD'] === $CFTD && $f['CFNUMSER'] === $CFNUMSER && $f['CFNUMDOC'] === $CFNUMDOC;
+    public function eliminarFacturaSeleccionada($NRO_DOC) {
+        // Encuentra la guía en las seleccionadas
+        $guia = collect($this->selectedGuias)->first(function ($f) use ($NRO_DOC) {
+            return $f['NRO_DOC'] === $NRO_DOC;
         });
 
-        if ($factura) {
-            // Elimina la factura de la lista seleccionada
-            $this->selectedFacturas = collect($this->selectedFacturas)
-                ->reject(function ($f) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
-                    return $f['CFTD'] === $CFTD && $f['CFNUMSER'] === $CFNUMSER && $f['CFNUMDOC'] === $CFNUMDOC;
+        if ($guia) {
+            $this->selectedGuias = collect($this->selectedGuias)
+                ->reject(function ($f) use ($NRO_DOC) {
+                    return $f['NRO_DOC'] === $NRO_DOC;
                 })
                 ->values()
                 ->toArray();
 
-            // Actualiza los totales
-            $this->pesoTotal -= $factura['total_kg'];
-            $this->volumenTotal -= $factura['total_volumen'];
-            $this->importeTotalVenta =  $this->importeTotalVenta - $factura['CFIMPORTE'];
-
-            // Verifica si no quedan facturas seleccionadas
-            if (empty($this->selectedFacturas)) {
-                $this->pesoTotal = 0;
-                $this->volumenTotal = 0;
-            }
+            $this->filteredGuias[] = (object) [
+                'NRO_DOC' => $guia['NRO_DOC'],
+                'PESO_G' => $guia['PESO_G'],
+                'VOLUMEN_TOTAL_CM3' => $guia['VOLUMEN_TOTAL_CM3'],
+                'NOMBRE_CLIENTE' => $guia['NOMBRE_CLIENTE'],
+                'IMPORTE_TOTAL' => $guia['IMPORTE_TOTAL'],
+                'RUC_CLIENTE' => $guia['RUC_CLIENTE'],
+                'FECHA_EMISION' => $guia['FECHA_EMISION'],
+                'DIRECCION_ENTREGA' => $guia['DIRECCION_ENTREGA'],
+                'DEPARTAMENTO' => $guia['DEPARTAMENTO'],
+                'PROVINCIA' => $guia['PROVINCIA'],
+                'DISTRITO' => $guia['DISTRITO'],
+            ];
         }
     }
-    public function guardarGuias() {
+
+    public function guardarFacturas() {
         try {
+            // Validar que haya facturas seleccionadas y un estado seleccionado
+            $this->validate([
+                'estado_envio' => 'required|integer',
+                'selectedFacturas' => 'required|array|min:1',
+            ], [
+                'estado_envio.required' => 'Debes seleccionar un estado.',
+                'estado_envio.integer' => 'El estado seleccionado no es válido.',
+                'selectedFacturas.required' => 'Debes seleccionar al menos una factura.',
+                'selectedFacturas.min' => 'Debes seleccionar al menos una factura.',
+            ]);
+
             DB::beginTransaction();
-            foreach ($this->selectedGuias as $g) {
-                $existe_guia = $this->facpreprog->listar_guia_existente($g->SERIE,$g->NUMERO);
-                if($existe_guia){
-                    session()->flash('error', 'Esta guía ya existe en el intranet.');
-                    return;
-                }else{
-                    $guia= new Facturaspreprogramacion();
-                    $guia->guia_serie = $g->SERIE;
-                    $guia->guia_numero = $g->NUMERO;
-                    $guia->guia_peso = $g->PESO;
-                    $guia->guia_volumen = $g->VOLUMEN;
-                    $guia->guia_nombre_cliente = $g->NOMBRE_CLIENTE;
-                    $guia->guia_importe = $g->IMPORTE;
-                    $guia->guia_ruc_cliente = $g->RUC_CLIENTE;
-                    $guia->guia_fecha_emision = $g->FECHA_EMISION;
-                    $guia->guia_direccion_llegada = $g->DIRECCION_LLEGADA;
-                    $guia->guia_departamento_llegada = $g->DEPARTAMENTO_LLEGADA;
-                    $guia->guia_provincia_llegada = $g->PROVINCIA_LLEGADA;
-                    $guia->guia_distrito_llegada = $g->DISTRITO_LLEGADA;
-                    $guia->guia_estado = $this->estado_envio;
-                    $guia->guia_fecha_creacion = now();
-                    $guia->save();
-                }
+
+            foreach ($this->selectedFacturas as $factura) {
+                // Verificar si la factura ya existe en la tabla
+                $facturaExistente = Facturaspreprogramacion::where('fac_pre_prog_cftd', $factura['CFTD'])
+                    ->where('fac_pre_prog_cfnumser', $factura['CFNUMSER'])
+                    ->where('fac_pre_prog_cfnumdoc', $factura['CFNUMDOC'])
+                    ->first();
+
+                if ($facturaExistente) {
+                    // Si la factura existe, actualizar el estado
+                    $facturaExistente->fac_pre_prog_estado_aprobacion = $this->estado_envio;
+                    $facturaExistente->fac_pre_prog_estado = 1;
+                    $facturaExistente->fac_pre_prog_fecha = Carbon::now('America/Lima');
+                    $facturaExistente->save();
+
+                    // Guardar en la tabla historial_pre_programacion
+                    $historial = new Historialpreprogramacion();
+                    $historial->id_fac_pre_prog = $facturaExistente->id_fac_pre_prog;
+                    $historial->fac_pre_prog_cfnumdoc = $facturaExistente->fac_pre_prog_cfnumdoc;
+                    $historial->fac_pre_prog_estado_aprobacion = $facturaExistente->fac_pre_prog_estado_aprobacion;
+                    $historial->fac_pre_prog_estado = $facturaExistente->fac_pre_prog_estado;
+                    $historial->his_pre_progr_fecha_hora = Carbon::now('America/Lima');
+                    $historial->save();
+                } else {
+                    // Si no existe, crear un nuevo registro
+                    $nuevaFactura = new Facturaspreprogramacion();
+                    $nuevaFactura->id_users = Auth::id();
+                    $nuevaFactura->fac_pre_prog_cftd = $factura['CFTD'];
+                    $nuevaFactura->fac_pre_prog_cfnumser = $factura['CFNUMSER'];
+                    $nuevaFactura->fac_pre_prog_cfnumdoc = $factura['CFNUMDOC'];
+                    $nuevaFactura->fac_pre_prog_factura = $factura['CFNUMSER'] . '-' . $factura['CFNUMDOC'];
+                    $nuevaFactura->fac_pre_prog_grefecemision = $factura['GREFECEMISION'];
+                    $nuevaFactura->fac_pre_prog_cnomcli = $factura['CNOMCLI'];
+                    $nuevaFactura->fac_pre_prog_cfcodcli = $factura['CCODCLI'];
+                    $nuevaFactura->fac_pre_prog_guia = $factura['guia'];
+                    $nuevaFactura->fac_pre_prog_cfimporte = $factura['CFIMPORTE'];
+                    $nuevaFactura->fac_pre_prog_total_kg = $factura['total_kg'];
+                    $nuevaFactura->fac_pre_prog_total_volumen = $factura['total_volumen'];
+                    $nuevaFactura->fac_pre_prog_direccion_llegada = $factura['LLEGADADIRECCION'];
+                    $nuevaFactura->fac_pre_prog_departamento = $factura['DEPARTAMENTO'];
+                    $nuevaFactura->fac_pre_prog_provincia = $factura['PROVINCIA'];
+                    $nuevaFactura->fac_pre_prog_distrito = $factura['DISTRITO'];
+                    $nuevaFactura->fac_pre_prog_estado_aprobacion = $this->estado_envio;
+                    $nuevaFactura->fac_pre_prog_estado = 1;
+                    $nuevaFactura->fac_pre_prog_fecha = Carbon::now('America/Lima');
+                    $nuevaFactura->save();
+
+                    // Guardar en la tabla historial_pre_programacion
+                    $historial = new Historialpreprogramacion();
+                    $historial->id_fac_pre_prog = $nuevaFactura->id_fac_pre_prog;
+                    $historial->fac_pre_prog_cfnumdoc = $nuevaFactura->fac_pre_prog_cfnumdoc;
+                    $historial->fac_pre_prog_estado_aprobacion = $nuevaFactura->fac_pre_prog_estado_aprobacion;
+                    $historial->fac_pre_prog_estado = $nuevaFactura->fac_pre_prog_estado;
+                    $historial->his_pre_progr_fecha_hora = Carbon::now('America/Lima');
+                    $historial->save();
+
+                }    // Insertar en facturas_mov
+                DB::table('facturas_mov')->insert([
+                    'id_fac_pre_prog' => $historial->id_fac_pre_prog, // Usar el ID de la nueva factura creada
+                    'fac_envio_valpago' => Carbon::now('America/Lima'), // Establecer la fecha de envío
+                    'id_users_responsable' => Auth::id(), // Asignar el ID del usuario responsable
+                ]);
             }
             DB::commit();
             $this->selectedGuias = [];
