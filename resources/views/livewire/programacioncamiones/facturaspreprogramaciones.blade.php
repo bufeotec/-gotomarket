@@ -2,7 +2,6 @@
     @php
         $me = new \App\Models\General();
     @endphp
-    {{--    MODAL DETALLE --}}
     <x-modal-general wire:ignore.self>
         <x-slot name="tama">modal-xl</x-slot>
         <x-slot name="id_modal">modalDetalleFactura</x-slot>
@@ -19,7 +18,6 @@
             </div>
         </x-slot>
     </x-modal-general>
-    {{--    FIN MODAL DETALLE --}}
 
     <div class="row">
         @if (session()->has('success'))
@@ -72,7 +70,7 @@
                                 <x-table-general>
                                     <x-slot name="thead">
                                         <tr>
-                                            <th style="font-size: 12px">Nro. Documento</th>
+                                            <th style="font-size: 12px">N° Documento</th>
                                             <th style="font-size: 12px">Nombre del Cliente</th>
                                             <th style="font-size: 12px">Peso y Volumen</th>
                                         </tr>
@@ -80,32 +78,41 @@
 
                                     <x-slot name="tbody">
                                         @if(!empty($filteredGuias))
+                                            @php
+                                                $documentosMostrados = [];
+                                            @endphp
                                             @foreach($filteredGuias as $guia)
                                                 @php
-//                                                    $SERIE = $guia->SERIE;
                                                     $NUMERO = $guia->NRO_DOC;
                                                     $comprobanteExiste = collect($this->selectedGuias)->first(function ($facturaVa) use ($NUMERO) {
                                                         return $facturaVa['NRO_DOC'] === $NUMERO;
                                                     });
                                                 @endphp
-                                                @if(!$comprobanteExiste)
-                                                    <tr style="cursor: pointer"
-                                                        wire:click="seleccionarGuia('{{ $guia->NRO_DOC }}')">
+                                                @if(!$comprobanteExiste && !in_array($NUMERO, $documentosMostrados))
+                                                    @php
+                                                        $documentosMostrados[] = $NUMERO;
+                                                    @endphp
+                                                    <tr style="cursor: pointer" wire:click="seleccionarGuia('{{ $guia->NRO_DOC }}')">
                                                         <td colspan="3" style="padding: 0px">
                                                             <table class="table">
                                                                 <tbody>
-                                                                <tr>
-                                                                    <td style="width: 39.6%">
+                                                                    <tr>
+                                                                    <td style="width: 32%">
                                                                         <span class="tamanhoTablaComprobantes">
                                                                             <b class="colorBlackComprobantes">
                                                                                 {{ isset($guia->{'FECHA_EMISION'}) ? date('d/m/Y', strtotime($guia->{'FECHA_EMISION'})) : 'Sin fecha' }}
                                                                             </b>
                                                                         </span>
                                                                         <span class="d-block tamanhoTablaComprobantes">
-                                                                            {{ $guia->NRO_DOC }}
+                                                                            GUÍA: {{ $guia->NRO_DOC }}
                                                                         </span>
+                                                                        @isset($guia->TIPO_DOC_REF)
+                                                                            <span class="d-block tamanhoTablaComprobantes">
+                                                                                {{ $guia->TIPO_DOC_REF . ': ' . $guia->NRO_DOC_REF }}
+                                                                            </span>
+                                                                        @endisset
                                                                     </td>
-                                                                    <td style="width: 32.2%">
+                                                                    <td style="width: 37%">
                                                                         <span class="d-block tamanhoTablaComprobantes">
                                                                             {{ ($guia->{'NOMBRE_CLIENTE'}) ?? 'Desconocido' }}
                                                                         </span>
@@ -119,7 +126,7 @@
                                                                         </span>
                                                                     </td>
                                                                 </tr>
-                                                                <tr style="border-top: 2px solid transparent;">
+                                                                    <tr style="border-top: 2px solid transparent;">
                                                                     <td colspan="3" style="padding-top: 0">
                                                                         <span class="d-block tamanhoTablaComprobantes">
                                                                             {{ ($guia->{'DIRECCION_ENTREGA'}) ?? 'Sin dirección' }} <br>
@@ -144,6 +151,7 @@
                                                 </td>
                                             </tr>
                                         @endif
+
                                     </x-slot>
                                 </x-table-general>
                             </div>
@@ -194,11 +202,10 @@
                                         <x-table-general id="ederTable">
                                             <x-slot name="thead">
                                                 <tr>
-                                                    <th class="">Nro Documento</th>
-                                                    <th class="">F. Emisión</th>
+                                                    <th class="">N° Documento</th>
+                                                    <th class="">Fecha Emisión</th>
                                                     <th class="">Importe sin IGV</th>
                                                     <th class="">Nombre Cliente</th>
-{{--                                                    <th class="">Peso y Volumen</th>--}}
                                                     <th class="">Dirección</th>
                                                     <th class="">Acciones</th>
                                                 </tr>

@@ -75,41 +75,27 @@ class Facturaspreprogramaciones extends Component
     }
 
     public function buscar_comprobantes(){
-        // Verificar si no hay fechas ni búsqueda
         if (empty($this->desde) && empty($this->hasta) && empty($this->searchFactura)) {
             session()->flash('error', 'Debe ingresar al menos una fecha o un criterio de búsqueda.');
-            return; // Salir del método
+            return;
         }
 
-        // Verificar si ambas fechas están presentes
         if (!empty($this->desde) && !empty($this->hasta)) {
-            // Obtener el año de las fechas 'desde' y 'hasta'
             $yearDesde = date('Y', strtotime($this->desde));
             $yearHasta = date('Y', strtotime($this->hasta));
-
-            // Validar que los años sean 2025 o posteriores
             if ($yearDesde < 2025 || $yearHasta < 2025) {
-                // Mostrar un mensaje de error si los años no son válidos
                 session()->flash('error', 'Las fechas deben ser a partir de 2025.');
-                return; // Salir del método si la validación falla
+                return;
             }
         }
 
-//        $datosResult = $this->server->listar_comprobantes_listos_local($this->searchFactura, $this->desde, $this->hasta);
-        $documento_guia = $this->server->obtenerDocumentosRemision($this->desde,$this->hasta);
-//        dd($documento_guia);
-        $this->filteredGuias = $documento_guia;
-        if (!$documento_guia) {
-            $this->filteredGuias = [];
-        }
+        $this->filteredGuias = $this->server->obtenerDocumentosRemision($this->desde, $this->hasta) ?? [];
     }
     public function seleccionarGuia($NRO_DOC) {
-        // Asegúrate de que $selectedGuias sea un array
         if (!is_array($this->selectedGuias)) {
             $this->selectedGuias = [];
         }
 
-        // Verifica si la guía ya está seleccionada
         $comprobanteExiste = collect($this->selectedGuias)->first(function ($guia) use ($NRO_DOC) {
             return isset($guia['NRO_DOC']) && $guia['NRO_DOC'] === $NRO_DOC;
         });
@@ -119,28 +105,47 @@ class Facturaspreprogramaciones extends Component
             return;
         }
 
-        // Busca la guía en $filteredGuias
         $guia = collect($this->filteredGuias)->first(function ($guia_) use ($NRO_DOC) {
             return $guia_->NRO_DOC === $NRO_DOC;
         });
 
         if ($guia) {
-            // Agrega la guía a $selectedGuias
             $this->selectedGuias[] = [
-                'NRO_DOC' => $guia->NRO_DOC,
-                'PESO_G' => $guia->PESO_G,
-                'VOLUMEN_TOTAL_CM3' => $guia->VOLUMEN_TOTAL_CM3,
-                'NOMBRE_CLIENTE' => $guia->NOMBRE_CLIENTE,
-                'IMPORTE_TOTAL' => $guia->IMPORTE_TOTAL,
-                'RUC_CLIENTE' => $guia->RUC_CLIENTE,
-                'FECHA_EMISION' => $guia->FECHA_EMISION,
-                'DIRECCION_ENTREGA' => $guia->DIRECCION_ENTREGA,
-                'DEPARTAMENTO' => $guia->DEPARTAMENTO,
-                'PROVINCIA' => $guia->PROVINCIA,
-                'DISTRITO' => $guia->DISTRITO,
+                'almacen_origen' => $guia->ALMACEN_ORIGEN,
+                'tipo_doc' => $guia->TIPO_DOC,
+                'nro_doc' => $guia->NRO_DOC,
+                'fecha_emision' => $guia->FECHA_EMISION,
+                'tipo_movimiento' => $guia->TIPO_MOVIMIENTO,
+                'tipo_doc_ref' => $guia->TIPO_DOC_REF,
+                'nro_doc_ref' => $guia->NRO_DOC_REF,
+                'glosa' => $guia->GLOSA,
+                'fecha_proceso' => $guia->FECHA_PROCESO,
+                'hora_proceso' => $guia->HORA_PROCESO,
+                'usuario' => $guia->USUARIO,
+                'cod_cliente' => $guia->COD_CLIENTE,
+                'ruc_cliente' => $guia->RUC_CLIENTE,
+                'nombre_cliente' => $guia->NOMBRE_CLIENTE,
+                'forma_pago' => $guia->FORMA_PAGO,
+                'vendedor' => $guia->VENDEDOR,
+                'moneda' => $guia->MONEDA,
+                'tipo_cambio' => $guia->TIPO_CAMBIO,
+                'estado' => $guia->ESTADO,
+                'direccion_entrega' => $guia->DIRECCION_ENTREGA,
+                'nro_pedido' => $guia->NRO_PEDIDO,
+                'importe_total' => $guia->IMPORTE_TOTAL,
+                'departamento' => $guia->DEPARTAMENTO,
+                'provincia' => $guia->PROVINCIA,
+                'distrito' => $guia->DISTRITO,
+                'peso' => $guia->PESO_G,
+                'volumen' => $guia->VOLUMEN_CM3,
+                'peso_total' => $guia->PESO_TOTAL_G,
+                'volumen_total' => $guia->VOLUMEN_TOTAL_CM3,
+                'codigo' => $guia->CODIGO,
+                'descripcion' => $guia->DESCRIPCION,
+                'cantidad' => $guia->CANTIDAD,
+                'unidad' => $guia->UNIDAD,
             ];
 
-            // Elimina la guía de $filteredGuias
             $this->filteredGuias = collect($this->filteredGuias)->reject(function ($guia_) use ($NRO_DOC) {
                 return $guia_->NRO_DOC === $NRO_DOC;
             })->values();
@@ -175,7 +180,6 @@ class Facturaspreprogramaciones extends Component
             ];
         }
     }
-
     public function guardarFacturas() {
         try {
             // Validar que haya facturas seleccionadas y un estado seleccionado
@@ -289,5 +293,4 @@ class Facturaspreprogramaciones extends Component
         // Convertir el array filtrado en una colección de objetos nuevamente
         $this->selectedGuias = array_values(array_map(fn($guia) => (object) $guia, $this->selectedGuias));
     }
-
 }
