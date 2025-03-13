@@ -82,6 +82,80 @@
     </x-modal-general>
 {{--    MODAL FIN NOTA DE CREDITO DETALLES--}}
 
+{{--    MODAL DETALLE FACTURA--}}
+    <x-modal-general wire:ignore.self>
+        <x-slot name="tama">modal-xl</x-slot>
+        <x-slot name="id_modal">modalDetalleFactura</x-slot>
+        <x-slot name="titleModal">Detalles de la guía Seleccionada</x-slot>
+        <x-slot name="modalContent">
+            <div class="modal-body">
+                <h6>Detalles de la Guía</h6>
+                <hr>
+                @if(!empty($detallesGuia))
+                    <x-table-general>
+                        <x-slot name="thead">
+                            <tr>
+                                <th>Almacén Salida</th>
+                                <th>Fecha Emisión</th>
+                                <th>Estado</th>
+                                <th>Tipo Documento</th>
+                                <th>Nro Documento</th>
+                                <th>Nro Línea</th>
+                                <th>Cód Producto</th>
+                                <th>Descripción Producto</th>
+                                <th>Lote</th>
+                                <th>Unidad</th>
+                                <th>Cantidad</th>
+                                <th>Precio Unit Final Inc IGV</th>
+                                <th>Precio Unit Antes Descuento Inc IGV</th>
+                                <th>Descuento Total Sin IGV</th>
+                                <th>IGV Total</th>
+                                <th>Importe Total Inc IGV</th>
+                                <th>Moneda</th>
+                                <th>Tipo Cambio</th>
+                                <th>Peso Gramos</th>
+                                <th>Volumen CM3</th>
+                                <th>Peso Total Gramos</th>
+                                <th>Volumen Total CM3</th>
+                            </tr>
+                        </x-slot>
+                        <x-slot name="tbody">
+                            @foreach($detallesGuia as $detalle)
+                                <tr>
+                                    <td>{{ $detalle->guia_det_almacen_salida ?? '-' }}</td>
+                                    <td>{{ $detalle->guia_det_fecha_emision ? $general->obtenerNombreFecha($detalle->guia_det_fecha_emision, 'DateTime', 'DateTime') : '-' }}</td>
+                                    <td>{{ $detalle->guia_det_estado ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_tipo_documento ?? '-' }}</td>
+                                    <td>{{ $detalle->guia_det_nro_documento ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_nro_linea ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_cod_producto ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_descripcion_producto ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_lote ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_unidad ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_cantidad ?? '-'}}</td>
+                                    <td>{{ $general->formatoDecimal($detalle->guia_det_precio_unit_final_inc_igv ?? 0)}}</td>
+                                    <td>{{ $general->formatoDecimal($detalle->guia_det_precio_unit_antes_descuente_inc_igv ?? 0)}}</td>
+                                    <td>{{ $general->formatoDecimal($detalle->guia_det_descuento_total_sin_igv ?? 0)}}</td>
+                                    <td>{{ $general->formatoDecimal($detalle->guia_det_igv_total ?? 0)}}</td>
+                                    <td>{{ $general->formatoDecimal($detalle->guia_det_importe_total_inc_igv ?? 0) }}</td>
+                                    <td>{{ $detalle->guia_det_moneda ?? '-'}}</td>
+                                    <td>{{ $general->formatoDecimal($detalle->guia_det_tipo_cambio ?? 0)}}</td>
+                                    <td>{{ $general->formatoDecimal($detalle->guia_det_peso_gramo ?? 0)}}</td>
+                                    <td>{{ $general->formatoDecimal($detalle->guia_det_volumen ?? 0)}}</td>
+                                    <td>{{ $general->formatoDecimal($detalle->guia_det_peso_total_gramo ?? 0)}}</td>
+                                    <td>{{ $general->formatoDecimal($detalle->guia_det_volumen_total ?? 0)}}</td>
+                                </tr>
+                            @endforeach
+                        </x-slot>
+                    </x-table-general>
+                @else
+                    <p>No hay detalles disponibles para mostrar.</p>
+                @endif
+            </div>
+        </x-slot>
+    </x-modal-general>
+{{--    MODAL FIN DETALLE FACTURA--}}
+
     {{--    MODAL REGISTRO NOTA CREDITO--}}
     <x-modal-general wire:ignore.self>
         <x-slot name="id_modal">modalNotaCredito</x-slot>
@@ -383,18 +457,24 @@
                                         <td>{{$general->formatoDecimal($lnc->not_cred_importe_total)}}</td>
                                         <td>{{$lnc->not_cred_estado}}</td>
                                         <td>
-                                            <a href="#" class="btn-ver" data-bs-toggle="modal" data-bs-target="#modalDetalleNotaCredito" wire:click="modal_nota_credito_detalle({{ $lnc->id_not_cred }})">
+                                            <a href="#" class="btn-ver m-3" data-bs-toggle="modal" data-bs-target="#modalDetalleNotaCredito" wire:click="modal_nota_credito_detalle({{ $lnc->id_not_cred }})">
                                                 <i class="fas fa-eye"></i>
                                             </a>
+
                                             @php
                                                 // Busca el registro en la tabla 'guias'
-                                                $vehiculo = \Illuminate\Support\Facades\DB::table('guias')
+                                                $nota = \Illuminate\Support\Facades\DB::table('guias')
                                                     ->where('guia_nro_doc_ref', '=', $lnc->not_cred_nro_doc_ref)
                                                     ->first();
                                             @endphp
-                                            <span class="font-bold badge {{ $vehiculo ? 'bg-label-success' : 'bg-label-danger' }}">
-                                                {{ $vehiculo ? 'Factura registrada en intranet' : 'Factura no registrada en intranet' }}
+                                            <span class="font-bold badge {{ $nota ? 'bg-label-success' : 'bg-label-danger' }}">
+                                                {{ $nota ? 'Factura registrada en intranet' : 'Factura no registrada en intranet' }}
                                             </span>
+                                            @if($nota)
+                                                <button wire:click="verDetallesGuia('{{ $nota->id_guia }}')" class="btn text-warning ms-3" data-bs-toggle="modal" data-bs-target="#modalDetalleFactura">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            @endif
                                         </td>
                                     </tr>
                                     @php $conteo++; @endphp
