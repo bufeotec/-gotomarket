@@ -235,7 +235,7 @@
                                             <tr>
                                                 <th style="font-size: 12px">N° Documento</th>
                                                 <th style="font-size: 12px">Nombre del Cliente</th>
-                                                <th style="font-size: 12px">Peso y Volumen</th>
+{{--                                                <th style="font-size: 12px">Peso y Volumen</th>--}}
                                             </tr>
                                         </x-slot>
 
@@ -261,44 +261,44 @@
                                                                     <tbody>
                                                                     <tr>
                                                                         <td style="width: 32%">
-                                                                <span class="tamanhoTablaComprobantes">
-                                                                    <b class="colorBlackComprobantes">
-                                                                        {{ isset($guia->{'FECHA_EMISION'}) ? date('d/m/Y', strtotime($guia->{'FECHA_EMISION'})) : 'Sin fecha' }}
-                                                                    </b>
-                                                                </span>
+                                                                            <span class="tamanhoTablaComprobantes">
+                                                                                <b class="colorBlackComprobantes">
+                                                                                    {{ isset($guia->{'FECHA_EMISION'}) ? date('d/m/Y', strtotime($guia->{'FECHA_EMISION'})) : 'Sin fecha' }}
+                                                                                </b>
+                                                                            </span>
                                                                             <span class="d-block tamanhoTablaComprobantes">
-                                                                    GUÍA: {{ $NRO_DOC }}
-                                                                </span>
+                                                                                GUÍA: {{ $NRO_DOC }}
+                                                                            </span>
                                                                             @isset($guia->TIPO_DOC_REF)
                                                                                 <span class="d-block tamanhoTablaComprobantes">
-                                                                        {{ $guia->TIPO_DOC_REF . ': ' . $guia->NRO_DOC_REF}}
-                                                                    </span>
+                                                                                    {{ $guia->TIPO_DOC_REF . ': ' . $guia->NRO_DOC_REF}}
+                                                                                </span>
                                                                             @endisset
                                                                         </td>
                                                                         <td style="width: 37%">
-                                                                <span class="d-block tamanhoTablaComprobantes">
-                                                                    {{ ($guia->{'NOMBRE_CLIENTE'}) ?? 'Desconocido' }}
-                                                                </span>
-                                                                        </td>
-                                                                        <td>
-                                                                <span class="d-block tamanhoTablaComprobantes">
-                                                                    <b class="colorBlackComprobantes">{{ number_format($guia->PESO_GRAMOS ?? 0, 2) }} kg</b>
-                                                                </span>
                                                                             <span class="d-block tamanhoTablaComprobantes">
-                                                                    <b class="colorBlackComprobantes">{{ number_format($guia->VOLUMEN_TOTAL_CM3 ?? 0, 2) }} cm³</b>
-                                                                </span>
+                                                                                {{ ($guia->{'NOMBRE_CLIENTE'}) ?? 'Desconocido' }}
+                                                                            </span>
                                                                         </td>
+{{--                                                                        <td>--}}
+{{--                                                                <span class="d-block tamanhoTablaComprobantes">--}}
+{{--                                                                    <b class="colorBlackComprobantes">{{ number_format($guia->PESO_GRAMOS ?? 0, 2) }} kg</b>--}}
+{{--                                                                </span>--}}
+{{--                                                                            <span class="d-block tamanhoTablaComprobantes">--}}
+{{--                                                                    <b class="colorBlackComprobantes">{{ number_format($guia->VOLUMEN_TOTAL_CM3 ?? 0, 2) }} cm³</b>--}}
+{{--                                                                </span>--}}
+{{--                                                                        </td>--}}
                                                                     </tr>
                                                                     <tr style="border-top: 2px solid transparent;">
                                                                         <td colspan="3" style="padding-top: 0">
-                                                                <span class="d-block tamanhoTablaComprobantes">
-                                                                    {{ ($guia->{'DIREC_ENTREGA'}) ?? 'Sin dirección' }} <br>
-                                                                    UBIGEO: <b class="colorBlackComprobantes">
-                                                                        {{ ($guia->{'DEPARTAMENTO'}) ?? 'N/A' }} -
-                                                                        {{ ($guia->{'PROVINCIA'} )?? 'N/A' }} -
-                                                                        {{ ($guia->{'DISTRITO'}) ?? 'N/A' }}
-                                                                    </b>
-                                                                </span>
+                                                                            <span class="d-block tamanhoTablaComprobantes">
+                                                                                {{ ($guia->{'DIREC_ENTREGA'}) ?? 'Sin dirección' }} <br>
+                                                                                UBIGEO: <b class="colorBlackComprobantes">
+                                                                                    {{ ($guia->{'DEPARTAMENTO'}) ?? 'N/A' }} -
+                                                                                    {{ ($guia->{'PROVINCIA'} )?? 'N/A' }} -
+                                                                                    {{ ($guia->{'DISTRITO'}) ?? 'N/A' }}
+                                                                                </b>
+                                                                            </span>
                                                                         </td>
                                                                     </tr>
                                                                     @if(isset($filtereddetGuias[$NRO_DOC])) <!-- Muestra detalles si existen -->
@@ -374,10 +374,15 @@
                                                         <option value="2">Despacho</option>
                                                     </select>
                                                 </div>
-                                                <div class="col-lg-2">
-                                                    <button href="#" class="btn bg-info text-white d-flex align-items-center" wire:click.prevent="guardarGuias">
-                                                        Enviar
-                                                        <i class="fa-solid fa-right-to-bracket ms-1"></i>
+                                                <div class="col-lg-2 mt-1">
+                                                    <button href="#" class="btn bg-info text-white d-flex align-items-center" wire:click.prevent="guardarGuias" wire:loading.attr="disabled">
+                                                        <span wire:loading.remove>
+                                                            Enviar
+                                                            <i class="fa-solid fa-right-to-bracket ms-1"></i>
+                                                        </span>
+                                                        <span wire:loading>
+                                                            <span class="spinner-border spinner-border-sm text-light" role="status" aria-hidden="true"></span>
+                                                        </span>
                                                     </button>
                                                 </div>
                                             @endif
