@@ -150,8 +150,11 @@
                                                                     <tr>
                                                                         <td style="width: 36.6%">
                                                                             <span class="d-block tamanhoTablaComprobantes">
-                                                                            {{ $factura->NRO_DOCUMENTO }}
-                                                                        </span>
+                                                                                N° Documento NC: {{ $factura->NRO_DOCUMENTO }}
+                                                                            </span>
+                                                                            <span class="d-block tamanhoTablaComprobantes">
+                                                                                N° Factura: {{ $factura->NRO_DOCUMENTO_REF }}
+                                                                            </span>
                                                                         </td>
                                                                         <td style="width: 37.2%">
                                                                             <span class="d-block tamanhoTablaComprobantes">
@@ -383,6 +386,15 @@
                                             <a href="#" class="btn-ver" data-bs-toggle="modal" data-bs-target="#modalDetalleNotaCredito" wire:click="modal_nota_credito_detalle({{ $lnc->id_not_cred }})">
                                                 <i class="fas fa-eye"></i>
                                             </a>
+                                            @php
+                                                // Busca el registro en la tabla 'guias'
+                                                $vehiculo = \Illuminate\Support\Facades\DB::table('guias')
+                                                    ->where('guia_nro_doc_ref', '=', $lnc->not_cred_nro_doc_ref)
+                                                    ->first();
+                                            @endphp
+                                            <span class="font-bold badge {{ $vehiculo ? 'bg-label-success' : 'bg-label-danger' }}">
+                                                {{ $vehiculo ? 'Factura registrada en intranet' : 'Factura no registrada en intranet' }}
+                                            </span>
                                         </td>
                                     </tr>
                                     @php $conteo++; @endphp
