@@ -13,7 +13,7 @@ use App\Models\Logs;
 use App\Models\DespachoVenta;
 use App\Models\Notacredito;
 use App\Models\Server;
-use App\Models\Notacreditoguia;
+use App\Models\Notacreditodetalle;
 
 class Notascreditos extends Component
 {
@@ -22,29 +22,26 @@ class Notascreditos extends Component
     private $despachoventa;
     private $notacredito;
     private $server;
-    private $notacreditoguia;
+    private $notacreditodetalle;
     public function __construct(){
         $this->logs = new Logs();
         $this->despachoventa = new DespachoVenta();
         $this->notacredito = new Notacredito();
         $this->server = new Server();
-        $this->notacreditoguia = new Notacreditoguia();
+        $this->notacreditodetalle = new Notacreditodetalle();
     }
     public $search_nota_credito;
     public $pagination_nota_credito = 10;
-    public $id_nota_credito = "";
-    public $id_despacho_venta = "";
-    public $not_cre_guia_motivo = "";
-    public $not_cre_guia_motivo_descripcion = "";
+    public $id_not_cred = "";
+    public $not_cred_motivo = "";
+    public $not_cred_motivo_descripcion = "";
     public $nota_credito_estado = "";
     public $messageNotCret;
-    public $despacho_venta;
-    public $search_factura = "";
-    protected $listeners = ['refreshComponent' => 'render'];
     public $desde;
     public $hasta;
     public $filteredGuias = [];
     public $selectedGuias = [];
+    public $nota_credito_detalle = [];
     public function mount(){
         $this->desde = date('Y-m-d');
         $this->hasta = date('Y-m-d');
@@ -53,9 +50,8 @@ class Notascreditos extends Component
     }
 
     public function render(){
-        $fac_despacho = $this->despachoventa->listar_despacho_nota_credito($this->id_despacho_venta);
         $listar_nota_credito = $this->notacredito->listar_nota_credito_activo($this->search_nota_credito, $this->pagination_nota_credito);
-        return view('livewire.programacioncamiones.notascreditos', compact('listar_nota_credito', 'fac_despacho'));
+        return view('livewire.programacioncamiones.notascreditos', compact('listar_nota_credito'));
     }
 
     public function buscar_comprobantes(){
@@ -87,66 +83,57 @@ class Notascreditos extends Component
         }
     }
 
-    public function seleccionar_guia($TIPO_DOCUMENTO, $SERIE, $NUMERO_DOCUMENTO){
-        // Validar que la guia no exista en el array selectedGuias
-        $comprobanteExiste = collect($this->selectedGuias)->first(function ($factura) use ($TIPO_DOCUMENTO, $SERIE, $NUMERO_DOCUMENTO) {
-            return $factura['TIPO_DOCUMENTO'] === $TIPO_DOCUMENTO
-                && $factura['SERIE'] === $SERIE
-                && $factura['NUMERO_DOCUMENTO'] === $NUMERO_DOCUMENTO;
+    public function seleccionar_nota_credito($NRO_DOCUMENTO){
+        // Validar que la nota credito no exista en el array selectedGuias
+        $comprobanteExiste = collect($this->selectedGuias)->first(function ($factura) use ($NRO_DOCUMENTO) {
+            return $factura['NRO_DOCUMENTO'] === $NRO_DOCUMENTO;
         });
 
         if ($comprobanteExiste) {
-            // Mostrar un mensaje de error si la guia ya fue agregada
+            // Mostrar un mensaje de error si la nota credito ya fue agregada
             session()->flash('error', 'Esta guía ya fue agregado.');
             return;
         }
 
         // Buscar la guia en el array filteredGuias
-        $factura = $this->filteredGuias->first(function ($f) use ($TIPO_DOCUMENTO, $SERIE, $NUMERO_DOCUMENTO) {
-            return $f->TIPO_DOCUMENTO === $TIPO_DOCUMENTO
-                && $f->SERIE === $SERIE
-                && $f->NUMERO_DOCUMENTO === $NUMERO_DOCUMENTO;
+        $factura = $this->filteredGuias->first(function ($f) use ($NRO_DOCUMENTO) {
+            return $f->NRO_DOCUMENTO === $NRO_DOCUMENTO;
         });
 
-        // Agregar la factura seleccionada y actualizar el peso y volumen total
+        // Agregar la factura seleccionada
         $this->selectedGuias[] = [
-            'TIPO_DOCUMENTO' => $TIPO_DOCUMENTO,
-            'SERIE' => $SERIE,
-            'NUMERO_DOCUMENTO' => $NUMERO_DOCUMENTO,
-            'CODIGO_ARTICULO' => $factura->CODIGO_ARTICULO,
-            'DESCRIPCION_ARTICULO' => $factura->DESCRIPCION_ARTICULO,
-            'LOTE' => $factura->LOTE,
-            'CANTIDAD' => $factura->CANTIDAD,
-            'PRECIO_VENTA' => $factura->PRECIO_VENTA,
-            'VALOR_VENTA' => $factura->VALOR_VENTA,
+            'NRO_DOCUMENTO' => $NRO_DOCUMENTO,
+            'ALMACEN_DESTINO' => $factura->ALMACEN_DESTINO,
+            'TIPO_DOCUMENTO' => $factura->TIPO_DOCUMENTO,
+            'FECHA_EMISION' => $factura->FECHA_EMISION,
+            'TIPO_MOVIMIENTO' => $factura->TIPO_MOVIMIENTO,
+            'TIPO_DOCUMENTO_REF' => $factura->TIPO_DOCUMENTO_REF,
+            'NRO_DOCUMENTO_REF' => $factura->NRO_DOCUMENTO_REF,
+            'GLOSA' => $factura->GLOSA,
+            'USUARIO' => $factura->USUARIO,
             'CODIGO_CLIENTE' => $factura->CODIGO_CLIENTE,
+            'RUC_CLIENTE' => $factura->RUC_CLIENTE,
             'NOMBRE_CLIENTE' => $factura->NOMBRE_CLIENTE,
-            'TIPO_DOCUMENTO_FACTURA' => $factura->TIPO_DOCUMENTO_FACTURA,
-            'SERIE_FACTURA' => $factura->SERIE_FACTURA,
-            'NUMERO_DOCUMENTO_FACTURA' => $factura->NUMERO_DOCUMENTO_FACTURA,
+            'FORMA_DE_PAGO' => $factura->FORMA_DE_PAGO,
+            'VENDEDOR' => $factura->VENDEDOR,
+            'MONEDA' => $factura->MONEDA,
+            'TIPO_DE_CAMBIO' => $factura->TIPO_DE_CAMBIO,
             'ESTADO' => $factura->ESTADO,
-            'TIPO_REFERENCIA' => $factura->TIPO_REFERENCIA,
-            'SERIE_REFERENCIA' => $factura->SERIE_REFERENCIA,
-            'DOCUMENTO_REFERENCIA' => $factura->DOCUMENTO_REFERENCIA,
+            'IMPORTE_TOTAL' => $factura->IMPORTE_TOTAL,
         ];
-
-        // Eliminar la guia de la lista de guias filtradas
-//        $this->filteredGuias = $this->filteredGuias->filter(function ($f) use ($NUMERO_DOCUMENTO) {
-//            return $f->NUMERO_DOCUMENTO !== $NUMERO_DOCUMENTO;
-//        });
     }
 
-    public function eliminar_guia_seleccionada($TIPO_DOCUMENTO, $SERIE, $NUMERO_DOCUMENTO){
-        // Encuentra la guia en las seleccionadas
-        $factura = collect($this->selectedGuias)->first(function ($f) use ($TIPO_DOCUMENTO, $SERIE, $NUMERO_DOCUMENTO) {
-            return $f['TIPO_DOCUMENTO'] === $TIPO_DOCUMENTO && $f['SERIE'] === $SERIE && $f['NUMERO_DOCUMENTO'] === $NUMERO_DOCUMENTO;
+    public function eliminar_nota_credito_seleccionada($NRO_DOCUMENTO){
+        // Encuentra la nota credito en las seleccionadas
+        $factura = collect($this->selectedGuias)->first(function ($f) use ($NRO_DOCUMENTO) {
+            return $f['NRO_DOCUMENTO'] === $NRO_DOCUMENTO;
         });
 
         if ($factura) {
-            // Elimina la guia de la lista seleccionada
+            // Elimina la nota credito de la lista seleccionada
             $this->selectedGuias = collect($this->selectedGuias)
-                ->reject(function ($f) use ($TIPO_DOCUMENTO, $SERIE, $NUMERO_DOCUMENTO) {
-                    return $f['TIPO_DOCUMENTO'] === $TIPO_DOCUMENTO && $f['SERIE'] === $SERIE && $f['NUMERO_DOCUMENTO'] === $NUMERO_DOCUMENTO;
+                ->reject(function ($f) use ($NRO_DOCUMENTO) {
+                    return $f['NRO_DOCUMENTO'] === $NRO_DOCUMENTO;
                 })
                 ->values()
                 ->toArray();
@@ -154,12 +141,122 @@ class Notascreditos extends Component
     }
 
     public function clear_form_nota_credito(){
-        $this->id_nota_credito = "";
-        $this->id_despacho_venta = "";
-        $this->nota_credito_motivo = "";
-        $this->nota_credito_motivo_descripcion = "";
+        $this->id_not_cred = "";
+        $this->not_cred_motivo = "";
+        $this->not_cred_motivo_descripcion = "";
+        $this->selectedGuias = [];
+        $this->filteredGuias = [];
+        $this->desde = date('Y-m-d');
+        $this->hasta = date('Y-m-d');
     }
 
+    public function modal_nota_credito_detalle($id_not_cred) {
+        $this->nota_credito_detalle = $this->notacredito->listar_nota_credito_detalle($id_not_cred);
+    }
+
+    public function saveNotaCredito() {
+        try {
+            if (!Gate::allows('guardar_nota_credito')) {
+                session()->flash('error', 'No tiene permisos para crear una programación local.');
+                return;
+            }
+
+            // Validar que haya facturas seleccionadas
+            $this->validate([
+                'selectedGuias' => 'required|array|min:1',
+            ], [
+                'selectedGuias.required' => 'Debes seleccionar al menos una factura.',
+                'selectedGuias.min' => 'Debes seleccionar al menos una factura.',
+            ]);
+
+            DB::beginTransaction();
+
+            foreach ($this->selectedGuias as $factura) {
+                // Verificar si la factura ya existe en la tabla
+                $facturaExistente = Notacredito::where('not_cred_nro_doc', $factura['NRO_DOCUMENTO'])
+                    ->first();
+
+                if (!$facturaExistente) {
+                    // Si no existe, crear un nuevo registro de cabecera
+                    $nuevaFactura = new Notacredito();
+                    $nuevaFactura->id_users = Auth::id();
+                    $nuevaFactura->not_cred_motivo = $this->not_cred_motivo;
+                    $nuevaFactura->not_cred_motivo_descripcion = $this->not_cred_motivo_descripcion;
+                    $nuevaFactura->not_cred_almacen_destino = $factura['ALMACEN_DESTINO'] ?: null;
+                    $nuevaFactura->not_cred_tipo_doc = $factura['TIPO_DOCUMENTO'] ?: null;
+                    $nuevaFactura->not_cred_nro_doc = $factura['NRO_DOCUMENTO'] ?: null;
+                    $nuevaFactura->not_cred_fecha_emision = $factura['FECHA_EMISION'] ?: null;
+                    $nuevaFactura->not_cred_tipo_movimiento = $factura['TIPO_MOVIMIENTO'] ?: null;
+                    $nuevaFactura->not_cred_tipo_doc_ref = $factura['TIPO_DOCUMENTO_REF'] ?: null;
+                    $nuevaFactura->not_cred_nro_doc_ref = $factura['NRO_DOCUMENTO_REF'] ?: null;
+                    $nuevaFactura->not_cred_glosa = $factura['GLOSA'] ?: null;
+                    $nuevaFactura->not_cred_usuario = $factura['USUARIO'] ?: null;
+                    $nuevaFactura->not_cred_codigo_cliente = $factura['CODIGO_CLIENTE'] ?: null;
+                    $nuevaFactura->not_cred_ruc_cliente = $factura['RUC_CLIENTE'] ?: null;
+                    $nuevaFactura->not_cred_nombre_cliente = $factura['NOMBRE_CLIENTE'] ?: null;
+                    $nuevaFactura->not_cred_forma_pago = $factura['FORMA_DE_PAGO'] ?: null;
+                    $nuevaFactura->not_cred_vendedor = $factura['VENDEDOR'] ?: null;
+                    $nuevaFactura->not_cred_moneda = $factura['MONEDA'] ?: null;
+                    $nuevaFactura->not_cred_tipo_cambio = $factura['TIPO_DE_CAMBIO'] ?: null;
+                    $nuevaFactura->not_cred_estado = $factura['ESTADO'] ?: null;
+                    $nuevaFactura->not_cred_importe_total = $factura['IMPORTE_TOTAL'] ?: null;
+                    $nuevaFactura->save();
+
+                    // Obtener los detalles de la nota de crédito
+                    $detalles = $this->server->listar_notas_credito_detalle_ss($factura['NRO_DOCUMENTO']);
+
+                    // Guardar los detalles en la tabla notas_creditos_detalles
+                    foreach ($detalles as $detalle) {
+                        $nuevoDetalle = new Notacreditodetalle();
+                        $nuevoDetalle->id_users = Auth::id();
+                        $nuevoDetalle->id_not_cred = $nuevaFactura->id_not_cred;
+                        $nuevoDetalle->not_cred_nro_doc = $detalle->NRO_DOCUMENTO ?: null;
+                        $nuevoDetalle->not_cred_det_almacen_entrada = $detalle->ALMACEN_ENTRADA ?: null;
+                        $nuevoDetalle->not_cred_det_fecha_emision = $detalle->FECHA_EMISION ?: null;
+                        $nuevoDetalle->not_cred_det_estado = $detalle->ESTADO ?: null;
+                        $nuevoDetalle->not_cred_det_tipo_doc = $detalle->TIPO_DOCUMENTO ?: null;
+                        $nuevoDetalle->not_cred_det_nro_doc = $detalle->NRO_DOCUMENTO ?: null;
+                        $nuevoDetalle->not_cred_det_nro_linea = $detalle->NRO_LINEA ?: null;
+                        $nuevoDetalle->not_cred_det_cod_producto = $detalle->COD_PRODUCTO ?: null;
+                        $nuevoDetalle->not_cred_det_descripcion_procd = $detalle->DESCRIPCION_PRODUCTO ?: null;
+                        $nuevoDetalle->not_cred_det_lote = $detalle->LOTE ?: null;
+                        $nuevoDetalle->not_cred_det_unidad = $detalle->UNIDAD ?: null;
+                        $nuevoDetalle->not_cred_det_cantidad = $detalle->CANTIDAD ?: null;
+                        $nuevoDetalle->not_cred_det_precio_unit_final_inc_igv = $detalle->PRECIO_UNIT_FINAL_INC_IGV ?: null;
+                        $nuevoDetalle->not_cred_det_texto = $detalle->TEXTO ?: null;
+                        $nuevoDetalle->not_cred_det_igv_total = $detalle->IGV_TOTAL ?: null;
+                        $nuevoDetalle->not_cred_det_importe_total_inc_igv = $detalle->IMPORTE_TOTAL_INC_IGV ?: null;
+                        $nuevoDetalle->not_cred_det_moneda = $detalle->MONEDA ?: null;
+                        $nuevoDetalle->not_cred_det_tipo_cambio = $detalle->TIPO_DE_CAMBIO ?: null;
+                        $nuevoDetalle->not_cred_det_peso_gramos = $detalle->PESO_GRAMOS ?: null;
+                        $nuevoDetalle->not_cred_det_volumen = $detalle->VOLUMEN_CM3 ?: null;
+                        $nuevoDetalle->not_cred_det_peso_toal_gramos = $detalle->PESO_TOTAL_GRAMOS ?: null;
+                        $nuevoDetalle->not_cred_det_volumen_total = $detalle->VOLUMEN_TOTAL_CM3 ?: null;
+                        $nuevoDetalle->save();
+                    }
+                }
+            }
+
+            DB::commit();
+
+            // Limpiar los resultados de la búsqueda y las guías seleccionadas
+            $this->filteredGuias = []; // Limpiar los resultados filtrados
+            $this->selectedGuias = []; // Limpiar las guías seleccionadas
+            $this->search_nota_credito = ''; // Limpiar el campo de búsqueda
+            $this->desde = date('Y-m-d'); // Reiniciar la fecha "desde"
+            $this->hasta = date('Y-m-d'); // Reiniciar la fecha "hasta"
+
+            // Cerrar el modal y mostrar mensaje de éxito
+            $this->dispatch('hideModal');
+            session()->flash('success', 'Facturas procesadas correctamente.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            session()->flash('error', 'Ocurrió un error al guardar las facturas: ' . $e->getMessage());
+        }
+    }
+
+//    *****
     public function edit_data($id){
         $notaCredEdit = Notacredito::find(base64_decode($id));
         if ($notaCredEdit) {
@@ -172,101 +269,10 @@ class Notascreditos extends Component
         }
     }
 
-//    public function saveNotaCredito() {
-//        try {
-//            $this->validate([
-//                'nota_credito_motivo' => 'required|integer',
-//                'nota_credito_motivo_descripcion' => 'required|string',
-//                'id_despacho_venta' => 'required|integer',
-//                'id_nota_credito' => 'nullable|integer',
-//            ], [
-//                'nota_credito_motivo.required' => 'Debes seleccionar un motivo.',
-//                'nota_credito_motivo.integer' => 'El motivo debe ser un número entero.',
-//
-//                'nota_credito_motivo_descripcion.required' => 'La descripción es obligatoria.',
-//                'nota_credito_motivo_descripcion.string' => 'La descripción debe ser una cadena de texto.',
-//
-//                'id_despacho_venta.required' => 'Debes seleccionar una factura.',
-//                'id_despacho_venta.integer' => 'La factura debe ser un número entero.',
-//
-//                'id_nota_credito.integer' => 'El identificador debe ser un número entero.',
-//            ]);
-//
-//            if (!$this->id_nota_credito) {
-//                if (!Gate::allows('create_nota_credito')) {
-//                    session()->flash('error', 'No tiene permisos para crear.');
-//                    return;
-//                }
-//
-//                $microtime = microtime(true);
-//                DB::beginTransaction();
-//                $notacredito_save = new Notacredito();
-//                $notacredito_save->id_users = Auth::id();
-//                $notacredito_save->id_despacho_venta = $this->id_despacho_venta;
-//                $notacredito_save->nota_credito_motivo = $this->nota_credito_motivo;
-//                $notacredito_save->nota_credito_motivo_descripcion = $this->nota_credito_motivo_descripcion;
-//                $notacredito_save->nota_credito_estado = 1;
-//                $notacredito_save->nota_credito_microtime = $microtime;
-//                $notacredito_save->nota_credito_estado_aprobacion = 0;
-//
-//                if ($notacredito_save->save()) {
-//                    // Actualizar el estado del despacho_venta
-//                    DB::table('despacho_ventas')
-//                        ->where('id_despacho_venta', $this->id_despacho_venta)
-//                        ->update(['despacho_detalle_estado_entrega' => 5]);
-//
-//                    DB::commit();
-//                    $this->dispatch('hideModal');
-//                    session()->flash('success', 'Registro guardado correctamente.');
-//                } else {
-//                    DB::rollBack();
-//                    session()->flash('error', 'Ocurrió un error al guardar.');
-//                    return;
-//                }
-//            } else { // UPDATE
-//                if (!Gate::allows('update_nota_credito')) {
-//                    session()->flash('error', 'No tiene permisos para actualizar este registro.');
-//                    return;
-//                }
-//                DB::beginTransaction();
-//                $notaCredito_update = Notacredito::findOrFail($this->id_nota_credito);
-//
-//                // Verificar si el estado de aprobación es 1 y si los campos relevantes han cambiado
-//                if (
-//                    $notaCredito_update->nota_credito_estado_aprobacion == 1 &&
-//                    ($notaCredito_update->nota_credito_motivo != $this->nota_credito_motivo ||
-//                        $notaCredito_update->nota_credito_motivo_descripcion != $this->nota_credito_motivo_descripcion)
-//                ) {
-//                    $notaCredito_update->nota_credito_estado_aprobacion = 0;
-//                }
-//
-//                $notaCredito_update->id_despacho_venta = $this->id_despacho_venta;
-//                $notaCredito_update->nota_credito_motivo = $this->nota_credito_motivo;
-//                $notaCredito_update->nota_credito_motivo_descripcion = $this->nota_credito_motivo_descripcion;
-//
-//                if (!$notaCredito_update->save()) {
-//                    DB::rollBack();
-//                    session()->flash('error', 'No se pudo actualizar el registro.');
-//                    return;
-//                }
-//
-//                DB::commit();
-//                $this->dispatch('hideModal');
-//                session()->flash('success', 'Registro actualizado correctamente.');
-//            }
-//        } catch (\Illuminate\Validation\ValidationException $e) {
-//            $this->setErrorBag($e->validator->errors());
-//        } catch (\Exception $e) {
-//            DB::rollBack();
-//            $this->logs->insertarLog($e);
-//            session()->flash('error', 'Ocurrió un error al guardar el registro: ' . $e->getMessage());
-//        }
-//    }
-
     public function cambio_estado($id_notCre){
         $id = base64_decode($id_notCre);
         if ($id) {
-            $this->id_nota_credito = $id;
+            $this->id_not_cred = $id;
             $this->messageNotCret = "¿Está seguro de aprobar esta nota de credito?";
         }
     }
@@ -308,66 +314,4 @@ class Notascreditos extends Component
             session()->flash('error', 'Ocurrió un error al aceptar la factura. Por favor, inténtelo nuevamente.');
         }
     }
-
-    public function saveNotaCredito() {
-        try {
-            if (!Gate::allows('guardar_nota_credito')) {
-                session()->flash('error', 'No tiene permisos para crear una programación local.');
-                return;
-            }
-            // Validar que haya facturas seleccionadas y un estado seleccionado
-            $this->validate([
-                'selectedGuias' => 'required|array|min:1',
-            ], [
-                'selectedGuias.required' => 'Debes seleccionar al menos una factura.',
-                'selectedGuias.min' => 'Debes seleccionar al menos una factura.',
-            ]);
-
-            DB::beginTransaction();
-
-            foreach ($this->selectedGuias as $factura) {
-                // Verificar si la factura ya existe en la tabla
-                $facturaExistente = Notacreditoguia::where('not_cre_guia_tipo_doc', $factura['TIPO_DOCUMENTO'])
-                    ->where('not_cre_guia_serie', $factura['SERIE'])
-                    ->where('not_cre_guia_num_doc', $factura['NUMERO_DOCUMENTO'])
-                    ->first();
-
-                if (!$facturaExistente) { // Cambia esta condición
-                    // Si no existe, crear un nuevo registro
-                    $nuevaFactura = new Notacreditoguia();
-                    $nuevaFactura->id_users = Auth::id();
-                    $nuevaFactura->not_cre_guia_motivo = $this->not_cre_guia_motivo;
-                    $nuevaFactura->not_cre_guia_motivo_descripcion = $this->not_cre_guia_motivo_descripcion;
-                    $nuevaFactura->not_cre_guia_tipo_doc = $factura['TIPO_DOCUMENTO'] ?: null;
-                    $nuevaFactura->not_cre_guia_serie = $factura['SERIE'] ?: null;
-                    $nuevaFactura->not_cre_guia_num_doc = $factura['NUMERO_DOCUMENTO'] ?: null;
-                    $nuevaFactura->not_cre_guia_codigo_articulo = $factura['CODIGO_ARTICULO'] ?: null;
-                    $nuevaFactura->not_cre_guia_desc_articulo = $factura['DESCRIPCION_ARTICULO'] ?: null;
-                    $nuevaFactura->not_cre_guia_lote = $factura['LOTE'] ?: null;
-                    $nuevaFactura->not_cre_guia_cantidad = $factura['CANTIDAD'] ?: null;
-                    $nuevaFactura->not_cre_guia_precio_venta = $factura['PRECIO_VENTA'] ?: null;
-                    $nuevaFactura->not_cre_guia_valor_venta = $factura['VALOR_VENTA'] ?: null;
-                    $nuevaFactura->not_cre_guia_codigo_cliente = $factura['CODIGO_CLIENTE'] ?: null;
-                    $nuevaFactura->not_cre_guia_nombre_cliente = $factura['NOMBRE_CLIENTE'] ?: null;
-                    $nuevaFactura->not_cre_guia_tipo_doc_factura = $factura['TIPO_DOCUMENTO_FACTURA'] ?: null;
-                    $nuevaFactura->not_cre_guia_serie_factura = $factura['SERIE_FACTURA'] ?: null;
-                    $nuevaFactura->not_cre_guia_num_doc_factura = $factura['NUMERO_DOCUMENTO_FACTURA'] ?: null;
-                    $nuevaFactura->not_cre_guia_estado_guia = $factura['ESTADO'] ?: null;
-                    $nuevaFactura->not_cre_guia_tipo_referencia = $factura['TIPO_REFERENCIA'] ?: null;
-                    $nuevaFactura->not_cre_guia_serie_referencia = $factura['SERIE_REFERENCIA'] ?: null;
-                    $nuevaFactura->not_cre_guia_doc_referencia = $factura['DOCUMENTO_REFERENCIA'] ?: null;
-                    $nuevaFactura->save();
-                }
-            }
-            DB::commit();
-            // Limpiar las facturas seleccionadas y el estado
-            $this->dispatch('hideModal');
-            $this->selectedGuias = [];
-            session()->flash('success', 'Facturas procesadas correctamente.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            session()->flash('error', 'Ocurrió un error al guardar las facturas: ' . $e->getMessage());
-        }
-    }
-
 }

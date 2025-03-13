@@ -2,6 +2,86 @@
     @php
         $general = new \App\Models\General();
     @endphp
+{{--    MODAL NOTA DE CREDITO DETALLES--}}
+    <x-modal-general wire:ignore.self>
+        <x-slot name="tama">modal-xl</x-slot>
+        <x-slot name="id_modal">modalDetalleNotaCredito</x-slot>
+        <x-slot name="titleModal">Detalles de la nota de crédito</x-slot>
+        <x-slot name="modalContent">
+            @if($nota_credito_detalle)
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12">
+                            <h6>Información del detalle</h6>
+                            <hr>
+                            <div class="table-responsive">
+                                <x-table-general>
+                                    <x-slot name="thead">
+                                        <tr>
+                                            <th>N°</th>
+                                            <th>Almacén de Entrada</th>
+                                            <th>Fecha Emisión</th>
+                                            <th>Estado</th>
+                                            <th>Tipo Documento</th>
+                                            <th>Nro. Documento</th>
+                                            <th>Nro. Línea</th>
+                                            <th>Cód. Producto</th>
+                                            <th>Descripción Producto</th>
+                                            <th>Lote</th>
+                                            <th>Unidad</th>
+                                            <th>Cantidad</th>
+                                            <th>Precio Unitario</th>
+                                            <th>Texto</th>
+                                            <th>IGV Total</th>
+                                            <th>Importe Total</th>
+                                            <th>Moneda</th>
+                                            <th>Tipo Cambio</th>
+                                            <th>Peso (g)</th>
+                                            <th>Volumen (cm³)</th>
+                                            <th>Peso Total (g)</th>
+                                            <th>Volumen Total (cm³)</th>
+                                        </tr>
+                                    </x-slot>
+                                    <x-slot name="tbody">
+                                        @php $a = 1; @endphp
+                                        @foreach($nota_credito_detalle as $detalle)
+                                            <tr>
+                                                <td>{{$a}}</td>
+                                                <td>{{ $detalle->not_cred_det_almacen_entrada }}</td>
+                                                <td>{{ $general->obtenerNombreFecha($detalle->not_cred_det_fecha_emision,'DateTime', 'DateTime')}}</td>
+                                                <td>{{ $detalle->not_cred_det_estado }}</td>
+                                                <td>{{ $detalle->not_cred_det_tipo_doc }}</td>
+                                                <td>{{ $detalle->not_cred_det_nro_doc }}</td>
+                                                <td>{{ $detalle->not_cred_det_nro_linea }}</td>
+                                                <td>{{ $detalle->not_cred_det_cod_producto }}</td>
+                                                <td>{{ $detalle->not_cred_det_descripcion_procd ?? '-'}}</td>
+                                                <td>{{ $detalle->not_cred_det_lote ?? '-' }}</td>
+                                                <td>{{ $detalle->not_cred_det_unidad }}</td>
+                                                <td>{{ $detalle->not_cred_det_cantidad }}</td>
+                                                <td>{{ $general->formatoDecimal($detalle->not_cred_det_precio_unit_final_inc_igv)}}</td>
+                                                <td>{{ $detalle->not_cred_det_texto ?? '-'}}</td>
+                                                <td>{{ $general->formatoDecimal($detalle->not_cred_det_igv_total)}}</td>
+                                                <td>{{ $general->formatoDecimal($detalle->not_cred_det_importe_total_inc_igv)}}</td>
+                                                <td>{{ $detalle->not_cred_det_moneda }}</td>
+                                                <td>{{ $general->formatoDecimal($detalle->not_cred_det_tipo_cambio)}}</td>
+                                                <td>{{ $general->formatoDecimal($detalle->not_cred_det_peso_gramos)}}</td>
+                                                <td>{{ $general->formatoDecimal($detalle->not_cred_det_volumen)}}</td>
+                                                <td>{{ $general->formatoDecimal($detalle->not_cred_det_peso_toal_gramos)}}</td>
+                                                <td>{{ $general->formatoDecimal($detalle->not_cred_det_volumen_total)}}</td>
+                                            </tr>
+                                            @php $a++; @endphp
+                                        @endforeach
+                                    </x-slot>
+                                </x-table-general>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        </x-slot>
+    </x-modal-general>
+{{--    MODAL FIN NOTA DE CREDITO DETALLES--}}
+
     {{--    MODAL REGISTRO NOTA CREDITO--}}
     <x-modal-general wire:ignore.self>
         <x-slot name="id_modal">modalNotaCredito</x-slot>
@@ -53,9 +133,9 @@
                                     <x-table-general>
                                         <x-slot name="thead">
                                             <tr>
-                                                <th style="font-size: 11px">Serie y Correlativo / Guía</th>
-                                                <th style="font-size: 12px">Descripción</th>
-                                                <th style="font-size: 12px">Cantidad / Precio</th>
+                                                <th style="font-size: 11px">Número de documento</th>
+                                                <th style="font-size: 12px">Tipo de movimiento</th>
+                                                <th style="font-size: 12px">Importe total</th>
                                             </tr>
                                         </x-slot>
 
@@ -63,34 +143,30 @@
                                             @if(!empty($filteredGuias))
                                                 @foreach($filteredGuias as $factura)
                                                     @php
-                                                        $TIPO_DOCUMENTO = $factura->TIPO_DOCUMENTO;
-                                                        $SERIE = $factura->SERIE;
-                                                        $NUMERO_DOCUMENTO = $factura->NUMERO_DOCUMENTO;
-                                                        $comprobanteExiste = collect($this->selectedGuias)->first(function ($facturaVa) use ($TIPO_DOCUMENTO, $SERIE, $NUMERO_DOCUMENTO) {
-                                                            return $facturaVa['TIPO_DOCUMENTO'] === $TIPO_DOCUMENTO
-                                                                && $facturaVa['SERIE'] === $SERIE
-                                                                && $facturaVa['NUMERO_DOCUMENTO'] === $NUMERO_DOCUMENTO;
+                                                        $NRO_DOCUMENTO = $factura->NRO_DOCUMENTO;
+                                                        $comprobanteExiste = collect($this->selectedGuias)->first(function ($facturaVa) use ($NRO_DOCUMENTO) {
+                                                            return $facturaVa['NRO_DOCUMENTO'] === $NRO_DOCUMENTO;
                                                         });
                                                     @endphp
                                                     @if(!$comprobanteExiste)
-                                                        <tr style="cursor: pointer" wire:click="seleccionar_guia('{{ $factura->TIPO_DOCUMENTO }}', '{{ $factura->SERIE }}', '{{ $factura->NUMERO_DOCUMENTO }}')">
+                                                        <tr style="cursor: pointer" wire:click="seleccionar_nota_credito('{{ $factura->NRO_DOCUMENTO }}')">
                                                             <td colspan="3" style="padding: 0px">
                                                                 <table class="table">
                                                                     <tbody>
                                                                     <tr>
-                                                                        <td style="width: 34.6%">
+                                                                        <td style="width: 36.6%">
                                                                             <span class="d-block tamanhoTablaComprobantes">
-                                                                            {{ $factura->TIPO_DOCUMENTO }} - {{ $factura->SERIE }} - {{ $factura->NUMERO_DOCUMENTO }}
+                                                                            {{ $factura->NRO_DOCUMENTO }}
                                                                         </span>
                                                                         </td>
                                                                         <td style="width: 37.2%">
                                                                             <span class="d-block tamanhoTablaComprobantes">
-                                                                            {{ $factura->DESCRIPCION_ARTICULO }}
+                                                                            {{ $factura->TIPO_MOVIMIENTO }}
                                                                         </span>
                                                                         </td>
                                                                         <td>
                                                                             <span class="d-block tamanhoTablaComprobantes">
-                                                                            CANTIDAD: <b class="colorBlackComprobantes">{{$factura->CANTIDAD}}</b> <br> PRECIO: <b class="colorBlackComprobantes">{{ $factura->PRECIO_VENTA }}</b>
+                                                                            {{ $general->formatoDecimal($factura->IMPORTE_TOTAL) }}
                                                                         </span>
                                                                         </td>
                                                                     </tr>
@@ -119,7 +195,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div wire:loading wire:target="seleccionar_guia" class="overlay__eliminar">
+                        <div wire:loading wire:target="seleccionar_nota_credito" class="overlay__eliminar">
                             <div class="spinner__container__eliminar">
                                 <div class="spinner__eliminar"></div>
                             </div>
@@ -134,9 +210,9 @@
                                     @foreach ($selectedGuias as $factura)
                                         <div class="d-flex justify-content-between align-items-center mb-3">
                                             <h6 class="mb-0">
-                                                {{ $factura['TIPO_DOCUMENTO'] }} - {{ $factura['SERIE'] }} - {{ $factura['NUMERO_DOCUMENTO'] }}
+                                                {{ $factura['NRO_DOCUMENTO'] }}
                                             </h6>
-                                            <a href="#" class="btn btn-danger btn-sm mx-3" wire:click.prevent="eliminar_guia_seleccionada('{{ $factura['TIPO_DOCUMENTO'] }}', '{{ $factura['SERIE'] }}', '{{ $factura['NUMERO_DOCUMENTO'] }}')">
+                                            <a href="#" class="btn btn-danger btn-sm mx-3" wire:click.prevent="eliminar_nota_credito_seleccionada('{{ $factura['NRO_DOCUMENTO'] }}')">
                                                 <i class="fas fa-trash"></i> Eliminar
                                             </a>
                                         </div>
@@ -146,8 +222,8 @@
                                 @endif
                             </div>
                             <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
-                                <label for="not_cre_guia_motivo" class="form-label">Código de motivo</label>
-                                <select class="form-select" name="not_cre_guia_motivo" id="not_cre_guia_motivo" wire:model="not_cre_guia_motivo">
+                                <label for="not_cred_motivo" class="form-label">Código de motivo</label>
+                                <select class="form-select" name="not_cred_motivo" id="not_cred_motivo" wire:model="not_cred_motivo">
                                     <option value="">Seleccionar...</option>
                                     <option value="1">1 - Devolución</option>
                                     <option value="2">2 - Calidad</option>
@@ -155,19 +231,19 @@
                                     <option value="4">4 - Error de facturación</option>
                                     <option value="5">5 - Otros comercial</option>
                                 </select>
-                                @error('not_cre_guia_motivo')
+                                @error('not_cred_motivo')
                                 <span class="message-error">{{ $message }}</span>
                                 @enderror
                             </div>
                             <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
-                                <label for="not_cre_guia_motivo_descripcion" class="form-label">Motivo descripción</label>
-                                <textarea class="form-control" id="not_cre_guia_motivo_descripcion" name="not_cre_guia_motivo_descripcion" wire:model="not_cre_guia_motivo_descripcion" rows="4"></textarea>
-                                @error('not_cre_guia_motivo_descripcion')
+                                <label for="not_cred_motivo_descripcion" class="form-label">Motivo descripción</label>
+                                <textarea class="form-control" id="not_cred_motivo_descripcion" name="not_cred_motivo_descripcion" wire:model="not_cred_motivo_descripcion" rows="4"></textarea>
+                                @error('not_cred_motivo_descripcion')
                                 <span class="message-error">{{ $message }}</span>
                                 @enderror
                             </div>
                         </div>
-                        <div wire:loading wire:target="eliminar_guia_seleccionada" class="overlay__eliminar">
+                        <div wire:loading wire:target="eliminar_nota_credito_seleccionada" class="overlay__eliminar">
                             <div class="spinner__container__eliminar">
                                 <div class="spinner__eliminar"></div>
                             </div>
@@ -251,12 +327,16 @@
                         <x-slot name="thead">
                             <tr>
                                 <th>N°</th>
-                                <th>Guía</th>
+                                <th>Número Documento</th>
                                 <th>Motivo</th>
-                                <th>Descripción</th>
-                                <th>Precio / Valor venta</th>
+                                <th>Motivo descripción</th>
+                                <th>Fecha de emision</th>
                                 <th>RUC</th>
                                 <th>Nombre del cliente</th>
+                                <th>Forma de pago</th>
+                                <th>Moneda</th>
+                                <th>Tipo de cambio</th>
+                                <th>Importe total</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
@@ -268,7 +348,7 @@
                                 @foreach($listar_nota_credito as $lnc)
                                     <tr>
                                         <td>{{$conteo}}</td>
-                                        <td>{{$lnc->not_cre_guia_tipo_doc}} - {{$lnc->not_cre_guia_serie}} - {{$lnc->not_cre_guia_num_doc}}</td>
+                                        <td>{{$lnc->not_cred_nro_doc}}</td>
                                         <td>
                                             {{ [
                                                 1 => '1 - Devolución',
@@ -276,20 +356,21 @@
                                                 3 => '3 - Cobranza',
                                                 4 => '4 - Error de facturación',
                                                 5 => '5 - Otros comercial'
-                                            ][$lnc->not_cre_guia_motivo] ?? 'No definido' }}
+                                            ][$lnc->not_cred_motivo] ?? 'No definido' }}
                                         </td>
-                                        <td>{{$lnc->not_cre_guia_motivo_descripcion}}</td>
-                                        <td>{{$lnc->not_cre_guia_precio_venta}} / {{$lnc->not_cre_guia_valor_venta}}</td>
-                                        <td>{{$lnc->not_cre_guia_codigo_cliente}}</td>
-                                        <td>{{$lnc->not_cre_guia_nombre_cliente}}</td>
-                                        <td>{{$lnc->not_cre_guia_estado_guia}}</td>
-
+                                        <td>{{$lnc->not_cred_motivo_descripcion}}</td>
+                                        <td>{{$general->obtenerNombreFecha($lnc->not_cred_fecha_emision,'DateTime', 'DateTime')}}</td>
+                                        <td>{{$lnc->not_cred_ruc_cliente}}</td>
+                                        <td>{{$lnc->not_cred_nombre_cliente}}</td>
+                                        <td>{{$lnc->not_cred_forma_pago}}</td>
+                                        <td>{{$lnc->not_cred_moneda}}</td>
+                                        <td>{{$general->formatoDecimal($lnc->not_cred_tipo_cambio)}}</td>
+                                        <td>{{$general->formatoDecimal($lnc->not_cred_importe_total)}}</td>
+                                        <td>{{$lnc->not_cred_estado}}</td>
                                         <td>
-                                            <x-btn-accion class="text-primary"  wire:click="edit_data('{{ base64_encode($lnc->id_nota_credito_guia) }}')" data-bs-toggle="modal" data-bs-target="#modalNotaCredito">
-                                                <x-slot name="message">
-                                                    <i class="fa-solid fa-pen-to-square"></i>
-                                                </x-slot>
-                                            </x-btn-accion>
+                                            <a href="#" class="btn-ver" data-bs-toggle="modal" data-bs-target="#modalDetalleNotaCredito" wire:click="modal_nota_credito_detalle({{ $lnc->id_not_cred }})">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
                                         </td>
                                     </tr>
                                     @php $conteo++; @endphp
