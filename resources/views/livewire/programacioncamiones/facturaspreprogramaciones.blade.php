@@ -2,43 +2,186 @@
     @php
         $me = new \App\Models\General();
     @endphp
+{{--    MODAL INFORMACION GUIA--}}
     <x-modal-general wire:ignore.self>
         <x-slot name="tama">modal-xl</x-slot>
-        <x-slot name="id_modal">modalDetalleFactura</x-slot>
-        <x-slot name="titleModal">Detalles del Documento Seleccionado</x-slot>
+        <x-slot name="id_modal">modalInformacionGuia</x-slot>
+        <x-slot name="titleModal">Información de la guia Seleccionada</x-slot>
+        <x-slot name="modalContent">
+            @if($guiaSeleccionada)
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <h6>Información general</h6>
+                                    <hr>
+                                </div>
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Numero documento:</strong>
+                                    <p>{{ $guiaSeleccionada['NRO_DOC'] }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Almacen de Origen:</strong>
+                                    <p>{{ $guiaSeleccionada['ALMACEN_ORIGEN'] }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Tipo Documento:</strong>
+                                    <p>{{ $guiaSeleccionada['TIPO_DOC'] }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Fecha de Emision:</strong>
+                                    <p>{{ $guiaSeleccionada['FECHA_EMISION'] }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Tipo de Movimiento:</strong>
+                                    <p>{{ $guiaSeleccionada['TIPO_MOVIMIENTO'] }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Tipo de Documento Referencial:</strong>
+                                    <p>{{ $guiaSeleccionada['TIPO_DOC_REF'] }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Número de Documento Referencial:</strong>
+                                    <p>{{ $guiaSeleccionada['NRO_DOC_REF'] }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Glosa:</strong>
+                                    <p>{{ $guiaSeleccionada['GLOSA'] }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Estado:</strong>
+                                    <p>{{ $guiaSeleccionada['ESTADO'] }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Importe Total:</strong>
+                                    <p>{{ $guiaSeleccionada['IMPORTE_TOTAL'] }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Tipo de Cambio:</strong>
+                                    <p>{{ $guiaSeleccionada['TIPO_DE_CAMBIO'] }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Moneda:</strong>
+                                    <p>{{ $guiaSeleccionada['MONEDA'] }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Dirección de Entrega:</strong>
+                                    <p>{{ $guiaSeleccionada['DIREC_ENTREGA'] }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Departamento:</strong>
+                                    <p>{{ $guiaSeleccionada['DEPARTAMENTO'] }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Provincia:</strong>
+                                    <p>{{ $guiaSeleccionada['PROVINCIA'] }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Distrito:</strong>
+                                    <p>{{ $guiaSeleccionada['DISTRITO'] }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            @else
+                <p>No hay información disponibles para mostrar.</p>
+            @endif
+        </x-slot>
+    </x-modal-general>
+{{--    MODAL FIN INFORMACION GUIA--}}
+
+{{--    MODAL DETALLE GUIA--}}
+    <x-modal-general wire:ignore.self>
+        <x-slot name="tama">modal-xl</x-slot>
+        <x-slot name="id_modal">modalDetalleGuia</x-slot>
+        <x-slot name="titleModal">Detalles de la guía Seleccionada</x-slot>
         <x-slot name="modalContent">
             <div class="modal-body">
-                <h6>Detalles del Documento</h6>
+                <h6>Detalles de la Guía</h6>
                 <hr>
-                @if($detalleFactura)
-                    <div>
-                        <p><strong>Número de Documento:</strong> {{ $detalleFactura['nro_doc'] }}</p>
-                        <p><strong>Almacén de Origen:</strong> {{ $detalleFactura['almacen_origen'] }}</p>
-                        <p><strong>Tipo de Documento:</strong> {{ $detalleFactura['tipo_doc'] }}</p>
-                        <p><strong>Fecha de Emisión:</strong> {{ \Carbon\Carbon::parse($detalleFactura['fecha_emision'])->format('d/m/Y') }}</p>
-                        <p><strong>Tipo de Movimiento:</strong> {{ $detalleFactura['tipo_movimiento'] }}</p>
-                        <p><strong>Tipo de Documento Referencial:</strong> {{ $detalleFactura['tipo_doc_ref'] }}</p>
-                        <p><strong>Número de Documento Referencial:</strong> {{ $detalleFactura['nro_doc_ref'] }}</p>
-                        <p><strong>Glosa:</strong> {{ $detalleFactura['glosa'] }}</p>
-                        <p><strong>Estado:</strong> {{ $detalleFactura['estado'] }}</p>
-                        <p><strong>Importe Total:</strong> {{ number_format($detalleFactura['importe_total'], 2) }}</p>
-                        <p><strong>Descuento Total (sin IGV):</strong> {{ number_format($detalleFactura['descuento_total_sin_igv'], 2) }}</p>
-                        <p><strong>IGV Total:</strong> {{ number_format($detalleFactura['igv_total'], 2) }}</p>
-                        <p><strong>Peso Total:</strong> {{ $detalleFactura['peso_total'] }} kg</p>
-                        <p><strong>Volumen:</strong> {{ $detalleFactura['volumen'] }} cm³</p>
-                        <p><strong>Tipo de Cambio:</strong> {{ $detalleFactura['tipo_cambio'] }}</p>
-                        <p><strong>Moneda:</strong> {{ $detalleFactura['moneda'] }}</p>
-                        <p><strong>Dirección de Entrega:</strong> {{ $detalleFactura['direccion_entrega'] }}</p>
-                        <p><strong>Departamento:</strong> {{ $detalleFactura['departamento'] }}</p>
-                        <p><strong>Provincia:</strong> {{ $detalleFactura['provincia'] }}</p>
-                        <p><strong>Distrito:</strong> {{ $detalleFactura['distrito'] }}</p>
-                    </div>
+                @if(!empty($detallesGuia))
+                    <x-table-general>
+                        <x-slot name="thead">
+                        <tr>
+                            <th>Almacén Salida</th>
+                            <th>Fecha Emisión</th>
+                            <th>Estado</th>
+                            <th>Tipo Documento</th>
+                            <th>Nro Documento</th>
+                            <th>Nro Línea</th>
+                            <th>Cód Producto</th>
+                            <th>Descripción Producto</th>
+                            <th>Lote</th>
+                            <th>Unidad</th>
+                            <th>Cantidad</th>
+                            <th>Precio Unit Final Inc IGV</th>
+                            <th>Precio Unit Antes Descuento Inc IGV</th>
+                            <th>Descuento Total Sin IGV</th>
+                            <th>IGV Total</th>
+                            <th>Importe Total Inc IGV</th>
+                            <th>Moneda</th>
+                            <th>Tipo Cambio</th>
+                            <th>Peso Gramos</th>
+                            <th>Volumen CM3</th>
+                            <th>Peso Total Gramos</th>
+                            <th>Volumen Total CM3</th>
+                        </tr>
+                        </x-slot>
+                        <x-slot name="tbody">
+                            @foreach($detallesGuia as $detalle)
+                            <tr>
+                                <td>{{ $detalle->ALMACEN_SALIDA ?? '-' }}</td>
+                                <td>{{ $detalle->FECHA_EMISION ? $me->obtenerNombreFecha($detalle->FECHA_EMISION, 'DateTime', 'DateTime') : '-' }}</td>
+                                <td>{{ $detalle->ESTADO ?? '-'}}</td>
+                                <td>{{ $detalle->TIPO_DOCUMENTO ?? '-' }}</td>
+                                <td>{{ $detalle->NRO_DOCUMENTO ?? '-'}}</td>
+                                <td>{{ $detalle->NRO_LINEA ?? '-'}}</td>
+                                <td>{{ $detalle->COD_PRODUCTO ?? '-'}}</td>
+                                <td>{{ $detalle->DESCRIPCION_PRODUCTO ?? '-'}}</td>
+                                <td>{{ $detalle->LOTE ?? '-'}}</td>
+                                <td>{{ $detalle->UNIDAD ?? '-'}}</td>
+                                <td>{{ $detalle->CANTIDAD ?? '-'}}</td>
+                                <td>{{ $me->formatoDecimal($detalle->PRECIO_UNIT_FINAL_INC_IGV ?? 0)}}</td>
+                                <td>{{ $me->formatoDecimal($detalle->PRECIO_UNIT_ANTES_DESCUENTO_INC_IGV ?? 0)}}</td>
+                                <td>{{ $me->formatoDecimal($detalle->DESCUENTO_TOTAL_SIN_IGV ?? 0)}}</td>
+                                <td>{{ $me->formatoDecimal($detalle->IGV_TOTAL ?? 0)}}</td>
+                                <td>{{ $me->formatoDecimal($detalle->IMPORTE_TOTAL_INC_IGV ?? 0) }}</td>
+                                <td>{{ $detalle->MONEDA ?? '-'}}</td>
+                                <td>{{ $me->formatoDecimal($detalle->TIPO_CAMBIO ?? 0)}}</td>
+                                <td>{{ $me->formatoDecimal($detalle->PESO_GRAMOS ?? 0)}}</td>
+                                <td>{{ $me->formatoDecimal($detalle->VOLUMEN_CM3 ?? 0)}}</td>
+                                <td>{{ $me->formatoDecimal($detalle->PESO_TOTAL_GRAMOS ?? 0)}}</td>
+                                <td>{{ $me->formatoDecimal($detalle->VOLUMEN_TOTAL_CM3 ?? 0)}}</td>
+                            </tr>
+                        @endforeach
+                        </x-slot>
+                    </x-table-general>
                 @else
                     <p>No hay detalles disponibles para mostrar.</p>
                 @endif
             </div>
         </x-slot>
     </x-modal-general>
+{{--    MODAL FIN DETALLE GUIA--}}
+
     <div class="row">
         @if (session()->has('success'))
             <div class="col-lg-12 col-md-12 col-sm-12">
@@ -103,16 +246,16 @@
                                                 @endphp
                                                 @foreach($filteredGuias as $guia)
                                                     @php
-                                                        $NUMERO = isset($guia->NRO_DOC) ? $guia->NRO_DOC : null;
-                                                        $comprobanteExiste = collect($this->selectedGuias)->first(function ($facturaVa) use ($NUMERO) {
-                                                            return isset($facturaVa['nro_doc']) && $facturaVa['nro_doc'] === $NUMERO;
+                                                        $NRO_DOC = isset($guia->NRO_DOC) ? $guia->NRO_DOC : null;
+                                                        $comprobanteExiste = collect($this->selectedGuias)->first(function ($facturaVa) use ($NRO_DOC) {
+                                                            return isset($facturaVa['NRO_DOC']) && $facturaVa['NRO_DOC'] === $NRO_DOC;
                                                         });
                                                     @endphp
-                                                    @if($NUMERO && !$comprobanteExiste && !in_array($NUMERO, $documentosMostrados))
+                                                    @if($NRO_DOC && !$comprobanteExiste && !in_array($NRO_DOC, $documentosMostrados))
                                                         @php
-                                                            $documentosMostrados[] = $NUMERO;
+                                                            $documentosMostrados[] = $NRO_DOC;
                                                         @endphp
-                                                        <tr style="cursor: pointer" wire:click="seleccionarGuia('{{ $NUMERO }}')">
+                                                        <tr style="cursor: pointer" wire:click="seleccionarGuia('{{ $NRO_DOC }}')">
                                                             <td colspan="3" style="padding: 0px">
                                                                 <table class="table">
                                                                     <tbody>
@@ -124,7 +267,7 @@
                                                                     </b>
                                                                 </span>
                                                                             <span class="d-block tamanhoTablaComprobantes">
-                                                                    GUÍA: {{ $NUMERO }}
+                                                                    GUÍA: {{ $NRO_DOC }}
                                                                 </span>
                                                                             @isset($guia->TIPO_DOC_REF)
                                                                                 <span class="d-block tamanhoTablaComprobantes">
@@ -158,7 +301,7 @@
                                                                 </span>
                                                                         </td>
                                                                     </tr>
-                                                                    @if(isset($filtereddetGuias[$NUMERO])) <!-- Muestra detalles si existen -->
+                                                                    @if(isset($filtereddetGuias[$NRO_DOC])) <!-- Muestra detalles si existen -->
                                                                     <tr>
                                                                         <td colspan="3">
                                                                             <table class="table table-bordered mt-2">
@@ -170,7 +313,7 @@
                                                                                 </tr>
                                                                                 </thead>
                                                                                 <tbody>
-                                                                                @foreach($filtereddetGuias[$NUMERO] as $detalle)
+                                                                                @foreach($filtereddetGuias[$NRO_DOC] as $detalle)
                                                                                     <tr>
                                                                                         <td>{{ $detalle->descripcion ?? 'Sin descripción' }}</td>
                                                                                         <td>{{ $detalle->cantidad ?? '0' }}</td>
@@ -256,16 +399,20 @@
                                                 <x-slot name="tbody">
                                                     @foreach($selectedGuias as $factura)
                                                         <tr>
-                                                            <td>{{ $factura['nro_doc'] ?? 'No disponible' }}</td>
-                                                            <td>{{ \Carbon\Carbon::parse($factura['fecha_emision'])->format('d/m/Y') ?? 'Sin fecha' }}</td>
-                                                            <td>{{ number_format($factura['importe_total'], 2) ?? '0.00' }}</td>
-                                                            <td>{{ $factura['nombre_cliente'] ?? 'Desconocido' }}</td>
-                                                            <td>{{ $factura['direccion_entrega'] ?? 'Sin dirección'}}</td>
+                                                            <td>{{ $factura['NRO_DOC'] ?? 'No disponible' }}</td>
+                                                            <td>{{ \Carbon\Carbon::parse($factura['FECHA_EMISION'])->format('d/m/Y') ?? 'Sin fecha' }}</td>
+                                                            <td>{{ number_format($factura['IMPORTE_TOTAL'], 2) ?? '0.00' }}</td>
+                                                            <td>{{ $factura['NOMBRE_CLIENTE'] ?? 'Desconocido' }}</td>
+                                                            <td>{{ $factura['DIREC_ENTREGA'] ?? 'Sin dirección'}}</td>
                                                             <td>
-                                                                <a href="#" wire:click.prevent="eliminarFacturaSeleccionada('{{ $factura['nro_doc'] }}')" class="btn btn-danger btn-sm text-white m-1">
+                                                                <a href="#" wire:click.prevent="eliminarFacturaSeleccionada('{{ $factura['NRO_DOC'] }}')" class="btn btn-danger btn-sm text-white m-1">
                                                                     <i class="fas fa-trash-alt"></i>
                                                                 </a>
-                                                                <a href="#" wire:click.prevent="listar_detallesf('{{ $factura['nro_doc'] }}')" class="btn btn-sm btn-primary text-white m-1" data-bs-toggle="modal" data-bs-target="#modalDetalleFactura">
+                                                                <a href="#" wire:click.prevent="listar_detallesf('{{ $factura['NRO_DOC'] }}')" class="btn btn-sm btn-primary text-white m-1" data-bs-toggle="modal" data-bs-target="#modalInformacionGuia">
+                                                                    <i class="fas fa-eye"></i>
+                                                                </a>
+
+                                                                <a href="#" wire:click.prevent="detalle_guia('{{ $factura['NRO_DOC'] }}')" class="btn btn-sm btn-warning text-white m-1" data-bs-toggle="modal" data-bs-target="#modalDetalleGuia">
                                                                     <i class="fas fa-eye"></i>
                                                                 </a>
                                                             </td>
