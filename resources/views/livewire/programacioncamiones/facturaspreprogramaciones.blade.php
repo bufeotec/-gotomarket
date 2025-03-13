@@ -12,23 +12,26 @@
                 <hr>
                 @if($detalleFactura)
                     <div>
-                        <p><strong>Número de Documento:</strong> {{ $detalleFactura['nro_documento'] }}</p>
-                        <p><strong>Almacén de Salida:</strong> {{ $detalleFactura['almacen_salida'] }}</p>
-                        <p><strong>Tipo de Documento:</strong> {{ $detalleFactura['tipo_documento'] }}</p>
+                        <p><strong>Número de Documento:</strong> {{ $detalleFactura['nro_doc'] }}</p>
+                        <p><strong>Almacén de Origen:</strong> {{ $detalleFactura['almacen_origen'] }}</p>
+                        <p><strong>Tipo de Documento:</strong> {{ $detalleFactura['tipo_doc'] }}</p>
                         <p><strong>Fecha de Emisión:</strong> {{ \Carbon\Carbon::parse($detalleFactura['fecha_emision'])->format('d/m/Y') }}</p>
-                        <p><strong>Descripción del Producto:</strong> {{ $detalleFactura['descripcion_producto'] }}</p>
-                        <p><strong>Lote:</strong> {{ $detalleFactura['lote'] }}</p>
-                        <p><strong>Cantidad:</strong> {{ $detalleFactura['cantidad'] }}</p>
-                        <p><strong>Unidad:</strong> {{ $detalleFactura['unidad'] }}</p>
+                        <p><strong>Tipo de Movimiento:</strong> {{ $detalleFactura['tipo_movimiento'] }}</p>
+                        <p><strong>Tipo de Documento Referencial:</strong> {{ $detalleFactura['tipo_doc_ref'] }}</p>
+                        <p><strong>Número de Documento Referencial:</strong> {{ $detalleFactura['nro_doc_ref'] }}</p>
+                        <p><strong>Glosa:</strong> {{ $detalleFactura['glosa'] }}</p>
                         <p><strong>Estado:</strong> {{ $detalleFactura['estado'] }}</p>
-                        <p><strong>Importe Total:</strong> {{ number_format($detalleFactura['importe_total_inc_igv'], 2) }}</p>
+                        <p><strong>Importe Total:</strong> {{ number_format($detalleFactura['importe_total'], 2) }}</p>
                         <p><strong>Descuento Total (sin IGV):</strong> {{ number_format($detalleFactura['descuento_total_sin_igv'], 2) }}</p>
                         <p><strong>IGV Total:</strong> {{ number_format($detalleFactura['igv_total'], 2) }}</p>
-                        <p><strong>Peso:</strong> {{ $detalleFactura['peso'] }} kg</p>
+                        <p><strong>Peso Total:</strong> {{ $detalleFactura['peso_total'] }} kg</p>
                         <p><strong>Volumen:</strong> {{ $detalleFactura['volumen'] }} cm³</p>
                         <p><strong>Tipo de Cambio:</strong> {{ $detalleFactura['tipo_cambio'] }}</p>
                         <p><strong>Moneda:</strong> {{ $detalleFactura['moneda'] }}</p>
-                        <!-- Agrega más campos según sea necesario -->
+                        <p><strong>Dirección de Entrega:</strong> {{ $detalleFactura['direccion_entrega'] }}</p>
+                        <p><strong>Departamento:</strong> {{ $detalleFactura['departamento'] }}</p>
+                        <p><strong>Provincia:</strong> {{ $detalleFactura['provincia'] }}</p>
+                        <p><strong>Distrito:</strong> {{ $detalleFactura['distrito'] }}</p>
                     </div>
                 @else
                     <p>No hay detalles disponibles para mostrar.</p>
@@ -68,7 +71,7 @@
                             </div>
                             <div class="col-lg-9 col-md-9 col-sm-12 mb-2">
                                 <div class="position-relative">
-                                    <input type="text" class="form-control bg-dark text-white rounded-pill ps-5 custom-placeholder" placeholder="Buscar documento" wire:model="searchFactura" style="border: none; outline: none;" />
+                                    <input type="text" class="form-control bg-dark text-white rounded-pill ps-5 custom-placeholder" placeholder="Buscar documento" wire:model="searchGuia" style="border: none; outline: none;" />
                                     <i class="fas fa-search position-absolute" style="left: 15px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
                                 </div>
                             </div>
@@ -100,9 +103,9 @@
                                                 @endphp
                                                 @foreach($filteredGuias as $guia)
                                                     @php
-                                                        $NUMERO = isset($guia->NRO_DOCUMENTO) ? $guia->NRO_DOCUMENTO : null;
+                                                        $NUMERO = isset($guia->NRO_DOC) ? $guia->NRO_DOC : null;
                                                         $comprobanteExiste = collect($this->selectedGuias)->first(function ($facturaVa) use ($NUMERO) {
-                                                            return isset($facturaVa['nro_documento']) && $facturaVa['nro_documento'] === $NUMERO;
+                                                            return isset($facturaVa['nro_doc']) && $facturaVa['nro_doc'] === $NUMERO;
                                                         });
                                                     @endphp
                                                     @if($NUMERO && !$comprobanteExiste && !in_array($NUMERO, $documentosMostrados))
@@ -125,7 +128,7 @@
                                                                 </span>
                                                                             @isset($guia->TIPO_DOC_REF)
                                                                                 <span class="d-block tamanhoTablaComprobantes">
-                                                                        {{ $guia->TIPO_DOC_REF . ': ' . $guia->NRO_DOC_REF }}
+                                                                        {{ $guia->TIPO_DOC_REF . ': ' . $guia->NRO_DOC_REF}}
                                                                     </span>
                                                                             @endisset
                                                                         </td>
@@ -146,7 +149,7 @@
                                                                     <tr style="border-top: 2px solid transparent;">
                                                                         <td colspan="3" style="padding-top: 0">
                                                                 <span class="d-block tamanhoTablaComprobantes">
-                                                                    {{ ($guia->{'DIRECCION_ENTREGA'}) ?? 'Sin dirección' }} <br>
+                                                                    {{ ($guia->{'DIREC_ENTREGA'}) ?? 'Sin dirección' }} <br>
                                                                     UBIGEO: <b class="colorBlackComprobantes">
                                                                         {{ ($guia->{'DEPARTAMENTO'}) ?? 'N/A' }} -
                                                                         {{ ($guia->{'PROVINCIA'} )?? 'N/A' }} -
@@ -244,7 +247,7 @@
                                                     <tr>
                                                         <th>N° Documento</th>
                                                         <th>Fecha Emisión</th>
-                                                        <th>Importe sin IGV</th>
+                                                        <th>Importe Total</th>
                                                         <th>Nombre Cliente</th>
                                                         <th>Dirección</th>
                                                         <th>Acciones</th>
@@ -253,16 +256,16 @@
                                                 <x-slot name="tbody">
                                                     @foreach($selectedGuias as $factura)
                                                         <tr>
-                                                            <td>{{ $factura['nro_documento'] ?? 'No disponible' }}</td>
+                                                            <td>{{ $factura['nro_doc'] ?? 'No disponible' }}</td>
                                                             <td>{{ \Carbon\Carbon::parse($factura['fecha_emision'])->format('d/m/Y') ?? 'Sin fecha' }}</td>
-                                                            <td>{{ number_format($factura['igv_total'], 2) ?? '0.00' }}</td>
+                                                            <td>{{ number_format($factura['importe_total'], 2) ?? '0.00' }}</td>
                                                             <td>{{ $factura['nombre_cliente'] ?? 'Desconocido' }}</td>
-                                                            <td>{{ $factura['direccion_entrega'] ?? 'Sin dirección' }}</td>
+                                                            <td>{{ $factura['direccion_entrega'] ?? 'Sin dirección'}}</td>
                                                             <td>
-                                                                <a href="#" wire:click.prevent="eliminarFacturaSeleccionada('{{ $factura['nro_documento'] }}')" class="btn btn-danger btn-sm text-white m-1">
+                                                                <a href="#" wire:click.prevent="eliminarFacturaSeleccionada('{{ $factura['nro_doc'] }}')" class="btn btn-danger btn-sm text-white m-1">
                                                                     <i class="fas fa-trash-alt"></i>
                                                                 </a>
-                                                                <a href="#" wire:click.prevent="listar_detallesf('{{ $factura['nro_documento'] }}')" class="btn btn-sm btn-primary text-white m-1" data-bs-toggle="modal" data-bs-target="#modalDetalleFactura">
+                                                                <a href="#" wire:click.prevent="listar_detallesf('{{ $factura['nro_doc'] }}')" class="btn btn-sm btn-primary text-white m-1" data-bs-toggle="modal" data-bs-target="#modalDetalleFactura">
                                                                     <i class="fas fa-eye"></i>
                                                                 </a>
                                                             </td>
