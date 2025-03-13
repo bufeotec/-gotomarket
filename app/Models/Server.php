@@ -183,6 +183,22 @@ class  Server extends Model
 
             if ($responseData->code === 200){
                 $result = collect($responseData->data);
+
+                if (count($result) > 0){
+                    // Iteramos sobre el resultado
+                    foreach ($result as $key => $re) {
+                        // Verificamos si existe el despacho en la tabla 'despacho_ventas'
+                        $validarExistencia = DB::table('guias')
+                            ->where('guia_nro_doc', $re->NRO_DOC)
+                            ->orderBy('id_guia','desc')
+                            ->exists();
+
+                        // Si existe, eliminamos el registro de $result
+                        if ($validarExistencia) {
+                            unset($result[$key]); // Elimina el elemento del array
+                        }
+                    }
+                }
             }
 
         } catch (\Exception $e) {
@@ -192,50 +208,17 @@ class  Server extends Model
 
         return $result;
     }
-//    public function listar_notas_credito_ss(){
-//        try {
-//            $result = array();
-//            $client = new \GuzzleHttp\Client();
-//            $url = "http://127.0.0.1/api_goto/public/api/v1/list_nc_ss";
-////            $url = "http://161.132.173.106:8081/api_goto/public/api/v1/list_nc_ss";
-//
-//
-////            $response = $client->post($url, [
-////                'form_params' => [
-//////                    'desde' => $desde,
-//////                    'hasta' => $hasta,
-////                ],
-////            ]);
-////            // Enviar solicitud GET sin parámetros
-//            $response = $client->post($url);
-//
-//            // Procesar la respuesta
-//            $body = $response->getBody()->getContents();
-//            $responseData = json_decode($body);
-//
-//            if ($responseData->code === 200){
-//                $result = collect($responseData->data);
-//            }
-//
-//        } catch (\Exception $e) {
-//            $this->logs->insertarLog($e);
-//            $result = [];
-//        }
-//
-//        return $result;
-//    }
-    public function obtenerDetalleRemision($serie,$numero){
+    public function obtenerDetalleRemision($num_doc){
         try {
             $result = array();
             $client = new \GuzzleHttp\Client();
-//            $url = "http://127.0.0.1/api_goto/public/api/v1/list_r_documents"; // Asegúrate de que esta ruta existe en tu API
-            $url = "http://161.132.173.106:8081/api_goto/public/api/v1/list_local_receipts";
+            $url = "http://127.0.0.1/api_goto/public/api/v1/list_detalles_r_documents";
+//            $url = "http://161.132.173.106:8081/api_goto/public/api/v1/list_detalles_r_documents";
 
 
             $response = $client->post($url, [
                 'form_params' => [
-                    'serie' => $serie,
-                    'numero' => $numero,
+                    'num_doc' => $num_doc,
                 ],
             ]);
 //            // Enviar solicitud GET sin parámetros
@@ -280,7 +263,51 @@ class  Server extends Model
                 ],
             ]);
 
-//            $response = $client->post($url);
+            // Procesar la respuesta
+            $body = $response->getBody()->getContents();
+            $responseData = json_decode($body);
+
+            if ($responseData->code === 200){
+                $result = collect($responseData->data);
+
+                if (count($result) > 0){
+                    // Iteramos sobre el resultado
+                    foreach ($result as $key => $re) {
+                        // Verificamos si existe el despacho en la tabla 'despacho_ventas'
+                        $validarExistencia = DB::table('notas_creditos')
+                            ->where('not_cred_nro_doc', $re->NRO_DOCUMENTO)
+                            ->orderBy('id_not_cred','desc')
+                            ->exists();
+
+                        // Si existe, eliminamos el registro de $result
+                        if ($validarExistencia) {
+                            unset($result[$key]); // Elimina el elemento del array
+                        }
+                    }
+                }
+
+            }
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+
+        return $result;
+    }
+    public function listar_notas_credito_detalle_ss($num_doc){
+        try {
+            $result = array();
+            $client = new \GuzzleHttp\Client();
+            $url = "http://127.0.0.1/api_goto/public/api/v1/list_detalle_nc_ss";
+//            $url = "http://161.132.173.106:8081/api_goto/public/api/v1/list_detalle_nc_ss";
+//            // Enviar solicitud GET sin parámetros
+
+            $response = $client->post($url, [
+                'form_params' => [
+                    'num_doc' => $num_doc,
+                ],
+            ]);
 
             // Procesar la respuesta
             $body = $response->getBody()->getContents();
@@ -288,6 +315,7 @@ class  Server extends Model
 
             if ($responseData->code === 200){
                 $result = collect($responseData->data);
+
             }
 
         } catch (\Exception $e) {
