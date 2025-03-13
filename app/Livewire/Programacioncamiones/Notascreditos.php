@@ -154,6 +154,21 @@ class Notascreditos extends Component
         $this->nota_credito_detalle = $this->notacredito->listar_nota_credito_detalle($id_not_cred);
     }
 
+    public $detallesGuia = [];
+
+    public function verDetallesGuia($id_guia) {
+        // Busca los detalles en la tabla 'guias_detalles' usando el id_guia
+        $this->detallesGuia = DB::table('guias_detalles')
+            ->where('id_guia', '=', $id_guia)
+            ->get()
+            ->toArray();
+
+        // Si no hay detalles, asigna un array vacío
+        if (empty($this->detallesGuia)) {
+            $this->detallesGuia = [];
+        }
+    }
+
     public function saveNotaCredito() {
         try {
             if (!Gate::allows('guardar_nota_credito')) {
