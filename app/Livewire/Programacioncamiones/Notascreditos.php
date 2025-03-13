@@ -161,13 +161,30 @@ class Notascreditos extends Component
                 return;
             }
 
-            // Validar que haya facturas seleccionadas
-            $this->validate([
-                'selectedGuias' => 'required|array|min:1',
-            ], [
-                'selectedGuias.required' => 'Debes seleccionar al menos una factura.',
-                'selectedGuias.min' => 'Debes seleccionar al menos una factura.',
-            ]);
+            // Validar manualmente en lugar de usar $this->validate()
+            $hasErrors = false;
+            // Validar guías seleccionadas
+            if (empty($this->selectedGuias) || !is_array($this->selectedGuias) || count($this->selectedGuias) < 1) {
+                session()->flash('error-guia', 'Debe seleccionar una nota de crédito');
+                $hasErrors = true;
+                return;
+            }
+            // Validar motivo
+            if (empty($this->not_cred_motivo)) {
+                session()->flash('error-guia', 'Debe seleccionar un motivo');
+                $hasErrors = true;
+                return;
+            }
+            // Validar descripción
+            if (empty($this->not_cred_motivo_descripcion)) {
+                session()->flash('error-guia', 'La descripción del motivo es obligatoria');
+                $hasErrors = true;
+                return;
+            }
+            // Si hay errores, detener la función
+            if ($hasErrors) {
+                return;
+            }
 
             DB::beginTransaction();
 
@@ -236,16 +253,13 @@ class Notascreditos extends Component
                     }
                 }
             }
-
             DB::commit();
-
             // Limpiar los resultados de la búsqueda y las guías seleccionadas
             $this->filteredGuias = []; // Limpiar los resultados filtrados
             $this->selectedGuias = []; // Limpiar las guías seleccionadas
             $this->search_nota_credito = ''; // Limpiar el campo de búsqueda
             $this->desde = date('Y-m-d'); // Reiniciar la fecha "desde"
             $this->hasta = date('Y-m-d'); // Reiniciar la fecha "hasta"
-
             // Cerrar el modal y mostrar mensaje de éxito
             $this->dispatch('hideModal');
             session()->flash('success', 'Facturas procesadas correctamente.');
@@ -257,6 +271,7 @@ class Notascreditos extends Component
     }
 
 //    *****
+
     public function edit_data($id){
         $notaCredEdit = Notacredito::find(base64_decode($id));
         if ($notaCredEdit) {

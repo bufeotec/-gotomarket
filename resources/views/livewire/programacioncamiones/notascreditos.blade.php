@@ -105,7 +105,7 @@
                     </div>
 
                     <!-- Campo para mostrar el select o el h6 -->
-                    <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
+                    <div class="col-lg-5 col-md-5 col-sm-12 mb-3">
                         <div class="row">
                             <div class="col-lg-4 col-md-4 col-sm-12 mb-2">
                                 <input type="date" name="fecha_desde" id="fecha_desde" wire:model="desde" class="form-control" min="2025-01-01">
@@ -113,12 +113,6 @@
                             <div class="col-lg-4 col-md-4 col-sm-12 mb-2">
                                 <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model="hasta" class="form-control" min="2025-01-01">
                             </div>
-{{--                            <div class="col-lg-9 col-md-9 col-sm-12 mb-2">--}}
-{{--                                <div class="position-relative">--}}
-{{--                                    <input type="text" class="form-control bg-dark text-white rounded-pill ps-5 custom-placeholder" placeholder="Buscar comprobante" wire:model="searchFactura" style="border: none; outline: none;" />--}}
-{{--                                    <i class="fas fa-search position-absolute" style="left: 15px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>--}}
-{{--                                </div>--}}
-{{--                            </div>--}}
                             <div class="col-lg-4 col-md-4 col-sm-12 mt-1">
                                 <a class="btn btn-sm bg-primary text-white w-100" type="button" wire:click="buscar_comprobantes" >
                                     <i class="fa fa-search"></i> BUSCAR
@@ -133,8 +127,8 @@
                                     <x-table-general>
                                         <x-slot name="thead">
                                             <tr>
-                                                <th style="font-size: 11px">Número de documento</th>
-                                                <th style="font-size: 12px">Tipo de movimiento</th>
+                                                <th style="font-size: 11px">N° Documento NC</th>
+                                                <th style="font-size: 12px">Tipo de Movimiento</th>
                                                 <th style="font-size: 12px">Importe total</th>
                                             </tr>
                                         </x-slot>
@@ -202,25 +196,48 @@
                         </div>
                     </div>
 
-                    <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
+                    <div class="col-lg-3 col-md-3 col-sm-12 mb-3">
                         <div class="row">
-                            <div class="col-lg-12 col-md-12 col-sm-12 m-3">
+                            <div class="col-lg-12 col-md-12 col-sm-12">
                                 <label class="mb-2">Notas Seleccionadas</label>
                                 @if (!empty($selectedGuias))
-                                    @foreach ($selectedGuias as $factura)
-                                        <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <h6 class="mb-0">
-                                                {{ $factura['NRO_DOCUMENTO'] }}
-                                            </h6>
-                                            <a href="#" class="btn btn-danger btn-sm mx-3" wire:click.prevent="eliminar_nota_credito_seleccionada('{{ $factura['NRO_DOCUMENTO'] }}')">
-                                                <i class="fas fa-trash"></i> Eliminar
-                                            </a>
-                                        </div>
-                                    @endforeach
+                                    <div class="contenedor-comprobante" style="max-height: 360px; overflow: auto">
+                                        <x-table-general>
+                                            <x-slot name="thead">
+                                                <tr>
+                                                    <th style="font-size: 12px">N° Documento NC</th>
+                                                    <th style="font-size: 12px">Acciones</th>
+                                                </tr>
+                                            </x-slot>
+
+                                            <x-slot name="tbody">
+                                                @foreach($selectedGuias as $factura)
+                                                    <tr>
+                                                        <td style="font-size: 15px">{{ $factura['NRO_DOCUMENTO'] }}</td>
+                                                        <td>
+                                                            <a href="#" class="btn text-danger btn-sm mx-3" wire:click.prevent="eliminar_nota_credito_seleccionada('{{ $factura['NRO_DOCUMENTO'] }}')">
+                                                                <i class="fas fa-trash"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </x-slot>
+                                        </x-table-general>
+                                    </div>
                                 @else
-                                    <p class="text-muted mb-0">No hay guía seleccionada.</p>
+                                    <p class="text-muted mb-0">Debe seleccionadar una nota de credito.</p>
                                 @endif
                             </div>
+                        </div>
+                        <div wire:loading wire:target="eliminar_nota_credito_seleccionada" class="overlay__eliminar">
+                            <div class="spinner__container__eliminar">
+                                <div class="spinner__eliminar"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                        <div class="row">
                             <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
                                 <label for="not_cred_motivo" class="form-label">Código de motivo</label>
                                 <select class="form-select" name="not_cred_motivo" id="not_cred_motivo" wire:model="not_cred_motivo">
@@ -241,11 +258,6 @@
                                 @error('not_cred_motivo_descripcion')
                                 <span class="message-error">{{ $message }}</span>
                                 @enderror
-                            </div>
-                        </div>
-                        <div wire:loading wire:target="eliminar_nota_credito_seleccionada" class="overlay__eliminar">
-                            <div class="spinner__container__eliminar">
-                                <div class="spinner__eliminar"></div>
                             </div>
                         </div>
                     </div>
@@ -391,46 +403,6 @@
     {{ $listar_nota_credito->links(data: ['scrollTo' => false]) }}
 
 </div>
-
-<script src="{{ asset('select2/dist/js/select2.min.js') }}"></script>
-<script>
-    function initSelect2() {
-        $('#id_despacho_venta').select2({
-            width: '100%',
-            allowClear: true,
-            placeholder: 'Seleccionar...',
-            minimumResultsForSearch: 1,
-            dropdownParent: $('#id_despacho_venta').parent(),
-            language: {
-                noResults: function() {
-                    return "No se encontraron resultados.";
-                }
-            }
-        });
-
-        // Escuchar el cambio de valor y actualizar el modelo de Livewire
-        $('#id_despacho_venta').on('change', function () {
-        @this.set('id_despacho_venta', $(this).val());
-        });
-    }
-
-    $(document).ready(function() {
-        initSelect2();
-    });
-
-    document.addEventListener('livewire:load', function () {
-        Livewire.hook('message.processed', (message, component) => {
-            initSelect2(); // Re-inicializar Select2 después de cada actualización de Livewire
-        });
-
-        // Escuchar el evento para actualizar Select2
-        Livewire.on('updateSelect2', (value) => {
-            $('#id_despacho_venta').val(value).trigger('change');
-        });
-    });
-</script>
-
-
 
 @script
 <script>
