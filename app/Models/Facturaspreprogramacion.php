@@ -64,8 +64,7 @@ class Facturaspreprogramacion extends Model
     public function listar_facturas_pre_programacion_estadox(){
         try {
             $result = DB::table('guias')
-                ->where('guia_estado_aprobacion', '=', 6)
-                ->where('guia_estado', '=', 'EMITIDA')
+                ->where('guia_estado_aprobacion', '=', 1,2,3,4,5,6)
                 ->get();
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);
