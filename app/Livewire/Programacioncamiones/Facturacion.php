@@ -4,7 +4,7 @@ namespace App\Livewire\Programacioncamiones;
 
 use App\Models\Facturamovimientoarea;
 use App\Models\Facturaspreprogramacion;
-use App\Models\Historialpreprogramacion;
+use App\Models\Historialguia;
 use App\Models\Logs;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -20,12 +20,12 @@ class Facturacion extends Component
     private $logs;
     private $facpreprog;
     private $facmovarea;
-    private $historialpreprogramacion;
+    private $historialguia;
     public function __construct(){
         $this->logs = new Logs();
         $this->facpreprog = new Facturaspreprogramacion();
         $this->facmovarea = new Facturamovimientoarea();
-        $this->historialpreprogramacion = new Historialpreprogramacion();
+        $this->historialguia = new Historialguia();
     }
     public $messagePrePro = "";
     public $id_guia;
@@ -94,6 +94,15 @@ class Facturacion extends Component
                 $factura->guia_estado_aprobacion = $this->guia_estado_aprobacion;
 
                 if ($factura->save()) {
+                    // Registrar en historial guias
+                    $historial = new Historialguia();
+                    $historial->id_users = Auth::id();
+                    $historial->id_guia = $this->id_guia;
+                    $historial->guia_nro_doc = $factura->guia_nro_doc;
+                    $historial->historial_guia_estado_aprobacion = $this->guia_estado_aprobacion;
+                    $historial->historial_guia_fecha_hora = Carbon::now('America/Lima');
+                    $historial->historial_guia_estado = 1;
+                    $historial->save();
                     // Buscar si ya existe un registro en la tabla facturas_mov
                     $facturaMov = DB::table('facturas_mov')
                         ->where('id_guia', $this->id_guia)
