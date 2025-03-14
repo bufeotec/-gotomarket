@@ -17,7 +17,7 @@
                     </div>
 
                     <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-center">
-                        <button type="submit" class="btn btn-primary text-white btnDelete">ENVIAR</button>
+                        <button type="submit" class="btn btn-primary text-white btnDelete">ACEPTAR</button>
                         <button type="button" class="btn btn-success btnDelete" id="btnEdit">EDITAR</button>
                     </div>
                 </div>
@@ -60,19 +60,14 @@
     <x-modal-delete wire:ignore.self style="z-index: 1056;">
         <x-slot name="id_modal">modalFacApro</x-slot>
         <x-slot name="modalContentDelete">
-            <form wire:submit.prevent="enviar_facturas_aprobrar">
+            <form wire:submit.prevent="confirmarEnvio">
                 <div class="row">
                     <div class="col-lg-12 col-md-12 col-sm-12">
                         <h2 class="deleteTitle">{{ $messageFacApro }}</h2>
                     </div>
-                    <div class="col-lg-12 col-md-12 col-sm-12 mt-3" id="fechaHoraContainer" style="display: none;">
-                        <label for="fechaHoraManual2">Modificar fecha y hora:</label>
-                        <input type="datetime-local" id="fechaHoraManual2" wire:model="fechaHoraManual2" wire:change="actualizarMensaje" class="form-control">
-                    </div>
-
                     <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-center">
                         <button type="submit" class="btn btn-primary text-white btnDelete">ENVIAR</button>
-                        <button type="button" class="btn btn-success btnDelete" id="btnEditar">EDITAR</button>
+                        <button type="button" class="btn btn-danger btnDelete" id="btnEditar" data-bs-dismiss="modal">CANCELAR</button>
                     </div>
                 </div>
             </form>
@@ -126,109 +121,78 @@
                                 <x-table-general>
                                     <x-slot name="thead">
                                         <tr>
-                                            <th style="font-size: 12px">Serie  / Guía</th>
+                                            <th style="font-size: 12px">Guía / Factura</th>
                                             <th style="font-size: 12px">Fecha Emisión</th>
                                             <th style="font-size: 12px">Importe sin IGV</th>
                                             <th style="font-size: 12px">Nombre del Cliente</th>
-                                            <th style="font-size: 12px">Peso y Volumen</th>
                                             <th style="font-size: 12px">Acciones</th>
                                         </tr>
                                     </x-slot>
 
                                     <x-slot name="tbody">
                                         @if(!empty($filteredFacturas))
-                                            @foreach($filteredFacturas as $factura)
-                                                @php
-                                                    $CFTD = $factura->fac_pre_prog_cftd; // Cambiado
-                                                    $CFNUMSER = $factura->fac_pre_prog_cfnumser; // Cambiado
-                                                    $CFNUMDOC = $factura->fac_pre_prog_cfnumdoc; // Cambiado
-                                                    $comprobanteExiste = collect($this->selectedFacturas)->first(function ($facturaVa) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
-                                                        return $facturaVa['CFTD'] === $CFTD
-                                                            && $facturaVa['CFNUMSER'] === $CFNUMSER
-                                                            && $facturaVa['CFNUMDOC'] === $CFNUMDOC;
-                                                    });
-                                                @endphp
-                                                @if(!$comprobanteExiste)
-                                                    <tr style="cursor: pointer">
-                                                        <td colspan="6" style="padding: 0px">
-                                                            <table class="table">
-                                                                <tbody>
-                                                                <tr>
-                                                                    <td style="width: 39.6%">
-                                                                            <span class="tamanhoTablaComprobantes">
-                                                                                <b class="colorBlackComprobantes">{{ date('d/m/Y', strtotime($factura->fac_pre_prog_grefecemision)) }}</b>
-                                                                            </span>
-                                                                        <span class="d-block tamanhoTablaComprobantes">
-                                                                                {{ $factura->fac_pre_prog_cfnumser }} - {{ $factura->fac_pre_prog_cfnumdoc }}
-                                                                            </span>
-                                                                        @php
-                                                                            $guia = $me->formatearCodigo($factura->fac_pre_prog_guia) // Cambiado
-                                                                        @endphp
-                                                                        <span class="d-block tamanhoTablaComprobantes">
-                                                                                {{ $guia }}
-                                                                            </span>
-                                                                    </td>
-                                                                    <td style="width: 32.2%">
-                                                                            <span class="d-block tamanhoTablaComprobantes">
-                                                                                {{$me->obtenerNombreFecha($factura->fac_pre_prog_grefecemision,'DateTime','Date')}}
-                                                                            </span>
-                                                                    </td>
-                                                                    <td style="width: 32.2%">
-                                                                            <span class="d-block tamanhoTablaComprobantes">
-                                                                                {{ $me->formatoDecimal($factura->fac_pre_prog_cfimporte ?? 0)}} <!-- Cambiado -->
-                                                                            </span>
-                                                                    </td>
-                                                                    <td style="width: 32.2%">
-                                                                            <span class="d-block tamanhoTablaComprobantes">
-                                                                                {{ $factura->fac_pre_prog_cnomcli }} <!-- Cambiado -->
-                                                                            </span>
-                                                                    </td>
-                                                                    <td>
-                                                                        @php
-                                                                            $tablaPeso = "0";
-                                                                            if ($factura->fac_pre_prog_total_kg){ // Cambiado
-                                                                                $tablaPeso = $me->formatoDecimal($factura->fac_pre_prog_total_kg);
-                                                                            }
-                                                                        @endphp
-                                                                        @php
-                                                                            $tablaVolumen = "0";
-                                                                            if ($factura->fac_pre_prog_total_volumen){ // Cambiado
-                                                                                $tablaVolumen = $me->formatoDecimal($factura->fac_pre_prog_total_volumen);
-                                                                            }
-                                                                        @endphp
-                                                                        <span class="d-block tamanhoTablaComprobantes">
-                                                                                <b class="colorBlackComprobantes">{{ $tablaPeso }} kg</b>
-                                                                            </span>
-                                                                        <span class="d-block tamanhoTablaComprobantes">
-                                                                                <b class="colorBlackComprobantes">{{ $tablaVolumen }} cm³</b>
-                                                                            </span>
-                                                                    </td>
-                                                                    <td>
-                                                                        <x-btn-accion class="btn btn-success btn-sm text-white" wire:click="pre_mot_cre('{{ base64_encode($factura->id_fac_pre_prog) }}')" data-bs-toggle="modal" data-bs-target="#modalMotCre">
-                                                                            <x-slot name="message">
-                                                                                <i class="fa-solid fa-check"></i>
-                                                                            </x-slot>
-                                                                        </x-btn-accion>
+                                            @foreach($filteredFacturas as $guia) <!-- Cambiado de $factura a $guia -->
+                                            @php
+                                                $NRO_DOC = $guia->guia_nro_doc; // Cambiado
+                                                $comprobanteExiste = collect($this->selectedFacturas)->first(function ($facturaVa) use ($NRO_DOC) {
+                                                    return isset($facturaVa['NRO_DOC']) && $facturaVa['NRO_DOC'] === $NRO_DOC;
+                                                });
+                                            @endphp
+                                            @if(!$comprobanteExiste)
+                                                <tr style="cursor: pointer">
+                                                    <td colspan="6" style="padding: 0px">
+                                                        <table class="table">
+                                                            <tbody>
+                                                            <tr>
+                                                                <td style="width: 39.6%">
+                                                                    <span class="tamanhoTablaComprobantes">
+                                                                        <b class="colorBlackComprobantes">{{ date('d/m/Y', strtotime($guia->guia_fecha_emision)) }}</b> <!-- Cambiado -->
+                                                                    </span>
+                                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                                        {{ $guia->guia_nro_doc }} - {{ $guia->guia_nro_doc_ref }}
+                                                                    </span>
+                                                                    @php
+                                                                        $codigoGuia = $me->formatearCodigo($guia->guia_nro_doc); // Cambiado
+                                                                    @endphp
+                                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                                        {{ $codigoGuia }}
+                                                                    </span>
+                                                                </td>
+                                                                <td style="width: 32.2%">
+                                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                                        {{ $me->obtenerNombreFecha($guia->guia_fecha, 'DateTime', 'Date') }} <!-- Cambiado -->
+                                                                    </span>
+                                                                </td>
+                                                                <td style="width: 32.2%">
+                                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                                        {{ $me->formatoDecimal($guia->guia_importe_total ?? 0) }} <!-- Cambiado -->
+                                                                    </span>
+                                                                </td>
+                                                                <td style="width: 32.2%">
+                                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                                        {{ $guia->guia_nombre_cliente }} <!-- Cambiado -->
+                                                                    </span>
+                                                                </td>
+                                                                <td>
+                                                                    <x-btn-accion class="btn btn-success btn-sm text-white" wire:click="pre_mot_cre('{{ base64_encode($guia->id_guia) }}')" data-bs-toggle="modal" data-bs-target="#modalMotCre">
+                                                                        <x-slot name="message">
+                                                                            <i class="fa-solid fa-check"></i>
+                                                                        </x-slot>
+                                                                    </x-btn-accion>
+                                                                </td>
+                                                            </tr>
+                                                            <tr style="border-top: 2px solid transparent;">
+                                                                <td colspan="6" style="padding-top: 0">
+                                                                    <span class="d-block tamanhoTablaComprobantes">
 
-{{--                                                                        <x-btn-accion class="btn btn-danger btn-sm text-white" wire:click="rech_mot_cre('{{ base64_encode($factura->id_fac_pre_prog) }}')" data-bs-toggle="modal" data-bs-target="#modalMotReCre">--}}
-{{--                                                                            <x-slot name="message">--}}
-{{--                                                                                <i class="fa-regular fa-circle-xmark"></i>--}}
-{{--                                                                            </x-slot>--}}
-{{--                                                                        </x-btn-accion>--}}
-                                                                    </td>
-                                                                </tr>
-                                                                <tr style="border-top: 2px solid transparent;">
-                                                                    <td colspan="6" style="padding-top: 0">
-                                                                            <span class="d-block tamanhoTablaComprobantes">
-                                                                                {{ $factura->fac_pre_prog_direccion_llegada }} <br> UBIGEO: <b class="colorBlackComprobantes">{{ $factura->fac_pre_prog_departamento }} - {{ $factura->fac_pre_prog_provincia }} - {{ $factura->fac_pre_prog_distrito }}</b>
-                                                                            </span>
-                                                                    </td>
-                                                                </tr>
-                                                                </tbody>
-                                                            </table>
-                                                        </td>
-                                                    </tr>
-                                                @endif
+                                                                    </span>
+                                                                </td>
+                                                            </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            @endif
                                             @endforeach
                                         @else
                                             <tr>
@@ -252,103 +216,103 @@
         </div>
 
         <div class="col-lg-7">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="card">
-                        <div class="card-body table-responsive">
-                            <div class="row">
-                                <div class="col-lg-12">
-                                    <div class="row align-items-center">
-                                        <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <h6 class="mb-0">Facturas Recepcionadas</h6>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-body table-responsive">
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="row align-items-center">
+                                            <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <h6 class="mb-0">Guías Recepcionadas</h6>
+{{--                                                    <div>--}}
+{{--                                                        <input type="checkbox" wire:model="selectAll" id="selectAll">--}}
+{{--                                                        <label for="selectAll">Seleccionar todo</label>--}}
+{{--                                                    </div>--}}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="col-lg-12 col-md-12 col-sm-12">
-                                    @if(count($facturasCreditoAprobadas) > 0)
-                                        <x-table-general id="ederTable">
-                                            <x-slot name="thead">
-                                                <tr>
-                                                    <th class="">Serie / Guía</th>
-                                                    <th class="">F. Emisión</th>
-                                                    <th class="">Importe sin IGV</th>
-                                                    <th class="">Nombre Cliente</th>
-                                                    <th class="">Peso y Volumen</th>
-                                                    <th class="">Dirección</th>
-                                                    <th class="">Acciones</th>
-                                                </tr>
-                                            </x-slot>
-                                            <x-slot name="tbody">
-                                                @foreach($facturasCreditoAprobadas as $factura)
+                                    <div class="col-lg-12 col-md-12 col-sm-12">
+                                        @if(count($facturasCreditoAprobadas) > 0)
+                                            <x-table-general id="ederTable">
+                                                <x-slot name="thead">
                                                     <tr>
-                                                        <td>
-                                                                <span class="d-block tamanhoTablaComprobantes">
-                                                                    {{ $factura->fac_pre_prog_cfnumser }} - {{ $factura->fac_pre_prog_cfnumdoc }}
-                                                                </span>
-                                                            @php
-                                                                $guia2 = $me->formatearCodigo($factura->fac_pre_prog_guia)
-                                                            @endphp
-                                                            <span class="d-block tamanhoTablaComprobantes">
-                                                                    {{ $guia2 }}
-                                                                </span>
-                                                        </td>
-                                                        <td>
-                                                            <span class="d-block tamanhoTablaComprobantes">
-                                                                {{ date('d/m/Y', strtotime($factura->fac_pre_prog_grefecemision)) }}
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <span class="d-block tamanhoTablaComprobantes">
-                                                                <b class="colorBlackComprobantes">{{ $me->formatoDecimal($factura->fac_pre_prog_cfimporte ?? 0) }}</b>
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <span class="d-block tamanhoTablaComprobantes">
-                                                                {{ $factura->fac_pre_prog_cnomcli }}
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <span class="d-block tamanhoTablaComprobantes">
-                                                                <b class="colorBlackComprobantes">{{ $me->formatoDecimal($factura->fac_pre_prog_total_kg ?? 0) }} kg</b>
-                                                            </span>
-                                                            <span class="d-block tamanhoTablaComprobantes">
-                                                                <b class="colorBlackComprobantes">{{ $me->formatoDecimal($factura->fac_pre_prog_total_volumen ?? 0) }} cm³</b>
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <span class="d-block tamanhoTablaComprobantes">
-                                                                {{ $factura->fac_pre_prog_direccion_llegada }}
-                                                            </span>
-                                                            <br>
-                                                            <span class="d-block tamanhoTablaComprobantes" style="color: black;font-weight: bold">
-                                                                {{ $factura->fac_pre_prog_departamento }} - {{ $factura->fac_pre_prog_provincia }} - {{ $factura->fac_pre_prog_distrito }}
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <x-btn-accion class="btn btn-success btn-sm text-white" wire:click="enviar_fac_apro('{{ base64_encode($factura->id_fac_pre_prog) }}')" data-bs-toggle="modal" data-bs-target="#modalFacApro">
-                                                                <x-slot name="message">
-                                                                    <i class="fa-solid fa-check"></i>
-                                                                </x-slot>
-                                                            </x-btn-accion>
-                                                        </td>
+                                                        <th class="">Guía / Factura</th>
+                                                        <th class="">F. Emisión</th>
+                                                        <th class="">Importe sin IGV</th>
+                                                        <th class="">Nombre Cliente</th>
+                                                        <th class="">Dirección</th>
+                                                        <th class="">Acciones</th>
                                                     </tr>
-                                                @endforeach
-                                            </x-slot>
-                                        </x-table-general>
-                                    @else
-                                        <p>No hay facturas aprobadas para crédito.</p>
-                                    @endif
+                                                </x-slot>
+                                                <x-slot name="tbody">
+                                                    @foreach($facturasCreditoAprobadas as $factura)
+                                                        <tr>
+                                                            <td>
+                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                        {{ $factura->guia_nro_doc }} - {{ $factura->guia_nro_doc_ref }}
+                                                    </span>
+                                                                @php
+                                                                    $guia2 = $me->formatearCodigo($factura->guia_nro_doc)
+                                                                @endphp
+                                                                <span class="d-block tamanhoTablaComprobantes">
+                                                        {{ $guia2 }}
+                                                    </span>
+                                                            </td>
+                                                            <td>
+                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                        {{ date('d/m/Y', strtotime($factura->guia_fecha_emision)) }}
+                                                    </span>
+                                                            </td>
+                                                            <td>
+                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                        <b class="colorBlackComprobantes">{{ $me->formatoDecimal($factura->guia_importe_total ?? 0) }}</b>
+                                                    </span>
+                                                            </td>
+                                                            <td>
+                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                        {{ $factura->guia_nombre_cliente }}
+                                                    </span>
+                                                            </td>
+                                                            <td>
+                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                        {{ $factura->guia_direc_entrega }}
+                                                    </span>
+                                                            </td>
+                                                            <td>
+                                                                <input type="checkbox" wire:model="selectedItems" value="{{ (string) $factura->id_guia }}" onchange="toggleButton()">
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                </x-slot>
+                                            </x-table-general>
+                                            <div class="col-lg-12 mt-3 text-end">
+                                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalFacApro" @if(empty($selectedItems)) disabled @endif>
+                                                    Enviar
+                                                </button>
+                                            </div>
+                                        @else
+                                            <p>No hay facturas aprobadas para crédito.</p>
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
     </div>
 </div>
+<script>
+    function toggleButton() {
+        const checkboxes = document.querySelectorAll('input[type="checkbox"][wire\\:model="selectedItems"]');
+        const submitButton = document.querySelector('button[data-bs-toggle="modal"]');
+        const isAnyChecked = Array.from(checkboxes).some(checkbox => checkbox.checked);
+        submitButton.disabled = !isAnyChecked;
+    }
+</script>
 
 @script
 <script>

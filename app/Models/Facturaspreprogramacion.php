@@ -18,11 +18,30 @@ class Facturaspreprogramacion extends Model
         $this->logs = new Logs();
     }
 
-    public function listar_facturas_pre_programacion_estado_dos(){
+//    public function listar_facturas_pre_programacion_estado_dos() {
+//        try {
+//            $result = DB::table('guias')
+//                ->join('guias_detalles', 'guias.id_guia', '=', 'guias_detalles.id_guia')
+//                ->where('guias.guia_estado_aprobacion', '=', 2)
+//                ->select('guias.*', 'guias_detalles.*')
+//                ->get();
+//        } catch (\Exception $e) {
+//            $this->logs->insertarLog($e);
+//            $result = [];
+//        }
+//        return $result;
+//    }
+    public function listar_facturas_pre_programacion_estado_dos() {
         try {
-            $result = DB::table('facturas_pre_programaciones')
-                ->where('fac_pre_prog_estado_aprobacion', '=', 2)
-                ->where('fac_pre_prog_estado', '=', 1)
+            $result = DB::table('guias')
+                ->join('guias_detalles', 'guias.id_guia', '=', 'guias_detalles.id_guia')
+                ->where('guias.guia_estado_aprobacion', '=', 2)
+                ->select(
+                    'guias.*',
+                    DB::raw('SUM(guias_detalles.guia_det_cantidad * guias_detalles.guia_det_peso_gramo) as total_peso'),
+                    DB::raw('SUM(guias_detalles.guia_det_cantidad * guias_detalles.guia_det_volumen) as total_volumen')
+                )
+                ->groupBy('guias.id_guia', 'guias.guia_nro_doc', 'guias.guia_fecha_emision', 'guias.guia_importe_total', 'guias.guia_nombre_cliente', 'guias.guia_direc_entrega') // Agrupamos por columnas necesarias
                 ->get();
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);
@@ -44,9 +63,9 @@ class Facturaspreprogramacion extends Model
     }
     public function listar_facturas_pre_programacion_estadox(){
         try {
-            $result = DB::table('facturas_pre_programaciones')
-                ->where('fac_pre_prog_estado_aprobacion', '=', 6)
-                ->where('fac_pre_prog_estado', '=', 1)
+            $result = DB::table('guias')
+                ->where('guia_estado_aprobacion', '=', 6)
+                ->where('guia_estado', '=', 'EMITIDA')
                 ->get();
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);
@@ -54,8 +73,6 @@ class Facturaspreprogramacion extends Model
         }
         return $result;
     }
-
-
     public function listar_fac_pre_prog_x_id($id){
         try {
             $result = DB::table('facturas_pre_programaciones')
@@ -75,6 +92,17 @@ class Facturaspreprogramacion extends Model
                 ->where('guia_numero','=',$num)
                 ->first();
         }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
+    public function listar_guiax_id($id) {
+        try {
+            $result = DB::table('guias')
+                ->where('id_guia', '=', $id)
+                ->first();
+        } catch (\Exception $e) {
             $this->logs->insertarLog($e);
             $result = [];
         }

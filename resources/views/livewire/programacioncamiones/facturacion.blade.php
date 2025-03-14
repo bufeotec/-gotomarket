@@ -100,7 +100,7 @@
                                             <th>Importe sin IGV</th>
                                             <th>Cliente</th>
                                             <th>Dirección</th>
-                                            <th>Peso y Volumen</th>
+{{--                                            <th>Peso y Volumen</th>--}}
                                             <th>Fecha/Hora Recibida</th>
                                             <th>Acciones</th>
                                         </tr>
@@ -110,12 +110,12 @@
                                             <tr>
                                                 <td>
                                                 <span class="d-block tamanhoTablaComprobantes">
-                                                    {{ $factura->fac_pre_prog_cfnumdoc }}
+                                                    {{ $factura->guia_nro_doc }}
                                                 </span>
                                                 </td>
                                                 <td>
                                                     @php
-                                                        $fechaEmision = \Carbon\Carbon::parse($factura->fac_pre_prog_grefecemision)->format('d/m/Y');
+                                                        $fechaEmision = \Carbon\Carbon::parse($factura->guia_fecha_emision)->format('d/m/Y');
                                                     @endphp
                                                     <span class="d-block tamanhoTablaComprobantes">
                                                     {{ $fechaEmision }}
@@ -123,12 +123,12 @@
                                                 </td>
                                                 <td>
                                                     <span class="d-block tamanhoTablaComprobantes">
-                                                    {{ $factura->fac_pre_prog_cfnumser }} - {{ $factura->fac_pre_prog_cfnumdoc }}
+                                                    {{ $factura->guia_nro_doc }} - {{ $factura->guia_nro_doc_ref }}
                                                 </span>
                                                </td>
                                                 <td>
                                                     @php
-                                                        $importe = number_format($factura->fac_pre_prog_cfimporte, 2, '.', ',');
+                                                        $importe = number_format($factura->guia_importe_total, 2, '.', ',');
                                                     @endphp
                                                     <span class="d-block tamanhoTablaComprobantes">
                                                     <b class="colorBlackComprobantes">{{ $importe }}</b>
@@ -136,25 +136,12 @@
                                                 </td>
                                                 <td>
                                                 <span class="d-block tamanhoTablaComprobantes">
-                                                    {{ $factura->fac_pre_prog_cnomcli }}
+                                                    {{ $factura->guia_nombre_cliente }}
                                                 </span>
                                                 </td>
                                                 <td>
                                                 <span class="d-block tamanhoTablaComprobantes">
-                                                    {{ $factura->fac_pre_prog_direccion_llegada }}
-                                                </span>
-                                                    <br>
-                                                    <span class="d-block tamanhoTablaComprobantes" style="color: black;font-weight: bold">
-                                                    {{ $factura->fac_pre_prog_departamento }} - {{ $factura->fac_pre_prog_provincia }} - {{ $factura->fac_pre_prog_distrito }}
-                                                </span>
-                                                </td>
-                                                <td>
-                                                <span class="d-block tamanhoTablaComprobantes">
-                                                    <b class="colorBlackComprobantes">{{ number_format($factura->fac_pre_prog_total_kg, 2, '.', ',') }} kg</b>
-                                                </span>
-                                                    <span class="d-block tamanhoTablaComprobantes">
-                                                    <b class="colorBlackComprobantes">{{ number_format($factura->fac_pre_prog_total_volumen, 2, '.', ',') }} cm³</b>
-                                                </span>
+                                                    {{ $factura->guia_direc_entrega }}
                                                 </td>
                                                 <td>
                                                 <span class="d-block tamanhoTablaComprobantes">
@@ -162,7 +149,7 @@
                                                 </span>
                                                 </td>
                                                 <td>
-                                                    <x-btn-accion class="btn bg-success btn-sm text-white" wire:click="cambio_estado('{{ base64_encode($factura->id_fac_pre_prog) }}', 2)" data-bs-toggle="modal" data-bs-target="#modalPrePro">
+                                                    <x-btn-accion class="btn bg-success btn-sm text-white" wire:click="cambio_estado('{{ base64_encode($factura->id_guia) }}', 2)" data-bs-toggle="modal" data-bs-target="#modalPrePro">
                                                         <x-slot name="message">
                                                             <i class="fa-solid fa-check"></i>
                                                         </x-slot>

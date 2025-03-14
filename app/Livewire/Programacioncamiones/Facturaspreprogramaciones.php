@@ -302,6 +302,7 @@ class Facturaspreprogramaciones extends Component
 //    }
 
     public function guardarGuias() {
+        $this->filteredGuias = [];
         $this->isSaving = true; // Activar el estado de guardado
         try {
             // Validar que haya facturas seleccionadas y un estado seleccionado
@@ -316,7 +317,6 @@ class Facturaspreprogramaciones extends Component
             ]);
 
             DB::beginTransaction();
-
             foreach ($this->selectedGuias as $factura) {
                 // Verificar si la factura ya existe en la tabla
                 $facturaExistente = Facturaspreprogramacion::where('guia_nro_doc', $factura['NRO_DOC'])
@@ -398,7 +398,7 @@ class Facturaspreprogramaciones extends Component
                 // Insertar en facturas_mov
                 if (isset($nuevaFactura)) {
                     DB::table('facturas_mov')->insert([
-                        'id_fac_pre_prog' => $nuevaFactura->id_guia, // Usar el ID de la nueva factura creada
+                        'id_guia' => $nuevaFactura->id_guia, // Usar el ID de la nueva factura creada
                         'fac_envio_valpago' => Carbon::now('America/Lima'), // Establecer la fecha de envío
                         'id_users_responsable' => Auth::id(), // Asignar el ID del usuario responsable
                     ]);
