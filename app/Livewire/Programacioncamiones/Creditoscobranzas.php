@@ -115,7 +115,7 @@ class Creditoscobranzas extends Component
                             // Registrar en historial guias
                             $historial = new Historialguia();
                             $historial->id_users = Auth::id();
-                            $historial->id_guia = $this->id_guia;
+                            $historial->id_guia = $guiaId;
                             $historial->guia_nro_doc = $facturaPreprogramada->guia_nro_doc;
                             $historial->historial_guia_estado_aprobacion = 5;
                             $historial->historial_guia_fecha_hora = Carbon::now('America/Lima');
