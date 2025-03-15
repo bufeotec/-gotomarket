@@ -9,7 +9,7 @@ use App\Models\Logs;
 use App\Models\TipoServicio;
 use App\Models\Server;
 use App\Models\Facturaspreprogramacion;
-use App\Models\Historialpreprogramacion;
+use App\Models\Historialguia;
 use App\Models\Guiadetalle;
 //use App\Models\Guia;
 use Carbon\Carbon;
@@ -21,7 +21,7 @@ class Facturaspreprogramaciones extends Component
     private $server;
     private $facpreprog;
 //    private $guia;
-    private $historialpreprogramacion;
+    private $historialguia;
     private $guiadetalle;
     public function __construct(){
         $this->logs = new Logs();
@@ -29,7 +29,7 @@ class Facturaspreprogramaciones extends Component
         $this->server = new Server();
 //        $this->guia = new Guia();
         $this->facpreprog = new Facturaspreprogramacion();
-        $this->historialpreprogramacion = new Historialpreprogramacion();
+        $this->historialguia = new Historialguia();
         $this->guiadetalle = new Guiadetalle();
     }
     public $selectedGuias = [];
@@ -328,6 +328,16 @@ class Facturaspreprogramaciones extends Component
                     $facturaExistente->guia_estado_registro = 1;
                     $facturaExistente->guia_fecha = Carbon::now('America/Lima');
                     $facturaExistente->save();
+
+                    // Guardar en la tabla historial guias
+                    $historial = new Historialguia();
+                    $historial->id_users = Auth::id();
+                    $historial->id_guia = $facturaExistente->id_guia;
+                    $historial->guia_nro_doc = $facturaExistente->guia_nro_doc;
+                    $historial->historial_guia_estado_aprobacion = $facturaExistente->guia_estado_aprobacion;
+                    $historial->historial_guia_fecha_hora = Carbon::now('America/Lima');
+                    $historial->historial_guia_estado = $facturaExistente->guia_estado_registro;
+                    $historial->save();
                 } else {
                     // Si no existe, crear un nuevo registro
                     $nuevaFactura = new Facturaspreprogramacion();
@@ -393,6 +403,15 @@ class Facturaspreprogramaciones extends Component
                         $nuevoDetalle->guia_det_volumen_total = $detalle->VOLUMEN_TOTAL_CM3 ?: null;
                         $nuevoDetalle->save();
                     }
+                    // Guardar en la tabla historial guias
+                    $historial = new Historialguia();
+                    $historial->id_users = Auth::id();
+                    $historial->id_guia = $nuevaFactura->id_guia;
+                    $historial->guia_nro_doc = $nuevaFactura->guia_nro_doc;
+                    $historial->historial_guia_estado_aprobacion = $nuevaFactura->guia_estado_aprobacion;
+                    $historial->historial_guia_fecha_hora = Carbon::now('America/Lima');
+                    $historial->historial_guia_estado = $nuevaFactura->guia_estado_registro;
+                    $historial->save();
                 }
 
                 // Insertar en facturas_mov

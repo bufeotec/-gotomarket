@@ -35,12 +35,12 @@
                                 @foreach($listar_comprobantes as $me)
                                     <tr>
                                         <td>{{$conteoMenu}}</td>
-                                        <td>{{$me->fac_pre_prog_cnomcli}}</td>
-                                        <td>{{$me->fac_pre_prog_cfcodcli}}</td>
-                                        <td>{{$me->fac_pre_prog_cfnumdoc}}</td>
-                                        <td>{{ $general->obtenerNombreFecha($me->fac_pre_prog_grefecemision,'DateTime','Date') }}</td>
-                                        <td>S/ {{$general->formatoDecimal($me->fac_pre_prog_cfimporte / 1.18) ?? 0 }}</td>
-                                        <td>S/ {{ $general->formatoDecimal($me->fac_pre_prog_cfimporte) }}</td>
+                                        <td>{{$me->guia_nombre_cliente}}</td>
+                                        <td>{{$me->guia_ruc_cliente}}</td>
+                                        <td>{{$me->guia_nro_doc}}</td>
+                                        <td>{{ $general->obtenerNombreFecha($me->guia_fecha_emision,'DateTime','Date') }}</td>
+                                        <td>S/ {{$general->formatoDecimal($me->guia_importe_total / 1.18) ?? 0 }}</td>
+                                        <td>S/ {{ $general->formatoDecimal($me->guia_importe_total) }}</td>
                                         <td>
                                             @php
                                                 $estado = [
@@ -51,10 +51,10 @@
                                                     5 => 'Aceptado por créditos'
                                                 ];
                                             @endphp
-                                            {{ $estado[$me->fac_pre_prog_estado_aprobacion] ?? 'Desconocido' }}
+                                            {{ $estado[$me->guia_estado_aprobacion] ?? 'Desconocido' }}
                                         </td>
                                         <td>
-                                            <a href="{{ route('Programacioncamion.vistatracking', ['data' => base64_encode(json_encode(['id' => $me->id_fac_pre_prog, 'numdoc' => $me->fac_pre_prog_cfnumdoc]))]) }}"
+                                            <a href="{{ route('Programacioncamion.vistatracking', ['data' => base64_encode(json_encode(['id' => $me->id_guia, 'numdoc' => $me->guia_nro_doc]))]) }}"
                                                target="_blank"
                                                class="btn text-primary">
                                                 <i class="fa-solid fa-eye"></i>

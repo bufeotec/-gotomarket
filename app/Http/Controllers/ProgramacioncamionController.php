@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Despacho;
 use App\Models\DespachoVenta;
+use App\Models\Guia;
 use App\Models\Programacion;
 use App\Models\Facturaspreprogramacion;
 use Illuminate\Http\Request;
@@ -17,6 +18,7 @@ class ProgramacioncamionController extends Controller
     private $despacho;
     private $despacho_venta;
     private $facturapreprogramacion;
+    private $guia;
 
     public function __construct()
     {
@@ -25,6 +27,7 @@ class ProgramacioncamionController extends Controller
         $this->despacho = new Despacho();
         $this->despacho_venta = new DespachoVenta();
         $this->facturapreprogramacion = new Facturaspreprogramacion();
+        $this->guia = new Guia();
     }
 
     public function facturas_pre_programacion(){
@@ -208,12 +211,12 @@ class ProgramacioncamionController extends Controller
             $data = json_decode(base64_decode(request()->get('data')), true);
 
             if ($data && isset($data['id'])) {
-                $id_fac = $data['id'];
+                $id_guia = $data['id'];
                 $num_doc = $data['numdoc'];
 
-                $informacion_fac = $this->facturapreprogramacion->listar_fac_pre_prog_x_id($id_fac);
+                $informacion_guia = $this->guia->listar_guia_x_id($id_guia);
 
-                return view('gestionvendedor.vistatracking', compact('informacion_fac', 'num_doc'));
+                return view('gestionvendedor.vistatracking', compact('informacion_guia', 'num_doc'));
             }
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);

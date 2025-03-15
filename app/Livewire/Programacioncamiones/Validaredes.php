@@ -4,6 +4,7 @@ namespace App\Livewire\Programacioncamiones;
 
 use App\Models\Facturamovimientoarea;
 use App\Models\Facturaspreprogramacion;
+use App\Models\Historialguia;
 use App\Models\Logs;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -12,7 +13,6 @@ use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
-use App\Models\Historialpreprogramacion;
 
 class Validaredes extends Component
 {
@@ -20,12 +20,12 @@ class Validaredes extends Component
     private $logs;
     private $facpreprog;
     private $facmovarea;
-    private $historialpreprogramacion;
+    private $historialguia;
     public function __construct(){
         $this->logs = new Logs();
         $this->facpreprog = new Facturaspreprogramacion();
         $this->facmovarea = new Facturamovimientoarea();
-        $this->historialpreprogramacion = new Historialpreprogramacion();
+        $this->historialguia = new Historialguia();
     }
     public $messagePrePro = "";
     public $id_guia;
@@ -35,6 +35,7 @@ class Validaredes extends Component
     public $guiaSeleccionada;
     public $messageRecFactApro;
     public $guiainfo = [];
+    public $guia_detalle = [];
 
     public function render(){
         $facturas_pre_prog_estado_dos = $this->facpreprog->listar_facturas_pre_programacion_estado_dos();
@@ -56,8 +57,7 @@ class Validaredes extends Component
             $this->messagePrePro = "¿Estás seguro de enviar con fecha $fhactual?";
         }
     }
-    public function actualizarMensaje()
-    {
+    public function actualizarMensaje(){
         // Si hay una fecha y hora manual, usarla; de lo contrario, usar la fecha y hora actual
         $fechaHora = $this->fmanual
             ? Carbon::parse($this->fmanual, 'America/Lima')->format('d/m/Y - h:i a')
@@ -95,6 +95,15 @@ class Validaredes extends Component
                 $factura->guia_estado_aprobacion = $this->guia_estado_aprobacion;
 
                 if ($factura->save()) {
+                    // Registrar en historial guias
+                    $historial = new Historialguia();
+                    $historial->id_users = Auth::id();
+                    $historial->id_guia = $this->id_guia;
+                    $historial->guia_nro_doc = $factura->guia_nro_doc;
+                    $historial->historial_guia_estado_aprobacion = $this->guia_estado_aprobacion;
+                    $historial->historial_guia_fecha_hora = Carbon::now('America/Lima');
+                    $historial->historial_guia_estado = 1;
+                    $historial->save();
                     // Buscar si ya existe un registro en la tabla facturas_mov
                     $facturaMov = DB::table('facturas_mov')
                         ->where('id_guia', $this->id_guia)
@@ -211,8 +220,12 @@ class Validaredes extends Component
             session()->flash('error', 'Ocurrió un error al rechazar la factura.');
         }
     }
-    public function modal_guia_info($id_not_cred) {
-        $this->guiainfo = $this->facpreprog->listar_guiax_id($id_not_cred);
+    public function modal_guia_info($id_guia) {
+        $this->guiainfo = $this->facpreprog->listar_guia_x_id($id_guia);
+    }
+
+    public function listar_detalle_guia($id_guia) {
+        $this->guia_detalle = $this->facpreprog->listar_guia_detalle_x_id($id_guia);
     }
 
 }

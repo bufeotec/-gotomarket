@@ -97,11 +97,24 @@ class Facturaspreprogramacion extends Model
         }
         return $result;
     }
-    public function listar_guiax_id($id) {
+    public function listar_guia_x_id($id) {
         try {
             $result = DB::table('guias')
                 ->where('id_guia', '=', $id)
                 ->first();
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
+
+    public function listar_guia_detalle_x_id($id) {
+        try {
+            $result = DB::table('guias as g')
+                ->join('guias_detalles as gd', 'g.id_guia', '=', 'gd.id_guia')
+                ->where('gd.id_guia', '=', $id)
+                ->get();
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);
             $result = [];

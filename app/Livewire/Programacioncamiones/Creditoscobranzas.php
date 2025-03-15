@@ -9,7 +9,7 @@ use App\Models\Logs;
 use App\Models\Facturaspreprogramacion;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Facturamovimientoarea;
-use App\Models\Historialpreprogramacion;
+use App\Models\Historialguia;
 use Carbon\Carbon;
 
 class Creditoscobranzas extends Component
@@ -17,12 +17,12 @@ class Creditoscobranzas extends Component
     private $logs;
     private $facpreprog;
     private $facmovarea;
-    private $historialpreprogramacion;
+    private $historialguia;
     public function __construct(){
         $this->logs = new Logs();
         $this->facpreprog = new Facturaspreprogramacion();
         $this->facmovarea = new Facturamovimientoarea();
-        $this->historialpreprogramacion = new Historialpreprogramacion();
+        $this->historialguia = new Historialguia();
     }
     public $desde;
     public $hasta;
@@ -82,8 +82,7 @@ class Creditoscobranzas extends Component
             $this->messageMotCre = "¿Está seguro de aceptar esta Guía con fecha $fechaHoraActual3?";
         }
     }
-    public function aceptar_fac_credito()
-    {
+    public function aceptar_fac_credito(){
         try {
             // Verifica permisos
             if (!Gate::allows('aceptar_fac_credito')) {
@@ -103,6 +102,15 @@ class Creditoscobranzas extends Component
 
                 // Guardar los cambios
                 if ($facturaPreprogramada->save()) {
+                    // Registrar en historial guias
+                    $historial = new Historialguia();
+                    $historial->id_users = Auth::id();
+                    $historial->id_guia = $this->id_guia;
+                    $historial->guia_nro_doc = $facturaPreprogramada->guia_nro_doc;
+                    $historial->historial_guia_estado_aprobacion = 5;
+                    $historial->historial_guia_fecha_hora = Carbon::now('America/Lima');
+                    $historial->historial_guia_estado = 1;
+                    $historial->save();
                     // Registrar el movimiento en facturas_mov
                     $facturaMov = DB::table('facturas_mov')
                         ->where('id_guia', $this->id_guia)
@@ -168,8 +176,7 @@ class Creditoscobranzas extends Component
         }
         $this->fac_pre_pro_motivo_credito = "";
     }
-    public function confirmarEnvio()
-    {
+    public function confirmarEnvio(){
         try {
             if (empty($this->selectedItems)) {
                 session()->flash('error', 'Debes seleccionar al menos una guía.');
@@ -184,6 +191,16 @@ class Creditoscobranzas extends Component
                     // Actualizar el estado de la factura
                     $factura->guia_estado_aprobacion = 6; // Estado aprobado
                     $factura->save();
+
+                    // Registrar en historial guias
+                    $historial = new Historialguia();
+                    $historial->id_users = Auth::id();
+                    $historial->id_guia = $id_guia;
+                    $historial->guia_nro_doc = $factura->guia_nro_doc;
+                    $historial->historial_guia_estado_aprobacion = 6;
+                    $historial->historial_guia_fecha_hora = Carbon::now('America/Lima');
+                    $historial->historial_guia_estado = 1;
+                    $historial->save();
 
                     // Registrar en facturas_mov
                     DB::table('facturas_mov')->updateOrInsert(
