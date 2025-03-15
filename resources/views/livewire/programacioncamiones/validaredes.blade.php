@@ -134,12 +134,12 @@
     <x-modal-general wire:ignore.self>
         <x-slot name="tama">modal-xl</x-slot>
         <x-slot name="id_modal">modalDetalleGuia</x-slot>
-        <x-slot name="titleModal">Detalles de la guía Seleccionada</x-slot>
+        <x-slot name="titleModal">Detalles de la guía</x-slot>
         <x-slot name="modalContent">
             <div class="modal-body">
                 <h6>Detalles de la Guía</h6>
                 <hr>
-                @if(!empty($detallesGuia))
+                @if(!empty($guia_detalle))
                     <x-table-general>
                         <x-slot name="thead">
                             <tr>
@@ -168,30 +168,30 @@
                             </tr>
                         </x-slot>
                         <x-slot name="tbody">
-                            @foreach($detallesGuia as $detalle)
+                            @foreach($guia_detalle as $detalle)
                                 <tr>
-                                    <td>{{ $detalle->ALMACEN_SALIDA ?? '-' }}</td>
-                                    <td>{{ $detalle->FECHA_EMISION ? $me->obtenerNombreFecha($detalle->FECHA_EMISION, 'DateTime', 'DateTime') : '-' }}</td>
-                                    <td>{{ $detalle->ESTADO ?? '-'}}</td>
-                                    <td>{{ $detalle->TIPO_DOCUMENTO ?? '-' }}</td>
-                                    <td>{{ $detalle->NRO_DOCUMENTO ?? '-'}}</td>
-                                    <td>{{ $detalle->NRO_LINEA ?? '-'}}</td>
-                                    <td>{{ $detalle->COD_PRODUCTO ?? '-'}}</td>
-                                    <td>{{ $detalle->DESCRIPCION_PRODUCTO ?? '-'}}</td>
-                                    <td>{{ $detalle->LOTE ?? '-'}}</td>
-                                    <td>{{ $detalle->UNIDAD ?? '-'}}</td>
-                                    <td>{{ $detalle->CANTIDAD ?? '-'}}</td>
-                                    <td>{{ $me->formatoDecimal($detalle->PRECIO_UNIT_FINAL_INC_IGV ?? 0)}}</td>
-                                    <td>{{ $me->formatoDecimal($detalle->PRECIO_UNIT_ANTES_DESCUENTO_INC_IGV ?? 0)}}</td>
-                                    <td>{{ $me->formatoDecimal($detalle->DESCUENTO_TOTAL_SIN_IGV ?? 0)}}</td>
-                                    <td>{{ $me->formatoDecimal($detalle->IGV_TOTAL ?? 0)}}</td>
-                                    <td>{{ $me->formatoDecimal($detalle->IMPORTE_TOTAL_INC_IGV ?? 0) }}</td>
-                                    <td>{{ $detalle->MONEDA ?? '-'}}</td>
-                                    <td>{{ $me->formatoDecimal($detalle->TIPO_CAMBIO ?? 0)}}</td>
-                                    <td>{{ $me->formatoDecimal($detalle->PESO_GRAMOS ?? 0)}}</td>
-                                    <td>{{ $me->formatoDecimal($detalle->VOLUMEN_CM3 ?? 0)}}</td>
-                                    <td>{{ $me->formatoDecimal($detalle->PESO_TOTAL_GRAMOS ?? 0)}}</td>
-                                    <td>{{ $me->formatoDecimal($detalle->VOLUMEN_TOTAL_CM3 ?? 0)}}</td>
+                                    <td>{{ $detalle->guia_det_almacen_salida ?? '-' }}</td>
+                                    <td>{{ $detalle->guia_det_fecha_emision ? $me->obtenerNombreFecha($detalle->guia_det_fecha_emision, 'DateTime', 'DateTime') : '-' }}</td>
+                                    <td>{{ $detalle->guia_det_estado ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_tipo_documento ?? '-' }}</td>
+                                    <td>{{ $detalle->guia_det_nro_documento ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_nro_linea ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_cod_producto ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_descripcion_producto ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_lote ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_unidad ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_cantidad ?? '-'}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_precio_unit_final_inc_igv ?? 0)}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_precio_unit_antes_descuente_inc_igv ?? 0)}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_descuento_total_sin_igv ?? 0)}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_igv_total ?? 0)}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_importe_total_inc_igv ?? 0) }}</td>
+                                    <td>{{ $detalle->guia_det_moneda ?? '-'}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_tipo_cambio ?? 0)}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_peso_gramo ?? 0)}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_volumen ?? 0)}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_peso_total_gramo ?? 0)}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_volumen_total ?? 0)}}</td>
                                 </tr>
                             @endforeach
                         </x-slot>
@@ -332,13 +332,13 @@
                                                     </x-btn-accion>
                                                     <x-btn-accion class="btn btn-primary btn-sm text-white" wire:click.prevent="modal_guia_info('{{ $factura->id_guia}}')" data-bs-toggle="modal" data-bs-target="#modalInformacionGuia">
                                                         <x-slot name="message">
-                                                            <i class="fas fa-eye"></i>Guía
+                                                            <i class="fas fa-eye"></i> Guía
                                                         </x-slot>
                                                     </x-btn-accion>
-                                                    @if(!empty($factura->guia_nro_doc_ref)) <!-- Verifica si el campo factura no está vacío -->
-                                                    <x-btn-accion class="btn btn-warning btn-sm text-white" wire:click.prevent="listar_detallex('{{ $factura->guia_nro_doc }}')" data-bs-toggle="modal" data-bs-target="#modalDetallex">
+                                                    @if(!empty($factura->guia_nro_doc_ref))
+                                                    <x-btn-accion class="btn btn-warning btn-sm text-white" wire:click.prevent="listar_detalle_guia('{{ $factura->id_guia }}')" data-bs-toggle="modal" data-bs-target="#modalDetalleGuia">
                                                         <x-slot name="message">
-                                                            <i class="fas fa-eye"></i>Factura
+                                                            <i class="fas fa-eye"></i> Factura
                                                         </x-slot>
                                                     </x-btn-accion>
                                                     @endif

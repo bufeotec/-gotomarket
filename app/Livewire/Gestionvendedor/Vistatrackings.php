@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Gestionvendedor;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Request;
 use Livewire\Component;
 use App\Models\Logs;
@@ -11,6 +12,8 @@ use App\Models\Facturaspreprogramacion;
 use App\Models\General;
 use App\Models\Historialdespachoventa;
 use App\Models\Historialpreprogramacion;
+use App\Models\Guia;
+use App\Models\Historialguia;
 
 class Vistatrackings extends Component
 {
@@ -21,6 +24,8 @@ class Vistatrackings extends Component
     private $despacho;
     private $historialpreprogramacion;
     private $historialdespachoventa;
+    private $guia;
+    private $historialguia;
     public function __construct(){
         $this->logs = new Logs();
         $this->despachoventa = new DespachoVenta();
@@ -29,13 +34,15 @@ class Vistatrackings extends Component
         $this->despacho = new Despacho();
         $this->historialpreprogramacion = new Historialpreprogramacion();
         $this->historialdespachoventa = new Historialdespachoventa();
+        $this->guia = new Guia();
+        $this->historialguia = new Historialguia();
     }
-    public $id_fac_pre_prog = "";
-    public $fac_pre_prog_cfnumdoc = "";
+    public $id_guia = "";
+    public $guia_nro_doc = "";
 
     public function mount($id, $numdoc){
-        $this->id_fac_pre_prog = $id;
-        $this->fac_pre_prog_cfnumdoc = $numdoc;
+        $this->id_guia = $id;
+        $this->guia_nro_doc = $numdoc;
         $this->buscar();
     }
     public $search_compro;
@@ -57,9 +64,19 @@ class Vistatrackings extends Component
     public $etapaMostrada;
     public $facturas = [];
     public $facturasRelacionadas = [];
+    public $guiainfo = [];
+    public $guia_detalle = [];
 
     public function render(){
         return view('livewire.gestionvendedor.vistatrackings');
+    }
+
+    public function modal_guia_info($id_guia) {
+        $this->guiainfo = $this->guia->listar_guia_x_id($id_guia);
+    }
+
+    public function listar_detalle_guia($id_guia) {
+        $this->guia_detalle = $this->guia->listar_guia_detalle_x_id($id_guia);
     }
 
     public function cambiarEtapa($nuevaEtapa) {
@@ -101,11 +118,29 @@ class Vistatrackings extends Component
         $this->facturas = [];
 
         // Utilizar $this->fac_pre_prog_cfnumdoc en lugar de $this->search_compro
-        $numdoc = $this->fac_pre_prog_cfnumdoc;
+        $numdoc = $this->guia_nro_doc;
 
-        $preProg = Facturaspreprogramacion::where('fac_pre_prog_cfnumdoc', $numdoc)->first();
+        $preProg = Guia::where('guia_nro_doc', $numdoc)->first();
 
         if ($preProg) {
+            // Obtener los detalles de la guía
+            $detallesGuia = DB::table('guias_detalles')
+                ->where('id_guia', $preProg->id_guia)
+                ->get();
+
+            // Calcular el peso y volumen total
+            $pesoTotal = 0;
+            $volumenTotal = 0;
+
+            foreach ($detallesGuia as $detalle) {
+                $pesoTotal += $detalle->guia_det_peso_gramo * $detalle->guia_det_cantidad;
+                $volumenTotal += $detalle->guia_det_volumen * $detalle->guia_det_cantidad;
+            }
+
+            // Agregar los totales a la guía
+            $preProg->peso_total = $pesoTotal;
+            $preProg->volumen_total = $volumenTotal;
+
             $this->facturas = [$preProg->toArray()]; // Convertir en array dentro de otro array
         } else {
             $this->facturas = []; // Asegurar que facturas sea un array vacío
@@ -113,23 +148,27 @@ class Vistatrackings extends Component
         }
 
         // Buscar en la tabla facturas_pre_programaciones (ETAPA 1)
-        $preProgramado = Facturaspreprogramacion::where('fac_pre_prog_cfnumdoc', $numdoc)->first();
+        $preProgramado = Guia::where('guia_nro_doc', $numdoc)->first();
 
         if ($preProgramado) {
             $this->codigoEncontrado = true;
             $this->etapaActual = 1; // Establece la etapa real
             $this->etapaMostrada = 1; // Se establece en etapa 1 por defecto
 
+            // Obtener la fecha de emisión de la guía
+            $fechaEmision = $this->general->obtenerNombreFecha($preProgramado->guia_fecha_emision, 'DateTime', 'DateTime');
+            $this->estadoMensaje[] = $fechaEmision . ' | ' . "Fecha de emisión de la guía.";
+
             // Buscar el historial de cambios de estado en la tabla historial_pre_programacion
-            $historial = Historialpreprogramacion::where('fac_pre_prog_cfnumdoc', $numdoc)
-                ->orderBy('his_pre_progr_fecha_hora', 'asc')
+            $historial = Historialguia::where('guia_nro_doc', $numdoc)
+                ->orderBy('historial_guia_fecha_hora', 'asc')
                 ->get();
 
             if ($historial->isNotEmpty()) {
                 foreach ($historial as $registro) {
-                    $fechaHora = $this->general->obtenerNombreFecha($registro->his_pre_progr_fecha_hora, 'DateTime', 'DateTime');
-                    $estado = $registro->fac_pre_prog_estado_aprobacion;
-                    $estadoGeneral = $registro->fac_pre_prog_estado; // Verificar el campo fac_pre_prog_estado
+                    $fechaHora = $this->general->obtenerNombreFecha($registro->historial_guia_fecha_hora, 'DateTime', 'DateTime');
+                    $estado = $registro->historial_guia_estado_aprobacion;
+                    $estadoGeneral = $registro->historial_guia_estado; // Verificar el campo fac_pre_prog_estado
 
                     // Si el estado general es 0, mostrar mensaje de rechazo
                     if ($estadoGeneral == 0) {
