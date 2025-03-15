@@ -146,13 +146,13 @@
                                                             <tr>
                                                                 <td style="width: 39.6%">
                                                                     <span class="tamanhoTablaComprobantes">
-                                                                        <b class="colorBlackComprobantes">{{ date('d/m/Y', strtotime($guia->guia_fecha_emision)) }}</b> <!-- Cambiado -->
+                                                                        <b class="colorBlackComprobantes">{{ date('d/m/Y', strtotime($guia->guia_fecha_emision)) }}</b>
                                                                     </span>
                                                                     <span class="d-block tamanhoTablaComprobantes">
                                                                         {{ $guia->guia_nro_doc }} - {{ $guia->guia_nro_doc_ref }}
                                                                     </span>
                                                                     @php
-                                                                        $codigoGuia = $me->formatearCodigo($guia->guia_nro_doc); // Cambiado
+                                                                        $codigoGuia = $me->formatearCodigo($guia->guia_nro_doc);
                                                                     @endphp
                                                                     <span class="d-block tamanhoTablaComprobantes">
                                                                         {{ $codigoGuia }}
@@ -160,17 +160,17 @@
                                                                 </td>
                                                                 <td style="width: 32.2%">
                                                                     <span class="d-block tamanhoTablaComprobantes">
-                                                                        {{ $me->obtenerNombreFecha($guia->guia_fecha, 'DateTime', 'Date') }} <!-- Cambiado -->
+                                                                        {{ $me->obtenerNombreFecha($guia->guia_fecha, 'DateTime', 'Date') }}
                                                                     </span>
                                                                 </td>
                                                                 <td style="width: 32.2%">
                                                                     <span class="d-block tamanhoTablaComprobantes">
-                                                                        {{ $me->formatoDecimal($guia->guia_importe_total ?? 0) }} <!-- Cambiado -->
+                                                                        {{ $me->formatoDecimal($guia->guia_importe_total ?? 0) }}
                                                                     </span>
                                                                 </td>
                                                                 <td style="width: 32.2%">
                                                                     <span class="d-block tamanhoTablaComprobantes">
-                                                                        {{ $guia->guia_nombre_cliente }} <!-- Cambiado -->
+                                                                        {{ $guia->guia_nombre_cliente }}
                                                                     </span>
                                                                 </td>
                                                                 <td>
@@ -226,10 +226,6 @@
                                             <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
                                                 <div class="d-flex justify-content-between align-items-center">
                                                     <h6 class="mb-0">Guías Recepcionadas</h6>
-{{--                                                    <div>--}}
-{{--                                                        <input type="checkbox" wire:model="selectAll" id="selectAll">--}}
-{{--                                                        <label for="selectAll">Seleccionar todo</label>--}}
-{{--                                                    </div>--}}
                                                 </div>
                                             </div>
                                         </div>
@@ -239,57 +235,67 @@
                                             <x-table-general id="ederTable">
                                                 <x-slot name="thead">
                                                     <tr>
+                                                        <th class="">
+                                                            <input type="checkbox" wire:model="selectAll" id="selectAll" onchange="toggleAllCheckboxes(this)">
+                                                        </th>
                                                         <th class="">Guía / Factura</th>
                                                         <th class="">F. Emisión</th>
                                                         <th class="">Importe sin IGV</th>
                                                         <th class="">Nombre Cliente</th>
                                                         <th class="">Dirección</th>
-                                                        <th class="">Acciones</th>
+                                                        <th class="">Acciones</th> <!-- Columna de acciones, pero vacía -->
                                                     </tr>
                                                 </x-slot>
                                                 <x-slot name="tbody">
                                                     @foreach($facturasCreditoAprobadas as $factura)
                                                         <tr>
                                                             <td>
-                                                    <span class="d-block tamanhoTablaComprobantes">
-                                                        {{ $factura->guia_nro_doc }} - {{ $factura->guia_nro_doc_ref }}
-                                                    </span>
+                                                                <input type="checkbox" wire:model="selectedItems" value="{{ (string) $factura->id_guia }}" onchange="toggleButton()">
+                                                            </td>
+                                                            <td>
+                                                                <span class="d-block tamanhoTablaComprobantes">
+                                                                    {{ $factura->guia_nro_doc }} - {{ $factura->guia_nro_doc_ref }}
+                                                                </span>
                                                                 @php
                                                                     $guia2 = $me->formatearCodigo($factura->guia_nro_doc)
                                                                 @endphp
                                                                 <span class="d-block tamanhoTablaComprobantes">
-                                                        {{ $guia2 }}
-                                                    </span>
+                                                                    {{ $guia2 }}
+                                                                </span>
                                                             </td>
                                                             <td>
-                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                                <span class="d-block tamanhoTablaComprobantes">
                                                         {{ date('d/m/Y', strtotime($factura->guia_fecha_emision)) }}
-                                                    </span>
+                                                                </span>
                                                             </td>
                                                             <td>
-                                                    <span class="d-block tamanhoTablaComprobantes">
-                                                        <b class="colorBlackComprobantes">{{ $me->formatoDecimal($factura->guia_importe_total ?? 0) }}</b>
-                                                    </span>
+                                                                <span class="d-block tamanhoTablaComprobantes">
+                                                                    <b class="colorBlackComprobantes">{{ $me->formatoDecimal($factura->guia_importe_total ?? 0) }}</b>
+                                                                </span>
                                                             </td>
                                                             <td>
-                                                    <span class="d-block tamanhoTablaComprobantes">
-                                                        {{ $factura->guia_nombre_cliente }}
-                                                    </span>
+                                                                <span class="d-block tamanhoTablaComprobantes">
+                                                                    {{ $factura->guia_nombre_cliente }}
+                                                                </span>
                                                             </td>
                                                             <td>
-                                                    <span class="d-block tamanhoTablaComprobantes">
-                                                        {{ $factura->guia_direc_entrega }}
-                                                    </span>
+                                                                <span class="d-block tamanhoTablaComprobantes">
+                                                                    {{ $factura->guia_direc_entrega }}
+                                                                </span>
                                                             </td>
                                                             <td>
-                                                                <input type="checkbox" wire:model="selectedItems" value="{{ (string) $factura->id_guia }}" onchange="toggleButton()">
+                                                                <x-btn-accion class="btn btn-success btn-sm text-white" wire:click="enviar_fac_apro('{{ base64_encode($factura->id_guia) }}')" data-bs-toggle="modal" data-bs-target="#modalFacApro">
+                                                                    <x-slot name="message">
+                                                                        <i class="fa-solid fa-check"></i>
+                                                                    </x-slot>
+                                                                </x-btn-accion>
                                                             </td>
                                                         </tr>
                                                     @endforeach
                                                 </x-slot>
                                             </x-table-general>
-                                            <div class="col-lg-12 mt-3 text-end">
-                                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalFacApro" @if(empty($selectedItems)) disabled @endif>
+                                            <div class="col-lg-12 mt-3 ms-2 ">
+                                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalFacApro" id="sendButton" disabled>
                                                     Enviar
                                                 </button>
                                             </div>
@@ -306,14 +312,22 @@
     </div>
 </div>
 <script>
+    function toggleAllCheckboxes(source) {
+        const checkboxes = document.querySelectorAll('input[type="checkbox"][wire\\:model="selectedItems"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = source.checked;
+            checkbox.dispatchEvent(new Event('change'));
+        });
+        toggleButton(); // Actualiza el estado del botón
+    }
+
     function toggleButton() {
         const checkboxes = document.querySelectorAll('input[type="checkbox"][wire\\:model="selectedItems"]');
-        const submitButton = document.querySelector('button[data-bs-toggle="modal"]');
-        const isAnyChecked = Array.from(checkboxes).some(checkbox => checkbox.checked);
-        submitButton.disabled = !isAnyChecked;
+        const sendButton = document.getElementById('sendButton');
+        const isChecked = Array.from(checkboxes).some(checkbox => checkbox.checked);
+        sendButton.disabled = !isChecked; // Habilitar o deshabilitar el botón
     }
 </script>
-
 @script
 <script>
     $wire.on('hidemodalMotCre', () => {

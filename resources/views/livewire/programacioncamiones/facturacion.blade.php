@@ -35,6 +35,41 @@
         </x-slot>
     </x-modal-delete>
     {{-- MODAL RECHAZAR FACTURA EN APROBRAR --}}
+
+    {{--    MODAL GESTIONAR ESTADOS--}}
+    <x-modal-delete wire:ignore.self>
+        <x-slot name="id_modal">modalGeStado</x-slot>
+        <x-slot name="modalContentDelete">
+            <form wire:submit.prevent="disable_pre_pro">
+                <div class="row">
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        <h2 class="deleteTitle">{{ $messagePrePro }}</h2>
+                    </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        @error('id_fac_pre_prog') <span class="message-error">{{ $message }}</span> @enderror
+                        @error('fac_pre_prog_estado_aprobacion') <span class="message-error">{{ $message }}</span> @enderror
+                        @if (session()->has('error_pre_pro'))
+                            <div class="alert alert-danger alert-dismissible show fade">
+                                {{ session('error_pre_pro') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        @endif
+                    </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12 mt-3" id="fechaHoraContainer" style="display: none;">
+                        <label for="fechaHoraManual">Modificar fecha y hora:</label>
+                        <input type="datetime-local" id="fechaHoraManual" wire:model="fechaHoraManual" wire:change="actualizarMensaje" class="form-control">
+                    </div>
+
+                    <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-center">
+                        <button type="submit" class="btn btn-primary text-white btnDelete">ENVIAR</button>
+                        <button type="button" class="btn btn-success btnDelete" id="btnEditar">EDITAR</button>
+                    </div>
+                </div>
+            </form>
+        </x-slot>
+    </x-modal-delete>
+    {{--    FIN MODAL GESTIONAR ESTADOS--}}
+
     <x-modal-delete wire:ignore.self style="z-index: 1056;">
         <x-slot name="id_modal">modaRecFac</x-slot>
         <x-slot name="modalContentDelete">
@@ -95,13 +130,14 @@
                                     <x-slot name="thead">
                                         <tr>
                                             <th>Guía</th>
-                                            <th>F. Emisión</th>
+                                            <th>Emisión</th>
                                             <th>Factura</th>
                                             <th>Importe sin IGV</th>
                                             <th>Cliente</th>
                                             <th>Dirección</th>
-{{--                                            <th>Peso y Volumen</th>--}}
-                                            <th>Fecha/Hora Recibida</th>
+                                            <th>Peso / Volumen</th>
+                                            <th>Recibido</th>
+                                            <th>Movimientos</th>
                                             <th>Acciones</th>
                                         </tr>
                                     </x-slot>
@@ -109,51 +145,90 @@
                                         @foreach($facturas_pre_prog_estadox as $factura)
                                             <tr>
                                                 <td>
-                                                <span class="d-block tamanhoTablaComprobantes">
-                                                    {{ $factura->guia_nro_doc }}
-                                                </span>
+                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                        {{ $factura->guia_nro_doc }}
+                                                    </span>
                                                 </td>
                                                 <td>
                                                     @php
                                                         $fechaEmision = \Carbon\Carbon::parse($factura->guia_fecha_emision)->format('d/m/Y');
                                                     @endphp
                                                     <span class="d-block tamanhoTablaComprobantes">
-                                                    {{ $fechaEmision }}
-                                                </span>
+                                                        {{ $fechaEmision }}
+                                                    </span>
                                                 </td>
                                                 <td>
                                                     <span class="d-block tamanhoTablaComprobantes">
-                                                    {{ $factura->guia_nro_doc }} - {{ $factura->guia_nro_doc_ref }}
-                                                </span>
-                                               </td>
+                                                        {{ $factura->guia_nro_doc }} - {{ $factura->guia_nro_doc_ref }}
+                                                    </span>
+                                                </td>
                                                 <td>
                                                     @php
                                                         $importe = number_format($factura->guia_importe_total, 2, '.', ',');
                                                     @endphp
                                                     <span class="d-block tamanhoTablaComprobantes">
-                                                    <b class="colorBlackComprobantes">{{ $importe }}</b>
-                                                </span>
+                                                        <b class="colorBlackComprobantes">{{ $importe }}</b>
+                                                    </span>
                                                 </td>
                                                 <td>
-                                                <span class="d-block tamanhoTablaComprobantes">
-                                                    {{ $factura->guia_nombre_cliente }}
-                                                </span>
+                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                        {{ $factura->guia_nombre_cliente }}
+                                                    </span>
                                                 </td>
                                                 <td>
-                                                <span class="d-block tamanhoTablaComprobantes">
-                                                    {{ $factura->guia_direc_entrega }}
+                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                        {{ $factura->guia_direc_entrega }}
+                                                    </span>
                                                 </td>
                                                 <td>
-                                                <span class="d-block tamanhoTablaComprobantes">
-                                                    {{date('d/m/Y - h:i A', strtotime($factura->updated_at)) }}
-                                                </span>
+                                                    {{ $factura->total_peso }} g
+                                                    <br>
+                                                    {{ $factura->total_volumen }} cm³
                                                 </td>
                                                 <td>
-                                                    <x-btn-accion class="btn bg-success btn-sm text-white" wire:click="cambio_estado('{{ base64_encode($factura->id_guia) }}', 2)" data-bs-toggle="modal" data-bs-target="#modalPrePro">
-                                                        <x-slot name="message">
-                                                            <i class="fa-solid fa-check"></i>
-                                                        </x-slot>
-                                                    </x-btn-accion>
+                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                        {{ date('d/m/Y - h:i a', strtotime($factura->updated_at)) }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="d-block tamanhoTablaComprobantes text-primary">
+                                                        @switch($factura->guia_estado_aprobacion)
+                                                            @case(1)
+                                                                Enviado a Créditos
+                                                                @break
+                                                            @case(2)
+                                                                Enviado a Despacho
+                                                                @break
+                                                            @case(3)
+                                                                Listo para despacho
+                                                                @break
+                                                            @case(4)
+                                                                Facturas despachadas
+                                                                @break
+                                                            @case(5)
+                                                                Aceptado por Créditos
+                                                                @break
+                                                            @case(6)
+                                                                Estado de facturación
+                                                                @break
+                                                                @default
+                                                                Estado desconocido
+                                                        @endswitch
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    @if ($factura->guia_estado_aprobacion != 2)
+                                                        <x-btn-accion class="btn bg-success btn-sm text-white" wire:click="cambio_estado('{{ base64_encode($factura->id_guia) }}', 2)" data-bs-toggle="modal" data-bs-target="#modalPrePro">
+                                                            <x-slot name="message">
+                                                                <i class="fa-solid fa-check"></i>
+                                                            </x-slot>
+                                                        </x-btn-accion>
+                                                    @endif
+                                                        <x-btn-accion class="btn bg-primary btn-sm text-white" wire:click="cambio_estado('{{ base64_encode($factura->id_guia) }}')" data-bs-toggle="modal" data-bs-target="#">
+                                                            <x-slot name="message">
+                                                                <i class="fa-solid fa-edit"></i>
+                                                            </x-slot>
+                                                        </x-btn-accion>
                                                 </td>
                                             </tr>
                                         @endforeach
