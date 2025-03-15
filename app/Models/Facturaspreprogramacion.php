@@ -18,19 +18,7 @@ class Facturaspreprogramacion extends Model
         $this->logs = new Logs();
     }
 
-//    public function listar_facturas_pre_programacion_estado_dos() {
-//        try {
-//            $result = DB::table('guias')
-//                ->join('guias_detalles', 'guias.id_guia', '=', 'guias_detalles.id_guia')
-//                ->where('guias.guia_estado_aprobacion', '=', 2)
-//                ->select('guias.*', 'guias_detalles.*')
-//                ->get();
-//        } catch (\Exception $e) {
-//            $this->logs->insertarLog($e);
-//            $result = [];
-//        }
-//        return $result;
-//    }
+
     public function listar_facturas_pre_programacion_estado_dos() {
         try {
             $result = DB::table('guias')
