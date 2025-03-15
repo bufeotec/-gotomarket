@@ -275,7 +275,7 @@ class Facturacion extends Component
         }
     }
 
-//    Modal
+//    Modal detalles
     public function modal_guia_detalle($id_not_cred) {
         $this->guiadetalle = $this->facpreprog->listar_guiax_id($id_not_cred);
     }

@@ -166,7 +166,7 @@
     </x-modal-general>
     {{--    FINMODAL VER GUIA--}}
 
-    {{--    MODAL DETALLES GUIA --}}
+    {{--    MODAL DETALLES GUIAS --}}
     <x-modal-general wire:ignore.self>
         <x-slot name="tama">modal-xl</x-slot>
         <x-slot name="id_modal">modalDetalleGuia</x-slot>
@@ -242,7 +242,7 @@
             </div>
         </x-slot>
     </x-modal-general>
-    {{--    FINMODAL DETALLES GUIA--}}
+    {{--    FINMODAL DETALLES GUIAS--}}
 
     <div class="row">
         @if (session()->has('success'))

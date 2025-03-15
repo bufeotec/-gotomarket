@@ -91,6 +91,8 @@ class Facturaspreprogramacion extends Model
         }
         return $result;
     }
+
+//    modal detalles
     public function listar_guiax_id($id) {
         try {
             $result = DB::table('guias')
@@ -102,6 +104,7 @@ class Facturaspreprogramacion extends Model
         }
         return $result;
     }
+
     public function listar_guia_detalles($id) {
         try {
             $result = DB::table('guias_detalles')
