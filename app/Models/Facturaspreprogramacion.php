@@ -102,4 +102,15 @@ class Facturaspreprogramacion extends Model
         }
         return $result;
     }
+    public function listar_guia_detalles($id) {
+        try {
+            $result = DB::table('guias_detalles')
+                ->where('id_guia', '=', $id)
+                ->get();
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
 }

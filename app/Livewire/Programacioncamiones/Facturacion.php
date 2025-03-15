@@ -29,6 +29,9 @@ class Facturacion extends Component
     }
     public $messagePrePro = "";
     public $id_guia;
+    public $guiadetalle = [];
+    public $facturadetalle = [];
+
     public $guia_estado_aprobacion;
     public $fechaHoraManual;
     public $fechaHoraManual2;
@@ -65,13 +68,10 @@ class Facturacion extends Component
     }
     public function disable_pre_pro(){
         try {
-            // Verificar permisos del usuario
             if (!Gate::allows('disable_pre_pro')) {
                 session()->flash('error_pre_pro', 'No tiene permisos para cambiar los estados de este registro.');
                 return;
             }
-
-            // Validar los datos de entrada
             $this->validate([
                 'id_guia' => 'required|integer',
                 'guia_estado_aprobacion' => 'required|integer',
@@ -83,11 +83,7 @@ class Facturacion extends Component
                 'guia_estado_aprobacion.integer' => 'El estado debe ser un número entero.',
                 'fechaHoraManual.date' => 'La fecha y hora manual debe ser una fecha válida.',
             ]);
-
-            // Iniciar una transacción de base de datos
             DB::beginTransaction();
-
-            // Buscar la factura por ID
             $factura = Facturaspreprogramacion::find($this->id_guia);
 
             if ($factura) {
@@ -128,8 +124,6 @@ class Facturacion extends Component
 
                     // Confirmar la transacción
                     DB::commit();
-
-                    // Cerrar el modal y mostrar mensaje de éxito
                     $this->dispatch('hidemodalPrePro');
                     session()->flash('success', 'Estado cambiado exitosamente.');
                 } else {
@@ -218,5 +212,75 @@ class Facturacion extends Component
             $this->logs->insertarLog($e);
             session()->flash('error', 'Ocurrió un error al rechazar la factura.');
         }
+    }
+
+//    Cambiar estado de documento
+    public function abrirModal($id)
+    {
+        $this->id_guia = base64_decode($id);
+        $this->messagePrePro = "¿Estás seguro de cambiar el estado?";
+    }
+    public function cambiarEstado()
+    {
+        try {
+            if (!Gate::allows('disable_pre_pro')) {
+                session()->flash('error_pre_pro', 'No tiene permisos para cambiar los estados de este registro.');
+                return;
+            }
+            $this->validate([
+                'id_guia' => 'required|integer',
+                'guia_estado_aprobacion' => 'required|integer',
+            ], [
+                'id_guia.required' => 'El identificador es obligatorio.',
+                'id_guia.integer' => 'El identificador debe ser un número entero.',
+                'guia_estado_aprobacion.required' => 'Debes seleccionar un estado.',
+                'guia_estado_aprobacion.integer' => 'El estado debe ser un número entero.',
+            ]);
+
+            DB::beginTransaction();
+
+            // Buscar la factura por ID
+            $factura = Facturaspreprogramacion::find($this->id_guia);
+
+            if ($factura) {
+                $factura->guia_estado_aprobacion = $this->guia_estado_aprobacion;
+
+                if ($factura->save()) {
+                    $historial = new Historialguia();
+                    $historial->id_users = Auth::id();
+                    $historial->id_guia = $this->id_guia;
+                    $historial->guia_nro_doc = $factura->guia_nro_doc;
+                    $historial->historial_guia_estado_aprobacion = $this->guia_estado_aprobacion;
+                    $historial->historial_guia_fecha_hora = Carbon::now('America/Lima');
+                    $historial->historial_guia_estado = 1;
+                    $historial->save();
+                    DB::commit();
+
+                    $this->dispatch('hidemodalGeStado');
+                    session()->flash('success', 'Estado cambiado exitosamente.');
+                } else {
+                    DB::rollBack();
+                    session()->flash('error_pre_pro', 'No se pudo cambiar el estado de la factura.');
+                }
+            } else {
+                DB::rollBack();
+                session()->flash('error_pre_pro', 'La factura no existe.');
+            }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->setErrorBag($e->validator->errors());
+        } catch (\Exception $e) {
+            DB::rollBack();
+            session()->flash('error', 'Ocurrió un error al aceptar la factura. Detalles: ' . $e->getMessage());
+            \Log::error('Error en cambiarEstado: ' . $e->getMessage());
+        }
+    }
+
+//    Modal
+    public function modal_guia_detalle($id_not_cred) {
+        $this->guiadetalle = $this->facpreprog->listar_guiax_id($id_not_cred);
+    }
+
+    public function modal_factura_detalle($id_not_cred) {
+        $this->facturadetalle = $this->facpreprog->listar_guia_detalles($id_not_cred);
     }
 }
