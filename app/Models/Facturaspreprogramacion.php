@@ -64,8 +64,15 @@ class Facturaspreprogramacion extends Model
     public function listar_facturas_pre_programacion_estadox(){
         try {
             $result = DB::table('guias')
-                ->where('guia_estado_aprobacion', '=', 1,2,3,4,5,6)
-                ->get();
+                ->join('guias_detalles', 'guias.id_guia', '=', 'guias_detalles.id_guia')
+                    ->where('guias.guia_estado_registro', '=', 1)
+                    ->select(
+                        'guias.*',
+                        DB::raw('SUM(guias_detalles.guia_det_cantidad * guias_detalles.guia_det_peso_gramo) as total_peso'),
+                        DB::raw('SUM(guias_detalles.guia_det_cantidad * guias_detalles.guia_det_volumen) as total_volumen')
+                    )
+                    ->groupBy('guias.id_guia', 'guias.guia_nro_doc', 'guias.guia_fecha_emision', 'guias.guia_importe_total', 'guias.guia_nombre_cliente', 'guias.guia_direc_entrega') // Agrupamos por columnas necesarias
+                    ->get();
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);
             $result = [];
