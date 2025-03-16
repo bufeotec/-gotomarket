@@ -91,7 +91,7 @@ class Notascreditos extends Component
 
         if ($comprobanteExiste) {
             // Mostrar un mensaje de error si la nota credito ya fue agregada
-            session()->flash('error', 'Esta guía ya fue agregado.');
+            session()->flash('error', 'Esta guía ya fue agregada.');
             return;
         }
 
@@ -99,6 +99,11 @@ class Notascreditos extends Component
         $factura = $this->filteredGuias->first(function ($f) use ($NRO_DOCUMENTO) {
             return $f->NRO_DOCUMENTO === $NRO_DOCUMENTO;
         });
+
+        // Verificar si existe una factura en la tabla guias usando DB::table
+        $existeEnGuias = DB::table('guias')
+            ->where('guia_nro_doc_ref', $factura->NRO_DOCUMENTO_REF)
+            ->exists();
 
         // Agregar la factura seleccionada
         $this->selectedGuias[] = [
@@ -120,6 +125,7 @@ class Notascreditos extends Component
             'TIPO_DE_CAMBIO' => $factura->TIPO_DE_CAMBIO,
             'ESTADO' => $factura->ESTADO,
             'IMPORTE_TOTAL' => $factura->IMPORTE_TOTAL,
+            'existe_en_guias' => $existeEnGuias,
         ];
     }
 

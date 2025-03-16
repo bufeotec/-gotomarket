@@ -19,6 +19,173 @@
         </div>
     @endif
 
+    {{--    MODAL VER GUIA--}}
+    <x-modal-general wire:ignore.self>
+        <x-slot name="tama">modal-xl</x-slot>
+        <x-slot name="id_modal">modalInformacionGuia</x-slot>
+        <x-slot name="titleModal">Información de la guia Seleccionada</x-slot>
+        <x-slot name="modalContent">
+            @if($guiainfo)
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <h6>Información general</h6>
+                                    <hr>
+                                </div>
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Guía:</strong>
+                                    <p>{{ $guiainfo->guia_nro_doc }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Fecha Emisión:</strong>
+                                    <p>{{ $guiainfo->guia_fecha_emision }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Factura:</strong>
+                                    <p>{{ $guiainfo->guia_nro_doc_ref }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Cliente:</strong>
+                                    <p>{{ $guiainfo->guia_nombre_cliente }}</p>
+                                </div>
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Dirección:</strong>
+                                    <p>{{ $guiainfo->guia_direc_entrega }}</p>
+                                </div>
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Cliente:</strong>
+                                    <p>{{ $guiainfo->guia_nombre_cliente }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Tipo de Documento Referencial:</strong>
+                                    <p>{{ $guiainfo->guia_tipo_doc_ref }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Número de Documento Referencial:</strong>
+                                    <p>{{ $guiainfo->guia_tipo_doc_ref }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Glosa:</strong>
+                                    <p>{{ $guiainfo->guia_glosa }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Estado:</strong>
+                                    <p>{{ $guiainfo->guia_estado }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Importe Total:</strong>
+                                    <p>{{ $guiainfo->guia_importe_total }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Tipo de Cambio:</strong>
+                                    <p>{{ $guiainfo->guia_tipo_cambio }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Moneda:</strong>
+                                    <p>{{ $guiainfo->guia_moneda }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Dirección de Entrega:</strong>
+                                    <p>{{ $guiainfo->guia_direc_entrega }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @else
+                <p>No hay información disponibles para mostrar.</p>
+            @endif
+        </x-slot>
+    </x-modal-general>
+    {{--    FIN MODAL VER GUIA--}}
+
+    {{--    MODAL DETALLE GUIA--}}
+    <x-modal-general wire:ignore.self>
+        <x-slot name="tama">modal-xl</x-slot>
+        <x-slot name="id_modal">modalDetalleGuia</x-slot>
+        <x-slot name="titleModal">Detalles de la guía</x-slot>
+        <x-slot name="modalContent">
+            <div class="modal-body">
+                <h6>Detalles de la Guía</h6>
+                <hr>
+                @if(!empty($guia_detalle))
+                    <x-table-general>
+                        <x-slot name="thead">
+                            <tr>
+                                <th>Almacén Salida</th>
+                                <th>Fecha Emisión</th>
+                                <th>Estado</th>
+                                <th>Tipo Documento</th>
+                                <th>Nro Documento</th>
+                                <th>Nro Línea</th>
+                                <th>Cód Producto</th>
+                                <th>Descripción Producto</th>
+                                <th>Lote</th>
+                                <th>Unidad</th>
+                                <th>Cantidad</th>
+                                <th>Precio Unit Final Inc IGV</th>
+                                <th>Precio Unit Antes Descuento Inc IGV</th>
+                                <th>Descuento Total Sin IGV</th>
+                                <th>IGV Total</th>
+                                <th>Importe Total Inc IGV</th>
+                                <th>Moneda</th>
+                                <th>Tipo Cambio</th>
+                                <th>Peso Gramos</th>
+                                <th>Volumen CM3</th>
+                                <th>Peso Total Gramos</th>
+                                <th>Volumen Total CM3</th>
+                            </tr>
+                        </x-slot>
+                        <x-slot name="tbody">
+                            @foreach($guia_detalle as $detalle)
+                                <tr>
+                                    <td>{{ $detalle->guia_det_almacen_salida ?? '-' }}</td>
+                                    <td>{{ $detalle->guia_det_fecha_emision ? $me->obtenerNombreFecha($detalle->guia_det_fecha_emision, 'DateTime', 'DateTime') : '-' }}</td>
+                                    <td>{{ $detalle->guia_det_estado ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_tipo_documento ?? '-' }}</td>
+                                    <td>{{ $detalle->guia_det_nro_documento ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_nro_linea ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_cod_producto ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_descripcion_producto ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_lote ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_unidad ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_cantidad ?? '-'}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_precio_unit_final_inc_igv ?? 0)}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_precio_unit_antes_descuente_inc_igv ?? 0)}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_descuento_total_sin_igv ?? 0)}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_igv_total ?? 0)}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_importe_total_inc_igv ?? 0) }}</td>
+                                    <td>{{ $detalle->guia_det_moneda ?? '-'}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_tipo_cambio ?? 0)}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_peso_gramo ?? 0)}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_volumen ?? 0)}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_peso_total_gramo ?? 0)}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_volumen_total ?? 0)}}</td>
+                                </tr>
+                            @endforeach
+                        </x-slot>
+                    </x-table-general>
+                @else
+                    <p>No hay detalles disponibles para mostrar.</p>
+                @endif
+            </div>
+        </x-slot>
+    </x-modal-general>
+    {{--    MODAL FIN DETALLE GUIA--}}
+
     {{--    MODAL DETALLES FACTURAS --}}
     <x-modal-general  wire:ignore.self >
         <x-slot name="id_modal">modalDetallesFact</x-slot>
@@ -41,26 +208,41 @@
                             </a>
                         </div>
                     </div>
-                    <div class="col-lg-12 col-md-12 col-sm-12 m3">
+                    <div class="col-lg-12 col-md-12 col-sm-12">
                         <!-- ETAPAS -->
                         <div class="row justify-content-center text-center mt-3">
-                            <div class="col-lg-2 col-md-4 col-sm-12">
+                            <!-- Nueva etapa: Fecha de Emisión -->
+                            <div class="col-lg-2 col-md-2 col-sm-12">
+                                <img src="{{ asset('assets/images/tracking/fecha.png') }}" alt="Fecha de Emisión" class="tracking-img">
+                                <p class="fw-bold {{ $etapaActual >= 0 ? 'text-dark' : 'text-muted' }}">FECHA DE EMISIÓN</p>
+                            </div>
+
+                            <!-- Etapa 1: En Créditos -->
+                            <div class="col-lg-2 col-md-2 col-sm-12">
                                 <img src="{{ asset('assets/images/tracking/creditos.png') }}" alt="Pre Programación" class="tracking-img">
                                 <p class="fw-bold {{ $etapaActual >= 1 ? 'text-dark' : 'text-muted' }}">EN CREDITOS</p>
                             </div>
-                            <div class="col-lg-2 col-md-4 col-sm-12">
+
+                            <!-- Etapa 2: Por Programar -->
+                            <div class="col-lg-2 col-md-2 col-sm-12">
                                 <img src="{{ asset('assets/images/tracking/despacho_por_aprobar.png') }}" alt="En Despacho" class="tracking-img">
                                 <p class="fw-bold {{ $etapaActual >= 2 ? 'text-dark' : 'text-muted' }}">POR PROGRAMAR</p>
                             </div>
-                            <div class="col-lg-2 col-md-4 col-sm-12">
+
+                            <!-- Etapa 3: Programado -->
+                            <div class="col-lg-2 col-md-2 col-sm-12">
                                 <img src="{{ asset('assets/images/tracking/despacho_aprobado.png') }}" alt="Despacho Entregado" class="tracking-img">
                                 <p class="fw-bold {{ $etapaActual >= 3 ? 'text-dark' : 'text-muted' }}">PROGRAMADO</p>
                             </div>
-                            <div class="col-lg-2 col-md-4 col-sm-12">
+
+                            <!-- Etapa 4: En Ruta -->
+                            <div class="col-lg-2 col-md-2 col-sm-12">
                                 <img src="{{ asset('assets/images/tracking/comprobante_en_camino.png') }}" alt="Despacho Entregado" class="tracking-img">
                                 <p class="fw-bold {{ $etapaActual >= 4 ? 'text-dark' : 'text-muted' }}">EN RUTA</p>
                             </div>
-                            <div class="col-lg-2 col-md-4 col-sm-12">
+
+                            <!-- Etapa 5: Comprobante Entregado -->
+                            <div class="col-lg-2 col-md-2 col-sm-12">
                                 @php
                                     $comprobanteNoEntregado = collect($mensajeEstadoEtapa3 ?? [])->contains(fn($mensaje) => str_contains($mensaje, 'Estado: Comprobante no entregado.'));
                                 @endphp
@@ -73,23 +255,24 @@
                                     <p class="fw-bold {{ $etapaActual >= 5 ? 'text-dark' : 'text-muted' }}">COMPROBANTE ENTREGADO</p>
                                 @endif
                             </div>
-
                         </div>
 
                         <!-- Línea de progreso con círculos -->
                         <div class="d-flex justify-content-center position-relative">
                             <div class="progress-line mt-4">
-                                <div class="progress-bar" style="width: {{ ($etapaActual - 1) * 25 }}%;"></div>
+                                <div class="progress-bar" style="width: {{ ($etapaActual) * 20 }}%;"></div>
 
                                 <!-- Círculo 1 -->
-                                <div class="tracking-circle {{ $etapaActual >= 1 ? 'circle-green' : 'circle-gray' }}" style="left: 0%;"></div>
+                                <div class="tracking-circle {{ $etapaActual >= 0 ? 'circle-green' : 'circle-gray' }}" style="left: 0%;"></div>
                                 <!-- Círculo 2 -->
-                                <div class="tracking-circle {{ $etapaActual >= 2 ? 'circle-green' : 'circle-gray' }}" style="left: 25%;"></div>
+                                <div class="tracking-circle {{ $etapaActual >= 1 ? 'circle-green' : 'circle-gray' }}" style="left: 20%;"></div>
                                 <!-- Círculo 3 -->
-                                <div class="tracking-circle {{ $etapaActual >= 3 ? 'circle-green' : 'circle-gray' }}" style="left: 50%;"></div>
+                                <div class="tracking-circle {{ $etapaActual >= 2 ? 'circle-green' : 'circle-gray' }}" style="left: 40%;"></div>
                                 <!-- Círculo 4 -->
-                                <div class="tracking-circle {{ $etapaActual >= 4 ? 'circle-green' : 'circle-gray' }}" style="left: 75%;"></div>
+                                <div class="tracking-circle {{ $etapaActual >= 3 ? 'circle-green' : 'circle-gray' }}" style="left: 60%;"></div>
                                 <!-- Círculo 5 -->
+                                <div class="tracking-circle {{ $etapaActual >= 4 ? 'circle-green' : 'circle-gray' }}" style="left: 80%;"></div>
+                                <!-- Círculo 6 -->
                                 <div class="tracking-circle {{ $etapaActual >= 5 ? 'circle-green' : 'circle-gray' }}" style="left: 100%;"></div>
                             </div>
                         </div>
@@ -114,30 +297,41 @@
                             <div class="row">
                                 <div class="col-lg-6">
                                     <h6 class="mb-2">
-                                        Información de la Facturas
+                                        Información Documentos
                                     </h6>
                                     <x-table-general>
                                         <x-slot name="thead">
                                             <tr>
-                                                <th>Factura</th>
                                                 <th>Guía</th>
-                                                <th>Monto</th>
-                                                <th>Ver detalle</th>
+                                                <th>Factura</th>
+                                                <th>Monto sin IGV</th>
+                                                <th>Peso / Volumen</th>
                                             </tr>
                                         </x-slot>
 
                                         <x-slot name="tbody">
                                             @foreach($facturas as $f)
                                                 <tr>
-                                                    <td>{{ $f['fac_pre_prog_cfnumdoc'] }}</td>
-                                                    <td>{{ $f['fac_pre_prog_guia'] }}</td>
-                                                    <td>{{ $me->formatoDecimal($f['fac_pre_prog_cfimporte']) }}</td>
-                                                    <td class="text-center">
-                                                        <x-btn-accion class="text-primary"  data-bs-toggle="modal" data-bs-target="#modalDetallesFact">
+                                                    <td>
+                                                        {{ $f['guia_nro_doc'] }}
+                                                        <x-btn-accion class="btn text-primary btn-sm" wire:click.prevent="modal_guia_info('{{ $f['id_guia']}}')" data-bs-toggle="modal" data-bs-target="#modalInformacionGuia">
                                                             <x-slot name="message">
-                                                                <i class="fa-solid fa-eye"></i>
+                                                                <i class="fas fa-eye"></i>
                                                             </x-slot>
                                                         </x-btn-accion>
+                                                    </td>
+                                                    <td>
+                                                        {{ $f['guia_nro_doc_ref'] }}
+                                                        <x-btn-accion class="btn text-primary btn-sm" wire:click.prevent="listar_detalle_guia('{{ $f['id_guia'] }}')" data-bs-toggle="modal" data-bs-target="#modalDetalleGuia">
+                                                            <x-slot name="message">
+                                                                <i class="fas fa-eye"></i>
+                                                            </x-slot>
+                                                        </x-btn-accion>
+                                                    </td>
+                                                    <td>{{ $me->formatoDecimal($f['guia_importe_total']) }}</td>
+                                                    <td>
+                                                        {{ $me->formatoDecimal($f['peso_total']) }} g /<br>
+                                                        {{ $me->formatoDecimal($f['volumen_total']) }} cm³
                                                     </td>
                                                 </tr>
                                             @endforeach
@@ -146,7 +340,7 @@
                                 </div>
                                 <div class="col-lg-6">
                                     <h6 class="mb-2">
-                                        Facturas relacionadas
+                                        Documentos Relacionados
                                     </h6>
                                     <x-table-general>
                                         <x-slot name="thead">

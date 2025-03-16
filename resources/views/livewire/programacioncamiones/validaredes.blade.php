@@ -37,6 +37,173 @@
         </x-slot>
     </x-modal-delete>
 
+    {{--    MODAL VER DETALLES--}}
+    <x-modal-general wire:ignore.self>
+        <x-slot name="tama">modal-xl</x-slot>
+        <x-slot name="id_modal">modalInformacionGuia</x-slot>
+        <x-slot name="titleModal">Información de la guia Seleccionada</x-slot>
+        <x-slot name="modalContent">
+            @if($guiainfo)
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <h6>Información general</h6>
+                                    <hr>
+                                </div>
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Guía:</strong>
+                                    <p>{{ $guiainfo->guia_nro_doc }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Fecha Emisión:</strong>
+                                    <p>{{ $guiainfo->guia_fecha_emision }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Factura:</strong>
+                                    <p>{{ $guiainfo->guia_nro_doc_ref }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Cliente:</strong>
+                                    <p>{{ $guiainfo->guia_nombre_cliente }}</p>
+                                </div>
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Dirección:</strong>
+                                    <p>{{ $guiainfo->guia_direc_entrega }}</p>
+                                </div>
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Cliente:</strong>
+                                    <p>{{ $guiainfo->guia_nombre_cliente }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Tipo de Documento Referencial:</strong>
+                                    <p>{{ $guiainfo->guia_tipo_doc_ref }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Número de Documento Referencial:</strong>
+                                    <p>{{ $guiainfo->guia_tipo_doc_ref }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Glosa:</strong>
+                                    <p>{{ $guiainfo->guia_glosa }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Estado:</strong>
+                                    <p>{{ $guiainfo->guia_estado }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Importe Total:</strong>
+                                    <p>{{ $guiainfo->guia_importe_total }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Tipo de Cambio:</strong>
+                                    <p>{{ $guiainfo->guia_tipo_cambio }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Moneda:</strong>
+                                    <p>{{ $guiainfo->guia_moneda }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Dirección de Entrega:</strong>
+                                    <p>{{ $guiainfo->guia_direc_entrega }}</p>
+                                </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            @else
+                <p>No hay información disponibles para mostrar.</p>
+            @endif
+        </x-slot>
+    </x-modal-general>
+    {{--    FIN MODAL VER DETALLES--}}
+
+    {{--    MODAL DETALLE GUIA--}}
+    <x-modal-general wire:ignore.self>
+        <x-slot name="tama">modal-xl</x-slot>
+        <x-slot name="id_modal">modalDetalleGuia</x-slot>
+        <x-slot name="titleModal">Detalles de la guía</x-slot>
+        <x-slot name="modalContent">
+            <div class="modal-body">
+                <h6>Detalles de la Guía</h6>
+                <hr>
+                @if(!empty($guia_detalle))
+                    <x-table-general>
+                        <x-slot name="thead">
+                            <tr>
+                                <th>Almacén Salida</th>
+                                <th>Fecha Emisión</th>
+                                <th>Estado</th>
+                                <th>Tipo Documento</th>
+                                <th>Nro Documento</th>
+                                <th>Nro Línea</th>
+                                <th>Cód Producto</th>
+                                <th>Descripción Producto</th>
+                                <th>Lote</th>
+                                <th>Unidad</th>
+                                <th>Cantidad</th>
+                                <th>Precio Unit Final Inc IGV</th>
+                                <th>Precio Unit Antes Descuento Inc IGV</th>
+                                <th>Descuento Total Sin IGV</th>
+                                <th>IGV Total</th>
+                                <th>Importe Total Inc IGV</th>
+                                <th>Moneda</th>
+                                <th>Tipo Cambio</th>
+                                <th>Peso Gramos</th>
+                                <th>Volumen CM3</th>
+                                <th>Peso Total Gramos</th>
+                                <th>Volumen Total CM3</th>
+                            </tr>
+                        </x-slot>
+                        <x-slot name="tbody">
+                            @foreach($guia_detalle as $detalle)
+                                <tr>
+                                    <td>{{ $detalle->guia_det_almacen_salida ?? '-' }}</td>
+                                    <td>{{ $detalle->guia_det_fecha_emision ? $me->obtenerNombreFecha($detalle->guia_det_fecha_emision, 'DateTime', 'DateTime') : '-' }}</td>
+                                    <td>{{ $detalle->guia_det_estado ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_tipo_documento ?? '-' }}</td>
+                                    <td>{{ $detalle->guia_det_nro_documento ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_nro_linea ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_cod_producto ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_descripcion_producto ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_lote ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_unidad ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_cantidad ?? '-'}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_precio_unit_final_inc_igv ?? 0)}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_precio_unit_antes_descuente_inc_igv ?? 0)}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_descuento_total_sin_igv ?? 0)}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_igv_total ?? 0)}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_importe_total_inc_igv ?? 0) }}</td>
+                                    <td>{{ $detalle->guia_det_moneda ?? '-'}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_tipo_cambio ?? 0)}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_peso_gramo ?? 0)}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_volumen ?? 0)}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_peso_total_gramo ?? 0)}}</td>
+                                    <td>{{ $me->formatoDecimal($detalle->guia_det_volumen_total ?? 0)}}</td>
+                                </tr>
+                            @endforeach
+                        </x-slot>
+                    </x-table-general>
+                @else
+                    <p>No hay detalles disponibles para mostrar.</p>
+                @endif
+            </div>
+        </x-slot>
+    </x-modal-general>
+    {{--    MODAL FIN DETALLE GUIA--}}
+
     {{-- MODAL RECHAZAR FACTURA EN APROBRAR --}}
     <x-modal-delete wire:ignore.self style="z-index: 1056;">
         <x-slot name="id_modal">modaRecFac</x-slot>
@@ -112,70 +279,69 @@
                                         @foreach($facturas_pre_prog_estado_dos as $factura)
                                             <tr>
                                                 <td>
-                                                <span class="d-block tamanhoTablaComprobantes">
-                                                    {{ $factura->fac_pre_prog_cfnumdoc }}
-                                                </span>
+                                        <span class="d-block tamanhoTablaComprobantes">
+                                            {{ $factura->guia_nro_doc }}
+                                        </span>
                                                 </td>
                                                 <td>
                                                     @php
-                                                        $fechaEmision = \Carbon\Carbon::parse($factura->fac_pre_prog_grefecemision)->format('d/m/Y');
+                                                        $fechaEmision = \Carbon\Carbon::parse($factura->guia_fecha_emision)->format('d/m/Y');
                                                     @endphp
                                                     <span class="d-block tamanhoTablaComprobantes">
-                                                    {{ $fechaEmision }}
-                                                </span>
+                                            {{ $fechaEmision }}
+                                        </span>
                                                 </td>
                                                 <td>
-                                                <span class="d-block tamanhoTablaComprobantes">
-                                                    {{ $factura->fac_pre_prog_cfnumser }} - {{ $factura->fac_pre_prog_cfnumdoc }}
-                                                </span>
+                                        <span class="d-block tamanhoTablaComprobantes">
+                                            {{ $factura->guia_nro_doc_ref }}
+                                        </span>
                                                 </td>
                                                 <td>
                                                     @php
-                                                        $importe = number_format($factura->fac_pre_prog_cfimporte, 2, '.', ',');
+                                                        $importe = number_format($factura->guia_importe_total, 2, '.', ',');
                                                     @endphp
                                                     <span class="d-block tamanhoTablaComprobantes">
-                                                    <b class="colorBlackComprobantes">{{ $importe }}</b>
-                                                </span>
+                                            <b class="colorBlackComprobantes">{{ $importe }}</b>
+                                        </span>
                                                 </td>
                                                 <td>
-                                                <span class="d-block tamanhoTablaComprobantes">
-                                                    {{ $factura->fac_pre_prog_cnomcli }}
-                                                </span>
+                                        <span class="d-block tamanhoTablaComprobantes">
+                                            {{ $factura->guia_nombre_cliente }}
+                                        </span>
                                                 </td>
                                                 <td>
-                                                <span class="d-block tamanhoTablaComprobantes">
-                                                    {{ $factura->fac_pre_prog_direccion_llegada }}
-                                                </span>
+                                        <span class="d-block tamanhoTablaComprobantes">
+                                            {{ $factura->guia_direc_entrega }}
+                                        </span>
+                                                </td>
+                                                <td>
+                                                    {{ $factura->total_peso }} g
                                                     <br>
-                                                    <span class="d-block tamanhoTablaComprobantes" style="color: black;font-weight: bold">
-                                                    {{ $factura->fac_pre_prog_departamento }} - {{ $factura->fac_pre_prog_provincia }} - {{ $factura->fac_pre_prog_distrito }}
-                                                </span>
+                                                    {{ $factura->total_volumen }} cm³
                                                 </td>
                                                 <td>
-                                                <span class="d-block tamanhoTablaComprobantes">
-                                                    <b class="colorBlackComprobantes">{{ number_format($factura->fac_pre_prog_total_kg, 2, '.', ',') }} kg</b>
-                                                </span>
-                                                    <span class="d-block tamanhoTablaComprobantes">
-                                                    <b class="colorBlackComprobantes">{{ number_format($factura->fac_pre_prog_total_volumen, 2, '.', ',') }} cm³</b>
-                                                </span>
+                                        <span class="d-block tamanhoTablaComprobantes">
+                                            {{date('d/m/Y - h:i A', strtotime($factura->updated_at)) }}
+                                        </span>
                                                 </td>
                                                 <td>
-                                                <span class="d-block tamanhoTablaComprobantes">
-                                                    {{date('d/m/Y - h:i A', strtotime($factura->updated_at)) }}
-                                                </span>
-                                                </td>
-                                                <td>
-                                                    <x-btn-accion class="btn bg-success btn-sm text-white" wire:click="cambio_estado('{{ base64_encode($factura->id_fac_pre_prog) }}', 3)" data-bs-toggle="modal" data-bs-target="#modalPrePro">
+                                                    <x-btn-accion class="btn bg-success btn-sm text-white" wire:click="cambio_estado('{{ base64_encode($factura->id_guia) }}', 3)" data-bs-toggle="modal" data-bs-target="#modalPrePro">
                                                         <x-slot name="message">
                                                             <i class="fa-solid fa-check"></i>
                                                         </x-slot>
                                                     </x-btn-accion>
-
-                                                    {{--                                                    <x-btn-accion class="btn btn-danger btn-sm text-white" wire:click="rech_fact('{{ base64_encode($factura->id_fac_pre_prog) }}')" data-bs-toggle="modal" data-bs-target="#modaRecFac">--}}
-                                                    {{--                                                        <x-slot name="message">--}}
-                                                    {{--                                                            <i class="fa-regular fa-circle-xmark"></i>--}}
-                                                    {{--                                                        </x-slot>--}}
-                                                    {{--                                                    </x-btn-accion>--}}
+                                                    <x-btn-accion class="btn btn-primary btn-sm text-white" wire:click.prevent="modal_guia_info('{{ $factura->id_guia}}')" data-bs-toggle="modal" data-bs-target="#modalInformacionGuia">
+                                                        <x-slot name="message">
+                                                            <i class="fas fa-eye"></i> Guía
+                                                        </x-slot>
+                                                    </x-btn-accion>
+                                                    @if(!empty($factura->guia_nro_doc_ref))
+                                                    <x-btn-accion class="btn btn-warning btn-sm text-white" wire:click.prevent="listar_detalle_guia('{{ $factura->id_guia }}')" data-bs-toggle="modal" data-bs-target="#modalDetalleGuia">
+                                                        <x-slot name="message">
+                                                            <i class="fas fa-eye"></i> Factura
+                                                        </x-slot>
+                                                    </x-btn-accion>
+                                                    @endif
                                                 </td>
                                             </tr>
                                         @endforeach

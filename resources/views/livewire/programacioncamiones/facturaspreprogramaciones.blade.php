@@ -273,7 +273,12 @@
                                                                                 <span class="d-block tamanhoTablaComprobantes">
                                                                                     {{ $guia->TIPO_DOC_REF . ': ' . $guia->NRO_DOC_REF}}
                                                                                 </span>
+                                                                                @else
+                                                                                <span class="d-block tamanhoTablaComprobantes">
+                                                                                    Sin Factura Asociada
+                                                                                </span>
                                                                             @endisset
+
                                                                         </td>
                                                                         <td style="width: 37%">
                                                                             <span class="d-block tamanhoTablaComprobantes">
@@ -393,7 +398,7 @@
                                             <x-table-general id="ederTable">
                                                 <x-slot name="thead">
                                                     <tr>
-                                                        <th>N° Documento</th>
+                                                        <th>Guía</th>
                                                         <th>Fecha Emisión</th>
                                                         <th>Importe Total</th>
                                                         <th>Nombre Cliente</th>
@@ -414,11 +419,11 @@
                                                                     <i class="fas fa-trash-alt"></i>
                                                                 </a>
                                                                 <a href="#" wire:click.prevent="listar_detallesf('{{ $factura['NRO_DOC'] }}')" class="btn btn-sm btn-primary text-white m-1" data-bs-toggle="modal" data-bs-target="#modalInformacionGuia">
-                                                                    <i class="fas fa-eye"></i>
+                                                                    <i class="fas fa-eye"></i>Guía
                                                                 </a>
 
                                                                 <a href="#" wire:click.prevent="detalle_guia('{{ $factura['NRO_DOC'] }}')" class="btn btn-sm btn-warning text-white m-1" data-bs-toggle="modal" data-bs-target="#modalDetalleGuia">
-                                                                    <i class="fas fa-eye"></i>
+                                                                    <i class="fas fa-eye"></i>Factura
                                                                 </a>
                                                             </td>
                                                         </tr>

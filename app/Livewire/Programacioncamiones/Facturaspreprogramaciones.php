@@ -9,7 +9,7 @@ use App\Models\Logs;
 use App\Models\TipoServicio;
 use App\Models\Server;
 use App\Models\Facturaspreprogramacion;
-use App\Models\Historialpreprogramacion;
+use App\Models\Historialguia;
 use App\Models\Guiadetalle;
 //use App\Models\Guia;
 use Carbon\Carbon;
@@ -21,7 +21,7 @@ class Facturaspreprogramaciones extends Component
     private $server;
     private $facpreprog;
 //    private $guia;
-    private $historialpreprogramacion;
+    private $historialguia;
     private $guiadetalle;
     public function __construct(){
         $this->logs = new Logs();
@@ -29,7 +29,7 @@ class Facturaspreprogramaciones extends Component
         $this->server = new Server();
 //        $this->guia = new Guia();
         $this->facpreprog = new Facturaspreprogramacion();
-        $this->historialpreprogramacion = new Historialpreprogramacion();
+        $this->historialguia = new Historialguia();
         $this->guiadetalle = new Guiadetalle();
     }
     public $selectedGuias = [];
@@ -302,6 +302,7 @@ class Facturaspreprogramaciones extends Component
 //    }
 
     public function guardarGuias() {
+        $this->filteredGuias = [];
         $this->isSaving = true; // Activar el estado de guardado
         try {
             // Validar que haya facturas seleccionadas y un estado seleccionado
@@ -316,7 +317,6 @@ class Facturaspreprogramaciones extends Component
             ]);
 
             DB::beginTransaction();
-
             foreach ($this->selectedGuias as $factura) {
                 // Verificar si la factura ya existe en la tabla
                 $facturaExistente = Facturaspreprogramacion::where('guia_nro_doc', $factura['NRO_DOC'])
@@ -328,6 +328,16 @@ class Facturaspreprogramaciones extends Component
                     $facturaExistente->guia_estado_registro = 1;
                     $facturaExistente->guia_fecha = Carbon::now('America/Lima');
                     $facturaExistente->save();
+
+                    // Guardar en la tabla historial guias
+                    $historial = new Historialguia();
+                    $historial->id_users = Auth::id();
+                    $historial->id_guia = $facturaExistente->id_guia;
+                    $historial->guia_nro_doc = $facturaExistente->guia_nro_doc;
+                    $historial->historial_guia_estado_aprobacion = $facturaExistente->guia_estado_aprobacion;
+                    $historial->historial_guia_fecha_hora = Carbon::now('America/Lima');
+                    $historial->historial_guia_estado = $facturaExistente->guia_estado_registro;
+                    $historial->save();
                 } else {
                     // Si no existe, crear un nuevo registro
                     $nuevaFactura = new Facturaspreprogramacion();
@@ -393,12 +403,21 @@ class Facturaspreprogramaciones extends Component
                         $nuevoDetalle->guia_det_volumen_total = $detalle->VOLUMEN_TOTAL_CM3 ?: null;
                         $nuevoDetalle->save();
                     }
+                    // Guardar en la tabla historial guias
+                    $historial = new Historialguia();
+                    $historial->id_users = Auth::id();
+                    $historial->id_guia = $nuevaFactura->id_guia;
+                    $historial->guia_nro_doc = $nuevaFactura->guia_nro_doc;
+                    $historial->historial_guia_estado_aprobacion = $nuevaFactura->guia_estado_aprobacion;
+                    $historial->historial_guia_fecha_hora = Carbon::now('America/Lima');
+                    $historial->historial_guia_estado = $nuevaFactura->guia_estado_registro;
+                    $historial->save();
                 }
 
                 // Insertar en facturas_mov
                 if (isset($nuevaFactura)) {
                     DB::table('facturas_mov')->insert([
-                        'id_fac_pre_prog' => $nuevaFactura->id_guia, // Usar el ID de la nueva factura creada
+                        'id_guia' => $nuevaFactura->id_guia, // Usar el ID de la nueva factura creada
                         'fac_envio_valpago' => Carbon::now('America/Lima'), // Establecer la fecha de envío
                         'id_users_responsable' => Auth::id(), // Asignar el ID del usuario responsable
                     ]);

@@ -4,6 +4,7 @@ namespace App\Livewire\Programacioncamiones;
 
 use App\Models\Facturamovimientoarea;
 use App\Models\Facturaspreprogramacion;
+use App\Models\Historialguia;
 use App\Models\Logs;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -12,7 +13,6 @@ use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
-use App\Models\Historialpreprogramacion;
 
 class Validaredes extends Component
 {
@@ -20,19 +20,22 @@ class Validaredes extends Component
     private $logs;
     private $facpreprog;
     private $facmovarea;
-    private $historialpreprogramacion;
+    private $historialguia;
     public function __construct(){
         $this->logs = new Logs();
         $this->facpreprog = new Facturaspreprogramacion();
         $this->facmovarea = new Facturamovimientoarea();
-        $this->historialpreprogramacion = new Historialpreprogramacion();
+        $this->historialguia = new Historialguia();
     }
     public $messagePrePro = "";
-    public $id_fac_pre_prog = "";
-    public $fac_pre_prog_estado_aprobacion = "";
-    public $fac_mov_area_motivo_rechazo = "";
-    public $messageRecFactApro;
+    public $id_guia;
+    public $guia_estado_aprobacion;
     public $fmanual;
+    public $fac_mov_area_motivo_rechazo = "";
+    public $guiaSeleccionada;
+    public $messageRecFactApro;
+    public $guiainfo = [];
+    public $guia_detalle = [];
 
     public function render(){
         $facturas_pre_prog_estado_dos = $this->facpreprog->listar_facturas_pre_programacion_estado_dos();
@@ -40,18 +43,21 @@ class Validaredes extends Component
     }
 
     public function cambio_estado($id_factura, $estado){
-        $this->fmanual = '';
-        $id = base64_decode($id_factura);
+        $this->fmanual = ''; // Inicializar la variable de fecha y hora manual
+        $id = base64_decode($id_factura); // Decodificar el ID de la factura
+
         if ($id) {
-            $this->id_fac_pre_prog = $id;
-            $this->fac_pre_prog_estado_aprobacion = $estado;
+            $this->id_guia = $id; // Asignar el ID decodificado a la propiedad id_guia
+            $this->guia_estado_aprobacion = $estado; // Asignar el estado de aprobación
+
+            // Obtener la fecha y hora actual en la zona horaria de Lima
             $fhactual = Carbon::now('America/Lima')->format('d/m/Y - h:i a');
 
+            // Actualizar el mensaje con la fecha y hora actual
             $this->messagePrePro = "¿Estás seguro de enviar con fecha $fhactual?";
         }
     }
-    public function actualizarMensaje()
-    {
+    public function actualizarMensaje(){
         // Si hay una fecha y hora manual, usarla; de lo contrario, usar la fecha y hora actual
         $fechaHora = $this->fmanual
             ? Carbon::parse($this->fmanual, 'America/Lima')->format('d/m/Y - h:i a')
@@ -60,63 +66,71 @@ class Validaredes extends Component
         // Actualizar el mensaje con la nueva fecha y hora
         $this->messagePrePro = "¿Estás seguro de enviar con fecha $fechaHora?";
     }
-
     public function disable_pre_pro(){
         try {
+            // Verificar permisos del usuario
             if (!Gate::allows('disable_pre_pro')) {
                 session()->flash('error_pre_pro', 'No tiene permisos para cambiar los estados de este registro.');
                 return;
             }
+
+            // Validar los datos de entrada
             $this->validate([
-                'id_fac_pre_prog' => 'required|integer',
-                'fac_pre_prog_estado_aprobacion' => 'required|integer',
+                'id_guia' => 'required|integer',
+                'guia_estado_aprobacion' => 'required|integer',
             ], [
-                'id_fac_pre_prog.required' => 'El identificador es obligatorio.',
-                'id_fac_pre_prog.integer' => 'El identificador debe ser un número entero.',
-                'fac_pre_prog_estado_aprobacion.required' => 'El estado es obligatorio.',
-                'fac_pre_prog_estado_aprobacion.integer' => 'El estado debe ser un número entero.',
+                'id_guia.required' => 'El identificador es obligatorio.',
+                'id_guia.integer' => 'El identificador debe ser un número entero.',
+                'guia_estado_aprobacion.required' => 'El estado es obligatorio.',
+                'guia_estado_aprobacion.integer' => 'El estado debe ser un número entero.',
             ]);
+
+            // Iniciar una transacción de base de datos
             DB::beginTransaction();
-            $factura = Facturaspreprogramacion::find($this->id_fac_pre_prog);
+
+            // Buscar la factura por ID
+            $factura = Facturaspreprogramacion::find($this->id_guia);
 
             if ($factura) {
-                $factura->fac_pre_prog_estado_aprobacion = $this->fac_pre_prog_estado_aprobacion;
+                $factura->guia_estado_aprobacion = $this->guia_estado_aprobacion;
 
                 if ($factura->save()) {
-                    // Registrar en historial_pre_programacion
-                    $historial = new Historialpreprogramacion();
-                    $historial->id_fac_pre_prog = $this->id_fac_pre_prog;
-                    $historial->fac_pre_prog_cfnumdoc = $factura->fac_pre_prog_cfnumdoc;
-                    $historial->fac_pre_prog_estado_aprobacion = $this->fac_pre_prog_estado_aprobacion;
-                    $historial->fac_pre_prog_estado = 1;
-                    $historial->his_pre_progr_fecha_hora = Carbon::now('America/Lima');
+                    // Registrar en historial guias
+                    $historial = new Historialguia();
+                    $historial->id_users = Auth::id();
+                    $historial->id_guia = $this->id_guia;
+                    $historial->guia_nro_doc = $factura->guia_nro_doc;
+                    $historial->historial_guia_estado_aprobacion = $this->guia_estado_aprobacion;
+                    $historial->historial_guia_fecha_hora = Carbon::now('America/Lima');
+                    $historial->historial_guia_estado = 1;
                     $historial->save();
-
-                    // Buscar el registro en la tabla facturas_mov
+                    // Buscar si ya existe un registro en la tabla facturas_mov
                     $facturaMov = DB::table('facturas_mov')
-                        ->where('id_fac_pre_prog', $this->id_fac_pre_prog) // Asegúrate de usar el campo correcto
+                        ->where('id_guia', $this->id_guia)
                         ->first();
 
                     if ($facturaMov) {
-                        // Si existe, actualizar los campos
+                        // Actualizar el registro existente
                         DB::table('facturas_mov')
-                            ->where('id_fac_pre_prog', $this->id_fac_pre_prog)
+                            ->where('id_guia', $this->id_guia)
                             ->update([
                                 'fac_acept_val_rec' => $this->fmanual ? Carbon::parse($this->fmanual, 'America/Lima') : Carbon::now('America/Lima'),
                                 'fac_env_ges_fac' => $this->fmanual ? Carbon::parse($this->fmanual, 'America/Lima') : Carbon::now('America/Lima'),
                             ]);
                     } else {
-                        // Si no existe, crear un nuevo registro
+                        // Crear un nuevo registro en facturas_mov
                         DB::table('facturas_mov')->insert([
-                            'id_fac_pre_prog' => $this->id_fac_pre_prog,
+                            'id_fac_pre_prog' => $this->id_guia,
                             'fac_acept_val_rec' => $this->fmanual ? Carbon::parse($this->fmanual, 'America/Lima') : Carbon::now('America/Lima'),
                             'fac_env_ges_fac' => $this->fmanual ? Carbon::parse($this->fmanual, 'America/Lima') : Carbon::now('America/Lima'),
-//                            'fac_envio_val_rec' => Carbon::now('America/Lima'), // Actualiza con la fecha actual
                             'id_users_responsable' => Auth::id(), // Asignar el ID del usuario responsable
                         ]);
                     }
-//                    hola
+
+                    // Confirmar la transacción
                     DB::commit();
+
+                    // Cerrar el modal y mostrar mensaje de éxito
                     $this->dispatch('hidemodalPrePro');
                     session()->flash('success', 'Factura aprobada.');
                 } else {
@@ -131,10 +145,10 @@ class Validaredes extends Component
             $this->setErrorBag($e->validator->errors());
         } catch (\Exception $e) {
             DB::rollBack();
-            session()->flash('error', 'Ocurrió un error al aceptar la factura. Por favor, inténtelo nuevamente.');
+            session()->flash('error', 'Ocurrió un error al aceptar la factura. Detalles: ' . $e->getMessage());
+            \Log::error('Error en disable_pre_pro: ' . $e->getMessage());
         }
     }
-
     public function rech_fact($id_fac){
         $id = base64_decode($id_fac);
         $this->fac_mov_area_motivo_rechazo = "";
@@ -206,4 +220,12 @@ class Validaredes extends Component
             session()->flash('error', 'Ocurrió un error al rechazar la factura.');
         }
     }
+    public function modal_guia_info($id_guia) {
+        $this->guiainfo = $this->facpreprog->listar_guia_x_id($id_guia);
+    }
+
+    public function listar_detalle_guia($id_guia) {
+        $this->guia_detalle = $this->facpreprog->listar_guia_detalle_x_id($id_guia);
+    }
+
 }
