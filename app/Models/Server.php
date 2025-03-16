@@ -223,6 +223,7 @@ class  Server extends Model
             ]);
 //            // Enviar solicitud GET sin parámetros
 //            $response = $client->post($url);
+            //HOLA
 
             // Procesar la respuesta
             $body = $response->getBody()->getContents();
