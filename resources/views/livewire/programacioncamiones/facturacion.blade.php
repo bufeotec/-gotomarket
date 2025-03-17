@@ -36,6 +36,45 @@
     </x-modal-delete>
     {{-- MODAL RECHAZAR FACTURA EN APROBRAR --}}
 
+    {{--    MODAL EDITAR ESTADO--}}
+    <x-modal-delete wire:ignore.self>
+        <x-slot name="id_modal">modalEditCambioEstado</x-slot>
+        <x-slot name="modalContentDelete">
+            <form wire:submit.prevent="cambio_estado_edit">
+                <div class="row">
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        <h2 class="deleteTitle">Cambio de estado de la guía</h2>
+                    </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        @error('guia_estado_aprobacion') <span class="message-error">{{ $message }}</span> @enderror
+                        @error('id_guia') <span class="message-error">{{ $message }}</span> @enderror
+                        @if (session()->has('error-edit-guia'))
+                            <div class="alert alert-danger alert-dismissible show fade">
+                                {{ session('error_delete') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="col-lg-12">
+                        <label for="guia_estado_aprobacion" class="form-label">Estado Guía</label>
+                        <select name="guia_estado_aprobacion" id="guia_estado_aprobacion" wire:model.live="guia_estado_aprobacion" class="form-select">
+                            <option value="">Seleccionar...</option>
+                            <option value="0">Anulado</option>
+                            <option value="8">Entregado</option>
+                        </select>
+                    </div>
+
+                    <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-center">
+                        <button type="submit" class="btn btn-primary text-white btnDelete">ENVIAR</button>
+                        <button type="button" data-bs-dismiss="modal" class="btn btn-danger btnDelete">No</button>
+                    </div>
+                </div>
+            </form>
+        </x-slot>
+    </x-modal-delete>
+    {{-- MODAL FIN EDITAR ESTADO --}}
+
     {{--    MODAL GESTIONAR ESTADOS--}}
     <x-modal-delete wire:ignore.self>
         <x-slot name="id_modal">modalGeStado</x-slot>
@@ -181,13 +220,13 @@
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    {{ $factura->total_peso }} g
+                                                    {{$me->formatoDecimal($factura->total_peso)}} g
                                                     <br>
-                                                    {{ $factura->total_volumen }} cm³
+                                                    {{$me->formatoDecimal($factura->total_volumen)}} cm³
                                                 </td>
                                                 <td>
                                                     <span class="d-block tamanhoTablaComprobantes">
-                                                        {{ date('d/m/Y - h:i a', strtotime($factura->updated_at)) }}
+                                                        {{$me->obtenerNombreFecha($factura->updated_at,'DateTime', 'DateTime')}}
                                                     </span>
                                                 </td>
                                                 <td>
@@ -209,7 +248,16 @@
                                                                 Aceptado por Créditos
                                                                 @break
                                                             @case(6)
-                                                                Estado de facturación
+                                                                En facturación
+                                                                @break
+                                                            @case(0)
+                                                                Guía anulada
+                                                                @break
+                                                            @case(7)
+                                                                Guía en transito
+                                                                @break
+                                                            @case(8)
+                                                                Guía entregada
                                                                 @break
                                                                 @default
                                                                 Estado desconocido
@@ -217,14 +265,14 @@
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    @if ($factura->guia_estado_aprobacion != 2)
+                                                    @if ($factura->guia_estado_aprobacion == 6)
                                                         <x-btn-accion class="btn bg-success btn-sm text-white" wire:click="cambio_estado('{{ base64_encode($factura->id_guia) }}', 2)" data-bs-toggle="modal" data-bs-target="#modalPrePro">
                                                             <x-slot name="message">
                                                                 <i class="fa-solid fa-check"></i>
                                                             </x-slot>
                                                         </x-btn-accion>
                                                     @endif
-                                                        <x-btn-accion class="btn bg-primary btn-sm text-white" wire:click="cambio_estado('{{ base64_encode($factura->id_guia) }}')" data-bs-toggle="modal" data-bs-target="#">
+                                                        <x-btn-accion class="btn bg-primary btn-sm text-white" wire:click="edit_cambio_estado('{{ base64_encode($factura->id_guia) }}')" data-bs-toggle="modal" data-bs-target="#modalEditCambioEstado">
                                                             <x-slot name="message">
                                                                 <i class="fa-solid fa-edit"></i>
                                                             </x-slot>
@@ -253,6 +301,10 @@
 
     $wire.on('hidemodaRecFac', () => {
         $('#modaRecFac').modal('hide');
+    });
+
+    $wire.on('hidemodalEditCambioEstado', () => {
+        $('#modalEditCambioEstado').modal('hide');
     });
 
     document.getElementById("btnEditar").addEventListener("click", function() {

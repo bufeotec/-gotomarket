@@ -43,7 +43,7 @@ class Notascreditos extends Component
     public $selectedGuias = [];
     public $nota_credito_detalle = [];
     public function mount(){
-        $this->desde = date('Y-m-d');
+        $this->desde = date('Y-01-01');
         $this->hasta = date('Y-m-d');
 
         $this->selectedGuias = [];
@@ -152,7 +152,7 @@ class Notascreditos extends Component
         $this->not_cred_motivo_descripcion = "";
         $this->selectedGuias = [];
         $this->filteredGuias = [];
-        $this->desde = date('Y-m-d');
+        $this->desde = date('Y-01-01');
         $this->hasta = date('Y-m-d');
     }
 
@@ -279,7 +279,7 @@ class Notascreditos extends Component
             $this->filteredGuias = []; // Limpiar los resultados filtrados
             $this->selectedGuias = []; // Limpiar las guías seleccionadas
             $this->search_nota_credito = ''; // Limpiar el campo de búsqueda
-            $this->desde = date('Y-m-d'); // Reiniciar la fecha "desde"
+            $this->desde = date('Y-01-01'); // Reiniciar la fecha "desde"
             $this->hasta = date('Y-m-d'); // Reiniciar la fecha "hasta"
             // Cerrar el modal y mostrar mensaje de éxito
             $this->dispatch('hideModal');

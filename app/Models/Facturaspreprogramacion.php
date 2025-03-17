@@ -9,8 +9,8 @@ use Illuminate\Support\Facades\DB;
 class Facturaspreprogramacion extends Model
 {
     use HasFactory;
-    protected $table = "guias";
-    protected $primaryKey = "id_guia";
+    protected $table = "facturas_pre_programaciones";
+    protected $primaryKey = "id_fac_pre_prog";
 
     private $logs;
     public function __construct(){

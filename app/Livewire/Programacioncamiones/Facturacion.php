@@ -6,6 +6,7 @@ use App\Models\Facturamovimientoarea;
 use App\Models\Facturaspreprogramacion;
 use App\Models\Historialguia;
 use App\Models\Logs;
+use App\Models\Guia;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -21,14 +22,16 @@ class Facturacion extends Component
     private $facpreprog;
     private $facmovarea;
     private $historialguia;
+    private $guia;
     public function __construct(){
         $this->logs = new Logs();
         $this->facpreprog = new Facturaspreprogramacion();
         $this->facmovarea = new Facturamovimientoarea();
         $this->historialguia = new Historialguia();
+        $this->guia = new Guia();
     }
     public $messagePrePro = "";
-    public $id_guia;
+    public $id_guia = "";
     public $guia_estado_aprobacion;
     public $fechaHoraManual;
     public $fechaHoraManual2;
@@ -37,7 +40,7 @@ class Facturacion extends Component
     public $messageRecFactApro;
 
     public function render(){
-        $facturas_pre_prog_estadox = $this->facpreprog->listar_facturas_pre_programacion_estadox();
+        $facturas_pre_prog_estadox = $this->guia->listar_facturas_pre_programacion_estadox();
         return view('livewire.programacioncamiones.facturacion', compact('facturas_pre_prog_estadox'));
     }
     public function cambio_estado($id_guia, $estado_aprobacion){
@@ -88,7 +91,7 @@ class Facturacion extends Component
             DB::beginTransaction();
 
             // Buscar la factura por ID
-            $factura = Facturaspreprogramacion::find($this->id_guia);
+            $factura = Guia::find($this->id_guia);
 
             if ($factura) {
                 $factura->guia_estado_aprobacion = $this->guia_estado_aprobacion;
@@ -181,7 +184,7 @@ class Facturacion extends Component
             DB::beginTransaction();
 
             // Buscar la factura preprogramada por su ID
-            $facturaPreprogramada = Facturaspreprogramacion::find($this->id_fac_pre_prog);
+            $facturaPreprogramada = Guia::find($this->id_fac_pre_prog);
 
             if ($facturaPreprogramada) {
                 // Actualizar el estado de aprobación a 0 (rechazado)
@@ -217,6 +220,59 @@ class Facturacion extends Component
             DB::rollBack();
             $this->logs->insertarLog($e);
             session()->flash('error', 'Ocurrió un error al rechazar la factura.');
+        }
+    }
+
+    public function edit_cambio_estado($id){
+        if ($id){
+            $this->id_guia = base64_decode($id);
+            $this->guia_estado_aprobacion = "";
+        }
+    }
+
+    public function cambio_estado_edit(){
+        try {
+            if (!Gate::allows('cambio_estado_edit')) {
+                session()->flash('error-edit-guia', 'No tiene permisos para aprobar o rechazar este servicio de transporte.');
+                return;
+            }
+
+            $this->validate([
+                'id_guia' => 'required|integer',
+                'guia_estado_aprobacion' => 'required|in:0,8',
+            ], [
+                'id_guia.required' => 'El identificador es obligatorio.',
+                'id_guia.integer' => 'El identificador debe ser un número entero.',
+                'guia_estado_aprobacion.required' => 'El estado de la guía es obligatorio.',
+                'guia_estado_aprobacion.in' => 'El estado de la guía debe ser Anulado (0) o Entregado (8).',
+            ]);
+
+            DB::beginTransaction();
+
+            // Buscar el servicio de transporte
+            $edit_guia_update = Guia::find($this->id_guia);
+
+            if (!$edit_guia_update) {
+                DB::rollBack();
+                session()->flash('error-edit-guia', 'La guía no fue encontrado.');
+                return;
+            }
+
+            // Cambiar el estado de la guía
+            $edit_guia_update->guia_estado_aprobacion = $this->guia_estado_aprobacion;
+
+            if ($edit_guia_update->save()) {
+                DB::commit();
+                $this->dispatch('hidemodalEditCambioEstado');
+                session()->flash('success', 'La guía cambio de estado.');
+            } else {
+                DB::rollBack();
+                session()->flash('error-edit-guia', 'No se pudo cambiar el estado de la guía.');
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error al cambiar el estado del registro. Por favor, inténtelo nuevamente.');
         }
     }
 }

@@ -295,11 +295,11 @@
                                                             <a href="#" class="btn text-danger btn-sm mx-3" wire:click.prevent="eliminar_nota_credito_seleccionada('{{ $factura['NRO_DOCUMENTO'] }}')">
                                                                 <i class="fas fa-trash"></i>
                                                             </a>
-                                                            {{-- Mostrar check o warning --}}
+                                                            {{-- Mostrar check o warning con tooltip --}}
                                                             @if ($factura['existe_en_guias'])
-                                                                <i class="fa-solid fa-check text-success"></i>
+                                                                <i class="fa-solid fa-check text-success cursoPointer" title="Factura registrada en el intranet"></i>
                                                             @else
-                                                                <i class="fas fa-exclamation-triangle text-warning"></i>
+                                                                <i class="fas fa-exclamation-triangle text-warning cursoPointer" title="Factura no registrada en intranet"></i>
                                                             @endif
                                                         </td>
                                                     </tr>

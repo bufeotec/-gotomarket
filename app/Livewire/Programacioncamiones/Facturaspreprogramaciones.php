@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Programacioncamiones;
 
+use App\Models\Guia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -319,7 +320,7 @@ class Facturaspreprogramaciones extends Component
             DB::beginTransaction();
             foreach ($this->selectedGuias as $factura) {
                 // Verificar si la factura ya existe en la tabla
-                $facturaExistente = Facturaspreprogramacion::where('guia_nro_doc', $factura['NRO_DOC'])
+                $facturaExistente = Guia::where('guia_nro_doc', $factura['NRO_DOC'])
                     ->first();
 
                 if ($facturaExistente) {
@@ -340,7 +341,7 @@ class Facturaspreprogramaciones extends Component
                     $historial->save();
                 } else {
                     // Si no existe, crear un nuevo registro
-                    $nuevaFactura = new Facturaspreprogramacion();
+                    $nuevaFactura = new Guia();
                     $nuevaFactura->id_users = Auth::id();
                     $nuevaFactura->guia_almacen_origen = $factura['ALMACEN_ORIGEN'] ?: null;
                     $nuevaFactura->guia_tipo_doc = $factura['TIPO_DOC'] ?: null;

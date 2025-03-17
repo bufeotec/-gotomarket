@@ -34,7 +34,7 @@
 
                                 <div class="col-lg-3">
                                     <strong style="color: #8c1017">Fecha de Emision:</strong>
-                                    <p>{{ $guiaSeleccionada['FECHA_EMISION'] }}</p>
+                                    <p>{{ $guiaSeleccionada['FECHA_EMISION'] ? $me->obtenerNombreFecha($guiaSeleccionada['FECHA_EMISION'], 'DateTime', 'DateTime') : '-' }}</p>
                                 </div>
 
                                 <div class="col-lg-3">
@@ -64,12 +64,12 @@
 
                                 <div class="col-lg-3">
                                     <strong style="color: #8c1017">Importe Total:</strong>
-                                    <p>{{ $guiaSeleccionada['IMPORTE_TOTAL'] }}</p>
+                                    <p>{{ $me->formatoDecimal($guiaSeleccionada['IMPORTE_TOTAL'] ?? 0)}}</p>
                                 </div>
 
                                 <div class="col-lg-3">
                                     <strong style="color: #8c1017">Tipo de Cambio:</strong>
-                                    <p>{{ $guiaSeleccionada['TIPO_DE_CAMBIO'] }}</p>
+                                    <p>{{ $me->formatoDecimal($guiaSeleccionada['TIPO_DE_CAMBIO'] ?? 0)}}</p>
                                 </div>
 
                                 <div class="col-lg-3">
@@ -263,7 +263,7 @@
                                                                         <td style="width: 32%">
                                                                             <span class="tamanhoTablaComprobantes">
                                                                                 <b class="colorBlackComprobantes">
-                                                                                    {{ isset($guia->{'FECHA_EMISION'}) ? date('d/m/Y', strtotime($guia->{'FECHA_EMISION'})) : 'Sin fecha' }}
+                                                                                    {{ isset($guia->{'FECHA_EMISION'}) ? $me->obtenerNombreFecha($guia->{'FECHA_EMISION'},'DateTime', 'DateTime') : 'Sin fecha' }}
                                                                                 </b>
                                                                             </span>
                                                                             <span class="d-block tamanhoTablaComprobantes">
@@ -419,11 +419,11 @@
                                                                     <i class="fas fa-trash-alt"></i>
                                                                 </a>
                                                                 <a href="#" wire:click.prevent="listar_detallesf('{{ $factura['NRO_DOC'] }}')" class="btn btn-sm btn-primary text-white m-1" data-bs-toggle="modal" data-bs-target="#modalInformacionGuia">
-                                                                    <i class="fas fa-eye"></i>Guía
+                                                                    <i class="fas fa-eye"></i> Guía
                                                                 </a>
 
                                                                 <a href="#" wire:click.prevent="detalle_guia('{{ $factura['NRO_DOC'] }}')" class="btn btn-sm btn-warning text-white m-1" data-bs-toggle="modal" data-bs-target="#modalDetalleGuia">
-                                                                    <i class="fas fa-eye"></i>Factura
+                                                                    <i class="fas fa-eye"></i> Factura
                                                                 </a>
                                                             </td>
                                                         </tr>
