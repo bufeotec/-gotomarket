@@ -6,6 +6,7 @@ use App\Models\Facturamovimientoarea;
 use App\Models\Facturaspreprogramacion;
 use App\Models\Historialguia;
 use App\Models\Logs;
+use App\Models\Guia;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -21,11 +22,13 @@ class Validaredes extends Component
     private $facpreprog;
     private $facmovarea;
     private $historialguia;
+    private $guia;
     public function __construct(){
         $this->logs = new Logs();
         $this->facpreprog = new Facturaspreprogramacion();
         $this->facmovarea = new Facturamovimientoarea();
         $this->historialguia = new Historialguia();
+        $this->guia = new Guia();
     }
     public $messagePrePro = "";
     public $id_guia;
@@ -38,7 +41,7 @@ class Validaredes extends Component
     public $guia_detalle = [];
 
     public function render(){
-        $facturas_pre_prog_estado_dos = $this->facpreprog->listar_facturas_pre_programacion_estado_dos();
+        $facturas_pre_prog_estado_dos = $this->guia->listar_facturas_pre_programacion_estado_dos();
         return view('livewire.programacioncamiones.validaredes', compact('facturas_pre_prog_estado_dos'));
     }
 
@@ -89,7 +92,7 @@ class Validaredes extends Component
             DB::beginTransaction();
 
             // Buscar la factura por ID
-            $factura = Facturaspreprogramacion::find($this->id_guia);
+            $factura = Guia::find($this->id_guia);
 
             if ($factura) {
                 $factura->guia_estado_aprobacion = $this->guia_estado_aprobacion;
@@ -221,11 +224,11 @@ class Validaredes extends Component
         }
     }
     public function modal_guia_info($id_guia) {
-        $this->guiainfo = $this->facpreprog->listar_guia_x_id($id_guia);
+        $this->guiainfo = $this->guia->listar_guia_x_id($id_guia);
     }
 
     public function listar_detalle_guia($id_guia) {
-        $this->guia_detalle = $this->facpreprog->listar_guia_detalle_x_id($id_guia);
+        $this->guia_detalle = $this->guia->listar_guia_detalle_x_id($id_guia);
     }
 
 }

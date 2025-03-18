@@ -10,6 +10,7 @@ use App\Models\Facturaspreprogramacion;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Facturamovimientoarea;
 use App\Models\Historialguia;
+use App\Models\Guia;
 use Carbon\Carbon;
 
 class Creditoscobranzas extends Component
@@ -18,11 +19,13 @@ class Creditoscobranzas extends Component
     private $facpreprog;
     private $facmovarea;
     private $historialguia;
+    private $guia;
     public function __construct(){
         $this->logs = new Logs();
         $this->facpreprog = new Facturaspreprogramacion();
         $this->facmovarea = new Facturamovimientoarea();
         $this->historialguia = new Historialguia();
+        $this->guia = new Guia();
     }
     public $desde;
     public $hasta;
@@ -41,14 +44,16 @@ class Creditoscobranzas extends Component
     public $messageFacApro;
     public $fechaHoraManual3 = "";
     public $selectedItems = [];
+    public $selectedGuiaAcp = [];
     public $selectAll = false;
+    public $estadoGuia = "";
 
     public function mount(){
-//        $this->desde = date('Y-m-d');
-//        $this->hasta =  date('Y-m-d');
+        $this->desde = date('Y-01-01');
+        $this->hasta =  date('Y-m-d');
         $this->buscar_comprobantes();
         $this->messageFacApro = "¿Está seguro de enviar a estados de facturación?";
-        $this->facturasCreditoAprobadas = Facturaspreprogramacion::where('guia_estado_aprobacion', 1)->get();
+        $this->facturasCreditoAprobadas = Guia::where('guia_estado_aprobacion', 1)->get();
     }
     public function render(){
         $this->facturasCreditoAprobadas = DB::table('guias')
@@ -72,8 +77,7 @@ class Creditoscobranzas extends Component
         // Obtener los resultados de la consulta
         $this->filteredFacturas = $query->get();
     }
-    public function pre_mot_cre($id_fac)
-    {
+    public function pre_mot_cre($id_fac){
         $this->fechaHoraManual3 = '';
         $id = base64_decode($id_fac);
 
@@ -100,7 +104,7 @@ class Creditoscobranzas extends Component
 
             // Iterar sobre las guías seleccionadas
             foreach ($this->selectedGuiaIds as $guiaId) {
-                $facturaPreprogramada = Facturaspreprogramacion::find($guiaId);
+                $facturaPreprogramada = Guia::find($guiaId);
 
                 if ($facturaPreprogramada) {
                     // Actualizar el estado de aprobación a 5
@@ -152,6 +156,7 @@ class Creditoscobranzas extends Component
 
                 // Confirmar transacción
                 DB::commit();
+                $this->selectedGuiaIds = [];
                 session()->flash('success', 'Facturas preprogramadas aprobadas correctamente.');
                 $this->dispatch('hidemodalMotCre');
                 $this->buscar_comprobantes();
@@ -188,7 +193,7 @@ class Creditoscobranzas extends Component
 
             DB::beginTransaction();
             foreach ($this->selectedItems as $id_guia) {
-                $factura = Facturaspreprogramacion::find($id_guia);
+                $factura = Guia::find($id_guia);
 
                 if ($factura) {
                     // Actualizar el estado de la factura
@@ -237,4 +242,5 @@ class Creditoscobranzas extends Component
     public function updatedSelectedItems(){
         $this->selectAll = count($this->selectedItems) === $this->facturasCreditoAprobadas->count();
     }
+
 }

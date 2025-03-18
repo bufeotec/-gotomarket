@@ -100,12 +100,12 @@
                     </div>
                     <div class="row">
                         <div class="col-lg-4 col-md-6 col-sm-12 mb-2">
-                            <input type="date" name="fecha_desde" id="fecha_desde" wire:model.live="desde" class="form-control" min="2025-01-01">
+                            <input type="date" name="desde" id="desde" wire:model.live="desde" class="form-control" min="2025-01-01">
                         </div>
                         <div class="col-lg-4 col-md-6 col-sm-12 mb-2">
-                            <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model.live="hasta" class="form-control" min="2025-01-01">
+                            <input type="date" name="hasta" id="hasta" wire:model.live="hasta" class="form-control" min="2025-01-01">
                         </div>
-                        <div class="col-lg-3 col-md-3 col-sm-12 mb-2 mt-1">
+                        <div class="col-lg-4 col-md-3 col-sm-12 mb-2 mt-1">
                             <button class="btn btn-sm bg-primary text-white w-100" wire:click="buscar_comprobantes" >
                                 <i class="fa fa-search"></i> BUSCAR
                             </button>
@@ -113,14 +113,15 @@
                         <div class="col-lg-12 col-md-12 col-sm-12">
                             <div class="loader mt-2" wire:loading wire:target="buscar_comprobantes"></div>
                         </div>
-
                     </div>
+
                     <div class="row mt-3">
                         <div class="col-lg-12 col-md-12 col-sm-12">
                             <div class="contenedor-comprobante" style="max-height: 600px; overflow: auto">
                                 <x-table-general>
                                     <x-slot name="thead">
                                         <tr>
+                                            <th style="font-size: 12px">Check</th>
                                             <th style="font-size: 12px">Guía / Factura</th>
                                             <th style="font-size: 12px">Fecha Emisión</th>
                                             <th style="font-size: 12px">Importe sin IGV</th>
@@ -144,9 +145,12 @@
                                                         <table class="table">
                                                             <tbody>
                                                             <tr>
+                                                                <td>
+                                                                    <input type="checkbox" wire:model.live="selectedGuiaIds" wire:click="pre_mot_cre('{{ base64_encode($guia->id_guia) }}')" value="{{ $guia->id_guia }}" id="checkbox-{{ $guia->id_guia }}" class="form-check-input">
+                                                                </td>
                                                                 <td style="width: 39.6%">
                                                                     <span class="tamanhoTablaComprobantes">
-                                                                        <b class="colorBlackComprobantes">{{ date('d/m/Y', strtotime($guia->guia_fecha_emision)) }}</b>
+                                                                        <b class="colorBlackComprobantes">{{ $me->obtenerNombreFecha($guia->guia_fecha_emision, 'DateTime', 'Date') }}</b>
                                                                     </span>
                                                                     <span class="d-block tamanhoTablaComprobantes">
                                                                         {{ $guia->guia_nro_doc }} - {{ $guia->guia_nro_doc_ref }}
@@ -204,6 +208,13 @@
                                     </x-slot>
                                 </x-table-general>
                             </div>
+                            @if(count($selectedGuiaIds) > 0)
+                                <div class="col-lg-12 col-md-12 col-sm-12 mb-2 text-end">
+                                    <button class="btn text-white bg-warning mt-4" data-bs-toggle="modal" data-bs-target="#modalMotCre">
+                                        Aceptar Guías
+                                    </button>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -231,77 +242,76 @@
                                         </div>
                                     </div>
                                     <div class="col-lg-12 col-md-12 col-sm-12">
-                                        @if(count($facturasCreditoAprobadas) > 0)
-                                            <x-table-general id="ederTable">
-                                                <x-slot name="thead">
-                                                    <tr>
-                                                        <th class="">
-                                                            <input type="checkbox" wire:model="selectAll" id="selectAll" onchange="toggleAllCheckboxes(this)">
-                                                        </th>
-                                                        <th class="">Guía / Factura</th>
-                                                        <th class="">F. Emisión</th>
-                                                        <th class="">Importe sin IGV</th>
-                                                        <th class="">Nombre Cliente</th>
-                                                        <th class="">Dirección</th>
-                                                        <th class="">Acciones</th> <!-- Columna de acciones, pero vacía -->
-                                                    </tr>
-                                                </x-slot>
-                                                <x-slot name="tbody">
-                                                    @foreach($facturasCreditoAprobadas as $factura)
+                                        <div class="contenedor-comprobante" style="max-height: 600px; overflow: auto">
+                                            @if(count($facturasCreditoAprobadas) > 0)
+                                                <x-table-general id="ederTable">
+                                                    <x-slot name="thead">
                                                         <tr>
-                                                            <td>
-                                                                <input type="checkbox" wire:model="selectedItems" value="{{ (string) $factura->id_guia }}" onchange="toggleButton()">
-                                                            </td>
-                                                            <td>
+                                                            <th class="">
+                                                                <input class="form-check-input" type="checkbox" wire:model="selectAll" id="selectAll" onchange="toggleAllCheckboxes(this)">
+                                                            </th>
+                                                            <th class="">Guía / Factura</th>
+                                                            <th class="">F. Emisión</th>
+                                                            <th class="">Importe sin IGV</th>
+                                                            <th class="">Nombre Cliente</th>
+                                                            <th class="">Dirección</th>
+                                                            <th class="">Acciones</th> <!-- Columna de acciones, pero vacía -->
+                                                        </tr>
+                                                    </x-slot>
+                                                    <x-slot name="tbody">
+                                                        @foreach($facturasCreditoAprobadas as $factura)
+                                                            <tr>
+                                                                <td>
+                                                                    <input class="form-check-input" type="checkbox" wire:model="selectedItems" value="{{ (string) $factura->id_guia }}" onchange="toggleButton()">
+                                                                </td>
+                                                                <td>
                                                                 <span class="d-block tamanhoTablaComprobantes">
                                                                     {{ $factura->guia_nro_doc }} - {{ $factura->guia_nro_doc_ref }}
                                                                 </span>
-                                                                @php
-                                                                    $guia2 = $me->formatearCodigo($factura->guia_nro_doc)
-                                                                @endphp
-                                                                <span class="d-block tamanhoTablaComprobantes">
-                                                                    {{ $guia2 }}
+                                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                                    {{ $me->formatearCodigo($factura->guia_nro_doc) }}
                                                                 </span>
-                                                            </td>
-                                                            <td>
+                                                                </td>
+                                                                <td>
                                                                 <span class="d-block tamanhoTablaComprobantes">
-                                                        {{ date('d/m/Y', strtotime($factura->guia_fecha_emision)) }}
+                                                                    {{ $me->obtenerNombreFecha($factura->guia_fecha_emision, 'DateTime', 'DateTime')}}
                                                                 </span>
-                                                            </td>
-                                                            <td>
+                                                                </td>
+                                                                <td>
                                                                 <span class="d-block tamanhoTablaComprobantes">
                                                                     <b class="colorBlackComprobantes">{{ $me->formatoDecimal($factura->guia_importe_total ?? 0) }}</b>
                                                                 </span>
-                                                            </td>
-                                                            <td>
+                                                                </td>
+                                                                <td>
                                                                 <span class="d-block tamanhoTablaComprobantes">
                                                                     {{ $factura->guia_nombre_cliente }}
                                                                 </span>
-                                                            </td>
-                                                            <td>
+                                                                </td>
+                                                                <td>
                                                                 <span class="d-block tamanhoTablaComprobantes">
                                                                     {{ $factura->guia_direc_entrega }}
                                                                 </span>
-                                                            </td>
-                                                            <td>
-                                                                <x-btn-accion class="btn btn-success btn-sm text-white" wire:click="enviar_fac_apro('{{ base64_encode($factura->id_guia) }}')" data-bs-toggle="modal" data-bs-target="#modalFacApro">
-                                                                    <x-slot name="message">
-                                                                        <i class="fa-solid fa-check"></i>
-                                                                    </x-slot>
-                                                                </x-btn-accion>
-                                                            </td>
-                                                        </tr>
-                                                    @endforeach
-                                                </x-slot>
-                                            </x-table-general>
-                                            <div class="col-lg-12 mt-3 ms-2 ">
-                                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalFacApro" id="sendButton" disabled>
-                                                    Enviar
-                                                </button>
-                                            </div>
-                                        @else
-                                            <p>No hay facturas aprobadas para crédito.</p>
-                                        @endif
+                                                                </td>
+                                                                <td>
+                                                                    <x-btn-accion class="btn btn-success btn-sm text-white" wire:click="enviar_fac_apro('{{ base64_encode($factura->id_guia) }}')" data-bs-toggle="modal" data-bs-target="#modalFacApro">
+                                                                        <x-slot name="message">
+                                                                            <i class="fa-solid fa-check"></i>
+                                                                        </x-slot>
+                                                                    </x-btn-accion>
+                                                                </td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </x-slot>
+                                                </x-table-general>
+                                                <div class="col-lg-12 mt-3 ms-2 ">
+                                                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalFacApro" id="sendButton" disabled>
+                                                        Enviar
+                                                    </button>
+                                                </div>
+                                            @else
+                                                <p>No hay facturas aprobadas para crédito.</p>
+                                            @endif
+                                        </div>
                                     </div>
                                 </div>
                             </div>

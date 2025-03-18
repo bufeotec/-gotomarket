@@ -6,6 +6,7 @@ use App\Models\Facturamovimientoarea;
 use App\Models\Facturaspreprogramacion;
 use App\Models\Historialguia;
 use App\Models\Logs;
+use App\Models\Guia;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -21,17 +22,16 @@ class Facturacion extends Component
     private $facpreprog;
     private $facmovarea;
     private $historialguia;
+    private $guia;
     public function __construct(){
         $this->logs = new Logs();
         $this->facpreprog = new Facturaspreprogramacion();
         $this->facmovarea = new Facturamovimientoarea();
         $this->historialguia = new Historialguia();
+        $this->guia = new Guia();
     }
     public $messagePrePro = "";
-    public $id_guia;
-    public $guiadetalle = [];
-    public $facturadetalle = [];
-
+    public $id_guia = "";
     public $guia_estado_aprobacion;
     public $fechaHoraManual;
     public $fechaHoraManual2;
@@ -40,7 +40,7 @@ class Facturacion extends Component
     public $messageRecFactApro;
 
     public function render(){
-        $facturas_pre_prog_estadox = $this->facpreprog->listar_facturas_pre_programacion_estadox();
+        $facturas_pre_prog_estadox = $this->guia->listar_facturas_pre_programacion_estadox();
         return view('livewire.programacioncamiones.facturacion', compact('facturas_pre_prog_estadox'));
     }
     public function cambio_estado($id_guia, $estado_aprobacion){
@@ -68,10 +68,13 @@ class Facturacion extends Component
     }
     public function disable_pre_pro(){
         try {
+            // Verificar permisos del usuario
             if (!Gate::allows('disable_pre_pro')) {
                 session()->flash('error_pre_pro', 'No tiene permisos para cambiar los estados de este registro.');
                 return;
             }
+
+            // Validar los datos de entrada
             $this->validate([
                 'id_guia' => 'required|integer',
                 'guia_estado_aprobacion' => 'required|integer',
@@ -83,8 +86,12 @@ class Facturacion extends Component
                 'guia_estado_aprobacion.integer' => 'El estado debe ser un número entero.',
                 'fechaHoraManual.date' => 'La fecha y hora manual debe ser una fecha válida.',
             ]);
+
+            // Iniciar una transacción de base de datos
             DB::beginTransaction();
-            $factura = Facturaspreprogramacion::find($this->id_guia);
+
+            // Buscar la factura por ID
+            $factura = Guia::find($this->id_guia);
 
             if ($factura) {
                 $factura->guia_estado_aprobacion = $this->guia_estado_aprobacion;
@@ -124,6 +131,8 @@ class Facturacion extends Component
 
                     // Confirmar la transacción
                     DB::commit();
+
+                    // Cerrar el modal y mostrar mensaje de éxito
                     $this->dispatch('hidemodalPrePro');
                     session()->flash('success', 'Estado cambiado exitosamente.');
                 } else {
@@ -214,73 +223,56 @@ class Facturacion extends Component
         }
     }
 
-//    Cambiar estado de documento
-    public function abrirModal($id)
-    {
-        $this->id_guia = base64_decode($id);
-        $this->messagePrePro = "¿Estás seguro de cambiar el estado?";
+    public function edit_cambio_estado($id){
+        if ($id){
+            $this->id_guia = base64_decode($id);
+            $this->guia_estado_aprobacion = "";
+        }
     }
-    public function cambiarEstado()
-    {
+
+    public function cambio_estado_edit(){
         try {
-            if (!Gate::allows('disable_pre_pro')) {
-                session()->flash('error_pre_pro', 'No tiene permisos para cambiar los estados de este registro.');
+            if (!Gate::allows('cambio_estado_edit')) {
+                session()->flash('error-edit-guia', 'No tiene permisos para aprobar o rechazar este servicio de transporte.');
                 return;
             }
+
             $this->validate([
                 'id_guia' => 'required|integer',
-                'guia_estado_aprobacion' => 'required|integer',
+                'guia_estado_aprobacion' => 'required|in:0,8',
             ], [
                 'id_guia.required' => 'El identificador es obligatorio.',
                 'id_guia.integer' => 'El identificador debe ser un número entero.',
-                'guia_estado_aprobacion.required' => 'Debes seleccionar un estado.',
-                'guia_estado_aprobacion.integer' => 'El estado debe ser un número entero.',
+                'guia_estado_aprobacion.required' => 'El estado de la guía es obligatorio.',
+                'guia_estado_aprobacion.in' => 'El estado de la guía debe ser Anulado (0) o Entregado (8).',
             ]);
 
             DB::beginTransaction();
 
-            // Buscar la factura por ID
-            $factura = Facturaspreprogramacion::find($this->id_guia);
+            // Buscar el servicio de transporte
+            $edit_guia_update = Guia::find($this->id_guia);
 
-            if ($factura) {
-                $factura->guia_estado_aprobacion = $this->guia_estado_aprobacion;
+            if (!$edit_guia_update) {
+                DB::rollBack();
+                session()->flash('error-edit-guia', 'La guía no fue encontrado.');
+                return;
+            }
 
-                if ($factura->save()) {
-                    $historial = new Historialguia();
-                    $historial->id_users = Auth::id();
-                    $historial->id_guia = $this->id_guia;
-                    $historial->guia_nro_doc = $factura->guia_nro_doc;
-                    $historial->historial_guia_estado_aprobacion = $this->guia_estado_aprobacion;
-                    $historial->historial_guia_fecha_hora = Carbon::now('America/Lima');
-                    $historial->historial_guia_estado = 1;
-                    $historial->save();
-                    DB::commit();
+            // Cambiar el estado de la guía
+            $edit_guia_update->guia_estado_aprobacion = $this->guia_estado_aprobacion;
 
-                    $this->dispatch('hidemodalGeStado');
-                    session()->flash('success', 'Estado cambiado exitosamente.');
-                } else {
-                    DB::rollBack();
-                    session()->flash('error_pre_pro', 'No se pudo cambiar el estado de la factura.');
-                }
+            if ($edit_guia_update->save()) {
+                DB::commit();
+                $this->dispatch('hidemodalEditCambioEstado');
+                session()->flash('success', 'La guía cambio de estado.');
             } else {
                 DB::rollBack();
-                session()->flash('error_pre_pro', 'La factura no existe.');
+                session()->flash('error-edit-guia', 'No se pudo cambiar el estado de la guía.');
             }
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            $this->setErrorBag($e->validator->errors());
         } catch (\Exception $e) {
             DB::rollBack();
-            session()->flash('error', 'Ocurrió un error al aceptar la factura. Detalles: ' . $e->getMessage());
-            \Log::error('Error en cambiarEstado: ' . $e->getMessage());
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error al cambiar el estado del registro. Por favor, inténtelo nuevamente.');
         }
-    }
-
-//    Modal detalles
-    public function modal_guia_detalle($id_not_cred) {
-        $this->guiadetalle = $this->facpreprog->listar_guiax_id($id_not_cred);
-    }
-
-    public function modal_factura_detalle($id_not_cred) {
-        $this->facturadetalle = $this->facpreprog->listar_guia_detalles($id_not_cred);
     }
 }

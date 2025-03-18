@@ -2,8 +2,9 @@
     @php
         $general = new \App\Models\General();
     @endphp
+{{--    MODAL DETALLES DEL DESPACHO--}}
     <x-modal-general  wire:ignore.self >
-        <x-slot name="tama">modal-xl</x-slot>
+        <x-slot name="tama">modal-lg</x-slot>
         <x-slot name="id_modal">modalDetalleDespacho</x-slot>
         <x-slot name="titleModal">Detalles del Despacho</x-slot>
         <x-slot name="modalContent">
@@ -110,60 +111,63 @@
                             </div>
                         </div>
 
-                        <div class="col-lg-12 col-md-12 col-sm-12">
-                            <div class="row">
-                                <div class="col-lg-12 col-md-12 col-sm-12">
-                                    <h6>Información de Comprobantes</h6>
-                                    <hr>
-                                </div>
-                                <div class="col-lg-12 col-md-12 col-sm-12">
-                                    <x-table-general>
-                                        <x-slot name="thead">
-                                            <tr>
-                                                <th>N°</th>
-                                                <th>Número Documento</th>
-                                                <th>Fecha Emision</th>
-                                                <th>Cliente</th>
-                                                <th>Guía de Remisión</th>
-                                                <th>Importe Venta</th>
-                                                <th>Peso Kilos</th>
-                                            </tr>
-                                        </x-slot>
+{{--                        <div class="col-lg-12 col-md-12 col-sm-12">--}}
+{{--                            <div class="row">--}}
+{{--                                <div class="col-lg-12 col-md-12 col-sm-12">--}}
+{{--                                    <h6>Información de Comprobantes</h6>--}}
+{{--                                    <hr>--}}
+{{--                                </div>--}}
+{{--                                <div class="col-lg-12 col-md-12 col-sm-12">--}}
+{{--                                    <x-table-general>--}}
+{{--                                        <x-slot name="thead">--}}
+{{--                                            <tr>--}}
+{{--                                                <th>N°</th>--}}
+{{--                                                <th>Número Documento</th>--}}
+{{--                                                <th>Fecha Emision</th>--}}
+{{--                                                <th>Cliente</th>--}}
+{{--                                                <th>Guía de Remisión</th>--}}
+{{--                                                <th>Importe Venta</th>--}}
+{{--                                                <th>Peso Kilos</th>--}}
+{{--                                            </tr>--}}
+{{--                                        </x-slot>--}}
 
-                                        <x-slot name="tbody">
-                                            @if(count($listar_detalle_despacho->comprobantes) > 0)
-                                                @php $conteo = 1; @endphp
-                                                @foreach($listar_detalle_despacho->comprobantes as $ta)
-                                                    <tr>
-                                                        <td>{{$conteo}}</td>
-                                                        <td>{{$ta->despacho_venta_factura}}</td>
-                                                        <td>
-                                                            {{$general->obtenerNombreFecha($ta->despacho_venta_grefecemision,'DateTime','Date')}}
-                                                        </td>
-                                                        <td>{{$ta->despacho_venta_cnomcli}}</td>
-                                                        <td>{{$ta->despacho_venta_guia}}</td>
-                                                        <td>S/ {{$general->formatoDecimal($ta->despacho_venta_cfimporte)}}</td>
-                                                        <td>{{$general->formatoDecimal($ta->despacho_venta_total_kg)}} Kg</td>
-                                                    </tr>
-                                                    @php $conteo++; @endphp
-                                                @endforeach
-                                            @else
-                                                <tr class="odd">
-                                                    <td valign="top" colspan="7" class="dataTables_empty text-center">
-                                                        No se han encontrado resultados.
-                                                    </td>
-                                                </tr>
-                                            @endif
-                                        </x-slot>
-                                    </x-table-general>
-                                </div>
-                            </div>
-                        </div>
+{{--                                        <x-slot name="tbody">--}}
+{{--                                            @if(count($listar_detalle_despacho->comprobantes) > 0)--}}
+{{--                                                @php $conteo = 1; @endphp--}}
+{{--                                                @foreach($listar_detalle_despacho->comprobantes as $ta)--}}
+{{--                                                    <tr>--}}
+{{--                                                        <td>{{$conteo}}</td>--}}
+{{--                                                        <td>{{$ta->despacho_venta_factura}}</td>--}}
+{{--                                                        <td>--}}
+{{--                                                            {{$general->obtenerNombreFecha($ta->despacho_venta_grefecemision,'DateTime','Date')}}--}}
+{{--                                                        </td>--}}
+{{--                                                        <td>{{$ta->despacho_venta_cnomcli}}</td>--}}
+{{--                                                        <td>{{$ta->despacho_venta_guia}}</td>--}}
+{{--                                                        <td>S/ {{$general->formatoDecimal($ta->despacho_venta_cfimporte)}}</td>--}}
+{{--                                                        <td>{{$general->formatoDecimal($ta->despacho_venta_total_kg)}} Kg</td>--}}
+{{--                                                    </tr>--}}
+{{--                                                    @php $conteo++; @endphp--}}
+{{--                                                @endforeach--}}
+{{--                                            @else--}}
+{{--                                                <tr class="odd">--}}
+{{--                                                    <td valign="top" colspan="7" class="dataTables_empty text-center">--}}
+{{--                                                        No se han encontrado resultados.--}}
+{{--                                                    </td>--}}
+{{--                                                </tr>--}}
+{{--                                            @endif--}}
+{{--                                        </x-slot>--}}
+{{--                                    </x-table-general>--}}
+{{--                                </div>--}}
+{{--                            </div>--}}
+{{--                        </div>--}}
                     </div>
                 </div>
             @endif
         </x-slot>
     </x-modal-general>
+{{--    MODAL FIN DETALLES DEL DESPACHO--}}
+
+{{--    MODAL APROBAR / RECHAZAR PROGRAMACIÓN--}}
     <x-modal-delete  wire:ignore.self >
         <x-slot name="id_modal">modalAprobarProgramacion</x-slot>
         <x-slot name="modalContentDelete">
@@ -196,6 +200,9 @@
             </form>
         </x-slot>
     </x-modal-delete>
+{{--    MODAL FIN APROBAR / RECHAZAR PROGRAMACIÓN--}}
+
+{{--    MODAL APROBAR / RECHAZAR SERVICIO TRANSPORTE--}}
 
 {{--    MODAL APROBAR / RECHAZAR SERVICIO TRANSPORTE--}}
     <x-modal-delete  wire:ignore.self >
@@ -230,7 +237,186 @@
             </form>
         </x-slot>
     </x-modal-delete>
+{{--    MODAL FIN APROBAR / RECHAZAR SERVICIO TRANSPORTE--}}
 
+    {{--    MODAL VER INFO DE LA GUIA--}}
+    <x-modal-general wire:ignore.self>
+        <x-slot name="tama">modal-xl</x-slot>
+        <x-slot name="id_modal">modalInformacionGuia</x-slot>
+        <x-slot name="titleModal">Información de la guia</x-slot>
+        <x-slot name="modalContent">
+            @if($guiainfo)
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <h6>Información general</h6>
+                                    <hr>
+                                </div>
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Guía:</strong>
+                                    <p>{{ $guiainfo->guia_nro_doc }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Almacen de Origen:</strong>
+                                    <p>{{ $guiainfo->guia_almacen_origen }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Tipo Documento:</strong>
+                                    <p>{{ $guiainfo->guia_tipo_doc }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Fecha Emisión:</strong>
+                                    <p>{{ $guiainfo->guia_fecha_emision ? $general->obtenerNombreFecha($guiainfo->guia_fecha_emision, 'DateTime', 'DateTime') : '-' }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Tipo de Movimiento:</strong>
+                                    <p>{{ $guiainfo->guia_tipo_movimiento }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Tipo de Documento Referencial:</strong>
+                                    <p>{{ $guiainfo->guia_tipo_doc_ref }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Número de Documento Referencial:</strong>
+                                    <p>{{ $guiainfo->guia_nro_doc_ref }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Glosa:</strong>
+                                    <p>{{ $guiainfo->guia_glosa }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Estado:</strong>
+                                    <p>{{ $guiainfo->guia_estado }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Importe Total:</strong>
+                                    <p>{{ $general->formatoDecimal($guiainfo->guia_importe_total ?? 0)}}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Tipo de Cambio:</strong>
+                                    <p>{{ $general->formatoDecimal($guiainfo->guia_tipo_cambio ?? 0)}}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Moneda:</strong>
+                                    <p>{{ $guiainfo->guia_moneda }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Dirección de Entrega:</strong>
+                                    <p>{{ $guiainfo->guia_direc_entrega }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Departamento:</strong>
+                                    <p>{{ $guiainfo->guia_departamento }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Provincia:</strong>
+                                    <p>{{ $guiainfo->guia_provincia }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Distrito:</strong>
+                                    <p>{{ $guiainfo->guia_destrito }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @else
+                <p>No hay información disponibles para mostrar.</p>
+            @endif
+        </x-slot>
+    </x-modal-general>
+    {{--    FIN MODAL VER INFO DE LA GUIA--}}
+
+    {{--    MODAL DETALLE GUIA--}}
+    <x-modal-general wire:ignore.self>
+        <x-slot name="tama">modal-xl</x-slot>
+        <x-slot name="id_modal">modalDetalleGuia</x-slot>
+        <x-slot name="titleModal">Detalles de la guía</x-slot>
+        <x-slot name="modalContent">
+            <div class="modal-body">
+                <h6>Detalles de la Guía</h6>
+                <hr>
+                @if(!empty($guia_detalle))
+                    <x-table-general>
+                        <x-slot name="thead">
+                            <tr>
+                                <th>Almacén Salida</th>
+                                <th>Fecha Emisión</th>
+                                <th>Estado</th>
+                                <th>Tipo Documento</th>
+                                <th>Nro Documento</th>
+                                <th>Nro Línea</th>
+                                <th>Cód Producto</th>
+                                <th>Descripción Producto</th>
+                                <th>Lote</th>
+                                <th>Unidad</th>
+                                <th>Cantidad</th>
+                                <th>Precio Unit Final Inc IGV</th>
+                                <th>Precio Unit Antes Descuento Inc IGV</th>
+                                <th>Descuento Total Sin IGV</th>
+                                <th>IGV Total</th>
+                                <th>Importe Total Inc IGV</th>
+                                <th>Moneda</th>
+                                <th>Tipo Cambio</th>
+                                <th>Peso Gramos</th>
+                                <th>Volumen CM3</th>
+                                <th>Peso Total Gramos</th>
+                                <th>Volumen Total CM3</th>
+                            </tr>
+                        </x-slot>
+                        <x-slot name="tbody">
+                            @foreach($guia_detalle as $detalle)
+                                <tr>
+                                    <td>{{ $detalle->guia_det_almacen_salida ?? '-' }}</td>
+                                    <td>{{ $detalle->guia_det_fecha_emision ? $general->obtenerNombreFecha($detalle->guia_det_fecha_emision, 'DateTime', 'DateTime') : '-' }}</td>
+                                    <td>{{ $detalle->guia_det_estado ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_tipo_documento ?? '-' }}</td>
+                                    <td>{{ $detalle->guia_det_nro_documento ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_nro_linea ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_cod_producto ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_descripcion_producto ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_lote ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_unidad ?? '-'}}</td>
+                                    <td>{{ $detalle->guia_det_cantidad ?? '-'}}</td>
+                                    <td>{{ $general->formatoDecimal($detalle->guia_det_precio_unit_final_inc_igv ?? 0)}}</td>
+                                    <td>{{ $general->formatoDecimal($detalle->guia_det_precio_unit_antes_descuente_inc_igv ?? 0)}}</td>
+                                    <td>{{ $general->formatoDecimal($detalle->guia_det_descuento_total_sin_igv ?? 0)}}</td>
+                                    <td>{{ $general->formatoDecimal($detalle->guia_det_igv_total ?? 0)}}</td>
+                                    <td>{{ $general->formatoDecimal($detalle->guia_det_importe_total_inc_igv ?? 0) }}</td>
+                                    <td>{{ $detalle->guia_det_moneda ?? '-'}}</td>
+                                    <td>{{ $general->formatoDecimal($detalle->guia_det_tipo_cambio ?? 0)}}</td>
+                                    <td>{{ $general->formatoDecimal($detalle->guia_det_peso_gramo ?? 0)}}</td>
+                                    <td>{{ $general->formatoDecimal($detalle->guia_det_volumen ?? 0)}}</td>
+                                    <td>{{ $general->formatoDecimal($detalle->guia_det_peso_total_gramo ?? 0)}}</td>
+                                    <td>{{ $general->formatoDecimal($detalle->guia_det_volumen_total ?? 0)}}</td>
+                                </tr>
+                            @endforeach
+                        </x-slot>
+                    </x-table-general>
+                @else
+                    <p>No hay detalles disponibles para mostrar.</p>
+                @endif
+            </div>
+        </x-slot>
+    </x-modal-general>
+    {{--    MODAL FIN DETALLE GUIA--}}
 
 
     <div class="row align-items-center mt-2">
@@ -342,7 +528,7 @@
                                                 <td>{{$des->tipo_servicio_concepto}}</td>
                                                 <td>{{$des->transportista_nom_comercial}}</td>
                                                 <td>S/ {{$general->formatoDecimal($des->totalVentaDespacho)}}</td>
-                                                <td>{{$des->despacho_peso}} kg</td>
+                                                <td>{{$general->formatoDecimal($des->despacho_peso)}} kg</td>
                                                 @php
                                                     $indi = "";
                                                     if ($des->id_vehiculo){
@@ -384,8 +570,16 @@
                                                 @endphp
                                                 <td>{{$ra2}}</td>
                                                 <td>
-                                                    <button class="btn btn-sm text-primary" wire:click="listar_informacion_despacho({{$des->id_despacho}})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">
-                                                        <i class="fa-solid fa-eye"></i>
+                                                    <button class="btn btn-primary btn-sm text-white mb-2" wire:click="listar_informacion_despacho({{$des->id_despacho}})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">
+                                                        <i class="fa-solid fa-eye"></i> Despacho
+                                                    </button>
+
+                                                    <button class="btn btn-info btn-sm text-white mb-2" wire:click="modal_guia_info({{$des->id_guia}})" data-bs-toggle="modal" data-bs-target="#modalInformacionGuia">
+                                                        <i class="fa-solid fa-eye"></i> Guía
+                                                    </button>
+
+                                                    <button class="btn btn-warning btn-sm text-white mb-2" wire:click="listar_detalle_guia({{$des->id_guia}})" data-bs-toggle="modal" data-bs-target="#modalDetalleGuia">
+                                                        <i class="fa-solid fa-eye"></i> Factura
                                                     </button>
                                                 </td>
                                             </tr>

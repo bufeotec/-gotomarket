@@ -207,7 +207,7 @@ class Vistatrackings extends Component
         }
 
         // Buscar en la tabla despachos_ventas (ETAPA 2)
-        $despachoVenta = DespachoVenta::where('despacho_venta_cfnumdoc', $numdoc)->first();
+        $despachoVenta = Guia::where('guia_nro_doc', $numdoc)->first();
 
         if ($despachoVenta) {
             $this->codigoEncontrado = true;

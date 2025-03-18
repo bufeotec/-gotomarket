@@ -12,6 +12,7 @@ use App\Models\Facturaspreprogramacion;
 use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
 use App\Models\Historialpreprogramacion;
+use App\Models\Guia;
 use Carbon\Carbon;
 
 class Facturasaprobar extends Component
@@ -21,11 +22,13 @@ class Facturasaprobar extends Component
     private $facpreprog;
     private $facmovarea;
     private $historialpreprogramacion;
+    private $guia;
     public function __construct(){
         $this->logs = new Logs();
         $this->facpreprog = new Facturaspreprogramacion();
         $this->facmovarea = new Facturamovimientoarea();
         $this->historialpreprogramacion = new Historialpreprogramacion();
+        $this->guia = new Guia();
     }
     public $messagePrePro = "";
     public $id_fac_pre_prog = "";
@@ -34,7 +37,7 @@ class Facturasaprobar extends Component
     public $messageRecFactApro;
 
     public function render(){
-        $facturas_pre_prog_estado_dos = $this->facpreprog->listar_facturas_pre_programacion_estado_dos();
+        $facturas_pre_prog_estado_dos = $this->guia->listar_facturas_pre_programacion_estado_dos();
         return view('livewire.programacioncamiones.facturasaprobar', compact('facturas_pre_prog_estado_dos'));
     }
 

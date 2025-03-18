@@ -40,26 +40,23 @@
                                 </div>
 
                                 <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Almacen de Origen:</strong>
+                                    <p>{{ $guiainfo->guia_almacen_origen }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Tipo Documento:</strong>
+                                    <p>{{ $guiainfo->guia_tipo_doc }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
                                     <strong style="color: #8c1017">Fecha Emisión:</strong>
-                                    <p>{{ $guiainfo->guia_fecha_emision }}</p>
+                                    <p>{{ $guiainfo->guia_fecha_emision ? $me->obtenerNombreFecha($guiainfo->guia_fecha_emision, 'DateTime', 'DateTime') : '-' }}</p>
                                 </div>
 
                                 <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Factura:</strong>
-                                    <p>{{ $guiainfo->guia_nro_doc_ref }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Cliente:</strong>
-                                    <p>{{ $guiainfo->guia_nombre_cliente }}</p>
-                                </div>
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Dirección:</strong>
-                                    <p>{{ $guiainfo->guia_direc_entrega }}</p>
-                                </div>
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Cliente:</strong>
-                                    <p>{{ $guiainfo->guia_nombre_cliente }}</p>
+                                    <strong style="color: #8c1017">Tipo de Movimiento:</strong>
+                                    <p>{{ $guiainfo->guia_tipo_movimiento }}</p>
                                 </div>
 
                                 <div class="col-lg-3">
@@ -69,7 +66,7 @@
 
                                 <div class="col-lg-3">
                                     <strong style="color: #8c1017">Número de Documento Referencial:</strong>
-                                    <p>{{ $guiainfo->guia_tipo_doc_ref }}</p>
+                                    <p>{{ $guiainfo->guia_nro_doc_ref }}</p>
                                 </div>
 
                                 <div class="col-lg-3">
@@ -84,12 +81,12 @@
 
                                 <div class="col-lg-3">
                                     <strong style="color: #8c1017">Importe Total:</strong>
-                                    <p>{{ $guiainfo->guia_importe_total }}</p>
+                                    <p>{{ $me->formatoDecimal($guiainfo->guia_importe_total ?? 0)}}</p>
                                 </div>
 
                                 <div class="col-lg-3">
                                     <strong style="color: #8c1017">Tipo de Cambio:</strong>
-                                    <p>{{ $guiainfo->guia_tipo_cambio }}</p>
+                                    <p>{{ $me->formatoDecimal($guiainfo->guia_tipo_cambio ?? 0)}}</p>
                                 </div>
 
                                 <div class="col-lg-3">
@@ -100,6 +97,21 @@
                                 <div class="col-lg-3">
                                     <strong style="color: #8c1017">Dirección de Entrega:</strong>
                                     <p>{{ $guiainfo->guia_direc_entrega }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Departamento:</strong>
+                                    <p>{{ $guiainfo->guia_departamento }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Provincia:</strong>
+                                    <p>{{ $guiainfo->guia_provincia }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Distrito:</strong>
+                                    <p>{{ $guiainfo->guia_destrito }}</p>
                                 </div>
                             </div>
                         </div>
@@ -380,12 +392,12 @@
 
     <style>
         .tracking-img {
-            width: 70px;
-            height: 70px;
+            width: 60px;
+            height: 60px;
         }
 
         .progress-line {
-            width: 70%;
+            width: 85%;
             height: 4px;
             background: lightgray;
             position: relative;
