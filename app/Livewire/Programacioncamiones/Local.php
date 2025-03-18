@@ -118,6 +118,7 @@ class Local extends Component
         $listar_vehiculos = $this->vehiculo->obtener_vehiculos_con_tarifarios();
         $facturas_pre_prog_estado_dos = $this->guia->listar_facturas_pre_programacion_estado_dos();
 //        $this->facturas_pre_prog_estado_tres = Facturaspreprogramacion::where('fac_pre_prog_estado_aprobacion', 3)->get();
+
         // Obtener las guías con estado 3
         $guias = Guia::where('guia_estado_aprobacion', 3)->get();
 
@@ -149,48 +150,104 @@ class Local extends Component
     public function listar_informacion_programacion_edit(){
         $informacionPrograma = $this->programacion->informacion_id($this->id_programacion_edit);
         $informacionDespacho = $this->despacho->listar_despachos_por_programacion($this->id_programacion_edit);
-        if ($informacionPrograma && $informacionDespacho){
+
+        if ($informacionPrograma && $informacionDespacho) {
             $this->id_transportistas = $informacionDespacho[0]->id_transportistas;
             $this->programacion_fecha = $informacionPrograma->programacion_fecha;
-            $comprobantes = DB::table('despacho_ventas')->where('id_despacho','=',$informacionDespacho[0]->id_despacho)->get();
-            foreach ($comprobantes as $c){
-                $this->selectedFacturas[] = [
-                    'CFTD' => $c->despacho_venta_cftd,
-                    'CFNUMSER' => $c->despacho_venta_cfnumser,
-                    'CFNUMDOC' => $c->despacho_venta_cfnumdoc,
-                    'total_kg' => $c->despacho_venta_total_kg,
-                    'total_volumen' => $c->despacho_venta_total_volumen,
-                    'CNOMCLI' => $c->despacho_venta_cnomcli,
-                    'CCODCLI' => $c->despacho_venta_cfcodcli,
-                    'CFIMPORTE' => $c->despacho_venta_cfimporte,
-                    'guia' => $c->despacho_venta_guia,
-                    'GREFECEMISION' => $c->despacho_venta_grefecemision, // fecha de emision de la guía
-                    'LLEGADADIRECCION' => $c->despacho_venta_direccion_llegada,// Dirección de destino
-                    'LLEGADAUBIGEO' => null,// Código del ubigeo
-                    'DEPARTAMENTO' => $c->despacho_venta_departamento,// Departamento
-                    'PROVINCIA' => $c->despacho_venta_provincia,// Provincia
-                    'DISTRITO' => $c->despacho_venta_distrito,// Distrito
-                ];
-                $this->pesoTotal += $c->despacho_venta_total_kg;
-                $this->volumenTotal += $c->despacho_venta_total_volumen;
-//                $importe = $this->general->formatoDecimal($c->despacho_venta_cfimporte);
-//                $this->importeTotalVenta += floatval($importe);
-                $importe = $c->despacho_venta_cfimporte;
-                $importe = floatval($importe);
-                $this->importeTotalVenta += $importe;
-            }
-            $this->tarifaMontoSeleccionado = $informacionDespacho[0]->despacho_monto_modificado;
 
+            // Obtener los comprobantes de despacho_ventas
+            $comprobantes = DB::table('despacho_ventas')
+                ->where('id_despacho', '=', $informacionDespacho[0]->id_despacho)
+                ->get();
+
+            // Array temporal para evitar duplicados
+            $guiasAgregadas = [];
+
+            foreach ($comprobantes as $c) {
+                // Verificar si el id_guia ya fue agregado
+                if (in_array($c->id_guia, $guiasAgregadas)) {
+                    continue; // Saltar si ya existe
+                }
+
+                // Obtener los datos de la guía desde la tabla guias
+                $guia = DB::table('guias')
+                    ->where('id_guia', '=', $c->id_guia)
+                    ->first();
+
+                if ($guia) {
+                    // Obtener los detalles de la guía desde la tabla guias_detalles
+                    $detallesGuia = DB::table('guias_detalles')
+                        ->where('id_guia', '=', $c->id_guia)
+                        ->get();
+
+                    // Calcular el peso y volumen total de la guía
+                    $pesoTotal = $detallesGuia->sum(function ($detalle) {
+                        return $detalle->guia_det_peso_gramo * $detalle->guia_det_cantidad;
+                    });
+
+                    $volumenTotal = $detallesGuia->sum(function ($detalle) {
+                        return $detalle->guia_det_volumen * $detalle->guia_det_cantidad;
+                    });
+
+                    // Agregar la guía a selectedFacturas
+                    $this->selectedFacturas[] = [
+                        'id_guia' => $c->id_guia,
+                        'guia_almacen_origen' => $guia->guia_almacen_origen,
+                        'guia_tipo_doc' => $guia->guia_tipo_doc,
+                        'guia_nro_doc' => $guia->guia_nro_doc,
+                        'peso_total' => $pesoTotal / 1000,
+                        'volumen_total' => $volumenTotal,
+                        'guia_fecha_emision' => $guia->guia_fecha_emision,
+                        'guia_tipo_movimiento' => $guia->guia_tipo_movimiento,
+                        'guia_tipo_doc_ref' => $guia->guia_tipo_doc_ref,
+                        'guia_nro_doc_ref' => $guia->guia_nro_doc_ref,
+                        'guia_glosa' => $guia->guia_glosa,
+                        'guia_fecha_proceso' => $guia->guia_fecha_proceso,
+                        'guia_hora_proceso' => $guia->guia_hora_proceso,
+                        'guia_usuario' => $guia->guia_usuario,
+                        'guia_cod_cliente' => $guia->guia_cod_cliente,
+                        'guia_ruc_cliente' => $guia->guia_ruc_cliente,
+                        'guia_nombre_cliente' => $guia->guia_nombre_cliente,
+                        'guia_forma_pago' => $guia->guia_forma_pago,
+                        'guia_vendedor' => $guia->guia_vendedor,
+                        'guia_moneda' => $guia->guia_moneda,
+                        'guia_tipo_cambio' => $guia->guia_tipo_cambio,
+                        'guia_estado' => $guia->guia_estado,
+                        'guia_direc_entrega' => $guia->guia_direc_entrega,
+                        'guia_nro_pedido' => $guia->guia_nro_pedido,
+                        'guia_importe_total' => $guia->guia_importe_total,
+                        'guia_departamento' => $guia->guia_departamento,
+                        'guia_provincia' => $guia->guia_provincia,
+                        'guia_destrito' => $guia->guia_destrito,
+                    ];
+
+                    // Marcar el id_guia como agregado
+                    $guiasAgregadas[] = $c->id_guia;
+
+                    // Sumar al peso y volumen total
+                    $this->pesoTotal += $pesoTotal; // Convertir gramos a kilogramos
+                    $this->volumenTotal += $volumenTotal;
+
+                    // Sumar al importe total
+                    $importe = floatval($guia->guia_importe_total);
+                    $this->importeTotalVenta += $importe;
+                }
+            }
+
+            // Obtener otros datos del despacho
+            $this->tarifaMontoSeleccionado = $informacionDespacho[0]->despacho_monto_modificado;
             $this->despacho_descripcion_modificado = $informacionDespacho[0]->despacho_descripcion_modificado;
             $this->despacho_gasto_otros = $informacionDespacho[0]->despacho_gasto_otros;
             $this->despacho_descripcion_otros = $informacionDespacho[0]->despacho_descripcion_otros;
             $this->despacho_ayudante = $informacionDespacho[0]->despacho_ayudante;
-
             $this->montoOriginal = $informacionDespacho[0]->despacho_flete;
             $this->id_tarifario_seleccionado = $informacionDespacho[0]->id_tarifario;
             $this->selectedVehiculo = $informacionDespacho[0]->id_vehiculo;
-            $this->checkInput = $informacionDespacho[0]->id_vehiculo.'-'.$informacionDespacho[0]->id_tarifario;
+            $this->checkInput = $informacionDespacho[0]->id_vehiculo . '-' . $informacionDespacho[0]->id_tarifario;
+
+            // Calcular el costo total
             $this->calcularCostoTotal();
+
             // Actualizar lista de vehículos sugeridos
             $this->listar_vehiculos_lo();
             $this->validarVehiculoSeleccionado();
@@ -244,9 +301,7 @@ class Local extends Component
 
     public function seleccionarFactura($id_guia){
         // Buscar la factura por su ID
-        $factura = collect($this->guias_estado_tres)->first(function ($f) use ($id_guia) {
-            return $f->id_guia === $id_guia;
-        });
+        $factura = Guia::find($id_guia);
 
         if (!$factura) {
             session()->flash('error', 'Guía no encontrada.');
@@ -259,14 +314,26 @@ class Local extends Component
         });
 
         if ($comprobanteExiste) {
-            // Si la factura ya fue agregada, mostrar un mensaje de error
-            session()->flash('error', 'Esta guía ya fue agregado.');
+            session()->flash('error', 'Esta guía ya fue agregada.');
             return;
         }
 
-        // Verificar que el peso y volumen sean mayores a 0
-        if ($factura->fac_pre_prog_total_kg <= 0 || $factura->fac_pre_prog_total_volumen <= 0) {
-            session()->flash('error', 'El peso o el volumen deben ser mayores a 0.');
+        // Calcular el peso y volumen total para la guía seleccionada
+        $detalles = DB::table('guias_detalles')
+            ->where('id_guia', $factura->id_guia)
+            ->get();
+
+        $pesoTotal = $detalles->sum(function ($detalle) {
+            return $detalle->guia_det_peso_gramo * $detalle->guia_det_cantidad;
+        });
+
+        $volumenTotal = $detalles->sum(function ($detalle) {
+            return $detalle->guia_det_volumen * $detalle->guia_det_cantidad;
+        });
+
+        // Validar que el peso y volumen sean mayores a 0
+        if ($pesoTotal <= 0 || $volumenTotal <= 0) {
+            session()->flash('error', 'El peso o el volumen deben ser mayores a 0. Verifique los detalles de la guía.');
             return;
         }
 
@@ -298,13 +365,15 @@ class Local extends Component
             'guia_departamento' => $factura->guia_departamento,
             'guia_provincia' => $factura->guia_provincia,
             'guia_destrito' => $factura->guia_destrito,
+            'peso_total' => $pesoTotal,
+            'volumen_total' => $volumenTotal,
         ];
 
         // Actualizar los totales
-        $this->pesoTotal += $factura->fac_pre_prog_total_kg;
-        $this->volumenTotal += $factura->fac_pre_prog_total_volumen;
+        $this->pesoTotal += $pesoTotal;
+        $this->volumenTotal += $volumenTotal;
 
-        $importes = $factura->fac_pre_prog_cfimporte;
+        $importes = $factura->guia_importe_total;
         $importe = floatval($importes);
         $this->importeTotalVenta += $importe;
 
@@ -313,35 +382,41 @@ class Local extends Component
         $this->validarVehiculoSeleccionado();
     }
 
+    public function eliminarFacturaSeleccionada($id_guia){
+        // Convertir id_guia a string para evitar problemas con bigint
+        $id_guia = (string)$id_guia;
 
-    public function eliminarFacturaSeleccionada($CFTD, $CFNUMSER, $CFNUMDOC){
         // Encuentra la factura en las seleccionadas
-        $factura = collect($this->selectedFacturas)->first(function ($f) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
-            return $f['CFTD'] === $CFTD && $f['CFNUMSER'] === $CFNUMSER && $f['CFNUMDOC'] === $CFNUMDOC;
+        $factura = collect($this->selectedFacturas)->first(function ($f) use ($id_guia) {
+            return (string)$f['id_guia'] === $id_guia; // Convertir a string para comparar
         });
 
         if ($factura) {
             // Elimina la factura de la lista seleccionada
             $this->selectedFacturas = collect($this->selectedFacturas)
-                ->reject(function ($f) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
-                    return $f['CFTD'] === $CFTD && $f['CFNUMSER'] === $CFNUMSER && $f['CFNUMDOC'] === $CFNUMDOC;
+                ->reject(function ($f) use ($id_guia) {
+                    return (string)$f['id_guia'] === $id_guia; // Convertir a string para comparar
                 })
                 ->values()
                 ->toArray();
 
             // Actualiza los totales
-            $this->pesoTotal -= $factura['total_kg'];
-            $this->volumenTotal -= $factura['total_volumen'];
-            $this->importeTotalVenta =  $this->importeTotalVenta - $factura['CFIMPORTE'];
+            $this->pesoTotal -= $factura['peso_total'];
+            $this->volumenTotal -= $factura['volumen_total'];
+            $this->importeTotalVenta -= floatval($factura['guia_importe_total']);
 
             // Verifica si no quedan facturas seleccionadas
             if (empty($this->selectedFacturas)) {
                 $this->pesoTotal = 0;
                 $this->volumenTotal = 0;
+                $this->importeTotalVenta = 0;
             }
 
+            // Actualizar lista de vehículos sugeridos
             $this->listar_vehiculos_lo();
             $this->validarVehiculoSeleccionado();
+        } else {
+            \Log::warning("No se encontró la guía con id_guia: $id_guia");
         }
     }
 
@@ -450,9 +525,7 @@ class Local extends Component
                 $existe = DB::table('despacho_ventas as dv')
                     ->join('despachos as d','d.id_despacho','=','dv.id_despacho')
                     ->where('d.despacho_estado_aprobacion','<>',4)
-                    ->where('dv.despacho_venta_cftd', $factura['CFTD'])
-                    ->where('dv.despacho_venta_cfnumser', $factura['CFNUMSER'])
-                    ->where('dv.despacho_venta_cfnumdoc', $factura['CFNUMDOC'])
+                    ->where('dv.id_guia', $factura['id_guia'])
                     ->whereIn('dv.despacho_detalle_estado_entrega', [0,1,2])
                     ->orderBy('dv.id_despacho_venta', 'desc')
                     ->exists();
@@ -522,69 +595,57 @@ class Local extends Component
                 return;
             }
             $ultimoDespacho = DB::table('despachos')->where('despacho_microtime','=',$microtimeCread)->first();
-//            // Guardar en el historial de despachos
-//            $historialDespacho = new Historialdespachoventa();
-//            $historialDespacho->id_programacion = $programacionCreada->id_programacion;
-//            $historialDespacho->id_despacho = $ultimoDespacho->id_despacho;
-//            $historialDespacho->programacion_estado_aprobacion = 0;
-//            // Guardar el estado de aprobación de la programación en el historial
-//            $historialDespacho->despacho_estado_aprobacion = ($this->id_programacion_edit && $this->id_despacho_edit) ? 6 : 0;
-//            $historialDespacho->his_desp_vent_fecha = Carbon::now('America/Lima');
-//            if (!$historialDespacho->save()) {
-//                DB::rollBack();
-//                session()->flash('error', 'Ocurrió un error al guardar el historial del despacho.');
-//                return;
-//            }
 
             // Guardar facturas seleccionadas en despacho_ventas
             foreach ($this->selectedFacturas as $factura) {
-                $despachoVenta = new DespachoVenta();
-                $despachoVenta->id_despacho = $ultimoDespacho->id_despacho;
-                $despachoVenta->id_venta = null;
-                $despachoVenta->despacho_venta_cftd = $factura['CFTD'];
-                $despachoVenta->despacho_venta_cfnumser = $factura['CFNUMSER'];
-                $despachoVenta->despacho_venta_cfnumdoc = $factura['CFNUMDOC'];
-                $despachoVenta->despacho_venta_factura = $factura['CFNUMSER'] . '-' . $factura['CFNUMDOC'];
-                $despachoVenta->despacho_venta_grefecemision = $factura['GREFECEMISION'];
-                $despachoVenta->despacho_venta_cnomcli = $factura['CNOMCLI'];
-                $despachoVenta->despacho_venta_cfcodcli = $factura['CCODCLI'];
-                $despachoVenta->despacho_venta_guia = $factura['guia'];
-                $despachoVenta->despacho_venta_cfimporte = $factura['CFIMPORTE'];
-                $despachoVenta->despacho_venta_total_kg = $factura['total_kg'];
-                $despachoVenta->despacho_venta_total_volumen = $factura['total_volumen'];
-                $despachoVenta->despacho_venta_direccion_llegada = $factura['LLEGADADIRECCION'];
-                $despachoVenta->despacho_venta_departamento = $factura['DEPARTAMENTO'];
-                $despachoVenta->despacho_venta_provincia = $factura['PROVINCIA'];
-                $despachoVenta->despacho_venta_distrito = $factura['DISTRITO'];
-                $despachoVenta->despacho_detalle_estado = 1;
-                $despachoVenta->despacho_detalle_microtime = microtime(true);
-                $despachoVenta->despacho_detalle_estado_entrega = 0;
-                if (!$despachoVenta->save()) {
-                    DB::rollBack();
-                    session()->flash('error', 'Ocurrió un error al guardar las facturas.');
-                    return;
+                // Obtener los detalles de la guía (id_guia_det) desde la tabla guias_detalles
+                $detallesGuia = DB::table('guias_detalles')
+                    ->where('id_guia', $factura['id_guia'])
+                    ->get();
+
+                foreach ($detallesGuia as $detalle) {
+                    $despachoVenta = new DespachoVenta();
+                    $despachoVenta->id_despacho = $ultimoDespacho->id_despacho;
+                    $despachoVenta->id_guia = $factura['id_guia']; // Guardar id_guia
+                    $despachoVenta->id_guia_det = $detalle->id_guia_det; // Guardar id_guia_det
+                    $despachoVenta->despacho_detalle_estado = 1;
+                    $despachoVenta->despacho_detalle_microtime = microtime(true);
+                    $despachoVenta->despacho_detalle_estado_entrega = 0;
+
+                    if (!$despachoVenta->save()) {
+                        DB::rollBack();
+                        session()->flash('error', 'Ocurrió un error al guardar las facturas.');
+                        return;
+                    }
                 }
             }
 
-            $idsFacturas = array_column($this->selectedFacturas, 'id_fac_pre_prog');
-            // Obtener los datos de las facturas antes de la actualización
-            $facturas = DB::table('facturas_pre_programaciones')
-                ->whereIn('id_fac_pre_prog', $idsFacturas)
-                ->get();
-            // Actualizar el estado de aprobación
-            DB::table('facturas_pre_programaciones')
-                ->whereIn('id_fac_pre_prog', $idsFacturas)
-                ->update(['fac_pre_prog_estado_aprobacion' => 4]);
-            // Registrar en historial_pre_programacion
-//            foreach ($facturas as $factura) {
-//                $historial = new Historialpreprogramacion();
-//                $historial->id_fac_pre_prog = $factura->id_fac_pre_prog;
-//                $historial->fac_pre_prog_cfnumdoc = $factura->fac_pre_prog_cfnumdoc;
-//                $historial->fac_pre_prog_estado_aprobacion = 4;
-//                $historial->fac_pre_prog_estado = 1;
-//                $historial->his_pre_progr_fecha_hora = Carbon::now('America/Lima');
-//                $historial->save();
-//            }
+            // Actualizar el estado de las guías a 4
+            $idsGuias = array_column($this->selectedFacturas, 'id_guia');
+            DB::table('guias')
+                ->whereIn('id_guia', $idsGuias)
+                ->update(['guia_estado_aprobacion' => 4]);
+            // Guardar en historial_guias
+            foreach ($this->selectedFacturas as $factura) {
+                // Obtener el número de documento de la guía
+                $guia = DB::table('guias')
+                    ->where('id_guia', $factura['id_guia'])
+                    ->first();
+
+                if ($guia) {
+                    // Insertar en historial_guias
+                    DB::table('historial_guias')->insert([
+                        'id_users' => Auth::id(),
+                        'id_guia' => $factura['id_guia'],
+                        'guia_nro_doc' => $guia->guia_nro_doc,
+                        'historial_guia_estado_aprobacion' => 4,
+                        'historial_guia_fecha_hora' => Carbon::now('America/Lima'),
+                        'historial_guia_estado' => 1,
+                        'created_at' => Carbon::now('America/Lima'),
+                        'updated_at' => Carbon::now('America/Lima'),
+                    ]);
+                }
+            }
 
             // Solo actualizar facturas_mov si NO se está editando
 //            if (!$this->id_programacion_edit && !$this->id_despacho_edit) {

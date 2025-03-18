@@ -7,8 +7,10 @@ use App\Models\General;
 use App\Models\Logs;
 use App\Models\Programacion;
 use App\Models\Transportista;
+use App\Models\Historialguia;
 use App\Models\Historialdespachoventa;
 use App\Models\Serviciotransporte;
+use App\Models\Guia;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -28,21 +30,27 @@ class ProgramacionesPendientes extends Component
     public $estadoPro = "";
     public $id_serv_transpt = "";
     public $serv_transpt_estado_aprobacion = "";
+    public $guiainfo = [];
+    public $guia_detalle = [];
     /* ---------------------------------------- */
     private $logs;
     private $programacion;
     private $despacho;
     private $general;
-    private $historialdespachoventa;
+    private $historialguia;
     private $serviciotransporte;
+    private $guia;
+    private $historialdespachoventa;
     public function __construct()
     {
         $this->logs = new Logs();
         $this->programacion = new Programacion();
         $this->despacho = new Despacho();
         $this->general = new General();
-        $this->historialdespachoventa = new Historialdespachoventa();
+        $this->historialguia = new Historialguia();
         $this->serviciotransporte = new Serviciotransporte();
+        $this->guia = new Guia();
+        $this->historialdespachoventa = new Historialdespachoventa();
     }
     public function mount()
     {
@@ -50,27 +58,45 @@ class ProgramacionesPendientes extends Component
         $this->hasta = Carbon::tomorrow()->toDateString(); // Un día después de la fecha actual
     }
 
-    public function render()
-    {
-        $resultado = $this->programacion->listar_programaciones_realizadas_x_fechas_x_estado($this->desde,$this->hasta,0);
-        foreach ($resultado as $re){
+    public function render(){
+        $resultado = $this->programacion->listar_programaciones_realizadas_x_fechas_x_estado($this->desde, $this->hasta, 0);
+
+        foreach ($resultado as $re) {
             $re->despacho = DB::table('despachos as d')
-                ->join('transportistas as t','t.id_transportistas','=','d.id_transportistas')
-                ->join('tipo_servicios as ts','ts.id_tipo_servicios','=','d.id_tipo_servicios')
-                ->where('d.id_programacion','=',$re->id_programacion)
+                ->join('transportistas as t', 't.id_transportistas', '=', 'd.id_transportistas')
+                ->join('tipo_servicios as ts', 'ts.id_tipo_servicios', '=', 'd.id_tipo_servicios')
+                ->where('d.id_programacion', '=', $re->id_programacion)
                 ->get();
-            foreach ($re->despacho as $des){
+
+            foreach ($re->despacho as $des) {
                 $totalVenta = 0;
-                $des->comprobantes =  DB::table('despacho_ventas as dv')
-                    ->where('dv.id_despacho','=',$des->id_despacho)
+                $guiasProcesadas = []; // Array para rastrear los id_guia ya procesados
+
+                $des->comprobantes = DB::table('despacho_ventas as dv')
+                    ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
+                    ->where('dv.id_despacho', '=', $des->id_despacho)
+                    ->select('dv.*', 'g.guia_importe_total')
                     ->get();
-                foreach ($des->comprobantes as $com){
-                    $precio = floatval($com->despacho_venta_cfimporte);
-                    $totalVenta+= round($precio,2);
+
+                foreach ($des->comprobantes as $com) {
+                    // Verificar si el id_guia ya fue procesado
+                    if (!in_array($com->id_guia, $guiasProcesadas)) {
+                        $precio = floatval($com->guia_importe_total);  // Usar guia_importe_total
+                        $totalVenta += round($precio, 2);
+                        $guiasProcesadas[] = $com->id_guia; // Marcar el id_guia como procesado
+                    }
                 }
                 $des->totalVentaDespacho = $totalVenta;
+
+                // Agregar el id_guia al objeto $des (usamos el primer id_guia encontrado)
+                if (count($des->comprobantes) > 0) {
+                    $des->id_guia = $des->comprobantes[0]->id_guia;
+                } else {
+                    $des->id_guia = null; // O un valor por defecto si no hay comprobantes
+                }
             }
         }
+
         // Obtener servicios de transporte
         $serviciosTransporte = DB::table('servicios_transportes as st')
             ->join('users as u', 'u.id_users', '=', 'st.id_users')
@@ -79,9 +105,11 @@ class ProgramacionesPendientes extends Component
             ->whereBetween('st.serv_transpt_fecha_creacion', [$this->desde, $this->hasta])
             ->orderBy('st.created_at', 'desc')
             ->get();
-        $conteoProgramacionesPend = DB::table('programaciones')->where('programacion_estado_aprobacion','=',0)->count();
-        $conteoServicioTransporte = DB::table('servicios_transportes')->where('serv_transpt_estado_aprobacion','=',0)->count();
-        return view('livewire.programacioncamiones.programaciones-pendientes',compact('resultado','conteoProgramacionesPend', 'serviciosTransporte', 'conteoServicioTransporte'));
+
+        $conteoProgramacionesPend = DB::table('programaciones')->where('programacion_estado_aprobacion', '=', 0)->count();
+        $conteoServicioTransporte = DB::table('servicios_transportes')->where('serv_transpt_estado_aprobacion', '=', 0)->count();
+
+        return view('livewire.programacioncamiones.programaciones-pendientes', compact('resultado', 'conteoProgramacionesPend', 'serviciosTransporte', 'conteoServicioTransporte'));
     }
 
     public function listar_informacion_despacho($id){
@@ -98,6 +126,14 @@ class ProgramacionesPendientes extends Component
         }
     }
 
+    public function modal_guia_info($id_guia) {
+        $this->guiainfo = $this->guia->listar_guia_x_id($id_guia);
+    }
+
+    public function listar_detalle_guia($id_guia) {
+        $this->guia_detalle = $this->guia->listar_guia_detalle_x_id($id_guia);
+    }
+
     public function cambiarEstadoProgramacion($id,$estado){ //  $estado = 1 aprobar , 2 desaprobar
         if ($id){
             $this->id_progr = $id;
@@ -106,7 +142,6 @@ class ProgramacionesPendientes extends Component
     }
     public function cambiarEstadoProgramacionFormulario(){
         try {
-
             if (!Gate::allows('aprobar_rechazar_programacion')) {
                 session()->flash('error_delete', 'No tiene permisos para aprobar o rechazar esta programación.');
                 return;
@@ -152,17 +187,48 @@ class ProgramacionesPendientes extends Component
                         session()->flash('error_delete', 'No se pudo aprobar los despachos relacionados a la programación.');
                         return;
                     }
-                    // Guardar historial de cambios
-                    $historialDespacho = new Historialdespachoventa();
-                    $historialDespacho->id_despacho = $des->id_despacho;
-                    $historialDespacho->id_programacion = $this->id_progr;
-                    $historialDespacho->programacion_estado_aprobacion = $this->estadoPro;
-                    $historialDespacho->despacho_estado_aprobacion = $this->estadoPro;
-                    $historialDespacho->his_desp_vent_fecha = Carbon::now('America/Lima');
-                    if (!$historialDespacho->save()) {
-                        DB::rollBack();
-                        session()->flash('error_delete', 'No se pudo guardar el historial del despacho.');
-                        return;
+
+                    // Guardar en historial_guias
+                    $despachoVentas = DB::table('despacho_ventas')
+                        ->where('id_despacho', $des->id_despacho)
+                        ->get();
+
+                    // Array para evitar duplicados en historial_guias
+                    $guiasProcesadas = [];
+
+                    foreach ($despachoVentas as $despachoVenta) {
+                        // Verificar si el id_guia ya fue procesado
+                        if (!in_array($despachoVenta->id_guia, $guiasProcesadas)) {
+                            // Obtener el guia_nro_doc desde la tabla guias
+                            $guia = DB::table('guias')
+                                ->where('id_guia', $despachoVenta->id_guia)
+                                ->first();
+
+                            if ($guia) {
+                                // Determinar el valor de historial_guia_estado_aprobacion
+                                $historialEstadoAprobacion = ($this->estadoPro == 1) ? 9 : 10;
+
+                                // Actualizar el estado en la tabla guias
+                                DB::table('guias')
+                                    ->where('id_guia', $despachoVenta->id_guia)
+                                    ->update(['guia_estado_aprobacion' => $historialEstadoAprobacion]);
+
+                                // Insertar en historial_guias
+                                DB::table('historial_guias')->insert([
+                                    'id_users' => Auth::id(),
+                                    'id_guia' => $despachoVenta->id_guia,
+                                    'guia_nro_doc' => $guia->guia_nro_doc,
+                                    'historial_guia_estado_aprobacion' => $historialEstadoAprobacion,
+                                    'historial_guia_fecha_hora' => Carbon::now('America/Lima'), // Fecha y hora actual de Perú
+                                    'historial_guia_estado' => 1, // Estado por defecto
+                                    'created_at' => Carbon::now('America/Lima'),
+                                    'updated_at' => Carbon::now('America/Lima'),
+                                ]);
+
+                                // Marcar el id_guia como procesado
+                                $guiasProcesadas[] = $despachoVenta->id_guia;
+                            }
+                        }
                     }
                 }
                 DB::commit();

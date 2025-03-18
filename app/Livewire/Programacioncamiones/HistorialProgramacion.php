@@ -10,6 +10,7 @@ use App\Models\Programacion;
 use App\Models\Serviciotransporte;
 use App\Models\Transportista;
 use App\Models\Historialdespachoventa;
+use App\Models\Guia;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -38,6 +39,8 @@ class HistorialProgramacion extends Component
     // Atributo público para almacenar los checkboxes seleccionados
     public $selectedItems = [];
     public $estadoComprobante = [];
+    public $guiainfo = [];
+    public $guia_detalle = [];
     /* ---------------------------------------- */
     private $logs;
     private $programacion;
@@ -45,6 +48,7 @@ class HistorialProgramacion extends Component
     private $general;
     private $historialdespachoventa;
     private $serviciotransporte;
+    private $guia;
     public function __construct()
     {
         $this->logs = new Logs();
@@ -53,6 +57,7 @@ class HistorialProgramacion extends Component
         $this->general = new General();
         $this->historialdespachoventa = new Historialdespachoventa();
         $this->serviciotransporte = new Serviciotransporte();
+        $this->guia = new Guia();
     }
     public function mount()
     {
@@ -75,15 +80,28 @@ class HistorialProgramacion extends Component
 
             foreach ($rehs->despacho as $des) {
                 $totalVenta = 0;
+                $guiasProcesadas =[];
                 $des->comprobantes = DB::table('despacho_ventas as dv')
+                    ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
                     ->where('dv.id_despacho', '=', $des->id_despacho)
+                    ->select('dv.*', 'g.guia_importe_total')
                     ->get();
 
                 foreach ($des->comprobantes as $com) {
-                    $precio = floatval($com->despacho_venta_cfimporte);
-                    $totalVenta += round($precio, 2);
+                    // Verificar si el id_guia ya fue procesado
+                    if (!in_array($com->id_guia, $guiasProcesadas)) {
+                        $precio = floatval($com->guia_importe_total);  // Usar guia_importe_total
+                        $totalVenta += round($precio, 2);
+                        $guiasProcesadas[] = $com->id_guia; // Marcar el id_guia como procesado
+                    }
                 }
                 $des->totalVentaDespacho = $totalVenta;
+                // Agregar el id_guia al objeto $des (usamos el primer id_guia encontrado)
+                if (count($des->comprobantes) > 0) {
+                    $des->id_guia = $des->comprobantes[0]->id_guia;
+                } else {
+                    $des->id_guia = null; // O un valor por defecto si no hay comprobantes
+                }
             }
         }
 
@@ -968,7 +986,7 @@ class HistorialProgramacion extends Component
                 session()->flash('error_delete', 'No tiene permisos para poder cambiar el estado del despacho.');
                 return;
             }
-            if (count($this->selectedItems) > 0){
+            if (count($this->selectedItems) > 0) {
                 // Validar que al menos un checkbox esté seleccionado
                 $this->validate([
                     'selectedItems' => 'required|array|min:1',
@@ -978,40 +996,50 @@ class HistorialProgramacion extends Component
                     'selectedItems.min'      => 'Debe seleccionar al menos una opción.',
                 ]);
                 DB::beginTransaction();
-                foreach ($this->selectedItems as $select){
+                foreach ($this->selectedItems as $select) {
                     $updateDespacho = Despacho::find($select);
                     $updateDespacho->despacho_estado_aprobacion = 2;
-                    if ($updateDespacho->save()){
-                        $existeComprobanteCamino = DB::table('despacho_ventas')->where('id_despacho', $select)->get();
-                        foreach ($existeComprobanteCamino as $e){
-                            // Verificar si el estado no es 2, 3 ni 4
-                            if (!in_array($e->despacho_detalle_estado_entrega, [2, 3, 4])) {
-                                DB::table('despacho_ventas')->where('id_despacho_venta', $e->id_despacho_venta)->update(['despacho_detalle_estado_entrega' => 1]);
-                            }
-                        }
-
-                        // Obtener los comprobantes actualizados para crear el historial
-                        $comprobantes = DB::table('despacho_ventas')
+                    if ($updateDespacho->save()) {
+                        // Obtener los id_guia relacionados con el id_despacho
+                        $despachoVentas = DB::table('despacho_ventas')
                             ->where('id_despacho', $select)
                             ->get();
-                        // Crear registro en historial para cada comprobante
-                        foreach ($comprobantes as $comprobante) {
-                            $historialDespacho = new Historialdespachoventa();
-                            $historialDespacho->id_despacho = $select;
-                            $historialDespacho->id_despacho_venta = $comprobante->id_despacho_venta;
-                            $historialDespacho->despacho_venta_cfnumdoc = $comprobante->despacho_venta_cfnumdoc;
-                            $historialDespacho->despacho_detalle_estado_entrega = 1;
-                            $historialDespacho->despacho_estado_aprobacion = 2;
-                            $historialDespacho->his_desp_vent_fecha = Carbon::now('America/Lima');
 
-                            if (!$historialDespacho->save()) {
-                                DB::rollBack();
-                                session()->flash('error_delete', 'Error al guardar el historial del despacho.');
-                                return;
+                        // Array para evitar duplicados en historial_guias
+                        $guiasProcesadas = [];
+
+                        foreach ($despachoVentas as $despachoVenta) {
+                            // Verificar si el id_guia ya fue procesado
+                            if (!in_array($despachoVenta->id_guia, $guiasProcesadas)) {
+                                // Actualizar el campo guia_estado_aprobacion en la tabla guias
+                                DB::table('guias')
+                                    ->where('id_guia', $despachoVenta->id_guia)
+                                    ->update(['guia_estado_aprobacion' => 7]);
+
+                                // Obtener el guia_nro_doc desde la tabla guias
+                                $guia = DB::table('guias')
+                                    ->where('id_guia', $despachoVenta->id_guia)
+                                    ->first();
+
+                                if ($guia) {
+                                    // Insertar en historial_guias
+                                    DB::table('historial_guias')->insert([
+                                        'id_users' => Auth::id(),
+                                        'id_guia' => $despachoVenta->id_guia,
+                                        'guia_nro_doc' => $guia->guia_nro_doc,
+                                        'historial_guia_estado_aprobacion' => 7, // Estado de aprobación
+                                        'historial_guia_fecha_hora' => Carbon::now('America/Lima'), // Fecha y hora actual de Perú
+                                        'historial_guia_estado' => 1, // Estado por defecto
+                                        'created_at' => Carbon::now('America/Lima'),
+                                        'updated_at' => Carbon::now('America/Lima'),
+                                    ]);
+
+                                    // Marcar el id_guia como procesado
+                                    $guiasProcesadas[] = $despachoVenta->id_guia;
+                                }
                             }
                         }
-
-                    }else{
+                    } else {
                         DB::rollBack();
                         session()->flash('error_delete', 'No se pudo cambiar los estados de los despachos a "En Camino".');
                         return;
@@ -1021,7 +1049,7 @@ class HistorialProgramacion extends Component
                 $this->selectedItems = [];
                 $this->dispatch('hideModalDelete');
                 session()->flash('success', 'Despachos en camino.');
-            }else{
+            } else {
                 $this->validate([
                     'id_despacho' => 'required|integer',
                 ], [
@@ -1032,39 +1060,51 @@ class HistorialProgramacion extends Component
                 DB::beginTransaction();
                 $updateDespacho = Despacho::find($this->id_despacho);
                 $updateDespacho->despacho_estado_aprobacion = 2;
-                if ($updateDespacho->save()){
-                    $existeComprobanteCamino = DB::table('despacho_ventas')->where('id_despacho', $this->id_despacho)->get();
-                    foreach ($existeComprobanteCamino as $e){
-                        // Verificar si el estado no es 2, 3 ni 4
-                        if (!in_array($e->despacho_detalle_estado_entrega, [2, 3, 4])) {
-                            DB::table('despacho_ventas')->where('id_despacho_venta', $e->id_despacho_venta)->update(['despacho_detalle_estado_entrega' => 1]);
-                        }
-                    }
-                    // Obtener los comprobantes actualizados para crear el historial
-                    $comprobantes = DB::table('despacho_ventas')
+                if ($updateDespacho->save()) {
+                    // Obtener los id_guia relacionados con el id_despacho
+                    $despachoVentas = DB::table('despacho_ventas')
                         ->where('id_despacho', $this->id_despacho)
                         ->get();
 
-                    // Crear registro en historial para cada comprobante
-                    foreach ($comprobantes as $comprobante) {
-                        $historialDespacho = new Historialdespachoventa();
-                        $historialDespacho->id_despacho = $this->id_despacho;
-                        $historialDespacho->id_despacho_venta = $comprobante->id_despacho_venta;
-                        $historialDespacho->despacho_venta_cfnumdoc = $comprobante->despacho_venta_cfnumdoc;
-                        $historialDespacho->despacho_detalle_estado_entrega = 1;
-                        $historialDespacho->despacho_estado_aprobacion = 2;
-                        $historialDespacho->his_desp_vent_fecha = Carbon::now('America/Lima');
+                    // Array para evitar duplicados en historial_guias
+                    $guiasProcesadas = [];
 
-                        if (!$historialDespacho->save()) {
-                            DB::rollBack();
-                            session()->flash('error_delete', 'Error al guardar el historial del despacho.');
-                            return;
+                    foreach ($despachoVentas as $despachoVenta) {
+                        // Verificar si el id_guia ya fue procesado
+                        if (!in_array($despachoVenta->id_guia, $guiasProcesadas)) {
+                            // Actualizar el campo guia_estado_aprobacion en la tabla guias
+                            DB::table('guias')
+                                ->where('id_guia', $despachoVenta->id_guia)
+                                ->update(['guia_estado_aprobacion' => 7]);
+
+                            // Obtener el guia_nro_doc desde la tabla guias
+                            $guia = DB::table('guias')
+                                ->where('id_guia', $despachoVenta->id_guia)
+                                ->first();
+
+                            if ($guia) {
+                                // Insertar en historial_guias
+                                DB::table('historial_guias')->insert([
+                                    'id_users' => Auth::id(),
+                                    'id_guia' => $despachoVenta->id_guia,
+                                    'guia_nro_doc' => $guia->guia_nro_doc,
+                                    'historial_guia_estado_aprobacion' => 7, // Estado de aprobación
+                                    'historial_guia_fecha_hora' => Carbon::now('America/Lima'), // Fecha y hora actual de Perú
+                                    'historial_guia_estado' => 1, // Estado por defecto
+                                    'created_at' => Carbon::now('America/Lima'),
+                                    'updated_at' => Carbon::now('America/Lima'),
+                                ]);
+
+                                // Marcar el id_guia como procesado
+                                $guiasProcesadas[] = $despachoVenta->id_guia;
+                            }
                         }
                     }
+
                     DB::commit();
                     $this->dispatch('hideModalDelete');
                     session()->flash('success', 'Despacho en camino.');
-                }else{
+                } else {
                     DB::rollBack();
                     session()->flash('error_delete', 'No se pudo cambiar el estado del despacho a "En Camino".');
                     return;
@@ -1214,6 +1254,14 @@ class HistorialProgramacion extends Component
             $this->logs->insertarLog($e);
             session()->flash('errorComprobante', 'Ocurrió un error al cambiar el estado del registro. Por favor, inténtelo nuevamente.');
         }
+    }
+
+    public function modal_guia_info($id_guia) {
+        $this->guiainfo = $this->guia->listar_guia_x_id($id_guia);
+    }
+
+    public function listar_detalle_guia($id_guia) {
+        $this->guia_detalle = $this->guia->listar_guia_detalle_x_id($id_guia);
     }
 
     public function cambiarEstadoServicioTr($id){
