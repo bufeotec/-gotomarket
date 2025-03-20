@@ -88,7 +88,7 @@ class Local extends Component
     public $guiainfo = [];
     public $guia_detalle = [];
     public $id_fac_pre_prog = "";
-    public $searchCliente = "";
+    public $searchGuia = [];
     public function mount($id = null){
         $this->id_transportistas = null;
         $this->selectedVehiculo = null;
@@ -121,7 +121,14 @@ class Local extends Component
         $facturas_pre_prog_estado_dos = $this->guia->listar_facturas_pre_programacion_estado_dos();
 
         // Obtener las guías con estado 3
-        $guias = Guia::where('guia_estado_aprobacion', 3)->get();
+        $guiasQuery = Guia::where('guia_estado_aprobacion', 3);
+
+        // Filtrar por nombre del cliente si searchGuia tiene valor
+        if (!empty($this->searchGuia)) {
+            $guiasQuery->where('guia_nombre_cliente', 'like', '%' . $this->searchGuia . '%');
+        }
+
+        $guias = $guiasQuery->get();
 
         // Calcular el peso y volumen total para cada guía
         $this->guias_estado_tres = $guias->map(function ($guia) {

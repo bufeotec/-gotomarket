@@ -347,6 +347,20 @@
                     <div class="row mb-3">
                         <h6>GUÍAS DISPONIBLES</h6>
                     </div>
+                    <div class="row align-items-center">
+                        <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                            <div class="position-relative">
+                                <input type="text"
+                                       class="form-control bg-dark text-white rounded-pill ps-5 custom-placeholder"
+                                       placeholder="Buscar guia"
+                                       wire:model.live="searchGuia"
+                                       style="border: none; outline: none;"
+                                       oninput="document.getElementById('buscarBtn').disabled = this.value.trim() === '';" />
+                                <i class="fas fa-search position-absolute"
+                                   style="left: 15px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
+                            </div>
+                        </div>
+                    </div>
                     <div class="row mt-3">
                         <div class="col-lg-12 col-md-12 col-sm-12">
                             <div class="contenedor-comprobante" style="max-height: 600px; overflow: auto">
