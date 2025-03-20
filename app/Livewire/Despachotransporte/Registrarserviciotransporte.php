@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithoutUrlPagination;
+use App\Models\Departamento;
 use Livewire\WithPagination;
 use App\Models\Logs;
 use App\Models\Serviciotransporte;
@@ -19,12 +20,14 @@ class Registrarserviciotransporte extends Component
     use WithPagination, WithoutUrlPagination;
     use WithFileUploads;
     private $logs;
+    private $departamento;
     private $serviciotransporte;
     private $general;
     public function __construct(){
         $this->logs = new Logs();
         $this->serviciotransporte = new Serviciotransporte();
         $this->general = new General();
+        $this->departamento = new Departamento();
     }
     public $search_servicio_transp;
     public $pagination_servicio_transp = 10;
@@ -37,9 +40,11 @@ class Registrarserviciotransporte extends Component
     public $serv_transpt_destinatario_ruc = "";
     public $serv_transpt_destinatario_razon_social = "";
     public $serv_transpt_destinatario_direccion = "";
-    public $serv_transpt_departamento = "";
-    public $serv_transpt_provincia = "";
-    public $serv_transpt_distrito = "";
+    public $id_departamento = "";
+    public $id_provincia = "";
+    public $id_distrito = "";
+    public $provincias = [];
+    public $distritos = [];
     public $serv_transpt_peso = "";
     public $serv_transpt_volumen = "";
     public $serv_transpt_documento = "";
@@ -51,8 +56,39 @@ class Registrarserviciotransporte extends Component
     public $nombre_archivo;
 
     public function render(){
+        $listar_departamento = $this->departamento->lista_departamento();
         $listar_servicio_transporte = $this->serviciotransporte->listar_servicio_transporte($this->search_servicio_transp, $this->pagination_servicio_transp);
-        return view('livewire.despachotransporte.registrarserviciotransporte', compact('listar_servicio_transporte'));
+        return view('livewire.despachotransporte.registrarserviciotransporte', compact('listar_servicio_transporte','listar_departamento'));
+    }
+    public function listar_provincias(){
+        $valor = $this->id_departamento;
+        if ($valor) {
+            $this->provincias = DB::table('provincias')->where('id_departamento', '=', $valor)->get();
+        } else {
+            $this->provincias = [];
+            $this->id_provincia = "";
+            $this->distritos = [];
+            $this->id_distrito = "";
+        }
+    }
+    public function listar_distritos(){
+        $valor = $this->id_provincia;
+        if ($valor) {
+            $this->distritos = DB::table('distritos')->where('id_provincia', '=', $valor)->get();
+        } else {
+            $this->distritos = [];
+            $this->id_distrito = "";
+        }
+    }
+    public function deparTari(){
+        $this->id_provincia = "";
+        $this->id_distrito = "";
+        $this->provincias = [];
+        $this->distritos = [];
+        $this->listar_provincias();
+    }
+    public function proviTari(){
+        $this->listar_distritos();
     }
 
     public function consulta_documento_remitente(){
@@ -101,9 +137,9 @@ class Registrarserviciotransporte extends Component
         $this->serv_transpt_destinatario_ruc = "";
         $this->serv_transpt_destinatario_razon_social = "";
         $this->serv_transpt_destinatario_direccion = "";
-        $this->serv_transpt_departamento = "";
-        $this->serv_transpt_provincia = "";
-        $this->serv_transpt_distrito = "";
+        $this->id_departamento = "";
+        $this->id_provincia = "";
+        $this->id_distrito = "";
         $this->serv_transpt_peso = "";
         $this->serv_transpt_volumen = "";
         $this->serv_transpt_documento = "";
@@ -122,9 +158,9 @@ class Registrarserviciotransporte extends Component
             $this->serv_transpt_destinatario_ruc = $servTrnspEdit->serv_transpt_destinatario_ruc;
             $this->serv_transpt_destinatario_razon_social = $servTrnspEdit->serv_transpt_destinatario_razon_social;
             $this->serv_transpt_destinatario_direccion = $servTrnspEdit->serv_transpt_destinatario_direccion;
-            $this->serv_transpt_departamento = $servTrnspEdit->serv_transpt_departamento;
-            $this->serv_transpt_provincia = $servTrnspEdit->serv_transpt_provincia;
-            $this->serv_transpt_distrito = $servTrnspEdit->serv_transpt_distrito;
+            $this->id_departamento = $servTrnspEdit->id_departamento;
+            $this->id_provincia = $servTrnspEdit->id_provincia;
+            $this->id_distrito = $servTrnspEdit->id_distrito;
             $this->serv_transpt_peso = $servTrnspEdit->serv_transpt_peso;
             $this->serv_transpt_volumen = $servTrnspEdit->serv_transpt_volumen;
             $this->serv_transpt_documento = $servTrnspEdit->serv_transpt_documento;
@@ -143,9 +179,9 @@ class Registrarserviciotransporte extends Component
                 'serv_transpt_remitente_direccion' => 'required|string',
                 'serv_transpt_destinatario_ruc' => 'nullable|size:11',
                 'serv_transpt_destinatario_razon_social' => 'required|string',
-                'serv_transpt_departamento' => 'required|string',
-                'serv_transpt_provincia' => 'required|string',
-                'serv_transpt_distrito' => 'required|string',
+                'id_departamento' => 'required|numeric',
+                'id_provincia' => 'required|numeric',
+                'id_distrito' => 'required|numeric',
                 'serv_transpt_peso' => 'required|numeric',
                 'serv_transpt_volumen' => 'required|numeric',
                 'serv_transpt_documento' => is_string($this->serv_transpt_documento) ? 'nullable' : 'file|mimes:jpg,jpeg,pdf,png|max:2048',
@@ -168,14 +204,14 @@ class Registrarserviciotransporte extends Component
                 'serv_transpt_remitente_direccion.required' => 'La dirección del remitente es obligatorio.',
                 'serv_transpt_remitente_direccion.string' => 'La dirección del remitente debe ser una cadena de texto.',
 
-                'serv_transpt_departamento.required' => 'El departamento del destinatario es obligatorio.',
-                'serv_transpt_departamento.string' => 'El departamento debe ser una cadena de texto.',
+                'id_departamento.required' => 'El departamento del destinatario es obligatorio.',
+                'id_departamento.numeric' => 'El departamento debe ser un valor numérico.',
 
-                'serv_transpt_provincia.required' => 'La provincia del destinatario es obligatorio.',
-                'serv_transpt_provincia.string' => 'La provincia  debe ser una cadena de texto.',
+                'id_provincia.required' => 'La provincia del destinatario es obligatorio.',
+                'id_provincia.numeric' => 'La provincia  debe ser un valor numérico.',
 
-                'serv_transpt_distrito.required' => 'El distrito del destinatario es obligatorio.',
-                'serv_transpt_distrito.string' => 'El distrito debe ser una cadena de texto.',
+                'id_distrito.required' => 'El distrito del destinatario es obligatorio.',
+                'id_distrito.numeric' => 'El distrito debe ser un valor numérico.',
 
                 'serv_transpt_destinatario_ruc.required' => 'El RUC del destinatario es obligatorio',
                 'serv_transpt_destinatario_ruc.string' => 'El RUC del destinatario debe ser una cadena de texto.',
@@ -220,9 +256,9 @@ class Registrarserviciotransporte extends Component
                 $serv_transp_save->serv_transpt_destinatario_ruc = $this->serv_transpt_destinatario_ruc;
                 $serv_transp_save->serv_transpt_destinatario_razon_social = $this->serv_transpt_destinatario_razon_social;
                 $serv_transp_save->serv_transpt_destinatario_direccion = $this->serv_transpt_destinatario_direccion;
-                $serv_transp_save->serv_transpt_departamento = $this->serv_transpt_departamento;
-                $serv_transp_save->serv_transpt_provincia = $this->serv_transpt_provincia;
-                $serv_transp_save->serv_transpt_distrito = $this->serv_transpt_distrito;
+                $serv_transp_save->id_departamento = $this->id_departamento;
+                $serv_transp_save->id_provincia = $this->id_provincia;
+                $serv_transp_save->id_distrito = $this->id_distrito;
                 $serv_transp_save->serv_transpt_peso = $this->serv_transpt_peso;
                 $serv_transp_save->serv_transpt_volumen = $this->serv_transpt_volumen;
 
@@ -264,9 +300,9 @@ class Registrarserviciotransporte extends Component
                 $serv_trnsp_update->serv_transpt_destinatario_ruc = $this->serv_transpt_destinatario_ruc;
                 $serv_trnsp_update->serv_transpt_destinatario_razon_social = $this->serv_transpt_destinatario_razon_social;
                 $serv_trnsp_update->serv_transpt_destinatario_direccion = $this->serv_transpt_destinatario_direccion;
-                $serv_trnsp_update->serv_transpt_departamento = $this->serv_transpt_departamento;
-                $serv_trnsp_update->serv_transpt_provincia = $this->serv_transpt_provincia;
-                $serv_trnsp_update->serv_transpt_distrito = $this->serv_transpt_distrito;
+                $serv_trnsp_update->id_departamento = $this->id_departamento;
+                $serv_trnsp_update->id_provincia = $this->id_provincia;
+                $serv_trnsp_update->id_distrito = $this->id_distrito;
                 $serv_trnsp_update->serv_transpt_peso = $this->serv_transpt_peso;
                 $serv_trnsp_update->serv_transpt_volumen = $this->serv_transpt_volumen;
 
