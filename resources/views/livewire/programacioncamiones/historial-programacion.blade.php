@@ -905,7 +905,7 @@
                 </div>
             @endforeach
         @else
-            <p class="text-center">No hay servicios de transporte para mostrar.</p>
+            <p class="text-center"></p>
         @endif
     </div>
 

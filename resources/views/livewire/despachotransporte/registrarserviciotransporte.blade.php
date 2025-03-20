@@ -34,11 +34,11 @@
                     <div class="col-lg-6">
                         <div class="row">
                             <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
-                                <small class="text-primary">Remitente</small>
+                                <small class="text-primary">Remitente / Lugar de recojo</small>
                                 <hr class="mb-0">
                             </div>
                             <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
-                                <label for="serv_transpt_remitente_ruc" class="form-label">RUC</label>
+                                <label for="serv_transpt_remitente_ruc" class="form-label">RUC (Opciona)</label>
                                 <x-input-general  type="text" id="serv_transpt_remitente_ruc" wire:model="serv_transpt_remitente_ruc" wire:change="consulta_documento_remitente" />
                                 <div wire:loading wire:target="consulta_documento_remitente">
                                     Consultando información
@@ -78,7 +78,7 @@
                                 <hr class="mb-0">
                             </div>
                             <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
-                                <label for="serv_transpt_destinatario_ruc" class="form-label">RUC</label>
+                                <label for="serv_transpt_destinatario_ruc" class="form-label">RUC (Opcional)</label>
                                 <x-input-general  type="text" id="serv_transpt_destinatario_ruc" wire:model="serv_transpt_destinatario_ruc" wire:change="consulta_documento_destinatario" />
                                 <div wire:loading wire:target="consulta_documento_destinatario">
                                     Consultando información
@@ -109,6 +109,28 @@
                                 @enderror
                             </div>
                         </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                        <label for="serv_transpt_departamento" class="form-label">Departamento</label>
+                        <x-input-general  type="text" id="serv_transpt_departamento" wire:model="serv_transpt_departamento"/>
+                        @error('serv_transpt_departamento')
+                        <span class="message-error">{{ $message }}</span>
+                        @enderror
+                    </div>
+                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                        <label for="serv_transpt_provincia" class="form-label">Provincia</label>
+                        <x-input-general  type="text" id="serv_transpt_provincia" wire:model="serv_transpt_provincia"/>
+                        @error('serv_transpt_provincia')
+                        <span class="message-error">{{ $message }}</span>
+                        @enderror
+                    </div>
+                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                        <label for="serv_transpt_distrito" class="form-label">Distrito</label>
+                        <x-input-general  type="text" id="serv_transpt_distrito" wire:model="serv_transpt_distrito"/>
+                        @error('serv_transpt_distrito')
+                        <span class="message-error">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <div class="col-lg-4 col-md-4 col-sm-12 mb-3">

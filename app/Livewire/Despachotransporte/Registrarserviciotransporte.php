@@ -37,6 +37,9 @@ class Registrarserviciotransporte extends Component
     public $serv_transpt_destinatario_ruc = "";
     public $serv_transpt_destinatario_razon_social = "";
     public $serv_transpt_destinatario_direccion = "";
+    public $serv_transpt_departamento = "";
+    public $serv_transpt_provincia = "";
+    public $serv_transpt_distrito = "";
     public $serv_transpt_peso = "";
     public $serv_transpt_volumen = "";
     public $serv_transpt_documento = "";
@@ -98,6 +101,9 @@ class Registrarserviciotransporte extends Component
         $this->serv_transpt_destinatario_ruc = "";
         $this->serv_transpt_destinatario_razon_social = "";
         $this->serv_transpt_destinatario_direccion = "";
+        $this->serv_transpt_departamento = "";
+        $this->serv_transpt_provincia = "";
+        $this->serv_transpt_distrito = "";
         $this->serv_transpt_peso = "";
         $this->serv_transpt_volumen = "";
         $this->serv_transpt_documento = "";
@@ -116,6 +122,9 @@ class Registrarserviciotransporte extends Component
             $this->serv_transpt_destinatario_ruc = $servTrnspEdit->serv_transpt_destinatario_ruc;
             $this->serv_transpt_destinatario_razon_social = $servTrnspEdit->serv_transpt_destinatario_razon_social;
             $this->serv_transpt_destinatario_direccion = $servTrnspEdit->serv_transpt_destinatario_direccion;
+            $this->serv_transpt_departamento = $servTrnspEdit->serv_transpt_departamento;
+            $this->serv_transpt_provincia = $servTrnspEdit->serv_transpt_provincia;
+            $this->serv_transpt_distrito = $servTrnspEdit->serv_transpt_distrito;
             $this->serv_transpt_peso = $servTrnspEdit->serv_transpt_peso;
             $this->serv_transpt_volumen = $servTrnspEdit->serv_transpt_volumen;
             $this->serv_transpt_documento = $servTrnspEdit->serv_transpt_documento;
@@ -129,12 +138,14 @@ class Registrarserviciotransporte extends Component
             $this->validate([
                 'serv_transpt_motivo' => 'required|string',
                 'serv_transpt_detalle_motivo' => 'required|string',
-                'serv_transpt_remitente_ruc' => 'required|size:11',
+                'serv_transpt_remitente_ruc' => 'nullable|size:11',
                 'serv_transpt_remitente_razon_social' => 'required|string',
                 'serv_transpt_remitente_direccion' => 'required|string',
-                'serv_transpt_destinatario_ruc' => 'required|size:11',
+                'serv_transpt_destinatario_ruc' => 'nullable|size:11',
                 'serv_transpt_destinatario_razon_social' => 'required|string',
-                'serv_transpt_destinatario_direccion' => 'required|string',
+                'serv_transpt_departamento' => 'required|string',
+                'serv_transpt_provincia' => 'required|string',
+                'serv_transpt_distrito' => 'required|string',
                 'serv_transpt_peso' => 'required|numeric',
                 'serv_transpt_volumen' => 'required|numeric',
                 'serv_transpt_documento' => is_string($this->serv_transpt_documento) ? 'nullable' : 'file|mimes:jpg,jpeg,pdf,png|max:2048',
@@ -156,6 +167,15 @@ class Registrarserviciotransporte extends Component
 
                 'serv_transpt_remitente_direccion.required' => 'La dirección del remitente es obligatorio.',
                 'serv_transpt_remitente_direccion.string' => 'La dirección del remitente debe ser una cadena de texto.',
+
+                'serv_transpt_departamento.required' => 'El departamento del destinatario es obligatorio.',
+                'serv_transpt_departamento.string' => 'El departamento debe ser una cadena de texto.',
+
+                'serv_transpt_provincia.required' => 'La provincia del destinatario es obligatorio.',
+                'serv_transpt_provincia.string' => 'La provincia  debe ser una cadena de texto.',
+
+                'serv_transpt_distrito.required' => 'El distrito del destinatario es obligatorio.',
+                'serv_transpt_distrito.string' => 'El distrito debe ser una cadena de texto.',
 
                 'serv_transpt_destinatario_ruc.required' => 'El RUC del destinatario es obligatorio',
                 'serv_transpt_destinatario_ruc.string' => 'El RUC del destinatario debe ser una cadena de texto.',
@@ -200,6 +220,9 @@ class Registrarserviciotransporte extends Component
                 $serv_transp_save->serv_transpt_destinatario_ruc = $this->serv_transpt_destinatario_ruc;
                 $serv_transp_save->serv_transpt_destinatario_razon_social = $this->serv_transpt_destinatario_razon_social;
                 $serv_transp_save->serv_transpt_destinatario_direccion = $this->serv_transpt_destinatario_direccion;
+                $serv_transp_save->serv_transpt_departamento = $this->serv_transpt_departamento;
+                $serv_transp_save->serv_transpt_provincia = $this->serv_transpt_provincia;
+                $serv_transp_save->serv_transpt_distrito = $this->serv_transpt_distrito;
                 $serv_transp_save->serv_transpt_peso = $this->serv_transpt_peso;
                 $serv_transp_save->serv_transpt_volumen = $this->serv_transpt_volumen;
 
@@ -241,6 +264,9 @@ class Registrarserviciotransporte extends Component
                 $serv_trnsp_update->serv_transpt_destinatario_ruc = $this->serv_transpt_destinatario_ruc;
                 $serv_trnsp_update->serv_transpt_destinatario_razon_social = $this->serv_transpt_destinatario_razon_social;
                 $serv_trnsp_update->serv_transpt_destinatario_direccion = $this->serv_transpt_destinatario_direccion;
+                $serv_trnsp_update->serv_transpt_departamento = $this->serv_transpt_departamento;
+                $serv_trnsp_update->serv_transpt_provincia = $this->serv_transpt_provincia;
+                $serv_trnsp_update->serv_transpt_distrito = $this->serv_transpt_distrito;
                 $serv_trnsp_update->serv_transpt_peso = $this->serv_transpt_peso;
                 $serv_trnsp_update->serv_transpt_volumen = $this->serv_transpt_volumen;
 

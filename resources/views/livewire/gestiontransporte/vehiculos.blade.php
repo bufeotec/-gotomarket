@@ -63,7 +63,7 @@
                         <select class="form-select" wire:model="id_tarifario">
                             <option value="">Seleccionar...</option>
                             @foreach($listar_tarifario as $ld)
-                                <option value="{{ $ld->id_tarifario }}">S/ {{ $ld->tarifa_monto  }}</option>
+                                <option value="{{ $ld->id_tarifario }}">S/ {{ $ld->tarifa_monto }}</option>
                             @endforeach
                         </select>
                         @error('id_tarifario')
@@ -91,6 +91,13 @@
                         <label for="vehiculo_alto" class="form-label">Alto (*) (Medida en cm)</label>
                         <x-input-general type="text" id="vehiculo_alto" wire:model="vehiculo_alto" wire:input="calcularVolumen" onkeyup="validar_numeros(this.id)" />
                         @error('vehiculo_alto')
+                        <span class="message-error">{{ $message }}</span>
+                        @enderror
+                    </div>
+                    <div class="col-lg-6 mb-3" style="{{ $isEditing ? '' : 'display: none;' }}">
+                        <label for="observaciones" class="form-label">Comentarios (opcional)</label>
+                        <textarea class="form-control" id="observaciones" rows="3" wire:model="observaciones"></textarea>
+                        @error('observaciones')
                         <span class="message-error">{{ $message }}</span>
                         @enderror
                     </div>

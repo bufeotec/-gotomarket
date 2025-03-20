@@ -48,19 +48,15 @@ class TarifaMovil extends Model
         return $result;
     }
 
-    public function listar_tarifario(){
-
+    public function listar_tarifario() {
         try {
-            $result = DB::table('tarifarios')
-                ->whereIn('id_tipo_servicio', [1])
-                ->get();
+            $query = DB::table('tarifarios')
+                ->where('id_tipo_servicio', 1);
+            return $query->get();
         } catch (\Exception $e) {
-            $this->logs->insertarLog($e);
-            $result = [];
+            return [];
         }
-        return $result;
     }
-
     public function listar_tarifamovil($search, $pagination, $order = 'asc')
     {
         try {
