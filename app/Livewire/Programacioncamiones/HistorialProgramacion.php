@@ -1356,96 +1356,6 @@ class HistorialProgramacion extends Component
         }
     }
 
-    public function cambiarEstadoSerCamino(){
-        try {
-            if (!Gate::allows('servicio_transp_camino')) {
-                session()->flash('error_delete', 'No tiene permisos para aprobar o rechazar este servicio de transporte.');
-                return;
-            }
-
-            $this->validate([
-                'id_serv_transpt' => 'required|integer',
-            ], [
-                'id_serv_transpt.required' => 'El identificador es obligatorio.',
-                'id_serv_transpt.integer' => 'El identificador debe ser un número entero.',
-            ]);
-
-            DB::beginTransaction();
-
-            // Buscar el servicio de transporte
-            $servicio_transp_update = Serviciotransporte::find($this->id_serv_transpt);
-
-            if (!$servicio_transp_update) {
-                DB::rollBack();
-                session()->flash('error_delete', 'El servicio de transporte no fue encontrado.');
-                return;
-            }
-
-            // Cambiar el estado a "en camino" (2)
-            $servicio_transp_update->serv_transpt_estado_aprobacion = 2;
-
-            if ($servicio_transp_update->save()) {
-                DB::commit();
-                $this->dispatch('hideModalDeleteCamino');
-                session()->flash('success', 'El servicio de transporte ha sido marcado como "en camino".');
-            } else {
-                DB::rollBack();
-                session()->flash('error_delete', 'No se pudo cambiar el estado del servicio de transporte.');
-            }
-        } catch (\Exception $e) {
-            DB::rollBack();
-            $this->logs->insertarLog($e);
-            session()->flash('error', 'Ocurrió un error al cambiar el estado del registro. Por favor, inténtelo nuevamente.');
-        }
-    }
-
-    public function cambiarConfirmarEntregaSer(){
-        try {
-            if (!Gate::allows('servicio_transp_entrega')) {
-                session()->flash('error_delete', 'No tiene permisos para aprobar o rechazar este servicio de transporte.');
-                return;
-            }
-
-            $this->validate([
-                'id_serv_transpt' => 'required|integer',
-                'serv_transpt_entrega' => 'required|in:1,2',
-            ], [
-                'id_serv_transpt.required' => 'El identificador es obligatorio.',
-                'id_serv_transpt.integer' => 'El identificador debe ser un número entero.',
-                'serv_transpt_entrega.required' => 'Debe seleccionar una opción de entrega.',
-                'serv_transpt_entrega.in' => 'La opción de entrega no es válida.',
-            ]);
-
-            DB::beginTransaction();
-
-            // Buscar el servicio de transporte
-            $servicio_transp_update = Serviciotransporte::find($this->id_serv_transpt);
-
-            if (!$servicio_transp_update) {
-                DB::rollBack();
-                session()->flash('error_delete', 'El servicio de transporte no fue encontrado.');
-                return;
-            }
-
-            // Actualizar el estado y el campo de entrega
-            $servicio_transp_update->serv_transpt_estado_aprobacion = 3;
-            $servicio_transp_update->serv_transpt_entrega = $this->serv_transpt_entrega;
-
-            if ($servicio_transp_update->save()) {
-                DB::commit();
-                $this->dispatch('hideModalDeleteEntrega');
-                session()->flash('success', 'El servicio de transporte ha sido marcado como culminado.');
-            } else {
-                DB::rollBack();
-                session()->flash('error_delete', 'No se pudo cambiar el estado del servicio de transporte.');
-            }
-        } catch (\Exception $e) {
-            DB::rollBack();
-            $this->logs->insertarLog($e);
-            session()->flash('error', 'Ocurrió un error al cambiar el estado del registro. Por favor, inténtelo nuevamente.');
-        }
-    }
-
     public function generar_excel_servicio_transporte()
     {
         try {
@@ -1453,14 +1363,6 @@ class HistorialProgramacion extends Component
                 session()->flash('error', 'No tiene permisos para generar el reporte en excel.');
                 return;
             }
-
-            // Obtener los datos de servicios_transportes
-            $serviciosTransportes = DB::table('servicios_transportes')
-                ->where('serv_transpt_estado', 1) // Solo registros activos
-                ->whereBetween('serv_transpt_fecha_creacion', [$this->desde, $this->hasta])
-                ->whereIn('serv_transpt_estado_aprobacion', [1, 2, 3]) // Aprobado, En Camino, Entregado
-                ->orderBy('serv_transpt_fecha_creacion', 'desc')
-                ->get();
 
             // Crear un nuevo archivo de Excel
             $spreadsheet = new Spreadsheet();

@@ -20,6 +20,7 @@ use App\Models\Facturaspreprogramacion;
 use App\Models\Historialdespachoventa;
 use App\Models\Historialpreprogramacion;
 use App\Models\Guia;
+use App\Models\Serviciotransporte;
 
 
 class Local extends Component
@@ -36,6 +37,7 @@ class Local extends Component
     private $historialdespachoventa;
     private $historialpreprogramacion;
     private $guia;
+    private $serviciotransporte;
     public function __construct(){
         $this->logs = new Logs();
         $this->server = new Server();
@@ -49,6 +51,7 @@ class Local extends Component
         $this->historialdespachoventa = new Historialdespachoventa();
         $this->historialpreprogramacion = new Historialpreprogramacion();
         $this->guia = new Guia();
+        $this->serviciotransporte = new Serviciotransporte();
     }
     public $searchFactura = "";
     public $filteredFacturas = [];
@@ -59,6 +62,7 @@ class Local extends Component
     public $volumenTotal = 0;
     public $importeTotalVenta = 0;
     public $selectedFacturas = [];
+    public $selectedServTrns = [];
     public $detalle_vehiculo = [];
     public $tarifaMontoSeleccionado = 0;
     public $montoOriginal = 0;
@@ -85,6 +89,7 @@ class Local extends Component
     public $checkInput = '';
     public $facturas_pre_prog_estado_tres = [];
     public $guias_estado_tres = [];
+    public $serv_transp = [];
     public $guiainfo = [];
     public $guia_detalle = [];
     public $id_fac_pre_prog = "";
@@ -151,6 +156,10 @@ class Local extends Component
 
             return $guia;
         });
+
+        $servTransp = Serviciotransporte::where('serv_transpt_estado_aprobacion', 0);
+        $servicio = $servTransp->get();
+        $this->serv_transp = $servicio;
 
         return view('livewire.programacioncamiones.local', compact('listar_transportistas', 'listar_vehiculos', 'facturas_pre_prog_estado_dos'));
     }

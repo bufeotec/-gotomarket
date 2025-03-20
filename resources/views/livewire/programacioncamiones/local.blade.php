@@ -446,6 +446,78 @@
                     </div>
                 </div>
             </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <h6>SERVICIO TRANSPORTE</h6>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-lg-12 col-md-12 col-sm-12">
+                            <div class="contenedor-comprobante" style="max-height: 600px; overflow: auto">
+                                @if($serv_transp->isEmpty())
+                                    <p class="text-center text-muted">No hay facturas disponibles.</p>
+                                @else
+                                    <table class="table table-responsive ">
+                                        <thead style="background: #E7E7FF; color: #696cff">
+                                        <tr>
+                                            <th>#</th>
+                                            <th style="font-size: 14px">Codigo</th>
+                                            <th style="font-size: 14px">Motivo</th>
+                                            <th style="font-size: 14px">Remitente</th>
+                                            <th style="font-size: 14px">Destinatario</th>
+                                            <th style="font-size: 14px">Peso y Volumen</th>
+                                        </tr>
+                                        </thead>
+
+                                        <tbody>
+                                        @foreach($serv_transp as $factura)
+                                            @if (!in_array($factura->id_serv_transpt, array_column($selectedServTrns, 'id_serv_transpt')))
+                                                <tr>
+                                                    <td>
+                                                        <button class="btn btn-success btn-sm text-white mb-2 cursoPointer" wire:click="seleccionarFactura({{ $factura->id_serv_transpt }})">
+                                                            <i class="fa-solid fa-check"></i>
+                                                        </button>
+                                                    </td>
+                                                    <td>
+                                                        <span class="tamanhoTablaComprobantes">
+                                                            <b class="colorBlackComprobantes">{{ $factura->serv_transpt_codigo }}</b>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="d-block tamanhoTablaComprobantes">
+                                                            {{ $factura->serv_transpt_motivo }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="d-block tamanhoTablaComprobantes">
+                                                            {{ $factura->serv_transpt_detalle_motivo}}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="d-block tamanhoTablaComprobantes">
+                                                            {{ $factura->guia_nombre_cliente }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="d-block tamanhoTablaComprobantes">
+                                                            <b class="colorBlackComprobantes">{{ $me->formatoDecimal($factura->peso_total)}} kg</b>
+                                                        </span>
+                                                        <span class="d-block tamanhoTablaComprobantes">
+                                                            <b class="colorBlackComprobantes">{{ $me->formatoDecimal($factura->volumen_total )}} cm³</b>
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            @endif
+                                        @endforeach
+                                        </tbody>
+                                    </table>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
             <div wire:loading wire:target="seleccionarFactura" class="overlay__eliminar">
                 <div class="spinner__container__eliminar">

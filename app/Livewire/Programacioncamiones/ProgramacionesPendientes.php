@@ -97,19 +97,9 @@ class ProgramacionesPendientes extends Component
             }
         }
 
-        // Obtener servicios de transporte
-        $serviciosTransporte = DB::table('servicios_transportes as st')
-            ->join('users as u', 'u.id_users', '=', 'st.id_users')
-            ->select('st.*', 'u.name', 'u.last_name')
-            ->where('st.serv_transpt_estado_aprobacion', '=', 0)
-            ->whereBetween('st.serv_transpt_fecha_creacion', [$this->desde, $this->hasta])
-            ->orderBy('st.created_at', 'desc')
-            ->get();
-
         $conteoProgramacionesPend = DB::table('programaciones')->where('programacion_estado_aprobacion', '=', 0)->count();
-        $conteoServicioTransporte = DB::table('servicios_transportes')->where('serv_transpt_estado_aprobacion', '=', 0)->count();
 
-        return view('livewire.programacioncamiones.programaciones-pendientes', compact('resultado', 'conteoProgramacionesPend', 'serviciosTransporte', 'conteoServicioTransporte'));
+        return view('livewire.programacioncamiones.programaciones-pendientes', compact('resultado', 'conteoProgramacionesPend'));
     }
 
     public function listar_informacion_despacho($id){
@@ -263,61 +253,6 @@ class ProgramacionesPendientes extends Component
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             $this->setErrorBag($e->validator->errors());
-        } catch (\Exception $e) {
-            DB::rollBack();
-            $this->logs->insertarLog($e);
-            session()->flash('error', 'Ocurrió un error al cambiar el estado del registro. Por favor, inténtelo nuevamente.');
-        }
-    }
-
-    public function cambiarEstadoServicioTransp($id_ser_trn,$estado_aprob){ //  $estado = 1 aprobar , 2 desaprobar
-        if ($id_ser_trn){
-            $this->id_serv_transpt = $id_ser_trn;
-            $this->serv_transpt_estado_aprobacion = $estado_aprob;
-        }
-    }
-
-    public function cambiarEstadoServicioTranspFormulario() {
-        try {
-            if (!Gate::allows('aprobar_rechazar_servicio_transp')) {
-                session()->flash('error_delete', 'No tiene permisos para aprobar o rechazar este servicio transporte.');
-                return;
-            }
-
-            $this->validate([
-                'id_serv_transpt' => 'required|integer',
-                'serv_transpt_estado_aprobacion' => 'required|integer',
-            ], [
-                'id_serv_transpt.required' => 'El identificador es obligatorio.',
-                'id_serv_transpt.integer' => 'El identificador debe ser un número entero.',
-                'serv_transpt_estado_aprobacion.required' => 'El estado es obligatorio.',
-                'serv_transpt_estado_aprobacion.integer' => 'El estado debe ser un número entero.',
-            ]);
-
-            DB::beginTransaction();
-            $servicio_transp_update = Serviciotransporte::find($this->id_serv_transpt);
-
-            // Asignar el estado directamente sin modificarlo
-            $servicio_transp_update->serv_transpt_estado_aprobacion = $this->serv_transpt_estado_aprobacion;
-
-            if ($this->serv_transpt_estado_aprobacion == 1) { // APROBACIÓN
-                $correlaApro = $this->despacho->listar_ultima_aprobacion_despacho();
-                $servicio_transp_update->serv_transpt_codigo_os = $correlaApro;
-            }
-
-            if ($servicio_transp_update->save()) {
-                DB::commit();
-                $this->dispatch('hideModalDeleteSerTr');
-                if ($this->serv_transpt_estado_aprobacion == 1) {
-                    session()->flash('success', 'Registro aprobado correctamente.');
-                } else {
-                    session()->flash('success', 'Registro rechazado correctamente.');
-                }
-            } else {
-                DB::rollBack();
-                session()->flash('error_delete', 'No se pudo cambiar el estado del servicio de transporte.');
-                return;
-            }
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logs->insertarLog($e);
