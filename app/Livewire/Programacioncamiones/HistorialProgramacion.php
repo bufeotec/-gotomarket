@@ -39,7 +39,7 @@ class HistorialProgramacion extends Component
     // Atributo público para almacenar los checkboxes seleccionados
     public $selectedItems = [];
     public $estadoComprobante = [];
-    public $guiainfo = [];
+    public $guias_info = [];
     public $guia_detalle = [];
     /* ---------------------------------------- */
     private $logs;
@@ -128,21 +128,37 @@ class HistorialProgramacion extends Component
         return view('livewire.programacioncamiones.historial-programacion', compact('resultado', 'roleId'));
     }
 
-    public function listar_informacion_despacho($id){
+    public function listar_informacion_despacho($id_despacho) {
         try {
             $this->estadoComprobante = [];
+
+            // Obtener la información del despacho
             $this->listar_detalle_despacho = DB::table('despachos as d')
-                ->join('users as u','u.id_users','=','d.id_users')
-                ->where('d.id_despacho','=',$id)->first();
-            if ($this->listar_detalle_despacho){
-                $this->listar_detalle_despacho->comprobantes = DB::table('despacho_ventas')->where('id_despacho','=',$id)->get();
-                foreach ($this->listar_detalle_despacho->comprobantes as $comp){
-                    if (!in_array($comp->despacho_detalle_estado_entrega, [2, 3, 4])){
-                        $this->estadoComprobante[$comp->id_despacho_venta] = 2;
-                    }
+                ->join('users as u', 'u.id_users', '=', 'd.id_users')
+                ->where('d.id_despacho', '=', $id_despacho)
+                ->first();
+
+            if ($this->listar_detalle_despacho) {
+                // Obtener los id_guia desde despacho_ventas usando el id_despacho
+                $id_guias = DB::table('despacho_ventas')
+                    ->where('id_despacho', '=', $id_despacho)
+                    ->pluck('id_guia')
+                    ->toArray();
+
+                // Obtener los comprobantes relacionados con los id_guia
+                $this->listar_detalle_despacho->comprobantes = DB::table('despacho_ventas as dv')
+                    ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
+                    ->whereIn('dv.id_guia', $id_guias)
+                    ->get();
+
+                // Verificar el estado de los comprobantes
+                foreach ($this->listar_detalle_despacho->comprobantes as $comp) {
+                        if (!in_array($comp->despacho_detalle_estado_entrega, [8, 7, 12])) {
+                            $this->estadoComprobante[$comp->id_despacho_venta] = 8;
+                        }
                 }
             }
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             $this->logs->insertarLog($e);
         }
     }
@@ -1154,99 +1170,73 @@ class HistorialProgramacion extends Component
             session()->flash('error', 'Ocurrió un error. Por favor, inténtelo nuevamente.');
         }
     }
-    public function cambiarEstadoComprobante(){
+
+    public function cambiarEstadoComprobante() {
         try {
-            // $estado sebe contener el valor del select
+            // Verificar permisos
             if (!Gate::allows('cambiar_estado_comprobante')) {
                 session()->flash('errorComprobante', 'No tiene permisos para poder cambiar el estado del comprobante.');
                 return;
             }
 
             DB::beginTransaction();
-            foreach ($this->estadoComprobante as $id_comprobante => $estado){
-                $informacionDespachoVenta = DB::table('despacho_ventas as dv')
-                    ->join('despachos as d','d.id_despacho','=','dv.id_despacho')
-                    ->join('programaciones as p','p.id_programacion','=','d.id_programacion')
-                    ->where('d.id_tipo_servicios','=',1)
-                    ->where('dv.id_despacho_venta','=',$id_comprobante)
-                    ->first();
 
-                // Validar cada estado
-                if (!in_array((int)$estado, [2, 3])) {
+            // Recorrer los estados de los comprobantes
+            foreach ($this->estadoComprobante as $id_despacho_venta => $estado) {
+                // Validar que el estado sea 8 (Entregado) o 11 (No entregado)
+                if (!in_array($estado, [8, 11])) {
                     DB::rollBack();
                     session()->flash('errorComprobante', 'Estado inválido seleccionado.');
                     return;
                 }
-                $comprobante = DespachoVenta::find($id_comprobante);
-                if (!$comprobante) {
+
+                // Obtener la información del despacho_venta
+                $despachoVenta = DB::table('despacho_ventas')
+                    ->where('id_despacho_venta', $id_despacho_venta)
+                    ->first();
+
+                if (!$despachoVenta) {
                     DB::rollBack();
                     session()->flash('errorComprobante', 'Comprobante no encontrado.');
                     return;
                 }
-                // Actualizar el estado del comprobante
-                $es = (int)$estado;
-                $comprobante->despacho_detalle_estado_entrega = $es;
-                if ($comprobante->save()){
 
-                    // **Nuevo código: Registrar en el historial**
-                    $historial = new Historialdespachoventa();
-                    $historial->id_despacho = $comprobante->id_despacho; // ID del despacho
-                    $historial->id_despacho_venta = $comprobante->id_despacho_venta; // ID del comprobante
-                    $historial->despacho_venta_cfnumdoc = $comprobante->despacho_venta_cfnumdoc; // Número de documento
-                    $historial->despacho_detalle_estado_entrega = $es; // Nuevo estado
-                    $historial->despacho_estado_aprobacion = 3; // Estado de aprobación (puedes cambiarlo si es necesario)
-                    $historial->his_desp_vent_fecha = Carbon::now('America/Lima'); // Fecha actual
-                    $historial->save(); // Guardar en el historial
+                // Obtener el id_guia desde despacho_ventas
+                $id_guia = $despachoVenta->id_guia;
 
-                    if ($es == 3 && $informacionDespachoVenta){
-                        $comprobanteProvincialProgramacion = DB::table('despacho_ventas as dv')
-                            ->join('despachos as d','d.id_despacho','=','dv.id_despacho')
-                            ->join('programaciones as p','p.id_programacion','=','d.id_programacion')
-                            ->where('p.id_programacion','=',$informacionDespachoVenta->id_programacion)
-                            ->where('d.id_tipo_servicios','=',2)
-                            ->where('dv.despacho_venta_guia','=',$informacionDespachoVenta->despacho_venta_guia)
-                            ->where('dv.despacho_venta_cfnumser','=',$informacionDespachoVenta->despacho_venta_cfnumser)
-                            ->where('dv.despacho_venta_cfnumdoc','=',$informacionDespachoVenta->despacho_venta_cfnumdoc)
-                            ->first();
+                // Actualizar el campo guia_estado_aprobacion en la tabla guias
+                DB::table('guias')
+                    ->where('id_guia', $id_guia)
+                    ->update(['guia_estado_aprobacion' => $estado]);
 
-                        if ($comprobanteProvincialProgramacion){
-                            $comprobanteProvi = DespachoVenta::find($comprobanteProvincialProgramacion->id_despacho_venta);
-                            if (!$comprobanteProvi) {
-                                DB::rollBack();
-                                session()->flash('errorComprobante', 'Comprobante no encontrado.');
-                                return;
-                            }
-                            $ress = DB::table('despacho_ventas')->where('id_despacho_venta','=',$comprobanteProvincialProgramacion->id_despacho_venta)
-                                ->update(['despacho_detalle_estado_entrega'=>3]);
-                            if ($ress == 1){
-                                // si el provincial no hay otros comprobantes poner como culminado.
-                                $conteDe = DB::table('despacho_ventas')->where('id_despacho','=',$comprobanteProvincialProgramacion->id_despacho)->count();
-                                $conteDeEstadoEntrega = DB::table('despacho_ventas')->where('id_despacho','=',$comprobanteProvincialProgramacion->id_despacho)
-                                    ->where('despacho_detalle_estado_entrega','=',3)->count();
-                                // si todos los despachos detalles ($conteDeEstadoEntrega) esta como no entregados cambiar el despacho como culminado
-                                if ($conteDe == $conteDeEstadoEntrega){
-                                    DB::table('despachos')->where('id_despacho','=',$comprobanteProvincialProgramacion->id_despacho)->update(['despacho_estado_aprobacion'=>3]);
-                                }
-                            }else{
-                                DB::rollBack();
-                                session()->flash('errorComprobante', 'Ocurrió un error al cambiar el estado.');
-                                return;
-                            }
-                        }
-                    }
-                }else{
-                    DB::rollBack();
-                    session()->flash('errorComprobante', 'Ocurrió un error al cambiar el estado.');
-                    return;
+                // Actualizar el campo despacho_estado_aprobacion en la tabla despachos
+                DB::table('despachos')
+                    ->where('id_despacho', $despachoVenta->id_despacho)
+                    ->update(['despacho_estado_aprobacion' => 3]);
+
+                // Obtener el guia_nro_doc desde la tabla guias
+                $guia = DB::table('guias')
+                    ->where('id_guia', $id_guia)
+                    ->first();
+
+                if ($guia) {
+                    // Registrar en historial_guias
+                    DB::table('historial_guias')->insert([
+                        'id_users' => Auth::id(),
+                        'id_guia' => $id_guia,
+                        'guia_nro_doc' => $guia->guia_nro_doc,
+                        'historial_guia_estado_aprobacion' => $estado, // Estado seleccionado (8 o 11)
+                        'historial_guia_fecha_hora' => Carbon::now('America/Lima'), // Fecha y hora actual de Perú
+                        'historial_guia_estado' => 1, // Estado por defecto
+                        'created_at' => Carbon::now('America/Lima'),
+                        'updated_at' => Carbon::now('America/Lima'),
+                    ]);
                 }
             }
 
-            $id_despacho = $this->listar_detalle_despacho->id_despacho;
-            Despacho::where('id_despacho', $id_despacho)->update(['despacho_estado_aprobacion' => 3]);
-
             DB::commit();
-            session()->flash('success', 'Los estados fueron actualizados correctamente.');
-            $this->listar_informacion_despacho($id_despacho);
+            session()->flash('successComprobante', 'Los estados fueron actualizados correctamente.');
+            $this->listar_informacion_despacho($this->listar_detalle_despacho->id_despacho);
         } catch (\Illuminate\Validation\ValidationException $e) {
             $this->setErrorBag($e->validator->errors());
         } catch (\Exception $e) {
@@ -1255,13 +1245,109 @@ class HistorialProgramacion extends Component
             session()->flash('errorComprobante', 'Ocurrió un error al cambiar el estado del registro. Por favor, inténtelo nuevamente.');
         }
     }
+//    public function cambiarEstadoComprobante(){
+//        try {
+//            // $estado sebe contener el valor del select
+//            if (!Gate::allows('cambiar_estado_comprobante')) {
+//                session()->flash('errorComprobante', 'No tiene permisos para poder cambiar el estado del comprobante.');
+//                return;
+//            }
+//
+//            DB::beginTransaction();
+//            foreach ($this->estadoComprobante as $id_comprobante => $estado){
+//                $informacionDespachoVenta = DB::table('despacho_ventas as dv')
+//                    ->join('despachos as d','d.id_despacho','=','dv.id_despacho')
+//                    ->join('programaciones as p','p.id_programacion','=','d.id_programacion')
+//                    ->where('d.id_tipo_servicios','=',1)
+//                    ->where('dv.id_despacho_venta','=',$id_comprobante)
+//                    ->first();
+//
+//                // Validar cada estado
+//                if (!in_array((int)$estado, [2, 3])) {
+//                    DB::rollBack();
+//                    session()->flash('errorComprobante', 'Estado inválido seleccionado.');
+//                    return;
+//                }
+//                $comprobante = DespachoVenta::find($id_comprobante);
+//                if (!$comprobante) {
+//                    DB::rollBack();
+//                    session()->flash('errorComprobante', 'Comprobante no encontrado.');
+//                    return;
+//                }
+//                // Actualizar el estado del comprobante
+//                $es = (int)$estado;
+//                $comprobante->despacho_detalle_estado_entrega = $es;
+//                if ($comprobante->save()){
+//
+//                    if ($es == 3 && $informacionDespachoVenta){
+//                        $comprobanteProvincialProgramacion = DB::table('despacho_ventas as dv')
+//                            ->join('despachos as d','d.id_despacho','=','dv.id_despacho')
+//                            ->join('programaciones as p','p.id_programacion','=','d.id_programacion')
+//                            ->where('p.id_programacion','=',$informacionDespachoVenta->id_programacion)
+//                            ->where('d.id_tipo_servicios','=',2)
+//                            ->where('dv.despacho_venta_guia','=',$informacionDespachoVenta->despacho_venta_guia)
+//                            ->where('dv.despacho_venta_cfnumser','=',$informacionDespachoVenta->despacho_venta_cfnumser)
+//                            ->where('dv.despacho_venta_cfnumdoc','=',$informacionDespachoVenta->despacho_venta_cfnumdoc)
+//                            ->first();
+//
+//                        if ($comprobanteProvincialProgramacion){
+//                            $comprobanteProvi = DespachoVenta::find($comprobanteProvincialProgramacion->id_despacho_venta);
+//                            if (!$comprobanteProvi) {
+//                                DB::rollBack();
+//                                session()->flash('errorComprobante', 'Comprobante no encontrado.');
+//                                return;
+//                            }
+//                            $ress = DB::table('despacho_ventas')->where('id_despacho_venta','=',$comprobanteProvincialProgramacion->id_despacho_venta)
+//                                ->update(['despacho_detalle_estado_entrega'=>3]);
+//                            if ($ress == 1){
+//                                // si el provincial no hay otros comprobantes poner como culminado.
+//                                $conteDe = DB::table('despacho_ventas')->where('id_despacho','=',$comprobanteProvincialProgramacion->id_despacho)->count();
+//                                $conteDeEstadoEntrega = DB::table('despacho_ventas')->where('id_despacho','=',$comprobanteProvincialProgramacion->id_despacho)
+//                                    ->where('despacho_detalle_estado_entrega','=',3)->count();
+//                                // si todos los despachos detalles ($conteDeEstadoEntrega) esta como no entregados cambiar el despacho como culminado
+//                                if ($conteDe == $conteDeEstadoEntrega){
+//                                    DB::table('despachos')->where('id_despacho','=',$comprobanteProvincialProgramacion->id_despacho)->update(['despacho_estado_aprobacion'=>3]);
+//                                }
+//                            }else{
+//                                DB::rollBack();
+//                                session()->flash('errorComprobante', 'Ocurrió un error al cambiar el estado.');
+//                                return;
+//                            }
+//                        }
+//                    }
+//                }else{
+//                    DB::rollBack();
+//                    session()->flash('errorComprobante', 'Ocurrió un error al cambiar el estado.');
+//                    return;
+//                }
+//            }
+//
+//            $id_despacho = $this->listar_detalle_despacho->id_despacho;
+//            Despacho::where('id_despacho', $id_despacho)->update(['despacho_estado_aprobacion' => 3]);
+//
+//            DB::commit();
+//            session()->flash('success', 'Los estados fueron actualizados correctamente.');
+//            $this->listar_informacion_despacho($id_despacho);
+//        } catch (\Illuminate\Validation\ValidationException $e) {
+//            $this->setErrorBag($e->validator->errors());
+//        } catch (\Exception $e) {
+//            DB::rollBack();
+//            $this->logs->insertarLog($e);
+//            session()->flash('errorComprobante', 'Ocurrió un error al cambiar el estado del registro. Por favor, inténtelo nuevamente.');
+//        }
+//    }
 
-    public function modal_guia_info($id_guia) {
-        $this->guiainfo = $this->guia->listar_guia_x_id($id_guia);
-    }
+    public function listar_detalle_guia($id_despacho) {
+        // Obtener los id_guia desde despacho_ventas usando el id_despacho
+        $id_guias = DB::table('despacho_ventas')
+            ->where('id_despacho', $id_despacho)
+            ->pluck('id_guia')
+            ->toArray();
 
-    public function listar_detalle_guia($id_guia) {
-        $this->guia_detalle = $this->guia->listar_guia_detalle_x_id($id_guia);
+        // Obtener los detalles de las guías desde la tabla guias_detalles
+        $this->guia_detalle = DB::table('guias_detalles')
+            ->whereIn('id_guia', $id_guias)
+            ->get();
     }
 
     public function cambiarEstadoServicioTr($id){

@@ -3,7 +3,7 @@
         $general = new \App\Models\General();
     @endphp
     <x-modal-general  wire:ignore.self >
-        <x-slot name="tama">modal-lg</x-slot>
+        <x-slot name="tama">modal-xl</x-slot>
         <x-slot name="id_modal">modalDetalleDespacho</x-slot>
         <x-slot name="titleModal">Detalles del Despacho</x-slot>
         <x-slot name="modalContent">
@@ -139,12 +139,16 @@
                                             <x-slot name="thead">
                                                 <tr>
                                                     <th>N°</th>
-                                                    <th>Número Documento</th>
-                                                    <th>Fecha Emision</th>
-                                                    <th>Cliente</th>
-                                                    <th>Guía de Remisión</th>
-                                                    <th>Importe Venta</th>
-                                                    <th>Peso Kilos</th>
+                                                    <th>Guía</th>
+                                                    <th>Almacén de Origen</th>
+                                                    <th>Tipo Documento</th>
+                                                    <th>Fecha Emisión</th>
+                                                    <th>Tipo de Movimiento</th>
+                                                    <th>Documento Referencial</th>
+                                                    <th>Glosa</th>
+                                                    <th>Importe Total</th>
+                                                    <th>Dirección de Entrega</th>
+                                                    <th>UBIGEO</th>
                                                     @if($listar_detalle_despacho->despacho_estado_aprobacion == 2 || $listar_detalle_despacho->despacho_estado_aprobacion == 3)
                                                         <th>Estado del comprobante</th>
                                                     @endif
@@ -157,31 +161,34 @@
                                                     @foreach($listar_detalle_despacho->comprobantes as $indexComprobantes => $ta)
                                                         <tr>
                                                             <td>{{$conteo}}</td>
-                                                            <td>{{$ta->despacho_venta_factura}}</td>
-                                                            <td>
-                                                                {{$general->obtenerNombreFecha($ta->despacho_venta_grefecemision,'DateTime','Date')}}
-                                                            </td>
-                                                            <td>{{$ta->despacho_venta_cnomcli}}</td>
-                                                            <td>{{$ta->despacho_venta_guia}}</td>
-                                                            <td>S/ {{$general->formatoDecimal($ta->despacho_venta_cfimporte)}}</td>
-                                                            <td>{{$general->formatoDecimal($ta->despacho_venta_total_kg)}} Kg</td>
+
+
+                                                            <td>{{ $ta->guia_nro_doc }}</td>
+                                                            <td>{{ $ta->guia_almacen_origen }}</td>
+                                                            <td>{{ $ta->guia_tipo_doc }}</td>
+                                                            <td>{{ $ta->guia_fecha_emision ? $general->obtenerNombreFecha($ta->guia_fecha_emision, 'DateTime', 'DateTime') : '-' }}</td>
+                                                            <td>{{ $ta->guia_tipo_movimiento }}</td>
+                                                            <td>{{ $ta->guia_nro_doc_ref }}</td>
+                                                            <td>{{ $ta->guia_glosa }}</td>
+                                                            <td>{{ $general->formatoDecimal($ta->guia_importe_total ?? 0) }}</td>
+                                                            <td>{{ $ta->guia_direc_entrega }}</td>
+                                                            <td>{{ $ta->guia_departamento }} - {{ $ta->guia_provincia }} - {{ $ta->guia_destrito }}</td>
                                                             @if($listar_detalle_despacho->despacho_estado_aprobacion == 2 || $listar_detalle_despacho->despacho_estado_aprobacion == 3)
                                                                 <td>
-                                                                    @if($listar_detalle_despacho->despacho_estado_aprobacion == 2 && !in_array($ta->despacho_detalle_estado_entrega, [2, 3, 4]) )
+                                                                    @if($listar_detalle_despacho->despacho_estado_aprobacion == 2 && !in_array($ta->guia_estado_aprobacion, [8, 11, 12]) )
                                                                         <select
                                                                             name="estadoComprobante[{{ $indexComprobantes }}]"
                                                                             class="form-control form-select"
                                                                             wire:model="estadoComprobante.{{ $ta->id_despacho_venta }}"
                                                                         >
-                                                                            <option value="2">Entregado</option>
-                                                                            <option value="3">No entregado</option>
+                                                                            <option value="8">Entregado</option>
+                                                                            <option value="11">No entregado</option>
                                                                         </select>
                                                                     @else
-                                                                        <span class="font-bold badge  {{$ta->despacho_detalle_estado_entrega == 2 ? 'bg-label-success' : 'bg-label-danger'}}">
-                                                                        {{$ta->despacho_detalle_estado_entrega == 2 ? 'ENTREGADO ' : 'NO ENTREGADO'}}
+                                                                        <span class="font-bold badge  {{$ta->guia_estado_aprobacion == 8 ? 'bg-label-success' : 'bg-label-danger'}}">
+                                                                        {{$ta->guia_estado_aprobacion == 8 ? 'ENTREGADO ' : 'NO ENTREGADO'}}
                                                                     </span>
                                                                     @endif
-
                                                                 </td>
                                                             @endif
                                                         </tr>
@@ -262,111 +269,6 @@
             </form>
         </x-slot>
     </x-modal-delete>
-
-    {{--    MODAL VER INFO DE LA GUIA--}}
-    <x-modal-general wire:ignore.self>
-        <x-slot name="tama">modal-xl</x-slot>
-        <x-slot name="id_modal">modalInformacionGuia</x-slot>
-        <x-slot name="titleModal">Información de la guia</x-slot>
-        <x-slot name="modalContent">
-            @if($guiainfo)
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-lg-12">
-                            <div class="row">
-                                <div class="col-lg-12">
-                                    <h6>Información general</h6>
-                                    <hr>
-                                </div>
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Guía:</strong>
-                                    <p>{{ $guiainfo->guia_nro_doc }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Almacen de Origen:</strong>
-                                    <p>{{ $guiainfo->guia_almacen_origen }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Tipo Documento:</strong>
-                                    <p>{{ $guiainfo->guia_tipo_doc }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Fecha Emisión:</strong>
-                                    <p>{{ $guiainfo->guia_fecha_emision ? $general->obtenerNombreFecha($guiainfo->guia_fecha_emision, 'DateTime', 'DateTime') : '-' }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Tipo de Movimiento:</strong>
-                                    <p>{{ $guiainfo->guia_tipo_movimiento }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Tipo de Documento Referencial:</strong>
-                                    <p>{{ $guiainfo->guia_tipo_doc_ref }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Número de Documento Referencial:</strong>
-                                    <p>{{ $guiainfo->guia_nro_doc_ref }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Glosa:</strong>
-                                    <p>{{ $guiainfo->guia_glosa }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Estado:</strong>
-                                    <p>{{ $guiainfo->guia_estado }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Importe Total:</strong>
-                                    <p>{{ $general->formatoDecimal($guiainfo->guia_importe_total ?? 0)}}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Tipo de Cambio:</strong>
-                                    <p>{{ $general->formatoDecimal($guiainfo->guia_tipo_cambio ?? 0)}}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Moneda:</strong>
-                                    <p>{{ $guiainfo->guia_moneda }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Dirección de Entrega:</strong>
-                                    <p>{{ $guiainfo->guia_direc_entrega }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Departamento:</strong>
-                                    <p>{{ $guiainfo->guia_departamento }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Provincia:</strong>
-                                    <p>{{ $guiainfo->guia_provincia }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Distrito:</strong>
-                                    <p>{{ $guiainfo->guia_destrito }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @else
-                <p>No hay información disponibles para mostrar.</p>
-            @endif
-        </x-slot>
-    </x-modal-general>
-    {{--    FIN MODAL VER INFO DE LA GUIA--}}
 
     {{--    MODAL DETALLE GUIA--}}
     <x-modal-general wire:ignore.self>
@@ -695,22 +597,18 @@
                                                         </span>
                                                     </td>
                                                     <td>
-                                                        <button class="btn btn-primary btn-sm text-white mb-2" wire:click="listar_informacion_despacho({{ $des->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">
-                                                            <i class="fa-solid fa-eye"></i> Despacho
-                                                        </button>
-
-                                                        <button class="btn btn-info btn-sm text-white mb-2" wire:click="modal_guia_info({{$des->id_guia}})" data-bs-toggle="modal" data-bs-target="#modalInformacionGuia">
-                                                            <i class="fa-solid fa-eye"></i> Guía
-                                                        </button>
-
-                                                        <button class="btn btn-warning btn-sm text-white mb-2" wire:click="listar_detalle_guia({{$des->id_guia}})" data-bs-toggle="modal" data-bs-target="#modalDetalleGuia">
-                                                            <i class="fa-solid fa-eye"></i> Factura
-                                                        </button>
                                                         @if($des->despacho_estado_aprobacion == 1)
                                                             <button class="btn btn-sm text-warning" wire:click="cambiarEstadoDespacho({{ $des->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalAprobarProgramacion">
                                                                 <i class="fa fa-car-side"></i>
                                                             </button>
                                                         @endif
+                                                        <button class="btn btn-primary btn-sm text-white mb-2" wire:click="listar_informacion_despacho({{ $des->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">
+                                                            <i class="fa-solid fa-eye"></i> Despacho
+                                                        </button>
+
+                                                        <button class="btn btn-warning btn-sm text-white mb-2" wire:click="listar_detalle_guia({{$des->id_despacho}})" data-bs-toggle="modal" data-bs-target="#modalDetalleGuia">
+                                                            <i class="fa-solid fa-eye"></i> Facturas
+                                                        </button>
                                                     </td>
                                                 </tr>
                                                 @php $conteoGeneral2++; @endphp

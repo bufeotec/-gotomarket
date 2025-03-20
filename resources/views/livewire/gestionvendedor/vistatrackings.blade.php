@@ -342,7 +342,7 @@
                                                     </td>
                                                     <td>{{ $me->formatoDecimal($f['guia_importe_total']) }}</td>
                                                     <td>
-                                                        {{ $me->formatoDecimal($f['peso_total']) }} g /<br>
+                                                        {{ $me->formatoDecimal($f['peso_total_kilogramos']) }} kg /<br>
                                                         {{ $me->formatoDecimal($f['volumen_total']) }} cm³
                                                     </td>
                                                 </tr>
@@ -357,10 +357,10 @@
                                     <x-table-general>
                                         <x-slot name="thead">
                                             <tr>
-                                                <th>Factura</th>
                                                 <th>Guía</th>
-                                                <th>Monto</th>
-                                                <th>Peso Kilos</th>
+                                                <th>Factura</th>
+                                                <th>Monto sin IGV</th>
+                                                <th>Peso / Volumen</th>
                                             </tr>
                                         </x-slot>
 
@@ -368,15 +368,29 @@
                                             @if (!empty($facturasRelacionadas))
                                                 @foreach ($facturasRelacionadas as $fr)
                                                     <tr>
-                                                        <td>{{ $fr['despacho_venta_cfnumdoc'] }}</td>
-                                                        <td>{{ $fr['despacho_venta_guia'] }}</td>
-                                                        <td>{{ $me->formatoDecimal($fr['despacho_venta_cfimporte']) }}</td>
-                                                        <td>{{ $me->formatoDecimal($fr['despacho_venta_total_kg']) }} kg</td>
+                                                        <td>
+                                                            {{ $fr->guia_nro_doc }}
+                                                            <x-btn-accion class="btn text-primary btn-sm" wire:click.prevent="modal_guia_info('{{ $fr->id_guia }}')" data-bs-toggle="modal" data-bs-target="#modalInformacionGuia">
+                                                                <x-slot name="message">
+                                                                    <i class="fas fa-eye"></i>
+                                                                </x-slot>
+                                                            </x-btn-accion>
+                                                        </td>
+                                                        <td>
+                                                            {{ $fr->guia_nro_doc_ref }}
+                                                            <x-btn-accion class="btn text-primary btn-sm" wire:click.prevent="listar_detalle_guia('{{ $fr->id_guia }}')" data-bs-toggle="modal" data-bs-target="#modalDetalleGuia">
+                                                                <x-slot name="message">
+                                                                    <i class="fas fa-eye"></i>
+                                                                </x-slot>
+                                                            </x-btn-accion>
+                                                        </td>
+                                                        <td>{{ $me->formatoDecimal($fr->guia_importe_total) }}</td>
+
                                                     </tr>
                                                 @endforeach
                                             @else
                                                 <tr>
-                                                    <td colspan="4" class="text-center">No hay facturas relacionadas.</td>
+                                                    <td colspan="4" class="text-center">No hay guías relacionadas.</td>
                                                 </tr>
                                             @endif
                                         </x-slot>
