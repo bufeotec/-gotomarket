@@ -63,7 +63,7 @@
                         <select class="form-select" name="id_tarifario" id="id_tarifario" wire:model="id_tarifario" {{ empty($listar_tarifario) ? 'disabled' : '' }}>
                             <option value="">Seleccionar...</option>
                             @foreach($listar_tarifario as $ld)
-                                <option value="{{ $ld->id_tarifario }}">S/ {{ $ld->tarifa_monto }}</option>
+                                <option value="{{ $ld->id_tarifario }}" {{ $ld->id_tarifario == $id_tarifario ? 'selected' : '' }}>S/ {{ $ld->tarifa_monto }}</option>
                             @endforeach
                         </select>
                         @error('id_tarifario')

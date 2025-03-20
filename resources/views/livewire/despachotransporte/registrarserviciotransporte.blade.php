@@ -135,14 +135,11 @@
                         @error('id_provincia')
                         <span class="message-error">{{ $message }}</span>
                         @enderror
-                        @error('serv_transpt_provincia')
-                        <span class="message-error">{{ $message }}</span>
-                        @enderror
                     </div>
 
                     <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
                         <label for="id_distrito" class="form-label">Distrito</label>
-                        <select class="form-select" name="id_distrito" id="id_distrito"   wire:model="id_distrito" {{ empty($distritos) ? 'disabled' : '' }}>
+                        <select class="form-select" name="id_distrito" id="id_distrito" wire:model="id_distrito" {{ empty($distritos) ? 'disabled' : '' }}>
                             <option value="">Todos los distritos</option>
                             @foreach($distritos as $di)
                                 <option value="{{ $di->id_distrito }}" {{ $di->id_distrito == $id_distrito ? 'selected' : '' }}>{{ $di->distrito_nombre }}</option>

@@ -58,7 +58,7 @@ class Vehiculos extends Component
 //
     public function mount(){
         $this->listarTipoVehiculoSelect();
-        $this->listar_tarifarios();
+
     }
 
     #[On('refresh_select_tipo_vehiculo')]
@@ -93,7 +93,7 @@ class Vehiculos extends Component
     public function tipoVehiculoChange()
     {
         $this->id_tarifario = ""; // Limpiar la selección de tarifa
-        $this->listar_tarifario = []; // Limpiar la lista de tarifas
+//        $this->listar_tarifario = []; // Limpiar la lista de tarifas
         $this->listar_tarifarios(); // Cargar tarifas según el tipo de vehículo seleccionado
     }
 
@@ -133,8 +133,8 @@ class Vehiculos extends Component
             $this->id_tarifario = $tarifa ? $tarifa->id_tarifario : null;
             $this->observaciones = $tarifa ? $tarifa->observaciones : '';
             $this->isEditing = true;
-
             $this->listar_tarifarios();
+
         }
     }
 
