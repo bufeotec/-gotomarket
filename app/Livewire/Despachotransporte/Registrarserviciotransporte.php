@@ -40,10 +40,13 @@ class Registrarserviciotransporte extends Component
     public $serv_transpt_destinatario_ruc = "";
     public $serv_transpt_destinatario_razon_social = "";
     public $serv_transpt_destinatario_direccion = "";
+
     public $id_departamento = "";
     public $id_provincia = "";
     public $id_distrito = "";
+
     public $provincias = [];
+
     public $distritos = [];
     public $serv_transpt_peso = "";
     public $serv_transpt_volumen = "";
@@ -90,6 +93,7 @@ class Registrarserviciotransporte extends Component
     public function proviTari(){
         $this->listar_distritos();
     }
+
 
     public function consulta_documento_remitente(){
         try {
@@ -166,7 +170,19 @@ class Registrarserviciotransporte extends Component
             $this->serv_transpt_documento = $servTrnspEdit->serv_transpt_documento;
             $this->nombre_archivo = basename($servTrnspEdit->serv_transpt_documento);
             $this->id_serv_transpt = $servTrnspEdit->id_serv_transpt;
+            $this->listar_provincias();
+            $this->listar_distritos();
+
         }
+    }
+    public function updatedIdDepartamento($value) {
+        $this->id_departamento = $value;
+        $this->listar_provincias();
+    }
+
+    public function updatedIdProvincia($value) {
+        $this->id_provincia = $value;
+        $this->listar_distritos();
     }
 
     public function saveServicioTransporte(){
