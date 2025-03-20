@@ -53,10 +53,12 @@ class Vehiculos extends Component
     public $id_tarifario = "";
     public $observaciones = "";
     public $isEditing = false;
+    public $listar_tarifario = [];
 
 //
     public function mount(){
         $this->listarTipoVehiculoSelect();
+        $this->listar_tarifarios();
     }
 
     #[On('refresh_select_tipo_vehiculo')]
@@ -70,13 +72,29 @@ class Vehiculos extends Component
         $alto = floatval($this->vehiculo_alto);
         $this->vehiculo_capacidad_volumen = $ancho * $largo * $alto;
     }
-
-
     public function render(){
-        $listar_tarifario = $this->tarifamovil->listar_tarifario();
         $listar_transportistas = $this->transportistas->listar_transportista_sin_id();
         $listar_vehiculos = $this->vehiculo->listar_vehiculos_por_transportistas($this->search_vehiculos, $this->pagination_vehiculos);
-        return view('livewire.gestiontransporte.vehiculos', compact('listar_vehiculos', 'listar_transportistas','listar_tarifario'));
+        return view('livewire.gestiontransporte.vehiculos', compact('listar_vehiculos', 'listar_transportistas'));
+    }
+    public function listar_tarifarios()
+    {
+        $valor = $this->id_tipo_vehiculo;
+        if ($valor) {
+            $this->listar_tarifario = DB::table('tarifarios')
+                ->where('id_tipo_vehiculo', '=', $valor)
+                ->get();
+        } else {
+            $this->listar_tarifario = [];
+            $this->id_tarifario = "";
+        }
+    }
+
+    public function tipoVehiculoChange()
+    {
+        $this->id_tarifario = ""; // Limpiar la selección de tarifa
+        $this->listar_tarifario = []; // Limpiar la lista de tarifas
+        $this->listar_tarifarios(); // Cargar tarifas según el tipo de vehículo seleccionado
     }
 
     public function limpiar_campo_tipo_vehiculo(){
@@ -97,7 +115,6 @@ class Vehiculos extends Component
         $this->observaciones = "";
         $this->isEditing = false;
     }
-
     public function edit_data($id) {
         $vehiculoEdit = Vehiculo::with('tarifasMovil')->find(base64_decode($id));
 
@@ -111,10 +128,13 @@ class Vehiculos extends Component
             $this->vehiculo_alto = $vehiculoEdit->vehiculo_alto;
             $this->vehiculo_capacidad_volumen = $vehiculoEdit->vehiculo_capacidad_volumen;
             $this->id_vehiculo = $vehiculoEdit->id_vehiculo;
+
             $tarifa = $vehiculoEdit->tarifasMovil->first();
             $this->id_tarifario = $tarifa ? $tarifa->id_tarifario : null;
             $this->observaciones = $tarifa ? $tarifa->observaciones : '';
             $this->isEditing = true;
+
+            $this->listar_tarifarios();
         }
     }
 

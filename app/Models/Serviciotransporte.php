@@ -72,5 +72,25 @@ class Serviciotransporte extends Model
         }
         return $result;
     }
-
+    public function listar_ubig()
+    {
+        try {
+            $result = DB::table('departamentos as dp')
+                ->join('provincias as pr', 'pr.id_departamento', '=', 'dp.id_departamento')
+                ->join('distritos as d', 'd.id_provincia', '=', 'pr.id_provincia')
+                ->select(
+                    'dp.id_departamento',
+                    'dp.departamento_nombre',
+                    'pr.id_provincia',
+                    'pr.provincia_nombre',
+                    'd.id_distrito',
+                    'd.distrito_nombre'
+                )
+                ->get();
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = collect(); // Devuelve una colección vacía en caso de error
+        }
+        return $result;
+    }
 }

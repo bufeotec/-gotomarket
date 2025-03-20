@@ -31,7 +31,7 @@
 
                     <div class="col-lg-6 col-md-4 col-sm-12 mb-3">
                         <label for="id_tipo_vehiculo" class="form-label">Tipo de vehículo (*)</label>
-                        <select class="form-select" name="id_tipo_vehiculo" id="id_tipo_vehiculo" wire:model="id_tipo_vehiculo">
+                        <select class="form-select" name="id_tipo_vehiculo" id="id_tipo_vehiculo" wire:model="id_tipo_vehiculo" wire:change="tipoVehiculoChange">
                             <option value="">Seleccionar...</option>
                             @foreach($listar_tipo_vehiculo as $lpv)
                                 <option value="{{$lpv->id_tipo_vehiculo}}">{{$lpv->tipo_vehiculo_concepto}}</option>
@@ -60,7 +60,7 @@
 
                     <div class="col-lg-4 mb-3">
                         <label for="id_tarifario" class="form-label">Tarifa</label>
-                        <select class="form-select" wire:model="id_tarifario">
+                        <select class="form-select" name="id_tarifario" id="id_tarifario" wire:model="id_tarifario" {{ empty($listar_tarifario) ? 'disabled' : '' }}>
                             <option value="">Seleccionar...</option>
                             @foreach($listar_tarifario as $ld)
                                 <option value="{{ $ld->id_tarifario }}">S/ {{ $ld->tarifa_monto }}</option>

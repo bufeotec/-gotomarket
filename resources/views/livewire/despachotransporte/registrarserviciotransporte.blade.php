@@ -38,7 +38,7 @@
                                 <hr class="mb-0">
                             </div>
                             <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
-                                <label for="serv_transpt_remitente_ruc" class="form-label">RUC (Opciona)</label>
+                                <label for="serv_transpt_remitente_ruc" class="form-label">RUC (Opcional)</label>
                                 <x-input-general  type="text" id="serv_transpt_remitente_ruc" wire:model="serv_transpt_remitente_ruc" wire:change="consulta_documento_remitente" />
                                 <div wire:loading wire:target="consulta_documento_remitente">
                                     Consultando información
@@ -112,22 +112,42 @@
                     </div>
 
                     <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                        <label for="serv_transpt_departamento" class="form-label">Departamento</label>
-                        <x-input-general  type="text" id="serv_transpt_departamento" wire:model="serv_transpt_departamento"/>
-                        @error('serv_transpt_departamento')
+                        <label for="id_departamento" class="form-label">Departamento</label>
+                        <select class="form-select" name="id_departamento" id="id_departamento" wire:change="deparTari" wire:model="id_departamento">
+                            <option value="">Seleccionar...</option>
+                            @foreach($listar_departamento as $de)
+                                <option value="{{ $de->id_departamento }}">{{ $de->departamento_nombre }}</option>
+                            @endforeach
+                        </select>
+                        @error('id_departamento')
                         <span class="message-error">{{ $message }}</span>
                         @enderror
                     </div>
+
                     <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                        <label for="serv_transpt_provincia" class="form-label">Provincia</label>
-                        <x-input-general  type="text" id="serv_transpt_provincia" wire:model="serv_transpt_provincia"/>
+                        <label for="id_provincia" class="form-label">Provincia</label>
+                        <select class="form-select" name="id_provincia" id="id_provincia" wire:model="id_provincia" wire:change="proviTari" {{ empty($provincias) ? 'disabled' : '' }}>
+                            <option value="">Seleccionar...</option>
+                            @foreach($provincias as $pr)
+                                <option value="{{ $pr->id_provincia }}" {{ $pr->id_provincia == $id_provincia ? 'selected' : '' }}>{{ $pr->provincia_nombre }}</option>
+                            @endforeach
+                        </select>
+                        @error('id_provincia')
+                        <span class="message-error">{{ $message }}</span>
+                        @enderror
                         @error('serv_transpt_provincia')
                         <span class="message-error">{{ $message }}</span>
                         @enderror
                     </div>
+
                     <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                        <label for="serv_transpt_distrito" class="form-label">Distrito</label>
-                        <x-input-general  type="text" id="serv_transpt_distrito" wire:model="serv_transpt_distrito"/>
+                        <label for="id_distrito" class="form-label">Distrito</label>
+                        <select class="form-select" name="id_distrito" id="id_distrito"   wire:model="id_distrito" {{ empty($distritos) ? 'disabled' : '' }}>
+                            <option value="">Todos los distritos</option>
+                            @foreach($distritos as $di)
+                                <option value="{{ $di->id_distrito }}" {{ $di->id_distrito == $id_distrito ? 'selected' : '' }}>{{ $di->distrito_nombre }}</option>
+                            @endforeach
+                        </select>
                         @error('serv_transpt_distrito')
                         <span class="message-error">{{ $message }}</span>
                         @enderror
