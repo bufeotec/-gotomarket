@@ -85,6 +85,10 @@ class Local extends Component
     public $checkInput = '';
     public $facturas_pre_prog_estado_tres = [];
     public $guias_estado_tres = [];
+    public $guiainfo = [];
+    public $guia_detalle = [];
+    public $id_fac_pre_prog = "";
+    public $searchCliente = "";
     public function mount($id = null){
         $this->id_transportistas = null;
         $this->selectedVehiculo = null;
@@ -104,49 +108,46 @@ class Local extends Component
     }
 
     public function render(){
-        if (count($this->vehiculosSugeridos) > 0){
-            // Obtener los id_transportistas únicos de la colección
+        if (count($this->vehiculosSugeridos) > 0) {
             $idsTransportistas = $this->vehiculosSugeridos->pluck('id_transportistas')->unique();
-            // Consultar la base de datos para traer transportistas únicos
             $listar_transportistas = DB::table('transportistas')
                 ->whereIn('id_transportistas', $idsTransportistas)
                 ->get();
-        }else{
+        } else {
             $listar_transportistas = $this->transportista->listar_transportista_sin_id();
         }
-//        $listar_transportistas = $this->transportista->listar_transportista_sin_id();
+
         $listar_vehiculos = $this->vehiculo->obtener_vehiculos_con_tarifarios();
         $facturas_pre_prog_estado_dos = $this->guia->listar_facturas_pre_programacion_estado_dos();
-//        $this->facturas_pre_prog_estado_tres = Facturaspreprogramacion::where('fac_pre_prog_estado_aprobacion', 3)->get();
 
         // Obtener las guías con estado 3
         $guias = Guia::where('guia_estado_aprobacion', 3)->get();
 
         // Calcular el peso y volumen total para cada guía
-        $guiasConTotales = $guias->map(function ($guia) {
+        $this->guias_estado_tres = $guias->map(function ($guia) {
             $detalles = DB::table('guias_detalles')
                 ->where('id_guia', $guia->id_guia)
                 ->get();
 
-            $pesoTotal = $detalles->sum(function ($detalle) {
+            $pesoTotalGramos = $detalles->sum(function ($detalle) {
                 return $detalle->guia_det_peso_gramo * $detalle->guia_det_cantidad;
             });
+
+            $pesoTotalKilos = $pesoTotalGramos / 1000;
 
             $volumenTotal = $detalles->sum(function ($detalle) {
                 return $detalle->guia_det_volumen * $detalle->guia_det_cantidad;
             });
 
-            $guia->peso_total = $pesoTotal;
+            $guia->peso_total = $pesoTotalKilos;
             $guia->volumen_total = $volumenTotal;
 
             return $guia;
         });
 
-        $this->guias_estado_tres = $guiasConTotales;
         return view('livewire.programacioncamiones.local', compact('listar_transportistas', 'listar_vehiculos', 'facturas_pre_prog_estado_dos'));
     }
 
-    public $id_fac_pre_prog = "";
     public function listar_informacion_programacion_edit(){
         $informacionPrograma = $this->programacion->informacion_id($this->id_programacion_edit);
         $informacionDespacho = $this->despacho->listar_despachos_por_programacion($this->id_programacion_edit);
@@ -181,9 +182,11 @@ class Local extends Component
                         ->get();
 
                     // Calcular el peso y volumen total de la guía
-                    $pesoTotal = $detallesGuia->sum(function ($detalle) {
+                    $pesoTotalGramos = $detallesGuia->sum(function ($detalle) {
                         return $detalle->guia_det_peso_gramo * $detalle->guia_det_cantidad;
                     });
+
+                    $pesoTotalKilos = $pesoTotalGramos / 1000;
 
                     $volumenTotal = $detallesGuia->sum(function ($detalle) {
                         return $detalle->guia_det_volumen * $detalle->guia_det_cantidad;
@@ -195,7 +198,7 @@ class Local extends Component
                         'guia_almacen_origen' => $guia->guia_almacen_origen,
                         'guia_tipo_doc' => $guia->guia_tipo_doc,
                         'guia_nro_doc' => $guia->guia_nro_doc,
-                        'peso_total' => $pesoTotal / 1000,
+                        'peso_total' => $pesoTotalKilos,
                         'volumen_total' => $volumenTotal,
                         'guia_fecha_emision' => $guia->guia_fecha_emision,
                         'guia_tipo_movimiento' => $guia->guia_tipo_movimiento,
@@ -225,7 +228,7 @@ class Local extends Component
                     $guiasAgregadas[] = $c->id_guia;
 
                     // Sumar al peso y volumen total
-                    $this->pesoTotal += $pesoTotal; // Convertir gramos a kilogramos
+                    $this->pesoTotal += $pesoTotalKilos;
                     $this->volumenTotal += $volumenTotal;
 
                     // Sumar al importe total
@@ -323,16 +326,20 @@ class Local extends Component
             ->where('id_guia', $factura->id_guia)
             ->get();
 
-        $pesoTotal = $detalles->sum(function ($detalle) {
+        // Calcular el peso total en kilogramos
+        $pesoTotalGramos = $detalles->sum(function ($detalle) {
             return $detalle->guia_det_peso_gramo * $detalle->guia_det_cantidad;
         });
+
+        // Convertir el peso total a kilogramos
+        $pesoTotalKilos = $pesoTotalGramos / 1000;
 
         $volumenTotal = $detalles->sum(function ($detalle) {
             return $detalle->guia_det_volumen * $detalle->guia_det_cantidad;
         });
 
         // Validar que el peso y volumen sean mayores a 0
-        if ($pesoTotal <= 0 || $volumenTotal <= 0) {
+        if ($pesoTotalKilos <= 0 || $volumenTotal <= 0) {
             session()->flash('error', 'El peso o el volumen deben ser mayores a 0. Verifique los detalles de la guía.');
             return;
         }
@@ -365,12 +372,12 @@ class Local extends Component
             'guia_departamento' => $factura->guia_departamento,
             'guia_provincia' => $factura->guia_provincia,
             'guia_destrito' => $factura->guia_destrito,
-            'peso_total' => $pesoTotal,
+            'peso_total' => $pesoTotalKilos, // Peso en kilogramos
             'volumen_total' => $volumenTotal,
         ];
 
         // Actualizar los totales
-        $this->pesoTotal += $pesoTotal;
+        $this->pesoTotal += $pesoTotalKilos; // Sumar en kilogramos
         $this->volumenTotal += $volumenTotal;
 
         $importes = $factura->guia_importe_total;
@@ -474,6 +481,14 @@ class Local extends Component
         $otros = floatval($this->despacho_gasto_otros);
 
         $this->costoTotal = $montoSeleccionado + $ayudante + $otros;
+    }
+
+    public function modal_guia_info($id_guia) {
+        $this->guiainfo = $this->guia->listar_guia_x_id($id_guia);
+    }
+
+    public function listar_detalle_guia($id_guia) {
+        $this->guia_detalle = $this->guia->listar_guia_detalle_x_id($id_guia);
     }
 
     public function guardarDespachos(){
@@ -598,28 +613,20 @@ class Local extends Component
 
             // Guardar facturas seleccionadas en despacho_ventas
             foreach ($this->selectedFacturas as $factura) {
-                // Obtener los detalles de la guía (id_guia_det) desde la tabla guias_detalles
-                $detallesGuia = DB::table('guias_detalles')
-                    ->where('id_guia', $factura['id_guia'])
-                    ->get();
+                // Crear un nuevo registro en despacho_ventas sin id_guia_det
+                $despachoVenta = new DespachoVenta();
+                $despachoVenta->id_despacho = $ultimoDespacho->id_despacho;
+                $despachoVenta->id_guia = $factura['id_guia']; // Guardar solo id_guia
+                $despachoVenta->despacho_detalle_estado = 1;
+                $despachoVenta->despacho_detalle_microtime = microtime(true);
+                $despachoVenta->despacho_detalle_estado_entrega = 0;
 
-                foreach ($detallesGuia as $detalle) {
-                    $despachoVenta = new DespachoVenta();
-                    $despachoVenta->id_despacho = $ultimoDespacho->id_despacho;
-                    $despachoVenta->id_guia = $factura['id_guia']; // Guardar id_guia
-                    $despachoVenta->id_guia_det = $detalle->id_guia_det; // Guardar id_guia_det
-                    $despachoVenta->despacho_detalle_estado = 1;
-                    $despachoVenta->despacho_detalle_microtime = microtime(true);
-                    $despachoVenta->despacho_detalle_estado_entrega = 0;
-
-                    if (!$despachoVenta->save()) {
-                        DB::rollBack();
-                        session()->flash('error', 'Ocurrió un error al guardar las facturas.');
-                        return;
-                    }
+                if (!$despachoVenta->save()) {
+                    DB::rollBack();
+                    session()->flash('error', 'Ocurrió un error al guardar las facturas.');
+                    return;
                 }
             }
-
             // Actualizar el estado de las guías a 4
             $idsGuias = array_column($this->selectedFacturas, 'id_guia');
             DB::table('guias')

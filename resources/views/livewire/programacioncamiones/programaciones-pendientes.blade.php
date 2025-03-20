@@ -4,7 +4,7 @@
     @endphp
 {{--    MODAL DETALLES DEL DESPACHO--}}
     <x-modal-general  wire:ignore.self >
-        <x-slot name="tama">modal-lg</x-slot>
+        <x-slot name="tama">modal-xl</x-slot>
         <x-slot name="id_modal">modalDetalleDespacho</x-slot>
         <x-slot name="titleModal">Detalles del Despacho</x-slot>
         <x-slot name="modalContent">
@@ -111,55 +111,61 @@
                             </div>
                         </div>
 
-{{--                        <div class="col-lg-12 col-md-12 col-sm-12">--}}
-{{--                            <div class="row">--}}
-{{--                                <div class="col-lg-12 col-md-12 col-sm-12">--}}
-{{--                                    <h6>Información de Comprobantes</h6>--}}
-{{--                                    <hr>--}}
-{{--                                </div>--}}
-{{--                                <div class="col-lg-12 col-md-12 col-sm-12">--}}
-{{--                                    <x-table-general>--}}
-{{--                                        <x-slot name="thead">--}}
-{{--                                            <tr>--}}
-{{--                                                <th>N°</th>--}}
-{{--                                                <th>Número Documento</th>--}}
-{{--                                                <th>Fecha Emision</th>--}}
-{{--                                                <th>Cliente</th>--}}
-{{--                                                <th>Guía de Remisión</th>--}}
-{{--                                                <th>Importe Venta</th>--}}
-{{--                                                <th>Peso Kilos</th>--}}
-{{--                                            </tr>--}}
-{{--                                        </x-slot>--}}
+                        <div class="col-lg-12 col-md-12 col-sm-12">
+                            <div class="row">
+                                <div class="col-lg-12 col-md-12 col-sm-12">
+                                    <h6>Información de Comprobantes</h6>
+                                    <hr>
+                                </div>
+                                <div class="col-lg-12 col-md-12 col-sm-12">
+                                    <x-table-general>
+                                        <x-slot name="thead">
+                                            <tr>
+                                                <th>N°</th>
+                                                <th>Guía</th>
+                                                <th>Almacén de Origen</th>
+                                                <th>Tipo Documento</th>
+                                                <th>Fecha Emisión</th>
+                                                <th>Tipo de Movimiento</th>
+                                                <th>Documento Referencial</th>
+                                                <th>Glosa</th>
+                                                <th>Importe Total</th>
+                                                <th>Dirección de Entrega</th>
+                                                <th>UBIGEO</th>
+                                            </tr>
+                                        </x-slot>
 
-{{--                                        <x-slot name="tbody">--}}
-{{--                                            @if(count($listar_detalle_despacho->comprobantes) > 0)--}}
-{{--                                                @php $conteo = 1; @endphp--}}
-{{--                                                @foreach($listar_detalle_despacho->comprobantes as $ta)--}}
-{{--                                                    <tr>--}}
-{{--                                                        <td>{{$conteo}}</td>--}}
-{{--                                                        <td>{{$ta->despacho_venta_factura}}</td>--}}
-{{--                                                        <td>--}}
-{{--                                                            {{$general->obtenerNombreFecha($ta->despacho_venta_grefecemision,'DateTime','Date')}}--}}
-{{--                                                        </td>--}}
-{{--                                                        <td>{{$ta->despacho_venta_cnomcli}}</td>--}}
-{{--                                                        <td>{{$ta->despacho_venta_guia}}</td>--}}
-{{--                                                        <td>S/ {{$general->formatoDecimal($ta->despacho_venta_cfimporte)}}</td>--}}
-{{--                                                        <td>{{$general->formatoDecimal($ta->despacho_venta_total_kg)}} Kg</td>--}}
-{{--                                                    </tr>--}}
-{{--                                                    @php $conteo++; @endphp--}}
-{{--                                                @endforeach--}}
-{{--                                            @else--}}
-{{--                                                <tr class="odd">--}}
-{{--                                                    <td valign="top" colspan="7" class="dataTables_empty text-center">--}}
-{{--                                                        No se han encontrado resultados.--}}
-{{--                                                    </td>--}}
-{{--                                                </tr>--}}
-{{--                                            @endif--}}
-{{--                                        </x-slot>--}}
-{{--                                    </x-table-general>--}}
-{{--                                </div>--}}
-{{--                            </div>--}}
-{{--                        </div>--}}
+                                        <x-slot name="tbody">
+                                            @if(count($listar_detalle_despacho->comprobantes) > 0)
+                                                @php $conteo = 1; @endphp
+                                                @foreach($listar_detalle_despacho->comprobantes as $ta)
+                                                    <tr>
+                                                        <td>{{$conteo}}</td>
+                                                        <td>{{ $ta->guia_nro_doc }}</td>
+                                                        <td>{{ $ta->guia_almacen_origen }}</td>
+                                                        <td>{{ $ta->guia_tipo_doc }}</td>
+                                                        <td>{{ $ta->guia_fecha_emision ? $general->obtenerNombreFecha($ta->guia_fecha_emision, 'DateTime', 'DateTime') : '-' }}</td>
+                                                        <td>{{ $ta->guia_tipo_movimiento }}</td>
+                                                        <td>{{ $ta->guia_nro_doc_ref }}</td>
+                                                        <td>{{ $ta->guia_glosa }}</td>
+                                                        <td>{{ $general->formatoDecimal($ta->guia_importe_total ?? 0) }}</td>
+                                                        <td>{{ $ta->guia_direc_entrega }}</td>
+                                                        <td>{{ $ta->guia_departamento }} - {{ $ta->guia_provincia }} - {{ $ta->guia_destrito }}</td>
+                                                    </tr>
+                                                    @php $conteo++; @endphp
+                                                @endforeach
+                                            @else
+                                                <tr class="odd">
+                                                    <td valign="top" colspan="7" class="dataTables_empty text-center">
+                                                        No se han encontrado resultados.
+                                                    </td>
+                                                </tr>
+                                            @endif
+                                        </x-slot>
+                                    </x-table-general>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             @endif
@@ -238,111 +244,6 @@
         </x-slot>
     </x-modal-delete>
 {{--    MODAL FIN APROBAR / RECHAZAR SERVICIO TRANSPORTE--}}
-
-    {{--    MODAL VER INFO DE LA GUIA--}}
-    <x-modal-general wire:ignore.self>
-        <x-slot name="tama">modal-xl</x-slot>
-        <x-slot name="id_modal">modalInformacionGuia</x-slot>
-        <x-slot name="titleModal">Información de la guia</x-slot>
-        <x-slot name="modalContent">
-            @if($guiainfo)
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-lg-12">
-                            <div class="row">
-                                <div class="col-lg-12">
-                                    <h6>Información general</h6>
-                                    <hr>
-                                </div>
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Guía:</strong>
-                                    <p>{{ $guiainfo->guia_nro_doc }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Almacen de Origen:</strong>
-                                    <p>{{ $guiainfo->guia_almacen_origen }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Tipo Documento:</strong>
-                                    <p>{{ $guiainfo->guia_tipo_doc }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Fecha Emisión:</strong>
-                                    <p>{{ $guiainfo->guia_fecha_emision ? $general->obtenerNombreFecha($guiainfo->guia_fecha_emision, 'DateTime', 'DateTime') : '-' }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Tipo de Movimiento:</strong>
-                                    <p>{{ $guiainfo->guia_tipo_movimiento }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Tipo de Documento Referencial:</strong>
-                                    <p>{{ $guiainfo->guia_tipo_doc_ref }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Número de Documento Referencial:</strong>
-                                    <p>{{ $guiainfo->guia_nro_doc_ref }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Glosa:</strong>
-                                    <p>{{ $guiainfo->guia_glosa }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Estado:</strong>
-                                    <p>{{ $guiainfo->guia_estado }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Importe Total:</strong>
-                                    <p>{{ $general->formatoDecimal($guiainfo->guia_importe_total ?? 0)}}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Tipo de Cambio:</strong>
-                                    <p>{{ $general->formatoDecimal($guiainfo->guia_tipo_cambio ?? 0)}}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Moneda:</strong>
-                                    <p>{{ $guiainfo->guia_moneda }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Dirección de Entrega:</strong>
-                                    <p>{{ $guiainfo->guia_direc_entrega }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Departamento:</strong>
-                                    <p>{{ $guiainfo->guia_departamento }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Provincia:</strong>
-                                    <p>{{ $guiainfo->guia_provincia }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Distrito:</strong>
-                                    <p>{{ $guiainfo->guia_destrito }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @else
-                <p>No hay información disponibles para mostrar.</p>
-            @endif
-        </x-slot>
-    </x-modal-general>
-    {{--    FIN MODAL VER INFO DE LA GUIA--}}
 
     {{--    MODAL DETALLE GUIA--}}
     <x-modal-general wire:ignore.self>
@@ -574,12 +475,8 @@
                                                         <i class="fa-solid fa-eye"></i> Despacho
                                                     </button>
 
-                                                    <button class="btn btn-info btn-sm text-white mb-2" wire:click="modal_guia_info({{$des->id_guia}})" data-bs-toggle="modal" data-bs-target="#modalInformacionGuia">
-                                                        <i class="fa-solid fa-eye"></i> Guía
-                                                    </button>
-
-                                                    <button class="btn btn-warning btn-sm text-white mb-2" wire:click="listar_detalle_guia({{$des->id_guia}})" data-bs-toggle="modal" data-bs-target="#modalDetalleGuia">
-                                                        <i class="fa-solid fa-eye"></i> Factura
+                                                    <button class="btn btn-warning btn-sm text-white mb-2" wire:click="listar_detalle_guia({{$des->id_despacho}})" data-bs-toggle="modal" data-bs-target="#modalDetalleGuia">
+                                                        <i class="fa-solid fa-eye"></i> Facturas
                                                     </button>
                                                 </td>
                                             </tr>

@@ -30,7 +30,7 @@ class ProgramacionesPendientes extends Component
     public $estadoPro = "";
     public $id_serv_transpt = "";
     public $serv_transpt_estado_aprobacion = "";
-    public $guiainfo = [];
+    public $guias_info = [];
     public $guia_detalle = [];
     /* ---------------------------------------- */
     private $logs;
@@ -114,24 +114,41 @@ class ProgramacionesPendientes extends Component
 
     public function listar_informacion_despacho($id){
         try {
+            // Obtener la información del despacho
             $this->listar_detalle_despacho = DB::table('despachos as d')
-                ->join('users as u','u.id_users','=','d.id_users')
-                ->where('d.id_despacho','=',$id)->first();
-            if ($this->listar_detalle_despacho){
-                $this->listar_detalle_despacho->comprobantes = DB::table('despacho_ventas')
-                    ->where('id_despacho','=',$id)->get();
+                ->join('users as u', 'u.id_users', '=', 'd.id_users')
+                ->where('d.id_despacho', '=', $id)
+                ->first();
+
+            if ($this->listar_detalle_despacho) {
+                // Obtener los id_guia desde despacho_ventas usando el id_despacho
+                $id_guias = DB::table('despacho_ventas')
+                    ->where('id_despacho', '=', $id)
+                    ->pluck('id_guia')
+                    ->toArray();
+
+                // Obtener los comprobantes relacionados con los id_guia
+                $this->listar_detalle_despacho->comprobantes = DB::table('despacho_ventas as dv')
+                    ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
+                    ->whereIn('dv.id_guia', $id_guias)
+                    ->get();
             }
         }catch (\Exception $e){
             $this->logs->insertarLog($e);
         }
     }
 
-    public function modal_guia_info($id_guia) {
-        $this->guiainfo = $this->guia->listar_guia_x_id($id_guia);
-    }
+    public function listar_detalle_guia($id_despacho) {
+        // Obtener los id_guia desde despacho_ventas usando el id_despacho
+        $id_guias = DB::table('despacho_ventas')
+            ->where('id_despacho', $id_despacho)
+            ->pluck('id_guia')
+            ->toArray();
 
-    public function listar_detalle_guia($id_guia) {
-        $this->guia_detalle = $this->guia->listar_guia_detalle_x_id($id_guia);
+        // Obtener los detalles de las guías desde la tabla guias_detalles
+        $this->guia_detalle = DB::table('guias_detalles')
+            ->whereIn('id_guia', $id_guias)
+            ->get();
     }
 
     public function cambiarEstadoProgramacion($id,$estado){ //  $estado = 1 aprobar , 2 desaprobar
