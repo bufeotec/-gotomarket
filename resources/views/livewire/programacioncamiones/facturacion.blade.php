@@ -175,7 +175,7 @@
                                             <th>Cliente</th>
                                             <th>Dirección</th>
                                             <th>Peso / Volumen</th>
-                                            <th>Recibido</th>
+{{--                                            <th>Recibido</th>--}}
                                             <th>Movimientos</th>
                                             <th>Acciones</th>
                                         </tr>
@@ -221,11 +221,11 @@
                                                     <br>
                                                     {{ $me->formatoDecimal($factura->total_volumen ?? 0)}} cm³
                                                 </td>
-                                                <td>
-                                                    <span class="d-block tamanhoTablaComprobantes">
-                                                        {{ date('d/m/Y - h:i a', strtotime($factura->updated_at)) }}
-                                                    </span>
-                                                </td>
+{{--                                                <td>--}}
+{{--                                                    <span class="d-block tamanhoTablaComprobantes">--}}
+{{--                                                        {{ date('d/m/Y - h:i a', strtotime($factura->updated_at)) }}--}}
+{{--                                                    </span>--}}
+{{--                                                </td>--}}
                                                 <td>
                                                     <span class="d-block tamanhoTablaComprobantes text-primary">
                                                         @switch($factura->guia_estado_aprobacion)

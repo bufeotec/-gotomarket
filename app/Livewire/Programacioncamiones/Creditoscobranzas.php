@@ -82,8 +82,20 @@ class Creditoscobranzas extends Component
         $id = base64_decode($id_fac);
 
         if ($id) {
-            // Añadir el ID a la lista de guías seleccionadas
-            if (!in_array($id, $this->selectedGuiaIds)) {
+            // Asegurarse de que $this->selectedGuiaIds sea un array
+            if (!is_array($this->selectedGuiaIds)) {
+                $this->selectedGuiaIds = [];
+            }
+
+            // Verificar si el ID ya está en el array
+            $index = array_search($id, $this->selectedGuiaIds);
+
+            // Si ya está en el array, elimínalo (deselección)
+            if ($index !== false) {
+                unset($this->selectedGuiaIds[$index]);
+                $this->selectedGuiaIds = array_values($this->selectedGuiaIds); // Reindexar el array
+            } else {
+                // Si no está en el array, añádelo (selección)
                 $this->selectedGuiaIds[] = $id;
             }
 
@@ -91,7 +103,7 @@ class Creditoscobranzas extends Component
             $this->messageMotCre = "¿Está seguro de aceptar estas Guías con fecha $fechaHoraActual3?";
         }
     }
-    public function aceptar_fac_credito(){
+    public function aceptar_fac_credito() {
         try {
             // Verifica permisos
             if (!Gate::allows('aceptar_fac_credito')) {
@@ -112,55 +124,51 @@ class Creditoscobranzas extends Component
 
                     // Guardar los cambios
                     if ($facturaPreprogramada->save()) {
+                        // Registrar en historial guias
+                        $historial = new Historialguia();
+                        $historial->id_users = Auth::id();
+                        $historial->id_guia = $guiaId;
+                        $historial->guia_nro_doc = $facturaPreprogramada->guia_nro_doc;
+                        $historial->historial_guia_estado_aprobacion = 5;
+                        $historial->historial_guia_fecha_hora = Carbon::now('America/Lima');
+                        $historial->historial_guia_estado = 1;
+                        $historial->save();
+
                         // Registrar el movimiento en facturas_mov
-                        $facturaMov = DB::table('facturas_mov')->where('id_guia', $guiaId)->first();
-                        // Guardar los cambios
-                        if ($facturaPreprogramada->save()) {
-                            // Registrar en historial guias
-                            $historial = new Historialguia();
-                            $historial->id_users = Auth::id();
-                            $historial->id_guia = $guiaId;
-                            $historial->guia_nro_doc = $facturaPreprogramada->guia_nro_doc;
-                            $historial->historial_guia_estado_aprobacion = 5;
-                            $historial->historial_guia_fecha_hora = Carbon::now('America/Lima');
-                            $historial->historial_guia_estado = 1;
-                            $historial->save();
-                            // Registrar el movimiento en facturas_mov
-                            $facturaMov = DB::table('facturas_mov')
-                                ->where('id_guia', $this->id_guia)
-                                ->first();
+                        $facturaMov = DB::table('facturas_mov')
+                            ->where('id_guia', $guiaId)
+                            ->first();
 
-                            $data = [
-                                'fac_acept_valpago' => $this->fechaHoraManual3 ? Carbon::parse($this->fechaHoraManual3, 'America/Lima') : Carbon::now('America/Lima'),
-                                'id_users_responsable' => Auth::id(),
-                            ];
+                        $data = [
+                            'fac_acept_valpago' => $this->fechaHoraManual3 ? Carbon::parse($this->fechaHoraManual3, 'America/Lima') : Carbon::now('America/Lima'),
+                            'id_users_responsable' => Auth::id(),
+                        ];
 
-                            if ($facturaMov) {
-                                // Si existe, actualizar los campos
-                                DB::table('facturas_mov')->where('id_guia', $guiaId)->update($data);
-                            } else {
-                                // Si no existe, crear un nuevo registro
-                                DB::table('facturas_mov')->insert(array_merge(['id_guia' => $guiaId], $data));
-                            }
+                        if ($facturaMov) {
+                            // Si existe, actualizar los campos
+                            DB::table('facturas_mov')->where('id_guia', $guiaId)->update($data);
                         } else {
-                            DB::rollBack();
-                            session()->flash('error', 'No se pudo actualizar el estado de la factura preprogramada.');
-                            return;
+                            // Si no existe, crear un nuevo registro
+                            DB::table('facturas_mov')->insert(array_merge(['id_guia' => $guiaId], $data));
                         }
                     } else {
                         DB::rollBack();
-                        session()->flash('error', 'No se encontró la factura preprogramada.');
+                        session()->flash('error', 'No se pudo actualizar el estado de la factura preprogramada.');
                         return;
                     }
+                } else {
+                    DB::rollBack();
+                    session()->flash('error', 'No se encontró la factura preprogramada.');
+                    return;
                 }
-
-                // Confirmar transacción
-                DB::commit();
-                $this->selectedGuiaIds = [];
-                session()->flash('success', 'Facturas preprogramadas aprobadas correctamente.');
-                $this->dispatch('hidemodalMotCre');
-                $this->buscar_comprobantes();
             }
+
+            // Confirmar transacción
+            DB::commit();
+            $this->selectedGuiaIds = []; // Limpiar los IDs seleccionados
+            session()->flash('success', 'Facturas preprogramadas aprobadas correctamente.');
+            $this->dispatch('hidemodalMotCre');
+            $this->buscar_comprobantes();
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logs->insertarLog($e);

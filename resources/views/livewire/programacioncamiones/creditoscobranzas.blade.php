@@ -132,21 +132,14 @@
 
                                     <x-slot name="tbody">
                                         @if(!empty($filteredFacturas))
-                                            @foreach($filteredFacturas as $guia) <!-- Cambiado de $factura a $guia -->
-                                            @php
-                                                $NRO_DOC = $guia->guia_nro_doc; // Cambiado
-                                                $comprobanteExiste = collect($this->selectedFacturas)->first(function ($facturaVa) use ($NRO_DOC) {
-                                                    return isset($facturaVa['NRO_DOC']) && $facturaVa['NRO_DOC'] === $NRO_DOC;
-                                                });
-                                            @endphp
-                                            @if(!$comprobanteExiste)
+                                            @foreach($filteredFacturas as $guia)
                                                 <tr style="cursor: pointer">
                                                     <td colspan="6" style="padding: 0px">
                                                         <table class="table">
                                                             <tbody>
                                                             <tr>
                                                                 <td>
-                                                                    <input type="checkbox" wire:model.live="selectedGuiaIds" wire:click="pre_mot_cre('{{ base64_encode($guia->id_guia) }}')" value="{{ $guia->id_guia }}" id="checkbox-{{ $guia->id_guia }}" class="form-check-input">
+                                                                    <input type="checkbox" wire:click="pre_mot_cre('{{ base64_encode($guia->id_guia) }}')" value="{{ $guia->id_guia }}" id="checkbox-{{ $guia->id_guia }}" class="form-check-input">
                                                                 </td>
                                                                 <td style="width: 39.6%">
                                                                     <span class="tamanhoTablaComprobantes">
@@ -196,7 +189,6 @@
                                                         </table>
                                                     </td>
                                                 </tr>
-                                            @endif
                                             @endforeach
                                         @else
                                             <tr>
