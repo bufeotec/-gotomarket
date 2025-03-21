@@ -147,12 +147,13 @@ class ProgramacionesPendientes extends Component
             $this->estadoPro = $estado;
         }
     }
-    public function cambiarEstadoProgramacionFormulario(){
+    public function cambiarEstadoProgramacionFormulario() {
         try {
             if (!Gate::allows('aprobar_rechazar_programacion')) {
                 session()->flash('error_delete', 'No tiene permisos para aprobar o rechazar esta programación.');
                 return;
             }
+
             $this->validate([
                 'id_progr' => 'required|integer',
                 'estadoPro' => 'required|integer',
@@ -166,30 +167,38 @@ class ProgramacionesPendientes extends Component
 
             DB::beginTransaction();
             $correlaApro = null;
-            if ($this->estadoPro == 1){ // APROBACIÓN
+
+            if ($this->estadoPro == 1) { // APROBACIÓN
                 /* Listar ultima programación aprobada */
                 $correlaApro = $this->programacion->listar_ultima_aprobacion();
             }
+
             $programacionUpdate = Programacion::find($this->id_progr);
             $programacionUpdate->id_users_programacion = Auth::id();
             $programacionUpdate->programacion_fecha_aprobacion = date('Y-m-d');
             $programacionUpdate->programacion_estado_aprobacion = $this->estadoPro == 4 ? 2 : 1;
-            if ($correlaApro){
+
+            if ($correlaApro) {
                 $programacionUpdate->programacion_numero_correlativo = $correlaApro;
             }
+
             if ($programacionUpdate->save()) {
-                // listar despachos realizados
-                $despachos = DB::table('despachos')->where('id_programacion','=',$this->id_progr)->get();
-                foreach ($despachos as $des){
+                // Listar despachos realizados
+                $despachos = DB::table('despachos')->where('id_programacion', '=', $this->id_progr)->get();
+
+                foreach ($despachos as $des) {
                     $updateDespacho = Despacho::find($des->id_despacho);
                     $updateDespacho->id_users_programacion = Auth::id();
                     $updateDespacho->despacho_estado_aprobacion = $this->estadoPro;
-                    if ($this->estadoPro == 1){
+
+                    if ($this->estadoPro == 1) {
                         $correlaApro = $this->despacho->listar_ultima_aprobacion_despacho();
                         $updateDespacho->despacho_numero_correlativo = $correlaApro;
                     }
+
                     $updateDespacho->despacho_fecha_aprobacion = date('Y-m-d');
-                    if (!$updateDespacho->save()){
+
+                    if (!$updateDespacho->save()) {
                         DB::rollBack();
                         session()->flash('error_delete', 'No se pudo aprobar los despachos relacionados a la programación.');
                         return;
@@ -237,12 +246,26 @@ class ProgramacionesPendientes extends Component
                             }
                         }
                     }
+                    // Actualizar el estado en la tabla servicios_transporte
+                    $serviciosTransporte = DB::table('despacho_ventas')
+                        ->where('id_despacho', $des->id_despacho)
+                        ->get();
+
+                    foreach ($serviciosTransporte as $servicio) {
+                        $nuevoEstado = ($this->estadoPro == 1) ? 2 : 3; // 2 para aprobado, 3 para rechazado
+
+                        DB::table('servicios_transportes')
+                            ->where('id_serv_transpt', $servicio->id_serv_transpt)
+                            ->update(['serv_transpt_estado_aprobacion' => $nuevoEstado]);
+                    }
                 }
+
                 DB::commit();
                 $this->dispatch('hideModalDelete');
-                if ($this->estadoPro == 1){
+
+                if ($this->estadoPro == 1) {
                     session()->flash('success', 'Registro aprobado correctamente.');
-                }else{
+                } else {
                     session()->flash('success', 'Registro rechazado correctamente.');
                 }
             } else {
@@ -250,7 +273,6 @@ class ProgramacionesPendientes extends Component
                 session()->flash('error_delete', 'No se pudo cambiar el estado de la programación.');
                 return;
             }
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             $this->setErrorBag($e->validator->errors());
         } catch (\Exception $e) {

@@ -256,7 +256,7 @@
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    @if ($factura->guia_estado_aprobacion != 2)
+                                                    @if ($factura->guia_estado_aprobacion == 6)
                                                         <x-btn-accion class="btn bg-success btn-sm text-white" wire:click="cambio_estado('{{ base64_encode($factura->id_guia) }}', 2)" data-bs-toggle="modal" data-bs-target="#modalPrePro">
                                                             <x-slot name="message">
                                                                 <i class="fa-solid fa-check"></i>

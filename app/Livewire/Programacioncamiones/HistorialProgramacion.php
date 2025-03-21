@@ -1055,6 +1055,17 @@ class HistorialProgramacion extends Component
                                 }
                             }
                         }
+                        // Actualizar el estado en la tabla servicios_transporte
+                        $serviciosTransporte = DB::table('despacho_ventas')
+                            ->where('id_despacho', $select)
+                            ->get();
+                        foreach ($serviciosTransporte as $servicio) {
+
+                            DB::table('servicios_transportes')
+                                ->where('id_serv_transpt', $servicio->id_serv_transpt)
+                                ->update(['serv_transpt_estado_aprobacion' => 4]);
+                        }
+
                     } else {
                         DB::rollBack();
                         session()->flash('error_delete', 'No se pudo cambiar los estados de los despachos a "En Camino".');
@@ -1115,6 +1126,16 @@ class HistorialProgramacion extends Component
                                 $guiasProcesadas[] = $despachoVenta->id_guia;
                             }
                         }
+                    }
+                    // Actualizar el estado en la tabla servicios_transporte
+                    $serviciosTransporte = DB::table('despacho_ventas')
+                        ->where('id_despacho', $this->id_despacho)
+                        ->get();
+                    foreach ($serviciosTransporte as $servicio) {
+
+                        DB::table('servicios_transportes')
+                            ->where('id_serv_transpt', $servicio->id_serv_transpt)
+                            ->update(['serv_transpt_estado_aprobacion' => 4]);
                     }
 
                     DB::commit();
@@ -1231,6 +1252,21 @@ class HistorialProgramacion extends Component
                         'created_at' => Carbon::now('America/Lima'),
                         'updated_at' => Carbon::now('America/Lima'),
                     ]);
+                }
+
+                // Actualizar el estado en la tabla servicios_transporte
+                $serviciosTransporte = DB::table('despacho_ventas')
+                    ->where('id_despacho', $despachoVenta->id_despacho)
+                    ->get();
+
+                foreach ($serviciosTransporte as $servicio) {
+                    // Determinar el nuevo estado para servicios_transporte
+                    $nuevoEstado = ($estado == 8) ? 5 : 6; // 5 para entregado, 6 para no entregado
+
+                    // Actualizar el campo serv_transpt_estado_aprobacion en servicios_transporte
+                    DB::table('servicios_transportes')
+                        ->where('id_serv_transpt', $servicio->id_serv_transpt)
+                        ->update(['serv_transpt_estado_aprobacion' => $nuevoEstado]);
                 }
             }
 

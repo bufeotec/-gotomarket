@@ -114,7 +114,7 @@
                         <div class="col-lg-12 col-md-12 col-sm-12">
                             <div class="row">
                                 <div class="col-lg-12 col-md-12 col-sm-12">
-                                    <h6>Información de Comprobantes</h6>
+                                    <h6>Información de la guía</h6>
                                     <hr>
                                 </div>
                                 <div class="col-lg-12 col-md-12 col-sm-12">

@@ -164,7 +164,7 @@ class Local extends Component
         return view('livewire.programacioncamiones.local', compact('listar_transportistas', 'listar_vehiculos', 'facturas_pre_prog_estado_dos'));
     }
 
-    public function listar_informacion_programacion_edit(){
+    public function listar_informacion_programacion_edit() {
         $informacionPrograma = $this->programacion->informacion_id($this->id_programacion_edit);
         $informacionDespacho = $this->despacho->listar_despachos_por_programacion($this->id_programacion_edit);
 
@@ -250,6 +250,40 @@ class Local extends Component
                     // Sumar al importe total
                     $importe = floatval($guia->guia_importe_total);
                     $this->importeTotalVenta += $importe;
+                }
+            }
+
+            // Obtener los servicios de transporte asociados al despacho
+            $serviciosTransporte = DB::table('despacho_ventas')
+                ->where('id_despacho', '=', $informacionDespacho[0]->id_despacho)
+                ->get();
+
+            foreach ($serviciosTransporte as $servicio) {
+                // Obtener los datos del servicio de transporte desde la tabla servicios_transporte
+                $servTrn = DB::table('servicios_transportes')
+                    ->where('id_serv_transpt', '=', $servicio->id_serv_transpt)
+                    ->first();
+
+                if ($servTrn) {
+                    // Agregar el servicio de transporte a selectedServTrns
+                    $this->selectedServTrns[] = [
+                        'id_serv_transpt' => $servTrn->id_serv_transpt,
+                        'serv_transpt_motivo' => $servTrn->serv_transpt_motivo,
+                        'serv_transpt_detalle_motivo' => $servTrn->serv_transpt_detalle_motivo,
+                        'serv_transpt_remitente_ruc' => $servTrn->serv_transpt_remitente_ruc,
+                        'serv_transpt_remitente_razon_social' => $servTrn->serv_transpt_remitente_razon_social,
+                        'serv_transpt_remitente_direccion' => $servTrn->serv_transpt_remitente_direccion,
+                        'serv_transpt_destinatario_ruc' => $servTrn->serv_transpt_destinatario_ruc,
+                        'serv_transpt_destinatario_razon_social' => $servTrn->serv_transpt_destinatario_razon_social,
+                        'serv_transpt_destinatario_direccion' => $servTrn->serv_transpt_destinatario_direccion,
+                        'serv_transpt_codigo' => $servTrn->serv_transpt_codigo,
+                        'peso_total_st' => $servTrn->serv_transpt_peso,
+                        'volumen_total_st' => $servTrn->serv_transpt_volumen,
+                    ];
+
+                    // Sumar al peso y volumen total
+                    $this->pesoTotal += $servTrn->serv_transpt_peso;
+                    $this->volumenTotal += $servTrn->serv_transpt_volumen;
                 }
             }
 
@@ -393,7 +427,7 @@ class Local extends Component
         ];
 
         // Actualizar los totales
-        $this->pesoTotal += $pesoTotalKilos; // Sumar en kilogramos
+        $this->pesoTotal += $pesoTotalKilos;
         $this->volumenTotal += $volumenTotal;
 
         $importes = $factura->guia_importe_total;
@@ -405,7 +439,57 @@ class Local extends Component
         $this->validarVehiculoSeleccionado();
     }
 
-    public function eliminarFacturaSeleccionada($id_guia){
+    public function seleccionarServTrns($id_ser_t){
+        // Buscar la factura por su ID
+        $serv_trn = Serviciotransporte::find($id_ser_t);
+
+        if (!$serv_trn) {
+            session()->flash('error', 'Servicio transporte no encontrada.');
+            return;
+        }
+
+        // Validar que la factura no esté ya en el array selectedFacturas
+        $comprobanteExiste = collect($this->selectedServTrns)->first(function ($facturaSeleccionada) use ($serv_trn) {
+            return $facturaSeleccionada['id_serv_transpt'] === $serv_trn->id_serv_transpt;
+        });
+
+        if ($comprobanteExiste) {
+            session()->flash('error', 'Esta guía ya fue agregada.');
+            return;
+        }
+
+        // Validar que el peso y volumen sean mayores a 0
+        if ($serv_trn->serv_transpt_peso <= 0 || $serv_trn->serv_transpt_volumen <= 0) {
+            session()->flash('error', 'El peso o el volumen deben ser mayores a 0. Verifique los detalles de la guía.');
+            return;
+        }
+
+        // Agregar la factura seleccionada al array
+        $this->selectedServTrns[] = [
+            'id_serv_transpt' => $serv_trn->id_serv_transpt,
+            'serv_transpt_motivo' => $serv_trn->serv_transpt_motivo,
+            'serv_transpt_detalle_motivo' => $serv_trn->serv_transpt_detalle_motivo,
+            'serv_transpt_remitente_ruc' => $serv_trn->serv_transpt_remitente_ruc,
+            'serv_transpt_remitente_razon_social' => $serv_trn->serv_transpt_remitente_razon_social,
+            'serv_transpt_remitente_direccion' => $serv_trn->serv_transpt_remitente_direccion,
+            'serv_transpt_destinatario_ruc' => $serv_trn->serv_transpt_destinatario_ruc,
+            'serv_transpt_destinatario_razon_social' => $serv_trn->serv_transpt_destinatario_razon_social,
+            'serv_transpt_destinatario_direccion' => $serv_trn->serv_transpt_destinatario_direccion,
+            'serv_transpt_codigo' => $serv_trn->serv_transpt_codigo,
+            'peso_total_st' => $serv_trn->serv_transpt_peso,
+            'volumen_total_st' => $serv_trn->serv_transpt_volumen,
+        ];
+
+        // Actualizar los totales
+        $this->pesoTotal += $serv_trn->serv_transpt_peso;
+        $this->volumenTotal += $serv_trn->serv_transpt_volumen;
+
+        // Actualizar lista de vehículos sugeridos
+        $this->listar_vehiculos_lo();
+        $this->validarVehiculoSeleccionado();
+    }
+
+    public function eliminarFacturaSeleccionada($id_guia) {
         // Convertir id_guia a string para evitar problemas con bigint
         $id_guia = (string)$id_guia;
 
@@ -428,8 +512,8 @@ class Local extends Component
             $this->volumenTotal -= $factura['volumen_total'];
             $this->importeTotalVenta -= floatval($factura['guia_importe_total']);
 
-            // Verifica si no quedan facturas seleccionadas
-            if (empty($this->selectedFacturas)) {
+            // Verifica si no quedan facturas ni servicios de transporte seleccionados
+            if (empty($this->selectedFacturas) && empty($this->selectedServTrns)) {
                 $this->pesoTotal = 0;
                 $this->volumenTotal = 0;
                 $this->importeTotalVenta = 0;
@@ -440,6 +524,43 @@ class Local extends Component
             $this->validarVehiculoSeleccionado();
         } else {
             \Log::warning("No se encontró la guía con id_guia: $id_guia");
+        }
+    }
+
+    public function eliminarSerTrnSeleccionada($id_ser_t) {
+        // Convertir id_ser_t a string para evitar problemas con bigint
+        $id_ser_t = (string)$id_ser_t;
+
+        // Encuentra el servicio de transporte en las seleccionadas
+        $servTrn = collect($this->selectedServTrns)->first(function ($f) use ($id_ser_t) {
+            return (string)$f['id_serv_transpt'] === $id_ser_t;
+        });
+
+        if ($servTrn) {
+            // Elimina el servicio de transporte de la lista seleccionada
+            $this->selectedServTrns = collect($this->selectedServTrns)
+                ->reject(function ($f) use ($id_ser_t) {
+                    return (string)$f['id_serv_transpt'] === $id_ser_t;
+                })
+                ->values()
+                ->toArray();
+
+            // Actualiza los totales
+            $this->pesoTotal -= $servTrn['peso_total_st'];
+            $this->volumenTotal -= $servTrn['volumen_total_st'];
+
+            // Verifica si no quedan servicios de transporte ni facturas seleccionados
+            if (empty($this->selectedServTrns) && empty($this->selectedFacturas)) {
+                $this->pesoTotal = 0;
+                $this->volumenTotal = 0;
+                $this->importeTotalVenta = 0;
+            }
+
+            // Actualizar lista de vehículos sugeridos
+            $this->listar_vehiculos_lo();
+            $this->validarVehiculoSeleccionado();
+        } else {
+            \Log::warning("No se encontró el servicio transporte con id_serv_transpt: $id_ser_t");
         }
     }
 
@@ -518,6 +639,7 @@ class Local extends Component
                 'id_transportistas' => 'required|integer',
                 'selectedVehiculo' => 'required|integer',
                 'selectedFacturas' => 'required|array|min:1',
+                'selectedServTrns' => 'nullable|array',
                 'despacho_peso' => 'nullable|numeric',
                 'despacho_volumen' => 'nullable|numeric',
                 'despacho_flete' => 'nullable|numeric',
@@ -551,21 +673,37 @@ class Local extends Component
                 DB::table('despacho_ventas')->where('id_despacho','=',$this->id_despacho_edit)->delete();
             }
             $microtimeCread = microtime(true);
-            // Validar duplicidad para las facturas seleccionadas
+            // Validar duplicidad para las facturas seleccionadas (selectedFacturas)
             foreach ($this->selectedFacturas as $factura) {
                 $existe = DB::table('despacho_ventas as dv')
-                    ->join('despachos as d','d.id_despacho','=','dv.id_despacho')
-                    ->where('d.despacho_estado_aprobacion','<>',4)
+                    ->join('despachos as d', 'd.id_despacho', '=', 'dv.id_despacho')
+                    ->where('d.despacho_estado_aprobacion', '<>', 4)
                     ->where('dv.id_guia', $factura['id_guia'])
-                    ->whereIn('dv.despacho_detalle_estado_entrega', [0,1,2])
+                    ->whereIn('dv.despacho_detalle_estado_entrega', [0, 1, 2])
                     ->orderBy('dv.id_despacho_venta', 'desc')
                     ->exists();
                 if ($existe) {
                     $contadorError++;
                 }
             }
+            // Validar duplicidad para los servicios de transporte seleccionados (selectedServTrns)
+            if (!empty($this->selectedServTrns)) { // Solo validar si selectedServTrns no está vacío
+                foreach ($this->selectedServTrns as $servTrn) {
+                    $existe = DB::table('despacho_ventas as dv')
+                        ->join('despachos as d', 'd.id_despacho', '=', 'dv.id_despacho')
+                        ->where('d.despacho_estado_aprobacion', '<>', 4)
+                        ->where('dv.id_serv_transpt', $servTrn['id_serv_transpt'])
+                        ->whereIn('dv.despacho_detalle_estado_entrega', [0, 1, 2])
+                        ->orderBy('dv.id_despacho_venta', 'desc')
+                        ->exists();
+                    if ($existe) {
+                        $contadorError++;
+                    }
+                }
+            }
+
             if ($contadorError > 0) {
-                session()->flash('error', "Se encontraron comprobantes duplicadas. Por favor, verifica.");
+                session()->flash('error', "Se encontraron comprobantes o servicios de transporte duplicados. Por favor, verifica.");
                 DB::rollBack();
                 return;
             }
@@ -629,7 +767,7 @@ class Local extends Component
 
             // Guardar facturas seleccionadas en despacho_ventas
             foreach ($this->selectedFacturas as $factura) {
-                // Crear un nuevo registro en despacho_ventas sin id_guia_det
+                // Crear un nuevo registro en despacho_ventas
                 $despachoVenta = new DespachoVenta();
                 $despachoVenta->id_despacho = $ultimoDespacho->id_despacho;
                 $despachoVenta->id_guia = $factura['id_guia']; // Guardar solo id_guia
@@ -641,6 +779,24 @@ class Local extends Component
                     DB::rollBack();
                     session()->flash('error', 'Ocurrió un error al guardar las facturas.');
                     return;
+                }
+            }
+            // Guardar servicios de transporte seleccionados en despacho_ventas (si existen)
+            if (!empty($this->selectedServTrns)) {
+                foreach ($this->selectedServTrns as $servTrn) {
+                    // Crear un nuevo registro en despacho_ventas sin id_guia
+                    $despachoServicio = new DespachoVenta();
+                    $despachoServicio->id_despacho = $ultimoDespacho->id_despacho;
+                    $despachoServicio->id_serv_transpt = $servTrn['id_serv_transpt']; // Guardar id_serv_transpt
+                    $despachoServicio->despacho_detalle_estado = 1;
+                    $despachoServicio->despacho_detalle_microtime = microtime(true);
+                    $despachoServicio->despacho_detalle_estado_entrega = 0;
+
+                    if (!$despachoServicio->save()) {
+                        DB::rollBack();
+                        session()->flash('error', 'Ocurrió un error al guardar los servicios de transporte.');
+                        return;
+                    }
                 }
             }
             // Actualizar el estado de las guías a 4
@@ -669,6 +825,11 @@ class Local extends Component
                     ]);
                 }
             }
+            // Actualizar el estado de los servicios transporte a 1
+            $idsSerTr = array_column($this->selectedServTrns, 'id_serv_transpt');
+            DB::table('servicios_transportes')
+                ->whereIn('id_serv_transpt', $idsSerTr)
+                ->update(['serv_transpt_estado_aprobacion' => 1]);
 
             // Solo actualizar facturas_mov si NO se está editando
 //            if (!$this->id_programacion_edit && !$this->id_despacho_edit) {
@@ -711,6 +872,7 @@ class Local extends Component
         $this->pesoTotal = 0;
         $this->volumenTotal = 0;
         $this->selectedFacturas = [];
+        $this->selectedServTrns = [];
         $this->detalle_vehiculo = [];
         $this->tarifaMontoSeleccionado = 0;
         $this->id_tarifario_seleccionado = '';
