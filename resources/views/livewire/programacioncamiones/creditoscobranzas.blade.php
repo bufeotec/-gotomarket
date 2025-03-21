@@ -247,7 +247,7 @@
                                                             <th class="">Importe sin IGV</th>
                                                             <th class="">Nombre Cliente</th>
                                                             <th class="">Dirección</th>
-                                                            <th class="">Acciones</th> <!-- Columna de acciones, pero vacía -->
+                                                            <th class="">Acciones</th>
                                                         </tr>
                                                     </x-slot>
                                                     <x-slot name="tbody">
@@ -259,9 +259,6 @@
                                                                 <td>
                                                                 <span class="d-block tamanhoTablaComprobantes">
                                                                     {{ $factura->guia_nro_doc }} - {{ $factura->guia_nro_doc_ref }}
-                                                                </span>
-                                                                    <span class="d-block tamanhoTablaComprobantes">
-                                                                    {{ $me->formatearCodigo($factura->guia_nro_doc) }}
                                                                 </span>
                                                                 </td>
                                                                 <td>
