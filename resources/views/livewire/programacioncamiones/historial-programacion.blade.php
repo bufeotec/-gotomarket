@@ -371,11 +371,11 @@
                 <button class="btn btn-success text-white mt-4" wire:click="generar_excel_historial_programacion" wire:loading.attr="disabled"><i class="fa-solid fa-file-excel"></i> Exportar Programación</button>
             </div>
         @endif
-        @if(count($serviciosTransportes) > 0)
-            <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-                <button class="btn btn-success text-white mt-4" wire:click="generar_excel_servicio_transporte" wire:loading.attr="disabled"><i class="fa-solid fa-file-excel"></i> Exportar Servicios</button>
-            </div>
-        @endif
+{{--        @if(count($serviciosTransportes) > 0)--}}
+{{--            <div class="col-lg-2 col-md-2 col-sm-12 mb-2">--}}
+{{--                <button class="btn btn-success text-white mt-4" wire:click="generar_excel_servicio_transporte" wire:loading.attr="disabled"><i class="fa-solid fa-file-excel"></i> Exportar Servicios</button>--}}
+{{--            </div>--}}
+{{--        @endif--}}
         @if(count($selectedItems) > 0)
             <div class="col-lg-2 col-md-2 col-sm-12 mb-2 text-end">
                 <button class="btn text-white bg-warning mt-4" data-bs-toggle="modal" data-bs-target="#modalAprobarProgramacion">
