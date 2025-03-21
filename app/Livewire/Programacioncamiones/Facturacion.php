@@ -56,6 +56,11 @@ class Facturacion extends Component
             $this->messagePrePro = "¿Estás seguro de enviar con fecha $fechaHoraActual?";
         }
     }
+
+    public function edit_guia($id_guia){
+        $this->id_guia = base64_decode($id_guia);
+    }
+
     public function actualizarMensaje()
     {
         // Si hay una fecha y hora manual, usarla; de lo contrario, usar la fecha y hora actual
@@ -239,7 +244,7 @@ class Facturacion extends Component
 
             $this->validate([
                 'id_guia' => 'required|integer',
-                'guia_estado_aprobacion' => 'required|in:0,8',
+                'guia_estado_aprobacion' => 'required|in:11,8',
             ], [
                 'id_guia.required' => 'El identificador es obligatorio.',
                 'id_guia.integer' => 'El identificador debe ser un número entero.',
@@ -263,7 +268,7 @@ class Facturacion extends Component
 
             if ($edit_guia_update->save()) {
                 DB::commit();
-                $this->dispatch('hidemodalEditCambioEstado');
+                $this->dispatch('modalEditCambioEstado');
                 session()->flash('success', 'La guía cambio de estado.');
             } else {
                 DB::rollBack();

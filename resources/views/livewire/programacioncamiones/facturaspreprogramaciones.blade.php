@@ -108,6 +108,46 @@
     </x-modal-general>
 {{--    MODAL FIN INFORMACION GUIA--}}
 
+    <style>
+        /* Estilos para el overlay y el spinner */
+        .overlay__eliminar__pre {
+            position: absolute;
+            top: 70%;
+            left: 2%;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .spinner__container__eliminar__pre {
+            text-align: center;
+            display: flex;
+            align-items: center;
+            gap: 10px; /* Espacio entre el texto y el spinner */
+        }
+
+        .loading-text {
+            font-size: 16px;
+            color: #333; /* Color del texto */
+        }
+
+        .spinner__eliminar_pre {
+            border: 4px solid #f3f3f3; /* Color del borde */
+            border-top: 4px solid #c3121a; /* Color del borde superior */
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite; /* Animación de rotación */
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 {{--    MODAL DETALLE GUIA--}}
     <x-modal-general wire:ignore.self>
         <x-slot name="tama">modal-xl</x-slot>
@@ -115,68 +155,80 @@
         <x-slot name="titleModal">Detalles de la guía Seleccionada</x-slot>
         <x-slot name="modalContent">
             <div class="modal-body">
-                <h6>Detalles de la Guía</h6>
+                <h6>Detalles de factura</h6>
                 <hr>
-                @if(!empty($detallesGuia))
-                    <x-table-general>
-                        <x-slot name="thead">
-                        <tr>
-                            <th>Almacén Salida</th>
-                            <th>Fecha Emisión</th>
-                            <th>Estado</th>
-                            <th>Tipo Documento</th>
-                            <th>Nro Documento</th>
-                            <th>Nro Línea</th>
-                            <th>Cód Producto</th>
-                            <th>Descripción Producto</th>
-                            <th>Lote</th>
-                            <th>Unidad</th>
-                            <th>Cantidad</th>
-                            <th>Precio Unit Final Inc IGV</th>
-                            <th>Precio Unit Antes Descuento Inc IGV</th>
-                            <th>Descuento Total Sin IGV</th>
-                            <th>IGV Total</th>
-                            <th>Importe Total Inc IGV</th>
-                            <th>Moneda</th>
-                            <th>Tipo Cambio</th>
-                            <th>Peso Gramos</th>
-                            <th>Volumen CM3</th>
-                            <th>Peso Total Gramos</th>
-                            <th>Volumen Total CM3</th>
-                        </tr>
-                        </x-slot>
-                        <x-slot name="tbody">
-                            @foreach($detallesGuia as $detalle)
-                            <tr>
-                                <td>{{ $detalle->ALMACEN_SALIDA ?? '-' }}</td>
-                                <td>{{ $detalle->FECHA_EMISION ? $me->obtenerNombreFecha($detalle->FECHA_EMISION, 'DateTime', 'DateTime') : '-' }}</td>
-                                <td>{{ $detalle->ESTADO ?? '-'}}</td>
-                                <td>{{ $detalle->TIPO_DOCUMENTO ?? '-' }}</td>
-                                <td>{{ $detalle->NRO_DOCUMENTO ?? '-'}}</td>
-                                <td>{{ $detalle->NRO_LINEA ?? '-'}}</td>
-                                <td>{{ $detalle->COD_PRODUCTO ?? '-'}}</td>
-                                <td>{{ $detalle->DESCRIPCION_PRODUCTO ?? '-'}}</td>
-                                <td>{{ $detalle->LOTE ?? '-'}}</td>
-                                <td>{{ $detalle->UNIDAD ?? '-'}}</td>
-                                <td>{{ $detalle->CANTIDAD ?? '-'}}</td>
-                                <td>{{ $me->formatoDecimal($detalle->PRECIO_UNIT_FINAL_INC_IGV ?? 0)}}</td>
-                                <td>{{ $me->formatoDecimal($detalle->PRECIO_UNIT_ANTES_DESCUENTO_INC_IGV ?? 0)}}</td>
-                                <td>{{ $me->formatoDecimal($detalle->DESCUENTO_TOTAL_SIN_IGV ?? 0)}}</td>
-                                <td>{{ $me->formatoDecimal($detalle->IGV_TOTAL ?? 0)}}</td>
-                                <td>{{ $me->formatoDecimal($detalle->IMPORTE_TOTAL_INC_IGV ?? 0) }}</td>
-                                <td>{{ $detalle->MONEDA ?? '-'}}</td>
-                                <td>{{ $me->formatoDecimal($detalle->TIPO_CAMBIO ?? 0)}}</td>
-                                <td>{{ $me->formatoDecimal($detalle->PESO_GRAMOS ?? 0)}}</td>
-                                <td>{{ $me->formatoDecimal($detalle->VOLUMEN_CM3 ?? 0)}}</td>
-                                <td>{{ $me->formatoDecimal($detalle->PESO_TOTAL_GRAMOS ?? 0)}}</td>
-                                <td>{{ $me->formatoDecimal($detalle->VOLUMEN_TOTAL_CM3 ?? 0)}}</td>
-                            </tr>
-                        @endforeach
-                        </x-slot>
-                    </x-table-general>
-                @else
-                    <p>No hay detalles disponibles para mostrar.</p>
-                @endif
+
+                <!-- Loading spinner -->
+                <div wire:loading wire:target="detalle_guia" class="overlay__eliminar__pre">
+                    <div class="spinner__container__eliminar__pre">
+                        <span class="loading-text">Cargando...</span>
+                        <div class="spinner__eliminar_pre"></div>
+                    </div>
+                </div>
+
+                <!-- Contenido del modal -->
+                <div wire:loading.remove wire:target="detalle_guia">
+                    @if(!empty($detallesGuia))
+                        <x-table-general>
+                            <x-slot name="thead">
+                                <tr>
+                                    <th>Almacén Salida</th>
+                                    <th>Fecha Emisión</th>
+                                    <th>Estado</th>
+                                    <th>Tipo Documento</th>
+                                    <th>Nro Documento</th>
+                                    <th>Nro Línea</th>
+                                    <th>Cód Producto</th>
+                                    <th>Descripción Producto</th>
+                                    <th>Lote</th>
+                                    <th>Unidad</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio Unit Final Inc IGV</th>
+                                    <th>Precio Unit Antes Descuento Inc IGV</th>
+                                    <th>Descuento Total Sin IGV</th>
+                                    <th>IGV Total</th>
+                                    <th>Importe Total Inc IGV</th>
+                                    <th>Moneda</th>
+                                    <th>Tipo Cambio</th>
+                                    <th>Peso Gramos</th>
+                                    <th>Volumen CM3</th>
+                                    <th>Peso Total Gramos</th>
+                                    <th>Volumen Total CM3</th>
+                                </tr>
+                            </x-slot>
+                            <x-slot name="tbody">
+                                @foreach($detallesGuia as $detalle)
+                                    <tr>
+                                        <td>{{ $detalle->ALMACEN_SALIDA ?? '-' }}</td>
+                                        <td>{{ $detalle->FECHA_EMISION ? $me->obtenerNombreFecha($detalle->FECHA_EMISION, 'DateTime', 'DateTime') : '-' }}</td>
+                                        <td>{{ $detalle->ESTADO ?? '-'}}</td>
+                                        <td>{{ $detalle->TIPO_DOCUMENTO ?? '-' }}</td>
+                                        <td>{{ $detalle->NRO_DOCUMENTO ?? '-'}}</td>
+                                        <td>{{ $detalle->NRO_LINEA ?? '-'}}</td>
+                                        <td>{{ $detalle->COD_PRODUCTO ?? '-'}}</td>
+                                        <td>{{ $detalle->DESCRIPCION_PRODUCTO ?? '-'}}</td>
+                                        <td>{{ $detalle->LOTE ?? '-'}}</td>
+                                        <td>{{ $detalle->UNIDAD ?? '-'}}</td>
+                                        <td>{{ $detalle->CANTIDAD ?? '-'}}</td>
+                                        <td>{{ $me->formatoDecimal($detalle->PRECIO_UNIT_FINAL_INC_IGV ?? 0)}}</td>
+                                        <td>{{ $me->formatoDecimal($detalle->PRECIO_UNIT_ANTES_DESCUENTO_INC_IGV ?? 0)}}</td>
+                                        <td>{{ $me->formatoDecimal($detalle->DESCUENTO_TOTAL_SIN_IGV ?? 0)}}</td>
+                                        <td>{{ $me->formatoDecimal($detalle->IGV_TOTAL ?? 0)}}</td>
+                                        <td>{{ $me->formatoDecimal($detalle->IMPORTE_TOTAL_INC_IGV ?? 0) }}</td>
+                                        <td>{{ $detalle->MONEDA ?? '-'}}</td>
+                                        <td>{{ $me->formatoDecimal($detalle->TIPO_CAMBIO ?? 0)}}</td>
+                                        <td>{{ $me->formatoDecimal($detalle->PESO_GRAMOS ?? 0)}}</td>
+                                        <td>{{ $me->formatoDecimal($detalle->VOLUMEN_CM3 ?? 0)}}</td>
+                                        <td>{{ $me->formatoDecimal($detalle->PESO_TOTAL_GRAMOS ?? 0)}}</td>
+                                        <td>{{ $me->formatoDecimal($detalle->VOLUMEN_TOTAL_CM3 ?? 0)}}</td>
+                                    </tr>
+                                @endforeach
+                            </x-slot>
+                        </x-table-general>
+                    @else
+                        <p>No hay detalles disponibles para mostrar.</p>
+                    @endif
+                </div>
             </div>
         </x-slot>
     </x-modal-general>

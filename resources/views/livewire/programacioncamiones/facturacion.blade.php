@@ -60,7 +60,7 @@
                         <label for="guia_estado_aprobacion" class="form-label">Estado Guía</label>
                         <select name="guia_estado_aprobacion" id="guia_estado_aprobacion" wire:model.live="guia_estado_aprobacion" class="form-select">
                             <option value="">Seleccionar...</option>
-                            <option value="0">Anulado</option>
+                            <option value="11">Anulado</option>
                             <option value="8">Entregado</option>
                         </select>
                     </div>
@@ -189,16 +189,13 @@
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    @php
-                                                        $fechaEmision = \Carbon\Carbon::parse($factura->guia_fecha_emision)->format('d/m/Y');
-                                                    @endphp
                                                     <span class="d-block tamanhoTablaComprobantes">
-                                                        {{ $fechaEmision }}
+                                                        {{ $factura->guia_fecha_emision ? $me->obtenerNombreFecha($factura->guia_fecha_emision, 'DateTime', 'DateTime') : '-' }}
                                                     </span>
                                                 </td>
                                                 <td>
                                                     <span class="d-block tamanhoTablaComprobantes">
-                                                        {{ $factura->guia_nro_doc }} - {{ $factura->guia_nro_doc_ref }}
+                                                        {{ $factura->guia_nro_doc_ref }}
                                                     </span>
                                                 </td>
                                                 <td>
@@ -220,9 +217,9 @@
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    {{ $factura->total_peso }} g
+                                                    {{ $me->formatoDecimal($factura->total_peso ?? 0)}} g
                                                     <br>
-                                                    {{ $factura->total_volumen }} cm³
+                                                    {{ $me->formatoDecimal($factura->total_volumen ?? 0)}} cm³
                                                 </td>
                                                 <td>
                                                     <span class="d-block tamanhoTablaComprobantes">
@@ -250,6 +247,21 @@
                                                             @case(6)
                                                                 Estado de facturación
                                                                 @break
+                                                            @case(7)
+                                                                Guía en transtio
+                                                                @break
+                                                            @case(8)
+                                                                Guía entregada
+                                                                @break
+                                                            @case(9)
+                                                                Despacho aprobado
+                                                                @break
+                                                            @case(10)
+                                                                Despacho rechazado
+                                                                @break
+                                                            @case(11)
+                                                                Guía no entregada
+                                                                @break
                                                                 @default
                                                                 Estado desconocido
                                                         @endswitch
@@ -263,7 +275,7 @@
                                                             </x-slot>
                                                         </x-btn-accion>
                                                     @endif
-                                                        <x-btn-accion class="btn bg-primary btn-sm text-white" wire:click="cambio_estado('{{ base64_encode($factura->id_guia) }}')" data-bs-toggle="modal" data-bs-target="#">
+                                                        <x-btn-accion class="btn bg-primary btn-sm text-white" wire:click="edit_guia('{{ base64_encode($factura->id_guia) }}')" data-bs-toggle="modal" data-bs-target="#modalEditCambioEstado">
                                                             <x-slot name="message">
                                                                 <i class="fa-solid fa-edit"></i>
                                                             </x-slot>
@@ -292,6 +304,10 @@
 
     $wire.on('hidemodaRecFac', () => {
         $('#modaRecFac').modal('hide');
+    });
+
+    $wire.on('modalEditCambioEstado', () => {
+        $('#modalEditCambioEstado').modal('hide');
     });
 
     document.getElementById("btnEditar").addEventListener("click", function() {
