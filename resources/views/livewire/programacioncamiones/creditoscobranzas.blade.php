@@ -142,22 +142,13 @@
                                                                     <input type="checkbox" wire:click="pre_mot_cre('{{ base64_encode($guia->id_guia) }}')" value="{{ $guia->id_guia }}" id="checkbox-{{ $guia->id_guia }}" class="form-check-input">
                                                                 </td>
                                                                 <td style="width: 39.6%">
-                                                                    <span class="tamanhoTablaComprobantes">
-                                                                        <b class="colorBlackComprobantes">{{ $me->obtenerNombreFecha($guia->guia_fecha_emision, 'DateTime', 'Date') }}</b>
-                                                                    </span>
                                                                     <span class="d-block tamanhoTablaComprobantes">
                                                                         {{ $guia->guia_nro_doc }} - {{ $guia->guia_nro_doc_ref }}
-                                                                    </span>
-                                                                    @php
-                                                                        $codigoGuia = $me->formatearCodigo($guia->guia_nro_doc);
-                                                                    @endphp
-                                                                    <span class="d-block tamanhoTablaComprobantes">
-                                                                        {{ $codigoGuia }}
                                                                     </span>
                                                                 </td>
                                                                 <td style="width: 32.2%">
                                                                     <span class="d-block tamanhoTablaComprobantes">
-                                                                        {{ $me->obtenerNombreFecha($guia->guia_fecha, 'DateTime', 'Date') }}
+                                                                        {{ $me->obtenerNombreFecha($guia->guia_fecha_emision, 'DateTime', 'Date') }}
                                                                     </span>
                                                                 </td>
                                                                 <td style="width: 32.2%">
