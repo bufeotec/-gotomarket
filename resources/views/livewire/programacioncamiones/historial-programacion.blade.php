@@ -134,7 +134,7 @@
                                         </div>
                                     @endif
 
-                                    <div class="col-lg-12 col-md-12 col-sm-12">
+                                    <div class="col-lg-12 col-md-12 col-sm-12 mb-4">
                                         <x-table-general>
                                             <x-slot name="thead">
                                                 <tr>
@@ -196,7 +196,7 @@
                                                     @endforeach
                                                 @else
                                                     <tr class="odd">
-                                                        <td valign="top" colspan="7" class="dataTables_empty text-center">
+                                                        <td valign="top" colspan="11" class="dataTables_empty text-center">
                                                             No se han encontrado resultados.
                                                         </td>
                                                     </tr>
@@ -204,6 +204,94 @@
                                             </x-slot>
                                         </x-table-general>
                                     </div>
+
+                                    <!-- Información del servicio transporte -->
+                                    @if(count($listar_detalle_despacho->servicios_transportes) > 0)
+                                        <div class="col-lg-12 col-md-12 col-sm-12">
+                                            <div class="row">
+                                                <div class="col-lg-12 col-md-12 col-sm-12">
+                                                    <h6>Información del servicio transporte</h6>
+                                                    <hr>
+                                                </div>
+                                                <div class="col-lg-12 col-md-12 col-sm-12">
+                                                    <x-table-general>
+                                                        <x-slot name="thead">
+                                                            <tr>
+                                                                <th>N°</th>
+                                                                <th>Codigo</th>
+                                                                <th>Motivo</th>
+                                                                <th>Detalle del Motivo</th>
+                                                                <th>Remitente</th>
+                                                                <th>Destinatario</th>
+                                                                <th>Ubigeo</th>
+                                                                <th>Documento</th>
+                                                                @if($listar_detalle_despacho->despacho_estado_aprobacion == 2 || $listar_detalle_despacho->despacho_estado_aprobacion == 3)
+                                                                    <th>Estado del comprobante</th>
+                                                                @endif
+                                                            </tr>
+                                                        </x-slot>
+
+                                                        <x-slot name="tbody">
+                                                            @php $a = 1; @endphp
+                                                            @foreach($listar_detalle_despacho->servicios_transportes as $st)
+                                                                <tr>
+                                                                    <td>{{$a}}</td>
+                                                                    <td>{{ $st->serv_transpt_codigo }}</td>
+                                                                    <td>{{ $st->serv_transpt_motivo }}</td>
+                                                                    <td>{{ $st->serv_transpt_detalle_motivo }}</td>
+                                                                    <td>
+                                                                        {{ $st->serv_transpt_remitente_ruc }} <br>
+                                                                        {{ $st->serv_transpt_remitente_razon_social }} <br>
+                                                                        {{ $st->serv_transpt_remitente_direccion }}
+                                                                    </td>
+                                                                    <td>
+                                                                        {{ $st->serv_transpt_destinatario_ruc }} <br>
+                                                                        {{ $st->serv_transpt_destinatario_razon_social }} <br>
+                                                                        {{ $st->serv_transpt_destinatario_direccion }}
+                                                                    </td>
+                                                                    <td>
+                                                                        @php
+                                                                            $departamento = \Illuminate\Support\Facades\DB::table('departamentos')
+                                                                            ->where('id_departamento','=',$st->id_departamento)->first();
+                                                                            $provincia = \Illuminate\Support\Facades\DB::table('provincias')
+                                                                            ->where('id_provincia','=',$st->id_provincia)->first();
+                                                                            $distrito = \Illuminate\Support\Facades\DB::table('distritos')
+                                                                            ->where('id_distrito','=',$st->id_distrito)->first();
+                                                                        @endphp
+                                                                        {{ $departamento ? $departamento->departamento_nombre : '' }} - {{ $provincia ? $provincia->provincia_nombre : '' }} - {{ $distrito ? $distrito->distrito_nombre : 'TODOS LOS DISTRITOS' }}
+                                                                    </td>
+                                                                    <td>
+                                                                        <a class="btn text-success" href="{{ asset($st->serv_transpt_documento) }}" target="_blank">
+                                                                            <i class="fa-solid fa-file-lines"></i>
+                                                                        </a>
+                                                                    </td>
+                                                                    @if($listar_detalle_despacho->despacho_estado_aprobacion == 2 || $listar_detalle_despacho->despacho_estado_aprobacion == 3)
+                                                                        <td>
+                                                                            @if($listar_detalle_despacho->despacho_estado_aprobacion == 2 && !in_array($st->serv_transpt_estado_aprobacion, [5, 6, 3]) )
+                                                                                <select
+                                                                                    name="estadoServicio[{{ $indexComprobantes }}]"
+                                                                                    class="form-control form-select"
+                                                                                    wire:model="estadoServicio.{{ $st->id_despacho_venta }}"
+                                                                                >
+                                                                                    <option value="5">Entregado</option>
+                                                                                    <option value="6">No entregado</option>
+                                                                                </select>
+                                                                            @else
+                                                                                <span class="font-bold badge  {{$st->serv_transpt_estado_aprobacion == 5 ? 'bg-label-success' : 'bg-label-danger'}}">
+                                                                                    {{$st->serv_transpt_estado_aprobacion == 5 ? 'ENTREGADO ' : 'NO ENTREGADO'}}
+                                                                                </span>
+                                                                            @endif
+                                                                        </td>
+                                                                    @endif
+                                                                </tr>
+                                                                @php $a++; @endphp
+                                                            @endforeach
+                                                        </x-slot>
+                                                    </x-table-general>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
                                     <div class="col-lg-12 col-md-12 col-sm-12 mt-4 text-end">
                                         @if($listar_detalle_despacho->despacho_estado_aprobacion == 2)
                                             <button class="btn  text-white bg-primary" type="submit">Guardar Estados de Comprobantes</button>

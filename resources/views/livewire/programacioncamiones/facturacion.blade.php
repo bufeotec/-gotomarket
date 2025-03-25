@@ -239,7 +239,7 @@
                                                                 Listo para despacho
                                                                 @break
                                                             @case(4)
-                                                                Facturas despachadas
+                                                                Pendiente de aprobación de despacho
                                                                 @break
                                                             @case(5)
                                                                 Aceptado por Créditos

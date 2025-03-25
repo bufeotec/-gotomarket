@@ -39,6 +39,7 @@ class HistorialProgramacion extends Component
     // Atributo público para almacenar los checkboxes seleccionados
     public $selectedItems = [];
     public $estadoComprobante = [];
+    public $estadoServicio = [];
     public $guias_info = [];
     public $guia_detalle = [];
     /* ---------------------------------------- */
@@ -66,8 +67,7 @@ class HistorialProgramacion extends Component
     }
     public $serviciosTransportes = [];
 
-    public function render()
-    {
+    public function render(){
         // Lógica existente para obtener $resultado
         $resultado = $this->programacion->listar_programaciones_historial_programacion($this->desde, $this->hasta, $this->serie_correlativo, $this->estadoPro);
 
@@ -128,9 +128,12 @@ class HistorialProgramacion extends Component
         return view('livewire.programacioncamiones.historial-programacion', compact('resultado', 'roleId'));
     }
 
+
     public function listar_informacion_despacho($id_despacho) {
         try {
-            $this->estadoComprobante = [];
+            // Inicializar arrays para este despacho
+            $this->estadoComprobante[$id_despacho] = [];
+            $this->estadoServicio[$id_despacho] = [];
 
             // Obtener la información del despacho
             $this->listar_detalle_despacho = DB::table('despachos as d')
@@ -139,23 +142,42 @@ class HistorialProgramacion extends Component
                 ->first();
 
             if ($this->listar_detalle_despacho) {
-                // Obtener los id_guia desde despacho_ventas usando el id_despacho
-                $id_guias = DB::table('despacho_ventas')
-                    ->where('id_despacho', '=', $id_despacho)
-                    ->pluck('id_guia')
-                    ->toArray();
-
-                // Obtener los comprobantes relacionados con los id_guia
-                $this->listar_detalle_despacho->comprobantes = DB::table('despacho_ventas as dv')
+                // Obtener los comprobantes
+                $comprobantes = DB::table('despacho_ventas as dv')
                     ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
-                    ->whereIn('dv.id_guia', $id_guias)
+                    ->where('dv.id_despacho', '=', $id_despacho)
                     ->get();
 
+                $this->listar_detalle_despacho->comprobantes = $comprobantes;
+
                 // Verificar el estado de los comprobantes
-                foreach ($this->listar_detalle_despacho->comprobantes as $comp) {
-                        if (!in_array($comp->despacho_detalle_estado_entrega, [8, 7, 12])) {
-                            $this->estadoComprobante[$comp->id_despacho_venta] = 8;
-                        }
+                foreach ($comprobantes as $comp) {
+                    if (!in_array($comp->guia_estado_aprobacion, [8, 11, 12])) {
+                        // Usar el estado actual si existe, de lo contrario usar 8 como predeterminado
+                        $this->estadoComprobante[$id_despacho][$comp->id_despacho_venta] = $comp->guia_estado_aprobacion ?? 8;
+                    } else {
+                        // Si ya tiene un estado final, asignarlo también
+                        $this->estadoComprobante[$id_despacho][$comp->id_despacho_venta] = $comp->guia_estado_aprobacion;
+                    }
+                }
+
+                // Obtener servicios de transporte
+                $servicios = DB::table('despacho_ventas as dv')
+                    ->join('servicios_transportes as st', 'st.id_serv_transpt', '=', 'dv.id_serv_transpt')
+                    ->where('dv.id_despacho', '=', $id_despacho)
+                    ->get();
+
+                $this->listar_detalle_despacho->servicios_transportes = $servicios;
+
+                // Verificar estado de servicios
+                foreach ($servicios as $serv) {
+                    if (!in_array($serv->serv_transpt_estado_aprobacion, [5, 6, 3])) {
+                        // Usar el estado actual si existe, de lo contrario usar 5 como predeterminado
+                        $this->estadoServicio[$id_despacho][$serv->id_despacho_venta] = $serv->serv_transpt_estado_aprobacion ?? 5;
+                    } else {
+                        // Si ya tiene un estado final, asignarlo también
+                        $this->estadoServicio[$id_despacho][$serv->id_despacho_venta] = $serv->serv_transpt_estado_aprobacion;
+                    }
                 }
             }
         } catch (\Exception $e) {
@@ -1202,12 +1224,17 @@ class HistorialProgramacion extends Component
 
             DB::beginTransaction();
 
-            // Recorrer los estados de los comprobantes
-            foreach ($this->estadoComprobante as $id_despacho_venta => $estado) {
+            // Obtener el id_despacho actual
+            $id_despacho = $this->listar_detalle_despacho->id_despacho;
+
+            // 1. Actualizar estados de guías (comprobantes)
+            foreach ($this->estadoComprobante[$id_despacho] as $id_despacho_venta => $estado) {
+                $es = (int)$estado;
+
                 // Validar que el estado sea 8 (Entregado) o 11 (No entregado)
-                if (!in_array($estado, [8, 11])) {
+                if (!in_array($es, [8, 11])) {
                     DB::rollBack();
-                    session()->flash('errorComprobante', 'Estado inválido seleccionado.');
+                    session()->flash('errorComprobante', 'Estado inválido seleccionado para guía.');
                     return;
                 }
 
@@ -1222,52 +1249,61 @@ class HistorialProgramacion extends Component
                     return;
                 }
 
-                // Obtener el id_guia desde despacho_ventas
-                $id_guia = $despachoVenta->id_guia;
-
-                // Actualizar el campo guia_estado_aprobacion en la tabla guias
+                // Actualizar estado en guías
                 DB::table('guias')
-                    ->where('id_guia', $id_guia)
-                    ->update(['guia_estado_aprobacion' => $estado]);
+                    ->where('id_guia', $despachoVenta->id_guia)
+                    ->update(['guia_estado_aprobacion' => $es]);
 
-                // Actualizar el campo despacho_estado_aprobacion en la tabla despachos
+                // Actualizar estado del despacho solo si todos los comprobantes están procesados
                 DB::table('despachos')
                     ->where('id_despacho', $despachoVenta->id_despacho)
                     ->update(['despacho_estado_aprobacion' => 3]);
 
-                // Obtener el guia_nro_doc desde la tabla guias
+                // Registrar en historial_guias
                 $guia = DB::table('guias')
-                    ->where('id_guia', $id_guia)
+                    ->where('id_guia', $despachoVenta->id_guia)
                     ->first();
 
                 if ($guia) {
-                    // Registrar en historial_guias
                     DB::table('historial_guias')->insert([
                         'id_users' => Auth::id(),
-                        'id_guia' => $id_guia,
+                        'id_guia' => $despachoVenta->id_guia,
                         'guia_nro_doc' => $guia->guia_nro_doc,
-                        'historial_guia_estado_aprobacion' => $estado, // Estado seleccionado (8 o 11)
-                        'historial_guia_fecha_hora' => Carbon::now('America/Lima'), // Fecha y hora actual de Perú
-                        'historial_guia_estado' => 1, // Estado por defecto
+                        'historial_guia_estado_aprobacion' => $es,
+                        'historial_guia_fecha_hora' => Carbon::now('America/Lima'),
+                        'historial_guia_estado' => 1,
                         'created_at' => Carbon::now('America/Lima'),
                         'updated_at' => Carbon::now('America/Lima'),
                     ]);
                 }
+            }
 
-                // Actualizar el estado en la tabla servicios_transporte
-                $serviciosTransporte = DB::table('despacho_ventas')
-                    ->where('id_despacho', $despachoVenta->id_despacho)
-                    ->get();
+            // 2. Actualizar estados de servicios de transporte
+            foreach ($this->estadoServicio[$id_despacho] as $id_despacho_venta => $estado) {
+                $es = (int)$estado;
 
-                foreach ($serviciosTransporte as $servicio) {
-                    // Determinar el nuevo estado para servicios_transporte
-                    $nuevoEstado = ($estado == 8) ? 5 : 6; // 5 para entregado, 6 para no entregado
-
-                    // Actualizar el campo serv_transpt_estado_aprobacion en servicios_transporte
-                    DB::table('servicios_transportes')
-                        ->where('id_serv_transpt', $servicio->id_serv_transpt)
-                        ->update(['serv_transpt_estado_aprobacion' => $nuevoEstado]);
+                // Validar que el estado sea 5 (Entregado) o 6 (No entregado)
+                if (!in_array($es, [5, 6])) {
+                    DB::rollBack();
+                    session()->flash('errorComprobante', 'Estado inválido seleccionado para servicio de transporte.');
+                    return;
                 }
+
+                // Obtener la información del despacho_venta
+                $despachoVenta = DB::table('despacho_ventas')
+                    ->where('id_despacho_venta', $id_despacho_venta)
+                    ->first();
+
+                if (!$despachoVenta) {
+                    DB::rollBack();
+                    session()->flash('errorComprobante', 'Servicio de transporte no encontrado.');
+                    return;
+                }
+
+                // Actualizar estado en servicios_transportes
+                DB::table('servicios_transportes')
+                    ->where('id_serv_transpt', $despachoVenta->id_serv_transpt)
+                    ->update(['serv_transpt_estado_aprobacion' => $es]);
             }
 
             DB::commit();
@@ -1281,6 +1317,7 @@ class HistorialProgramacion extends Component
             session()->flash('errorComprobante', 'Ocurrió un error al cambiar el estado del registro. Por favor, inténtelo nuevamente.');
         }
     }
+
 //    public function cambiarEstadoComprobante(){
 //        try {
 //            // $estado sebe contener el valor del select

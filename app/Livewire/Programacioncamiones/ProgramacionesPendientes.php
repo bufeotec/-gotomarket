@@ -102,7 +102,7 @@ class ProgramacionesPendientes extends Component
         return view('livewire.programacioncamiones.programaciones-pendientes', compact('resultado', 'conteoProgramacionesPend'));
     }
 
-    public function listar_informacion_despacho($id){
+    public function listar_informacion_despacho($id) {
         try {
             // Obtener la información del despacho
             $this->listar_detalle_despacho = DB::table('despachos as d')
@@ -122,8 +122,14 @@ class ProgramacionesPendientes extends Component
                     ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
                     ->whereIn('dv.id_guia', $id_guias)
                     ->get();
+
+                // Obtener los servicios de transporte relacionados con el despacho
+                $this->listar_detalle_despacho->servicios_transportes = DB::table('despacho_ventas as dv')
+                    ->join('servicios_transportes as st', 'st.id_serv_transpt', '=', 'dv.id_serv_transpt')
+                    ->where('dv.id_despacho', '=', $id)
+                    ->get();
             }
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             $this->logs->insertarLog($e);
         }
     }
