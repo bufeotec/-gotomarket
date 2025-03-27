@@ -470,13 +470,13 @@
                                                                 <a href="#" wire:click.prevent="eliminarFacturaSeleccionada('{{ $factura['NRO_DOC'] }}')" class="btn btn-danger btn-sm text-white m-1">
                                                                     <i class="fas fa-trash-alt"></i>
                                                                 </a>
-                                                                <a href="#" wire:click.prevent="listar_detallesf('{{ $factura['NRO_DOC'] }}')" class="btn btn-sm btn-primary text-white m-1" data-bs-toggle="modal" data-bs-target="#modalInformacionGuia">
-                                                                    <i class="fas fa-eye"></i> Guía
-                                                                </a>
+{{--                                                                <a href="#" wire:click.prevent="listar_detallesf('{{ $factura['NRO_DOC'] }}')" class="btn btn-sm btn-primary text-white m-1" data-bs-toggle="modal" data-bs-target="#modalInformacionGuia">--}}
+{{--                                                                    <i class="fas fa-eye"></i> Guía--}}
+{{--                                                                </a>--}}
 
-                                                                <a href="#" wire:click.prevent="detalle_guia('{{ $factura['NRO_DOC'] }}')" class="btn btn-sm btn-warning text-white m-1" data-bs-toggle="modal" data-bs-target="#modalDetalleGuia">
-                                                                    <i class="fas fa-eye"></i> Factura
-                                                                </a>
+{{--                                                                <a href="#" wire:click.prevent="detalle_guia('{{ $factura['NRO_DOC'] }}')" class="btn btn-sm btn-warning text-white m-1" data-bs-toggle="modal" data-bs-target="#modalDetalleGuia">--}}
+{{--                                                                    <i class="fas fa-eye"></i> Factura--}}
+{{--                                                                </a>--}}
                                                             </td>
                                                         </tr>
                                                     @endforeach

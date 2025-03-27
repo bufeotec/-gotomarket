@@ -40,16 +40,6 @@
                                 </div>
 
                                 <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Almacen de Origen:</strong>
-                                    <p>{{ $guiainfo->guia_almacen_origen }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Tipo Documento:</strong>
-                                    <p>{{ $guiainfo->guia_tipo_doc }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
                                     <strong style="color: #8c1017">Fecha Emisión:</strong>
                                     <p>{{ $guiainfo->guia_fecha_emision ? $me->obtenerNombreFecha($guiainfo->guia_fecha_emision, 'DateTime', 'DateTime') : '-' }}</p>
                                 </div>
@@ -74,22 +64,17 @@
                                     <p>{{ $guiainfo->guia_glosa }}</p>
                                 </div>
 
-                                <div class="col-lg-3">
+                                <div class="col-lg-2">
                                     <strong style="color: #8c1017">Estado:</strong>
                                     <p>{{ $guiainfo->guia_estado }}</p>
                                 </div>
 
-                                <div class="col-lg-3">
+                                <div class="col-lg-2">
                                     <strong style="color: #8c1017">Importe Total:</strong>
                                     <p>{{ $me->formatoDecimal($guiainfo->guia_importe_total ?? 0)}}</p>
                                 </div>
 
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Tipo de Cambio:</strong>
-                                    <p>{{ $me->formatoDecimal($guiainfo->guia_tipo_cambio ?? 0)}}</p>
-                                </div>
-
-                                <div class="col-lg-3">
+                                <div class="col-lg-2">
                                     <strong style="color: #8c1017">Moneda:</strong>
                                     <p>{{ $guiainfo->guia_moneda }}</p>
                                 </div>
@@ -198,28 +183,9 @@
     </x-modal-general>
     {{--    MODAL FIN DETALLE GUIA--}}
 
-    {{--    MODAL DETALLES FACTURAS --}}
-    <x-modal-general  wire:ignore.self >
-        <x-slot name="id_modal">modalDetallesFact</x-slot>
-        <x-slot name="titleModal">Detalles de la factura</x-slot>
-        <x-slot name="tama">modal-lg</x-slot>
-        <x-slot name="modalContent">
-            <div class="row">
-
-            </div>
-        </x-slot>
-    </x-modal-general>
-
-        <x-card-general-view>
-            <x-slot name="content">
+        <div class="card">
+            <div class="card-body">
                 <div class="row">
-                    <div class="col-lg-12">
-                        <div class="text-end m-4">
-                            <a class="btn bg-primary btn-lg text-white text-center">
-                                <i class="fa-solid fa-download"></i>
-                            </a>
-                        </div>
-                    </div>
                     <div class="col-lg-12 col-md-12 col-sm-12">
                         <!-- ETAPAS -->
                         <div class="row justify-content-center text-center mt-3">
@@ -253,27 +219,26 @@
                                 <p class="fw-bold {{ $etapaActual >= 4 ? 'text-dark' : 'text-muted' }}">EN RUTA</p>
                             </div>
 
-                            <!-- Etapa 5: Comprobante Entregado -->
+                            <!-- Etapa 5: Guía Entregado -->
                             <div class="col-lg-2 col-md-2 col-sm-12">
                                 @php
-                                    $comprobanteNoEntregado = collect($mensajeEstadoEtapa3 ?? [])->contains(fn($mensaje) => str_contains($mensaje, 'Estado: Comprobante no entregado.'));
+                                    $comprobanteNoEntregado = collect($mensajeEtapa5 ?? [])->contains(fn($mensaje) => str_contains($mensaje, 'Guía no entregado.'));
                                 @endphp
 
                                 @if ($comprobanteNoEntregado)
-                                    <img src="{{ asset('assets/images/tracking/comprobante_no_entregado.png') }}" alt="Comprobante No Entregado" class="tracking-img">
-                                    <p class="fw-bold text-dark">COMPROBANTE NO ENTREGADO</p>
+                                    <img src="{{ asset('assets/images/tracking/comprobante_no_entregado.png') }}" alt="Guía No Entregado" class="tracking-img">
+                                    <p class="fw-bold text-dark">GUÍA NO ENTREGADO</p>
                                 @else
-                                    <img src="{{ asset('assets/images/tracking/comprobante_entregado.png') }}" alt="Comprobante Entregado" class="tracking-img">
-                                    <p class="fw-bold {{ $etapaActual >= 5 ? 'text-dark' : 'text-muted' }}">COMPROBANTE ENTREGADO</p>
+                                    <img src="{{ asset('assets/images/tracking/comprobante_entregado.png') }}" alt="Guía Entregado" class="tracking-img">
+                                    <p class="fw-bold {{ $etapaActual >= 5 ? 'text-dark' : 'text-muted' }}">GUÍA ENTREGADO</p>
                                 @endif
                             </div>
                         </div>
 
                         <!-- Línea de progreso con círculos -->
-                        <div class="d-flex justify-content-center position-relative">
+                        <div class="d-flex justify-content-center position-relative mb-3">
                             <div class="progress-line mt-4">
                                 <div class="progress-bar" style="width: {{ ($etapaActual) * 20 }}%;"></div>
-
                                 <!-- Círculo 1 -->
                                 <div class="tracking-circle {{ $etapaActual >= 0 ? 'circle-green' : 'circle-gray' }}" style="left: 0%;"></div>
                                 <!-- Círculo 2 -->
@@ -289,21 +254,50 @@
                             </div>
                         </div>
 
-                        <!-- Mensajes y Estados -->
-                        @if (!empty($mensajesCompletos))
-                            <div class="col-lg-12 d-flex justify-content-center mt-3">
-                                <div class="ard">
-                                    <div class="card-body">
-                                        @foreach ($mensajesCompletos as $mensaje)
-                                            <div class="d-flex align-items-center">
-                                                <div class="timeline-circle"></div>
-                                                <p class="ms-2 mt-3"><b>{{ $mensaje }}</b></p>
-                                            </div>
-                                        @endforeach
+                        <div class="d-flex justify-content-center mb-3">
+                            <div class="col-lg-2 col-md-2 col-sm-12 clase__mensaje">
+                                @if($mensajeEtapa0)
+                                    <div class="tracking-message {{ $etapaActual >= 0 ? 'text-dark' : 'text-muted' }}">
+                                        <b>{{ $mensajeEtapa0 }}</b>
                                     </div>
-                                </div>
+                                @endif
                             </div>
-                        @endif
+                            <div class="col-lg-2 col-md-2 col-sm-12 clase__mensaje">
+                                @if($mensajeEtapa1)
+                                    <div class="tracking-message {{ $etapaActual >= 1 ? 'text-dark' : 'text-muted' }}">
+                                        <b>{{ $mensajeEtapa1 }}</b>
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="col-lg-2 col-md-2 col-sm-12 clase__mensaje">
+                                @if($mensajeEtapa2)
+                                    <div class="tracking-message {{ $etapaActual >= 2 ? 'text-dark' : 'text-muted' }}">
+                                        <b>{{ $mensajeEtapa2 }}</b>
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="col-lg-2 col-md-2 col-sm-12 clase__mensaje">
+                                @if($mensajeEtapa3)
+                                    <div class="tracking-message {{ $etapaActual >= 3 ? 'text-dark' : 'text-muted' }}">
+                                        <b>{{ $mensajeEtapa3 }}</b>
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="col-lg-2 col-md-2 col-sm-12 clase__mensaje">
+                                @if($mensajeEtapa4)
+                                    <div class="tracking-message {{ $etapaActual >= 4 ? 'text-dark' : 'text-muted' }}">
+                                        <b>{{ $mensajeEtapa4 }}</b>
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="col-lg-2 col-md-2 col-sm-12 clase__mensaje">
+                                @if($mensajeEtapa5)
+                                    <div class="tracking-message {{ $etapaActual >= 5 ? 'text-dark' : 'text-muted' }}">
+                                        <b>{{ $mensajeEtapa5 }}</b>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
 
                         <div class="col-lg-12 p-3">
                             <div class="row">
@@ -326,15 +320,21 @@
                                                 <tr>
                                                     <td>
                                                         {{ $f['guia_nro_doc'] }}
-                                                        <x-btn-accion class="btn text-primary btn-sm" wire:click.prevent="modal_guia_info('{{ $f['id_guia']}}')" data-bs-toggle="modal" data-bs-target="#modalInformacionGuia">
+                                                        <x-btn-accion class="btn text-primary" wire:click.prevent="modal_guia_info('{{ $f['id_guia']}}')" data-bs-toggle="modal" data-bs-target="#modalInformacionGuia">
                                                             <x-slot name="message">
                                                                 <i class="fas fa-eye"></i>
+                                                            </x-slot>
+                                                        </x-btn-accion>
+
+                                                        <x-btn-accion class="btn text-success" wire:click="generar_excel_guia_factura" wire:loading.attr="disabled">
+                                                            <x-slot name="message">
+                                                                <i class="fa-solid fa-file-excel"></i>
                                                             </x-slot>
                                                         </x-btn-accion>
                                                     </td>
                                                     <td>
                                                         {{ $f['guia_nro_doc_ref'] }}
-                                                        <x-btn-accion class="btn text-primary btn-sm" wire:click.prevent="listar_detalle_guia('{{ $f['id_guia'] }}')" data-bs-toggle="modal" data-bs-target="#modalDetalleGuia">
+                                                        <x-btn-accion class="btn text-primary" wire:click.prevent="listar_detalle_guia('{{ $f['id_guia'] }}')" data-bs-toggle="modal" data-bs-target="#modalDetalleGuia">
                                                             <x-slot name="message">
                                                                 <i class="fas fa-eye"></i>
                                                             </x-slot>
@@ -370,22 +370,33 @@
                                                     <tr>
                                                         <td>
                                                             {{ $fr->guia_nro_doc }}
-                                                            <x-btn-accion class="btn text-primary btn-sm" wire:click.prevent="modal_guia_info('{{ $fr->id_guia }}')" data-bs-toggle="modal" data-bs-target="#modalInformacionGuia">
+                                                            <x-btn-accion class="btn text-primary" wire:click.prevent="modal_guia_info('{{ $fr->id_guia }}')" data-bs-toggle="modal" data-bs-target="#modalInformacionGuia">
                                                                 <x-slot name="message">
                                                                     <i class="fas fa-eye"></i>
+                                                                </x-slot>
+                                                            </x-btn-accion>
+
+                                                            <x-btn-accion class="btn text-success"
+                                                                          wire:click="generar_excel_guia_factura('{{ $fr->id_guia }}')"
+                                                                          wire:loading.attr="disabled">
+                                                                <x-slot name="message">
+                                                                    <i class="fa-solid fa-file-excel"></i>
                                                                 </x-slot>
                                                             </x-btn-accion>
                                                         </td>
                                                         <td>
                                                             {{ $fr->guia_nro_doc_ref }}
-                                                            <x-btn-accion class="btn text-primary btn-sm" wire:click.prevent="listar_detalle_guia('{{ $fr->id_guia }}')" data-bs-toggle="modal" data-bs-target="#modalDetalleGuia">
+                                                            <x-btn-accion class="btn text-primary" wire:click.prevent="listar_detalle_guia('{{ $fr->id_guia }}')" data-bs-toggle="modal" data-bs-target="#modalDetalleGuia">
                                                                 <x-slot name="message">
                                                                     <i class="fas fa-eye"></i>
                                                                 </x-slot>
                                                             </x-btn-accion>
                                                         </td>
                                                         <td>{{ $me->formatoDecimal($fr->guia_importe_total) }}</td>
-
+                                                        <td>
+                                                            {{ $me->formatoDecimal($fr->peso_total_kilogramos ?? 0) }} kg /<br>
+                                                            {{ $me->formatoDecimal($fr->volumen_total ?? 0) }} cm³
+                                                        </td>
                                                     </tr>
                                                 @endforeach
                                             @else
@@ -401,10 +412,14 @@
 
                     </div>
                 </div>
-            </x-slot>
-        </x-card-general-view>
+            </div>
+        </div>
 
     <style>
+        .clase__mensaje{
+            font-size: 14px;
+            text-align: center;
+        }
         .tracking-img {
             width: 60px;
             height: 60px;

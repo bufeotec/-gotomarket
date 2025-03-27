@@ -20,27 +20,11 @@ class Guia extends Model
 
     public function listar_comprobantes($search, $pagination, $order = 'desc'){
         try {
-            // Mapeo de términos de búsqueda a valores de estado
-            $estadoMapping = [
-                'creditos' => 1,
-                'programar' => 2,
-                'programado' => 3,
-                'ruta' => 4
-            ];
-
-            // Convertir el término de búsqueda a su valor correspondiente si existe en el mapeo
-            $estadoValue = $estadoMapping[strtoupper($search)] ?? null;
-
             $query = DB::table('guias')
-                ->where(function ($q) use ($search, $estadoValue) {
+                ->where(function ($q) use ($search) {
                     $q->where('guia_nombre_cliente', 'like', '%' . $search . '%')
                         ->orWhere('guia_ruc_cliente', 'like', '%' . $search . '%')
                         ->orWhere('guia_nro_doc', 'like', '%' . $search . '%');
-
-                    // Si el término de búsqueda coincide con un estado, filtrar por el campo correspondiente
-                    if (!is_null($estadoValue)) {
-                        $q->orWhere('guia_estado_aprobacion', $estadoValue);
-                    }
                 })
                 ->orderBy('id_guia', $order);
 

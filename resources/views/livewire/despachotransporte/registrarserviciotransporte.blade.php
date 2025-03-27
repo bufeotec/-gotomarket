@@ -170,7 +170,7 @@
                         <label for="serv_transpt_documento" class="form-label">Documento</label>
                         <div class="input-group">
                             <input type="text" class="form-control" id="nombre_archivo" readonly
-                                   value="{{ $nombre_archivo ?? '' }}">
+                                   wire:model="nombre_archivo">
                             <label class="input-group-text curso-pointer" for="serv_transpt_documento">
                                 <i class="fa-solid fa-upload"></i>
                             </label>
@@ -297,11 +297,11 @@
 
     <script>
         function mostrarNombreArchivo(input) {
-            // Obtener el nombre del archivo seleccionado
             const nombreArchivo = input.files[0] ? input.files[0].name : '';
-
-            // Actualizar el campo de texto con el nombre del archivo
             document.getElementById('nombre_archivo').value = nombreArchivo;
+
+            // Opcional: También puedes emitir un evento de Livewire para actualizar la propiedad
+        @this.set('nombre_archivo', nombreArchivo);
         }
     </script>
 

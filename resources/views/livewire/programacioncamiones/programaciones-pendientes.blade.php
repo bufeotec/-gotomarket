@@ -50,20 +50,7 @@
                                     </div>
                                 @endif
 
-
                                 @if($listar_detalle_despacho->id_tarifario)
-{{--                                    @php--}}
-{{--                                        $tarifa = \Illuminate\Support\Facades\DB::table('tarifarios as t')--}}
-{{--                                        ->where('t.id_tarifario','=',$listar_detalle_despacho->id_tarifario)->first();--}}
-{{--                                        $medida = \Illuminate\Support\Facades\DB::table('medida')->where('id_medida','=',$tarifa->id_medida)->first();--}}
-{{--                                        $meMed = "";--}}
-{{--                                        if ($medida){--}}
-{{--                                            $meMed = $medida->id_medida == 23 ? ' Kg' : ' cm³';--}}
-{{--                                        }else{--}}
-{{--                                            $meMed = ' Kg';--}}
-{{--                                        }--}}
-{{--                                    @endphp--}}
-
                                     <div class="col-lg-3 col-md-3 col-sm-4 mb-3">
                                         <strong class="colorgotomarket mb-2">Capacidad de la Tarifa:</strong>
                                         <p>Min: {{$general->formatoDecimal($listar_detalle_despacho->despacho_cap_min)}} Kg - Max: {{ $general->formatoDecimal($listar_detalle_despacho->despacho_cap_max) }} Kg</p>
@@ -111,7 +98,7 @@
                             </div>
                         </div>
 
-                        <div class="col-lg-12 col-md-12 col-sm-12">
+                        <div class="col-lg-12 col-md-12 col-sm-12 mb-4">
                             <div class="row">
                                 <div class="col-lg-12 col-md-12 col-sm-12">
                                     <h6>Información de la guía</h6>
@@ -166,6 +153,76 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- Información del servicio transporte -->
+                        @if(count($listar_detalle_despacho->servicios_transportes) > 0)
+                            <div class="col-lg-12 col-md-12 col-sm-12">
+                                <div class="row">
+                                    <div class="col-lg-12 col-md-12 col-sm-12">
+                                        <h6>Información del servicio transporte</h6>
+                                        <hr>
+                                    </div>
+                                    <div class="col-lg-12 col-md-12 col-sm-12">
+                                        <x-table-general>
+                                            <x-slot name="thead">
+                                                <tr>
+                                                    <th>N°</th>
+                                                    <th>Codigo</th>
+                                                    <th>Motivo</th>
+                                                    <th>Detalle del Motivo</th>
+                                                    <th>Remitente</th>
+                                                    <th>Destinatario</th>
+                                                    <th>Ubigeo</th>
+                                                    <th>Documento</th>
+{{--                                                    <th>Peso</th>--}}
+{{--                                                    <th>Volumen</th>--}}
+                                                </tr>
+                                            </x-slot>
+
+                                            <x-slot name="tbody">
+                                                @php $a = 1; @endphp
+                                                @foreach($listar_detalle_despacho->servicios_transportes as $st)
+                                                    <tr>
+                                                        <td>{{$a}}</td>
+                                                        <td>{{ $st->serv_transpt_codigo }}</td>
+                                                        <td>{{ $st->serv_transpt_motivo }}</td>
+                                                        <td>{{ $st->serv_transpt_detalle_motivo }}</td>
+                                                        <td>
+                                                            {{ $st->serv_transpt_remitente_ruc }} <br>
+                                                            {{ $st->serv_transpt_remitente_razon_social }} <br>
+                                                            {{ $st->serv_transpt_remitente_direccion }}
+                                                        </td>
+                                                        <td>
+                                                            {{ $st->serv_transpt_destinatario_ruc }} <br>
+                                                            {{ $st->serv_transpt_destinatario_razon_social }} <br>
+                                                            {{ $st->serv_transpt_destinatario_direccion }}
+                                                        </td>
+                                                        <td>
+                                                            @php
+                                                                $departamento = \Illuminate\Support\Facades\DB::table('departamentos')
+                                                                ->where('id_departamento','=',$st->id_departamento)->first();
+                                                                $provincia = \Illuminate\Support\Facades\DB::table('provincias')
+                                                                ->where('id_provincia','=',$st->id_provincia)->first();
+                                                                $distrito = \Illuminate\Support\Facades\DB::table('distritos')
+                                                                ->where('id_distrito','=',$st->id_distrito)->first();
+                                                            @endphp
+                                                            {{ $departamento ? $departamento->departamento_nombre : '' }} - {{ $provincia ? $provincia->provincia_nombre : '' }} - {{ $distrito ? $distrito->distrito_nombre : 'TODOS LOS DISTRITOS' }}
+                                                        </td>
+                                                        <td>
+                                                            <a class="btn text-success" href="{{ asset($st->serv_transpt_documento) }}" target="_blank">
+                                                                <i class="fa-solid fa-file-lines"></i>
+                                                            </a>
+                                                        </td>
+{{--                                                        <td>{{ $general->formatoDecimal($st->serv_transpt_peso) }} kg</td>--}}
+{{--                                                        <td>{{ $general->formatoDecimal($st->serv_transpt_volumen) }} cm³</td>--}}
+                                                    </tr>
+                                                    @php $a++; @endphp
+                                                @endforeach
+                                            </x-slot>
+                                        </x-table-general>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 </div>
             @endif

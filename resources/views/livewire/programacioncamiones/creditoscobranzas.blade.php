@@ -8,6 +8,7 @@
         <x-slot name="modalContentDelete">
             <form wire:submit.prevent="aceptar_fac_credito">
                 <div class="row">
+                    @error('selectedGuiaIds') <span class="message-error">{{ $message }}</span> @enderror
                     <div class="col-lg-12 col-md-12 col-sm-12">
                         <h2 class="deleteTitle">{{ $messageMotCre }}</h2>
                     </div>
@@ -139,7 +140,7 @@
                                                             <tbody>
                                                             <tr>
                                                                 <td>
-                                                                    <input type="checkbox" wire:click="pre_mot_cre('{{ base64_encode($guia->id_guia) }}')" value="{{ $guia->id_guia }}" id="checkbox-{{ $guia->id_guia }}" class="form-check-input">
+                                                                    <input type="checkbox" wire:model.live="selectedGuiaIds" value="{{ $guia->id_guia }}" id="checkbox-{{ $guia->id_guia }}" class="form-check-input">
                                                                 </td>
                                                                 <td style="width: 39.6%">
                                                                     <span class="d-block tamanhoTablaComprobantes">
@@ -193,8 +194,13 @@
                             </div>
                             @if(count($selectedGuiaIds) > 0)
                                 <div class="col-lg-12 col-md-12 col-sm-12 mb-2 text-end">
-                                    <button class="btn text-white bg-warning mt-4" data-bs-toggle="modal" data-bs-target="#modalMotCre">
-                                        Aceptar Guías
+                                    <button
+                                        class="btn text-white bg-warning mt-4"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#modalMotCre"
+                                        wire:click="pre_mot_cre()"
+                                    >
+                                        Aceptar Guías ({{ count($selectedGuiaIds) }})
                                     </button>
                                 </div>
                             @endif

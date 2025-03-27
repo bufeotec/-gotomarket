@@ -58,16 +58,6 @@
                                 </div>
 
                                 <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Almacen de Origen:</strong>
-                                    <p>{{ $guiainfo->guia_almacen_origen }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Tipo Documento:</strong>
-                                    <p>{{ $guiainfo->guia_tipo_doc }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
                                     <strong style="color: #8c1017">Fecha Emisión:</strong>
                                     <p>{{ $guiainfo->guia_fecha_emision ? $me->obtenerNombreFecha($guiainfo->guia_fecha_emision, 'DateTime', 'DateTime') : '-' }}</p>
                                 </div>
@@ -92,22 +82,17 @@
                                     <p>{{ $guiainfo->guia_glosa }}</p>
                                 </div>
 
-                                <div class="col-lg-3">
+                                <div class="col-lg-2">
                                     <strong style="color: #8c1017">Estado:</strong>
                                     <p>{{ $guiainfo->guia_estado }}</p>
                                 </div>
 
-                                <div class="col-lg-3">
+                                <div class="col-lg-2">
                                     <strong style="color: #8c1017">Importe Total:</strong>
                                     <p>{{ $me->formatoDecimal($guiainfo->guia_importe_total ?? 0)}}</p>
                                 </div>
 
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Tipo de Cambio:</strong>
-                                    <p>{{ $me->formatoDecimal($guiainfo->guia_tipo_cambio ?? 0)}}</p>
-                                </div>
-
-                                <div class="col-lg-3">
+                                <div class="col-lg-2">
                                     <strong style="color: #8c1017">Moneda:</strong>
                                     <p>{{ $guiainfo->guia_moneda }}</p>
                                 </div>
@@ -296,12 +281,9 @@
                                         </span>
                                                 </td>
                                                 <td>
-                                                    @php
-                                                        $fechaEmision = \Carbon\Carbon::parse($factura->guia_fecha_emision)->format('d/m/Y');
-                                                    @endphp
                                                     <span class="d-block tamanhoTablaComprobantes">
-                                            {{ $fechaEmision }}
-                                        </span>
+                                                        {{ $me->obtenerNombreFecha($factura->guia_fecha_emision,'DateTime','Date') }}
+                                                    </span>
                                                 </td>
                                                 <td>
                                         <span class="d-block tamanhoTablaComprobantes">
@@ -332,9 +314,9 @@
                                                     {{ $factura->total_volumen }} cm³
                                                 </td>
                                                 <td>
-                                        <span class="d-block tamanhoTablaComprobantes">
-                                            {{date('d/m/Y - h:i A', strtotime($factura->updated_at)) }}
-                                        </span>
+                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                        {{ $me->obtenerNombreFecha($factura->updated_at,'DateTime','DateTime') }}
+                                                    </span>
                                                 </td>
                                                 <td>
                                                     <x-btn-accion class="btn bg-success btn-sm text-white" wire:click="cambio_estado('{{ base64_encode($factura->id_guia) }}', 3)" data-bs-toggle="modal" data-bs-target="#modalPrePro">

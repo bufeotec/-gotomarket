@@ -425,6 +425,7 @@
                                 <th>Número Documento</th>
                                 <th>Motivo</th>
                                 <th>Motivo descripción</th>
+                                <th>Factura</th>
                                 <th>Fecha de emision</th>
                                 <th>RUC</th>
                                 <th>Nombre del cliente</th>
@@ -454,6 +455,7 @@
                                             ][$lnc->not_cred_motivo] ?? 'No definido' }}
                                         </td>
                                         <td>{{$lnc->not_cred_motivo_descripcion}}</td>
+                                        <td>{{$lnc->not_cred_nro_doc_ref}}</td>
                                         <td>{{$general->obtenerNombreFecha($lnc->not_cred_fecha_emision,'DateTime', 'DateTime')}}</td>
                                         <td>{{$lnc->not_cred_ruc_cliente}}</td>
                                         <td>{{$lnc->not_cred_nombre_cliente}}</td>
