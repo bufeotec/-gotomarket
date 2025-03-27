@@ -52,6 +52,7 @@ class Reporteliqapro extends Component
             return;
         }
 
+        // Primero obtenemos los datos básicos sin el total por proveedor
         $query = DB::table('guias as g')
             ->join('despacho_ventas as dv', 'g.id_guia', '=', 'dv.id_guia')
             ->join('despachos as d', 'dv.id_despacho', '=', 'd.id_despacho')
@@ -67,14 +68,14 @@ class Reporteliqapro extends Component
                 'prov.provincia_nombre as provincia',
                 'dep.departamento_nombre as departamento',
                 't.transportista_nom_comercial as proveedor',
+                't.id_transportistas',
                 'g.guia_nro_doc_ref as fact',
                 'g.guia_importe_total as sin_igv',
-                DB::raw('g.guia_importe_total * 1.18 as con_igv'),
-                DB::raw('SUM(g.guia_importe_total) OVER (PARTITION BY t.id_transportistas) as total_proveedor')
+                DB::raw('g.guia_importe_total * 1.18 as con_igv')
             )
             ->where('d.despacho_estado_aprobacion', 1);
 
-        // Filtro por fecha de creación
+        // Aplicar filtros de fecha
         if ($this->desde) {
             $query->whereDate('g.created_at', '>=', $this->desde);
         }
@@ -88,16 +89,31 @@ class Reporteliqapro extends Component
             $query->whereDate('d.despacho_fecha_aprobacion', $this->fecha_aprobacion);
         }
 
-        // Obtener datos separados
-        $this->localData = (clone $query)
-            ->where('dep.departamento_nombre', 'LIMA')
-            ->get();
+        // Obtenemos los datos filtrados
+        $datos = $query->get();
 
-        $this->provincialData = (clone $query)
-            ->where('dep.departamento_nombre', '!=', 'LIMA')
-            ->get();
+        // Si no hay datos, retornamos colecciones vacías
+        if ($datos->isEmpty()) {
+            $this->localData = collect();
+            $this->provincialData = collect();
+            $this->filteredData = collect();
+            return;
+        }
 
-        $this->filteredData = $query->get();
+        // Calculamos los totales por proveedor
+        $totalesProveedor = $datos->groupBy('id_transportistas')->map(function($group) {
+            return $group->sum('con_igv');
+        });
+
+        $datosConTotales = $datos->map(function($item) use ($totalesProveedor) {
+            $item->total_proveedor = $totalesProveedor[$item->id_transportistas] ?? 0;
+            return $item;
+        });
+
+        // Separamos los datos en local y provincial
+        $this->localData = $datosConTotales->where('departamento', 'LIMA');
+        $this->provincialData = $datosConTotales->where('departamento', '!=', 'LIMA');
+        $this->filteredData = $datosConTotales;
     }
     public function exportarDespachosExcel()
     {
