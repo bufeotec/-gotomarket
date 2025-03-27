@@ -58,16 +58,6 @@
                                 </div>
 
                                 <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Almacen de Origen:</strong>
-                                    <p>{{ $guiainfo->guia_almacen_origen }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Tipo Documento:</strong>
-                                    <p>{{ $guiainfo->guia_tipo_doc }}</p>
-                                </div>
-
-                                <div class="col-lg-3">
                                     <strong style="color: #8c1017">Fecha Emisión:</strong>
                                     <p>{{ $guiainfo->guia_fecha_emision ? $me->obtenerNombreFecha($guiainfo->guia_fecha_emision, 'DateTime', 'DateTime') : '-' }}</p>
                                 </div>
@@ -92,22 +82,17 @@
                                     <p>{{ $guiainfo->guia_glosa }}</p>
                                 </div>
 
-                                <div class="col-lg-3">
+                                <div class="col-lg-2">
                                     <strong style="color: #8c1017">Estado:</strong>
                                     <p>{{ $guiainfo->guia_estado }}</p>
                                 </div>
 
-                                <div class="col-lg-3">
+                                <div class="col-lg-2">
                                     <strong style="color: #8c1017">Importe Total:</strong>
                                     <p>{{ $me->formatoDecimal($guiainfo->guia_importe_total ?? 0)}}</p>
                                 </div>
 
-                                <div class="col-lg-3">
-                                    <strong style="color: #8c1017">Tipo de Cambio:</strong>
-                                    <p>{{ $me->formatoDecimal($guiainfo->guia_tipo_cambio ?? 0)}}</p>
-                                </div>
-
-                                <div class="col-lg-3">
+                                <div class="col-lg-2">
                                     <strong style="color: #8c1017">Moneda:</strong>
                                     <p>{{ $guiainfo->guia_moneda }}</p>
                                 </div>

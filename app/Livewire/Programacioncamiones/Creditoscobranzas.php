@@ -52,7 +52,7 @@ class Creditoscobranzas extends Component
         $this->desde = date('Y-01-01');
         $this->hasta =  date('Y-m-d');
         $this->buscar_comprobantes();
-        $this->messageFacApro = "¿Está seguro de enviar a estados de facturación?";
+        $this->messageFacApro = "¿Está seguro de enviar a despacho?";
         $this->facturasCreditoAprobadas = Guia::where('guia_estado_aprobacion', 1)->get();
     }
     public function render(){
