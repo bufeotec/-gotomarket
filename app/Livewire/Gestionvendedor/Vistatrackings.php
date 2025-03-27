@@ -159,7 +159,7 @@ class Vistatrackings extends Component
 
         // Mensaje de etapa 0 (Fecha de Emisión)
         $fechaEmision = $this->general->obtenerNombreFecha($preProg->guia_fecha_emision, 'DateTime', 'DateTime');
-        $this->mensajeEtapa0 = $fechaEmision . ' | Fecha de emisión de la guía.';
+        $this->mensajeEtapa0 = $fechaEmision . '<br>' . 'Fecha de emisión de la guía.';
 
         // Procesar historial
         foreach ($historialGuia as $registro) {
@@ -167,27 +167,27 @@ class Vistatrackings extends Component
             $estado = $registro->historial_guia_estado_aprobacion;
 
             if ($estado == 1) {
-                $this->mensajeEtapa1 = $fechaHora . ' | Guía en créditos.';
+                $this->mensajeEtapa1 = $fechaHora . '<br>' . 'Guía en créditos.';
                 $this->etapaActual = 1;
             }
             elseif ($estado == 3) {
-                $this->mensajeEtapa2 = $fechaHora . ' | Guía listo para despachar.';
+                $this->mensajeEtapa2 = $fechaHora . '<br>' . 'Guía listo para despachar.';
                 $this->etapaActual = 2;
             }
             elseif ($estado == 4) {
-                $this->mensajeEtapa3 = $fechaHora . ' | Guía despachado.';
+                $this->mensajeEtapa3 = $fechaHora . '<br>' . 'Guía despachado.';
                 $this->etapaActual = 3;
             }
             elseif ($estado == 7) {
-                $this->mensajeEtapa4 = $fechaHora . ' | Guía en tránsito.';
+                $this->mensajeEtapa4 = $fechaHora . '<br>' . 'Guía en tránsito.';
                 $this->etapaActual = 4;
             }
             elseif ($estado == 8) {
-                $this->mensajeEtapa5 = $fechaHora . ' | Guía entregado.';
+                $this->mensajeEtapa5 = $fechaHora . '<br>' . 'Guía entregado.';
                 $this->etapaActual = 5;
             }
             elseif ($estado == 11) {
-                $this->mensajeEtapa5 = $fechaHora . ' | Guía no entregado.';
+                $this->mensajeEtapa5 = $fechaHora . '<br>' . 'Guía no entregado.';
                 $this->etapaActual = 5;
             }
 
