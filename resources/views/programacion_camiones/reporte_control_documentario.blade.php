@@ -11,35 +11,36 @@
 
 {{--        @livewire('programacioncamiones.reportecontroldocumentario')--}}
     </div>
+    <div class="row">
+        {{--                <div class="col-lg-6 col-md-6 col-sm-12">--}}
+        {{--                    <div class="card">--}}
+        {{--                        <div class="card-header">--}}
+        {{--                            <h4>Reporte de Venta e Indicadores</h4>--}}
+        {{--                        </div>--}}
+        {{--                        <div class="card-body">--}}
+        {{--                            <div class="d-flex justify-content-end">--}}
+        {{--                                <a href="{{route('Programacioncamion.reporte_ventas_indicadores')}}" class="btn btn-success">Ingresar</a>--}}
+        {{--                            </div>--}}
+        {{--                        </div>--}}
+        {{--                    </div>--}}
+        {{--                </div>--}}
+
+        {{--        <div class="col-lg-6 col-md-6 col-sm-6">--}}
+        {{--            <div class="card">--}}
+        {{--                <div class="card-header">--}}
+        {{--                    <h4>Reporte de Estados de Comprobante</h4>--}}
+        {{--                </div>--}}
+        {{--                <div class="card-body">--}}
+        {{--                    <div class="d-flex justify-content-end">--}}
+        {{--                        <a href="{{route('Programacioncamion.reporte_estados_factura')}}" class="btn btn-success">Ingresar</a>--}}
+        {{--                    </div>--}}
+        {{--                </div>--}}
+        {{--            </div>--}}
+        {{--        </div>--}}
+    </div>
 
     <div class="row">
-{{--                <div class="col-lg-6 col-md-6 col-sm-12">--}}
-{{--                    <div class="card">--}}
-{{--                        <div class="card-header">--}}
-{{--                            <h4>Reporte de Venta e Indicadores</h4>--}}
-{{--                        </div>--}}
-{{--                        <div class="card-body">--}}
-{{--                            <div class="d-flex justify-content-end">--}}
-{{--                                <a href="{{route('Programacioncamion.reporte_ventas_indicadores')}}" class="btn btn-success">Ingresar</a>--}}
-{{--                            </div>--}}
-{{--                        </div>--}}
-{{--                    </div>--}}
-{{--                </div>--}}
-
-{{--        <div class="col-lg-6 col-md-6 col-sm-6">--}}
-{{--            <div class="card">--}}
-{{--                <div class="card-header">--}}
-{{--                    <h4>Reporte de Estados de Comprobante</h4>--}}
-{{--                </div>--}}
-{{--                <div class="card-body">--}}
-{{--                    <div class="d-flex justify-content-end">--}}
-{{--                        <a href="{{route('Programacioncamion.reporte_estados_factura')}}" class="btn btn-success">Ingresar</a>--}}
-{{--                    </div>--}}
-{{--                </div>--}}
-{{--            </div>--}}
-{{--        </div>--}}
-
-        <div class="col-lg-6 col-md-6 col-sm-6">
+        <div class="col-lg-3 col-md-3 col-sm-6">
                     <div class="card">
                         <div class="card-header">
                             <h4>Efectividad de Entrega de Pedidos</h4>
@@ -51,7 +52,8 @@
                         </div>
                     </div>
                 </div>
-        <div class="col-lg-6 col-md-6 col-sm-6">
+
+        <div class="col-lg-3 col-md-3 col-sm-6">
             <div class="card">
                 <div class="card-header">
                     <h4>Reporte de Tiempos de Atención de Pedidos</h4>
@@ -63,7 +65,8 @@
                 </div>
             </div>
         </div>
-        <div class="col-lg-6 col-md-6 col-sm-6">
+
+        <div class="col-lg-3 col-md-3 col-sm-6">
             <div class="card">
                 <div class="card-header">
                     <h4>Reporte Estados de Documentos</h4>
@@ -75,7 +78,8 @@
                 </div>
             </div>
         </div>
-        <div class="col-lg-6 col-md-6 col-sm-6">
+
+        <div class="col-lg-3 col-md-3 col-sm-6">
             <div class="card">
                 <div class="card-header">
                     <h4>Reporte de Flete: Indicadores de Valor Transportado</h4>
@@ -87,7 +91,8 @@
                 </div>
             </div>
         </div>
-        <div class="col-lg-6 col-md-6 col-sm-6">
+
+        <div class="col-lg-5 col-md-5 col-sm-6">
             <div class="card">
                 <div class="card-header">
                     <h4>Reporte de Flete: Indicador de Peso Despachado</h4>
@@ -99,7 +104,8 @@
                 </div>
             </div>
         </div>
-        <div class="col-lg-6 col-md-6 col-sm-6">
+
+        <div class="col-lg-4 col-md-4 col-sm-6">
             <div class="card">
                 <div class="card-header">
                     <h4>Historial de Programación de Despacho</h4>
@@ -111,14 +117,15 @@
                 </div>
             </div>
         </div>
-        <div class="col-lg-6 col-md-6 col-sm-6">
+
+        <div class="col-lg-3 col-md-3 col-sm-6">
             <div class="card">
                 <div class="card-header">
                     <h4>Reporte de Flete: Liquidaciones Aprobadas</h4>
                 </div>
                 <div class="card-body">
                     <div class="d-flex justify-content-end">
-                        <a href="{{route('Programacioncamion.reporte_estados_factura')}}" class="btn btn-success">Ingresar</a>
+                        <a href="{{route('Programacioncamion.reporte_liq_apro')}}" class="btn btn-success">Ingresar</a>
                     </div>
                 </div>
             </div>
