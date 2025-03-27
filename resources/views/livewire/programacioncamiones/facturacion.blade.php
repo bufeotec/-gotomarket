@@ -62,6 +62,8 @@
                             <option value="">Seleccionar...</option>
                             <option value="11">Anulado</option>
                             <option value="8">Entregado</option>
+                            <option value="1">Creditos</option>
+                            <option value="2">Despacho</option>
                         </select>
                     </div>
 
@@ -268,18 +270,20 @@
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    @if ($factura->guia_estado_aprobacion == 6)
-                                                        <x-btn-accion class="btn bg-success btn-sm text-white" wire:click="cambio_estado('{{ base64_encode($factura->id_guia) }}', 2)" data-bs-toggle="modal" data-bs-target="#modalPrePro">
-                                                            <x-slot name="message">
-                                                                <i class="fa-solid fa-check"></i>
-                                                            </x-slot>
-                                                        </x-btn-accion>
-                                                    @endif
+{{--                                                    @if ($factura->guia_estado_aprobacion == 6)--}}
+{{--                                                        <x-btn-accion class="btn bg-success btn-sm text-white" wire:click="cambio_estado('{{ base64_encode($factura->id_guia) }}', 2)" data-bs-toggle="modal" data-bs-target="#modalPrePro">--}}
+{{--                                                            <x-slot name="message">--}}
+{{--                                                                <i class="fa-solid fa-check"></i>--}}
+{{--                                                            </x-slot>--}}
+{{--                                                        </x-btn-accion>--}}
+{{--                                                    @endif--}}
+                                                    @if($factura->guia_estado_aprobacion != 7)
                                                         <x-btn-accion class="btn bg-primary btn-sm text-white" wire:click="edit_guia('{{ base64_encode($factura->id_guia) }}')" data-bs-toggle="modal" data-bs-target="#modalEditCambioEstado">
                                                             <x-slot name="message">
                                                                 <i class="fa-solid fa-edit"></i>
                                                             </x-slot>
                                                         </x-btn-accion>
+                                                    @endif
                                                 </td>
                                             </tr>
                                         @endforeach

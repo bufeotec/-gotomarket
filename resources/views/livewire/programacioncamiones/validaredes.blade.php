@@ -296,12 +296,9 @@
                                         </span>
                                                 </td>
                                                 <td>
-                                                    @php
-                                                        $fechaEmision = \Carbon\Carbon::parse($factura->guia_fecha_emision)->format('d/m/Y');
-                                                    @endphp
                                                     <span class="d-block tamanhoTablaComprobantes">
-                                            {{ $fechaEmision }}
-                                        </span>
+                                                        {{ $me->obtenerNombreFecha($factura->guia_fecha_emision,'DateTime','Date') }}
+                                                    </span>
                                                 </td>
                                                 <td>
                                         <span class="d-block tamanhoTablaComprobantes">
@@ -332,9 +329,9 @@
                                                     {{ $factura->total_volumen }} cm³
                                                 </td>
                                                 <td>
-                                        <span class="d-block tamanhoTablaComprobantes">
-                                            {{date('d/m/Y - h:i A', strtotime($factura->updated_at)) }}
-                                        </span>
+                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                        {{ $me->obtenerNombreFecha($factura->updated_at,'DateTime','DateTime') }}
+                                                    </span>
                                                 </td>
                                                 <td>
                                                     <x-btn-accion class="btn bg-success btn-sm text-white" wire:click="cambio_estado('{{ base64_encode($factura->id_guia) }}', 3)" data-bs-toggle="modal" data-bs-target="#modalPrePro">

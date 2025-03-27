@@ -244,12 +244,12 @@ class Facturacion extends Component
 
             $this->validate([
                 'id_guia' => 'required|integer',
-                'guia_estado_aprobacion' => 'required|in:11,8',
+                'guia_estado_aprobacion' => 'required|in:11,8,1,2',
             ], [
                 'id_guia.required' => 'El identificador es obligatorio.',
                 'id_guia.integer' => 'El identificador debe ser un número entero.',
                 'guia_estado_aprobacion.required' => 'El estado de la guía es obligatorio.',
-                'guia_estado_aprobacion.in' => 'El estado de la guía debe ser Anulado (0) o Entregado (8).',
+                'guia_estado_aprobacion.in' => 'Debe seleccionar un estado válido: Anulado, Entregado, Creditos o Despacho.',
             ]);
 
             DB::beginTransaction();
@@ -270,6 +270,7 @@ class Facturacion extends Component
                 DB::commit();
                 $this->dispatch('modalEditCambioEstado');
                 session()->flash('success', 'La guía cambio de estado.');
+                $this->guia_estado_aprobacion = "";
             } else {
                 DB::rollBack();
                 session()->flash('error-edit-guia', 'No se pudo cambiar el estado de la guía.');

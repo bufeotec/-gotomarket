@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Gestionvendedor;
 
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
@@ -22,10 +23,28 @@ class Trackings extends Component
     }
     public $search_tracking;
     public $pagination_tracking = 10;
-
+    public $listar_comprobantes = [];
+    public $desde;
+    public $hasta;
+    public function mount(){
+        $this->desde = date('Y-01-01');
+        $this->hasta =  date('Y-m-d');
+    }
     public function render(){
-//        $listar_comprobantes = $this->despachoventa->listar_comprobantes($this->search_tracking, $this->pagination_tracking);
-        $listar_comprobantes = $this->guia->listar_comprobantes($this->search_tracking, $this->pagination_tracking);
-        return view('livewire.gestionvendedor.trackings', compact('listar_comprobantes'));
+        return view('livewire.gestionvendedor.trackings');
+    }
+
+    public function buscar_comprobantes(){
+        // Construir la consulta base
+        $query = DB::table('guias');
+        // Aplicar filtros de fecha si están presentes
+        if ($this->desde) {
+            $query->whereDate('guia_fecha_emision', '>=', $this->desde);
+        }
+        if ($this->hasta) {
+            $query->whereDate('guia_fecha_emision', '<=', $this->hasta);
+        }
+        // Obtener los resultados de la consulta
+        $this->listar_comprobantes = $query->get();
     }
 }

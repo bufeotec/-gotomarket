@@ -179,7 +179,7 @@
                                                                         <select
                                                                             name="estadoComprobante[{{ $indexComprobantes }}]"
                                                                             class="form-control form-select"
-                                                                            wire:model="estadoComprobante.{{ $ta->id_despacho_venta }}"
+                                                                            wire:model="estadoComprobante.{{ $listar_detalle_despacho->id_despacho }}_{{ $ta->id_despacho_venta }}"
                                                                         >
                                                                             <option value="8">Entregado</option>
                                                                             <option value="11">No entregado</option>
@@ -233,7 +233,7 @@
 
                                                         <x-slot name="tbody">
                                                             @php $a = 1; @endphp
-                                                            @foreach($listar_detalle_despacho->servicios_transportes as $st)
+                                                            @foreach($listar_detalle_despacho->servicios_transportes as $indexSer => $st)
                                                                 <tr>
                                                                     <td>{{$a}}</td>
                                                                     <td>{{ $st->serv_transpt_codigo }}</td>
@@ -269,9 +269,9 @@
                                                                         <td>
                                                                             @if($listar_detalle_despacho->despacho_estado_aprobacion == 2 && !in_array($st->serv_transpt_estado_aprobacion, [5, 6, 3]) )
                                                                                 <select
-                                                                                    name="estadoServicio[{{ $indexComprobantes }}]"
+                                                                                    name="estadoServicio[{{ $indexSer }}]"
                                                                                     class="form-control form-select"
-                                                                                    wire:model="estadoServicio.{{ $st->id_despacho_venta }}"
+                                                                                    wire:model="estadoServicio.{{ $listar_detalle_despacho->id_despacho }}_{{ $st->id_despacho_venta }}"
                                                                                 >
                                                                                     <option value="5">Entregado</option>
                                                                                     <option value="6">No entregado</option>

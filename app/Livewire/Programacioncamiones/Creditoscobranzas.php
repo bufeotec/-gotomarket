@@ -77,31 +77,21 @@ class Creditoscobranzas extends Component
         // Obtener los resultados de la consulta
         $this->filteredFacturas = $query->get();
     }
-    public function pre_mot_cre($id_fac){
+    public function pre_mot_cre($id_fac = null){
         $this->fechaHoraManual3 = '';
-        $id = base64_decode($id_fac);
 
-        if ($id) {
-            // Asegurarse de que $this->selectedGuiaIds sea un array
-            if (!is_array($this->selectedGuiaIds)) {
-                $this->selectedGuiaIds = [];
+        // Si se pasa un ID específico
+        if ($id_fac) {
+            $id = base64_decode($id_fac);
+
+            // No cambiar la selección del checkbox cuando se abre desde el botón de acción
+            if ($id) {
+                $this->id_guia = $id;
             }
-
-            // Verificar si el ID ya está en el array
-            $index = array_search($id, $this->selectedGuiaIds);
-
-            // Si ya está en el array, elimínalo (deselección)
-            if ($index !== false) {
-                unset($this->selectedGuiaIds[$index]);
-                $this->selectedGuiaIds = array_values($this->selectedGuiaIds); // Reindexar el array
-            } else {
-                // Si no está en el array, añádelo (selección)
-                $this->selectedGuiaIds[] = $id;
-            }
-
-            $fechaHoraActual3 = Carbon::now('America/Lima')->format('d/m/Y - h:i a');
-            $this->messageMotCre = "¿Está seguro de aceptar estas Guías con fecha $fechaHoraActual3?";
         }
+
+        $fechaHoraActual3 = Carbon::now('America/Lima')->format('d/m/Y - h:i a');
+        $this->messageMotCre = "¿Está seguro de aceptar estas Guías con fecha $fechaHoraActual3?";
     }
     public function aceptar_fac_credito() {
         try {
@@ -111,23 +101,24 @@ class Creditoscobranzas extends Component
                 return;
             }
 
-            // Iniciar transacción
-            DB::beginTransaction();
-
-            // Iterar sobre las guías seleccionadas
-            foreach ($this->selectedGuiaIds as $guiaId) {
-                $facturaPreprogramada = Guia::find($guiaId);
-
-                if ($facturaPreprogramada) {
-                    // Actualizar el estado de aprobación a 5
+            if (count($this->selectedGuiaIds) > 0) {
+                // Validar que al menos un checkbox esté seleccionado
+                $this->validate([
+                    'selectedGuiaIds' => 'required|array|min:1',
+                ], [
+                    'selectedGuiaIds.required' => 'Debe seleccionar al menos una opción.',
+                    'selectedGuiaIds.array'    => 'La selección debe ser válida.',
+                    'selectedGuiaIds.min'      => 'Debe seleccionar al menos una opción.',
+                ]);
+                DB::beginTransaction();
+                foreach ($this->selectedGuiaIds as $select) {
+                    $facturaPreprogramada = Guia::find($select);
                     $facturaPreprogramada->guia_estado_aprobacion = 5;
-
-                    // Guardar los cambios
                     if ($facturaPreprogramada->save()) {
                         // Registrar en historial guias
                         $historial = new Historialguia();
                         $historial->id_users = Auth::id();
-                        $historial->id_guia = $guiaId;
+                        $historial->id_guia = $select;
                         $historial->guia_nro_doc = $facturaPreprogramada->guia_nro_doc;
                         $historial->historial_guia_estado_aprobacion = 5;
                         $historial->historial_guia_fecha_hora = Carbon::now('America/Lima');
@@ -136,7 +127,7 @@ class Creditoscobranzas extends Component
 
                         // Registrar el movimiento en facturas_mov
                         $facturaMov = DB::table('facturas_mov')
-                            ->where('id_guia', $guiaId)
+                            ->where('id_guia', $select)
                             ->first();
 
                         $data = [
@@ -146,29 +137,72 @@ class Creditoscobranzas extends Component
 
                         if ($facturaMov) {
                             // Si existe, actualizar los campos
-                            DB::table('facturas_mov')->where('id_guia', $guiaId)->update($data);
+                            DB::table('facturas_mov')->where('id_guia', $select)->update($data);
                         } else {
                             // Si no existe, crear un nuevo registro
-                            DB::table('facturas_mov')->insert(array_merge(['id_guia' => $guiaId], $data));
+                            DB::table('facturas_mov')->insert(array_merge(['id_guia' => $select], $data));
                         }
                     } else {
                         DB::rollBack();
                         session()->flash('error', 'No se pudo actualizar el estado de la factura preprogramada.');
                         return;
                     }
+                }
+                DB::commit();
+                $this->selectedGuiaIds = [];
+                $this->dispatch('hidemodalMotCre');
+                session()->flash('success', 'Guías aprobadas correctamente.');
+                $this->buscar_comprobantes();
+            } else {
+                $this->validate([
+                    'id_guia' => 'required|integer',
+                ], [
+                    'id_guia.required' => 'El identificador es obligatorio.',
+                    'id_guia.integer' => 'El identificador debe ser un número entero.',
+                ]);
+
+                DB::beginTransaction();
+                $updateDespacho = Guia::find($this->id_guia);
+                $updateDespacho->guia_estado_aprobacion = 5;
+                if ($updateDespacho->save()) {
+                    // Registrar en historial guias
+                    $historial = new Historialguia();
+                    $historial->id_users = Auth::id();
+                    $historial->id_guia = $this->id_guia;
+                    $historial->guia_nro_doc = $updateDespacho->guia_nro_doc;
+                    $historial->historial_guia_estado_aprobacion = 5;
+                    $historial->historial_guia_fecha_hora = Carbon::now('America/Lima');
+                    $historial->historial_guia_estado = 1;
+                    $historial->save();
+
+                    // Registrar el movimiento en facturas_mov
+                    $facturaMov = DB::table('facturas_mov')
+                        ->where('id_guia', $this->id_guia)
+                        ->first();
+
+                    $data = [
+                        'fac_acept_valpago' => $this->fechaHoraManual3 ? Carbon::parse($this->fechaHoraManual3, 'America/Lima') : Carbon::now('America/Lima'),
+                        'id_users_responsable' => Auth::id(),
+                    ];
+
+                    if ($facturaMov) {
+                        // Si existe, actualizar los campos
+                        DB::table('facturas_mov')->where('id_guia', $this->id_guia)->update($data);
+                    } else {
+                        // Si no existe, crear un nuevo registro
+                        DB::table('facturas_mov')->insert(array_merge(['id_guia' => $this->id_guia], $data));
+                    }
                 } else {
                     DB::rollBack();
-                    session()->flash('error', 'No se encontró la factura preprogramada.');
+                    session()->flash('error', 'No se pudo actualizar el estado de la factura preprogramada.');
                     return;
                 }
+                DB::commit();
+                $this->id_guia = "";
+                $this->dispatch('hidemodalMotCre');
+                session()->flash('success', 'Guia aprobada correctamente.');
+                $this->buscar_comprobantes();
             }
-
-            // Confirmar transacción
-            DB::commit();
-            $this->selectedGuiaIds = []; // Limpiar los IDs seleccionados
-            session()->flash('success', 'Facturas preprogramadas aprobadas correctamente.');
-            $this->dispatch('hidemodalMotCre');
-            $this->buscar_comprobantes();
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logs->insertarLog($e);
@@ -205,7 +239,7 @@ class Creditoscobranzas extends Component
 
                 if ($factura) {
                     // Actualizar el estado de la factura
-                    $factura->guia_estado_aprobacion = 6; // Estado aprobado
+                    $factura->guia_estado_aprobacion = 2;
                     $factura->save();
 
                     // Registrar en historial guias
