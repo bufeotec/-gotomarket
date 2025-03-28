@@ -71,7 +71,7 @@ class Reporteliqapro extends Component
                 'g.guia_importe_total as sin_igv',
                 DB::raw('g.guia_importe_total * 1.18 as con_igv')
             )
-            ->where('d.despacho_estado_aprobacion', 1);
+            ->where('d.despacho_estado_aprobacion', [1, 2, 3]);
 
         // Aplicar filtros de fecha
         if ($this->desde) {
