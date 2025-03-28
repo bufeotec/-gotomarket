@@ -484,6 +484,66 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
+
+    @if(count($resultado) > 0)
+        <x-card-general-view>
+            <x-slot name="content">
+                <div class="row">
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        <x-table-general id="facturasPreProgTable">
+                            <x-slot name="thead">
+                                <tr>
+                                    <th>Zona de Despacho</th>
+                                    <th>Valor Transportado (Soles sin IGV)</th>
+                                    <th>Flete Aprobados (Soles)</th>
+                                    <th>Flete Penal. De Aprobación</th>
+                                    <th>Total Flete (Soles)</th>
+                                </tr>
+                            </x-slot>
+                            <x-slot name="tbody">
+                                <tr>
+                                    <td>Total</td>
+                                    <td>816,948.47</td>
+                                    <td>21,758.40</td>
+                                    <td></td>
+                                    <td>21,758.40</td>
+                                </tr>
+                                <tr>
+                                    <td>Local</td>
+                                    <td>583,328.10</td>
+                                    <td>7,825.13</td>
+                                    <td></td>
+                                    <td>7,825.13</td>
+                                </tr>
+                                <tr>
+                                    <td>Provincia 1</td>
+                                    <td>105,129.17</td>
+                                    <td>5,525.01</td>
+                                    <td></td>
+                                    <td>5,525.01</td>
+                                </tr>
+                                <tr>
+                                    <td>Provincia 2</td>
+                                    <td>128,491.20</td>
+                                    <td>8,408.26</td>
+                                    <td></td>
+                                    <td>8,408.26</td>
+                                </tr>
+                                <tr>
+                                    <td>Total Provincia</td>
+                                    <td>233,620.37</td>
+                                    <td>13,933.27</td>
+                                    <td></td>
+                                    <td>13,933.27</td>
+                                </tr>
+                            </x-slot>
+                        </x-table-general>
+                    </div>
+                </div>
+            </x-slot>
+        </x-card-general-view>
+    @endif
+
     @if(count($resultado) > 0)
         <div class="row mt-4">
             <div class="col-lg col-md-3 col-sm-3 mb-1">
@@ -506,6 +566,8 @@
             </div>
         </div>
     @endif
+
+
 
     <div class="accordion mt-3" id="accordionExample">
         @if(count($resultado) > 0)

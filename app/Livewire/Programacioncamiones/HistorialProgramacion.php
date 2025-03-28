@@ -345,6 +345,52 @@ class HistorialProgramacion extends Component
                 $sheet1->setCellValue('A'.$row, "");
                 $sheet1->mergeCells('A'.$row.':Y'.$row);
                 $row++;
+
+                // Insertar la tabla después del incremento de $row
+                // Encabezados de la tabla
+                $sheet1->setCellValue('A'.$row, 'Zona de Despacho');
+                $sheet1->setCellValue('B'.$row, 'Valor Transportado (Soles sin IGV)');
+                $sheet1->setCellValue('C'.$row, 'Flete Aprobados (Soles)');
+                $sheet1->setCellValue('D'.$row, 'Flete Penal. De Aprobación');
+                $sheet1->setCellValue('E'.$row, 'Total Flete (Soles)');
+                // Estilo para los encabezados
+                $headerStyle = $sheet1->getStyle('A'.$row.':E'.$row);
+                $headerStyle->getFont()->setBold(true);
+                $headerStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('D9D9D9');
+                $headerStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+
+                $row++;
+                // Datos de la tabla
+                $tableData = [
+                    ['Total', 816948.47, 21758.40, '', 21758.40],
+                    ['Local', 583328.10, 7825.13, '', 7825.13],
+                    ['Provincia 1', 105129.17, 5525.01, '', 5525.01],
+                    ['Provincia 2', 128491.20, 8408.26, '', 8408.26],
+                    ['Total Provincia', 233620.37, 13933.27, '', 13933.27]
+                ];
+
+                foreach ($tableData as $data) {
+                    $sheet1->setCellValue('A'.$row, $data[0]);
+                    $sheet1->setCellValue('B'.$row, $data[1]);
+                    $sheet1->setCellValue('C'.$row, $data[2]);
+                    $sheet1->setCellValue('D'.$row, $data[3]);
+                    $sheet1->setCellValue('E'.$row, $data[4]);
+
+                    // Formato numérico para las columnas de valores
+                    $sheet1->getStyle('B'.$row)->getNumberFormat()->setFormatCode('#,##0.00');
+                    $sheet1->getStyle('C'.$row)->getNumberFormat()->setFormatCode('#,##0.00');
+                    $sheet1->getStyle('E'.$row)->getNumberFormat()->setFormatCode('#,##0.00');
+
+                    // Bordes para las celdas
+                    $cellStyle = $sheet1->getStyle('A'.$row.':E'.$row);
+                    $cellStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+
+                    $row++;
+                }
+
+// Espacio después de la tabla
+                $sheet1->setCellValue('A'.$row, "");
+                $row++;
                 /* --------------------------------------------------------------------------------- */
                 $sheet1->setCellValue('A'.$row, 'LIQUIDACIÓN DE GASTOS DE TRANSPORTE');
                 $titleStyle = $sheet1->getStyle('A'.$row);
@@ -474,7 +520,7 @@ class HistorialProgramacion extends Component
                 $sheet1->getColumnDimension('B')->setWidth(12);
                 $sheet1->getColumnDimension('C')->setWidth(60);
                 $sheet1->getColumnDimension('D')->setWidth(15);
-                $sheet1->getColumnDimension('E')->setWidth(12);
+                $sheet1->getColumnDimension('E')->setWidth(17);
                 $sheet1->getColumnDimension('F')->setWidth(12);
                 $sheet1->getColumnDimension('G')->setWidth(15);
                 $sheet1->getColumnDimension('H')->setWidth(13);
