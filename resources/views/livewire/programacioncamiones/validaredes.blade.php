@@ -253,7 +253,23 @@
             <div class="card">
                 <div class="card-body table-responsive">
                     <div class="row mb-2">
-                        <h6>Recibidos por validar</h6>
+                        <div class="col-lg-6">
+                            <h6>Recibidos por validar</h6>
+                        </div>
+                        <div class="col-lg-6">
+                            @if(count($selectedGuiaIds) > 0)
+                                <div class="col-lg-12 col-md-12 col-sm-12 mb-2 text-end">
+                                    <button
+                                        class="btn text-white bg-warning mt-4"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#modalPrePro"
+                                        wire:click="cambio_estado()"
+                                    >
+                                        Aceptar Guías ({{ count($selectedGuiaIds) }})
+                                    </button>
+                                </div>
+                            @endif
+                        </div>
                     </div>
                     <div class="row">
                         <div class="col-lg-12">
@@ -261,6 +277,7 @@
                                 <x-table-general id="facturasPreProgTable">
                                     <x-slot name="thead">
                                         <tr>
+                                            <th>Check</th>
                                             <th>Guía</th>
                                             <th>F. Emisión</th>
                                             <th>Factura</th>
@@ -276,9 +293,12 @@
                                         @foreach($facturas_pre_prog_estado_dos as $factura)
                                             <tr>
                                                 <td>
-                                        <span class="d-block tamanhoTablaComprobantes">
-                                            {{ $factura->guia_nro_doc }}
-                                        </span>
+                                                    <input type="checkbox" wire:model.live="selectedGuiaIds" value="{{ $factura->id_guia }}" id="checkbox-{{ $factura->id_guia }}" class="form-check-input">
+                                                </td>
+                                                <td>
+                                                    <span class="d-block tamanhoTablaComprobantes">
+                                                        {{ $factura->guia_nro_doc }}
+                                                    </span>
                                                 </td>
                                                 <td>
                                                     <span class="d-block tamanhoTablaComprobantes">

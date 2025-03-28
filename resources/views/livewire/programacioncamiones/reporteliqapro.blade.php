@@ -20,15 +20,15 @@
             <label class="form-label">Hasta</label>
             <input type="date" name="hasta" id="hasta" wire:model.live="hasta" class="form-control" min="2025-01-01">
         </div>
-        <div class="col-lg-2 col-md-3 col-sm-12 mb-2">
+        <div class="col-lg-2 col-md-3 col-sm-12">
             <button class="btn btn-sm bg-primary text-white w-100" wire:click="buscar_datos" style="margin-top: 18%;">
                 <i class="fa fa-search"></i> BUSCAR
             </button>
         </div>
         @if(count($filteredData) > 0)
-            <div class="col-lg-6 col-md-2 col-sm-12 mb-5">
-                <button class="btn btn-success text-white" wire:click.prevent="exportarDespachosExcel">
-                    <i class="fa-solid fa-file-excel"></i> Exportar a Excel
+            <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
+                <button class="btn btn-success text-white" wire:click.prevent="exportarDespachosExcel"  style="margin-top: 16%;">
+                    <i class="fa-solid fa-file-excel"></i> Exportar
                 </button>
             </div>
         @endif
@@ -36,7 +36,6 @@
             <div class="loader mt-2" wire:loading wire:target="buscar_datos"></div>
         </div>
     </div>
-
     @if($searchdatos)
         <div class="row">
             <!-- TABLA LOCAL (LIMA) -->
@@ -55,7 +54,7 @@
                                             <tr>
                                                 <th style="font-size: 12px">FEC. DESPACHO</th>
                                                 <th style="font-size: 12px">FEC. APROB</th>
-                                                <th style="font-size: 12px">DISTRITO</th>
+                                                <th style="font-size: 12px">LOCAL</th>
                                                 <th style="font-size: 12px">PROVEEDOR</th>
                                                 <th style="font-size: 12px">FACT</th>
                                                 <th style="font-size: 12px">SIN IGV</th>
@@ -80,14 +79,14 @@
 
                                                 @foreach($guias as $guia)
                                                     <tr style="cursor: pointer">
-                                                        <td>{{ date('d/m/Y', strtotime($guia->fec_despacho)) }}</td>
-                                                        <td>{{ date('d/m/Y', strtotime($guia->fec_aprob)) }}</td>
-                                                        <td>{{ $guia->departamento }}</td>
-                                                        <td>{{ $proveedor }}</td>
-                                                        <td class="text-center">{{ $guia->fact ?? '---'}}</td>
-                                                        <td>S/ {{ $general->formatoDecimal($guia->sin_igv) }}</td>
-                                                        <td>S/ {{ $general->formatoDecimal($guia->con_igv) }}</td>
-                                                        <td>
+                                                        <td style="font-size: 12px">{{ date('d/m/Y', strtotime($guia->fec_despacho)) }}</td>
+                                                        <td style="font-size: 12px">{{ date('d/m/Y', strtotime($guia->fec_aprob)) }}</td>
+                                                        <td style="font-size: 12px">{{ $guia->departamento }}</td>
+                                                        <td style="font-size: 12px">{{ $proveedor }}</td>
+                                                        <td style="font-size: 12px" class="text-center">{{ $guia->fact ?? '---'}}</td>
+                                                        <td style="font-size: 12px">S/ {{ $general->formatoDecimal($guia->sin_igv) }}</td>
+                                                        <td style="font-size: 12px">S/ {{ $general->formatoDecimal($guia->con_igv) }}</td>
+                                                        <td style="font-size: 12px">
                                                             @if($firstRow)
                                                                 S/ {{ $general->formatoDecimal($totalProveedorConIgv) }}
                                                                 @php $firstRow = false; @endphp
@@ -97,13 +96,11 @@
                                                 @endforeach
                                             @endforeach
 
-                                            <tr class="fw-bold text-primary">
+                                            <tr class="fw-bold text-primary" >
                                                 <td colspan="2"></td>
-                                                <td><strong>Total General</strong></td>
-                                                <td></td>
-                                                <td></td>
+                                                <td colspan="3"><strong>Total General</strong></td>
                                                 <td>S/ {{ $general->formatoDecimal($totalLocalSinIgv) }}</td>
-                                                <td class="text-center">#####</td>
+                                                <td>S/ {{ $general->formatoDecimal($totalLocalConIgv) }}</td>
                                                 <td>S/ {{ $general->formatoDecimal($totalLocalConIgv) }}</td>
                                             </tr>
                                         </x-slot>
@@ -125,7 +122,7 @@
                 </div>
             @endif
 
-            <!-- TABLA PROVINCIAL (NO LIMA) -->
+            <!-- TABLA PROVINCIAL -->
             @if(count($provincialData) > 0)
                 <div class="col-lg-6 col-md-12 col-sm-12">
                     <x-card-general-view>
@@ -141,7 +138,7 @@
                                             <tr>
                                                 <th style="font-size: 12px">FEC. DESPACHO</th>
                                                 <th style="font-size: 12px">FEC. APROB</th>
-                                                <th style="font-size: 12px">DEPARTAMENTO-PROVINCIA</th>
+                                                <th style="font-size: 12px">DEPARTAMENTO - PROVINCIA</th>
                                                 <th style="font-size: 12px">PROVEEDOR</th>
                                                 <th style="font-size: 12px">FACT</th>
                                                 <th style="font-size: 12px">SIN IGV</th>
@@ -166,14 +163,14 @@
 
                                                 @foreach($guias as $guia)
                                                     <tr style="cursor: pointer">
-                                                        <td>{{ date('d/m/Y', strtotime($guia->fec_despacho)) }}</td>
-                                                        <td>{{ date('d/m/Y', strtotime($guia->fec_aprob)) }}</td>
-                                                        <td>{{ $guia->departamento }}-{{ $guia->provincia }}</td>
-                                                        <td>{{ $proveedor }}</td>
-                                                        <td class="text-center">{{ $guia->fact ?? '---'}}</td>
-                                                        <td>S/ {{ $general->formatoDecimal($guia->sin_igv) }}</td>
-                                                        <td>S/ {{ $general->formatoDecimal($guia->con_igv) }}</td>
-                                                        <td>
+                                                        <td style="font-size: 12px">{{ date('d/m/Y', strtotime($guia->fec_despacho)) }}</td>
+                                                        <td style="font-size: 12px">{{ date('d/m/Y', strtotime($guia->fec_aprob)) }}</td>
+                                                        <td style="font-size: 12px">{{ $guia->departamento }} - {{ $guia->provincia }}</td>
+                                                        <td style="font-size: 12px">{{ $proveedor }}</td>
+                                                        <td style="font-size: 12px" class="text-center">{{ $guia->fact ?? '---'}}</td>
+                                                        <td style="font-size: 12px">S/ {{ $general->formatoDecimal($guia->sin_igv) }}</td>
+                                                        <td style="font-size: 12px">S/ {{ $general->formatoDecimal($guia->con_igv) }}</td>
+                                                        <td style="font-size: 12px">
                                                             @if($firstRow)
                                                                 S/ {{ $general->formatoDecimal($totalProveedorConIgv) }}
                                                                 @php $firstRow = false; @endphp
@@ -185,11 +182,9 @@
 
                                             <tr class="fw-bold text-primary">
                                                 <td colspan="2"></td>
-                                                <td><strong>Total General</strong></td>
-                                                <td></td>
-                                                <td></td>
+                                                <td colspan="3"><strong>Total General</strong></td>
                                                 <td>S/ {{ $general->formatoDecimal($totalProvincialSinIgv) }}</td>
-                                                <td class="text-center">#####</td>
+                                                <td>S/ {{ $general->formatoDecimal($totalProvincialConIgv) }}</td>
                                                 <td>S/ {{ $general->formatoDecimal($totalProvincialConIgv) }}</td>
                                             </tr>
                                         </x-slot>

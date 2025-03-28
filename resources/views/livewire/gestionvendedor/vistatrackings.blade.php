@@ -258,42 +258,42 @@
                             <div class="col-lg-2 col-md-2 col-sm-12 clase__mensaje">
                                 @if($mensajeEtapa0)
                                     <div class="tracking-message {{ $etapaActual >= 0 ? 'text-dark' : 'text-muted' }}">
-                                        <b>{{ $mensajeEtapa0 }}</b>
+                                        <b>{!! $mensajeEtapa0 !!}</b>
                                     </div>
                                 @endif
                             </div>
                             <div class="col-lg-2 col-md-2 col-sm-12 clase__mensaje">
                                 @if($mensajeEtapa1)
                                     <div class="tracking-message {{ $etapaActual >= 1 ? 'text-dark' : 'text-muted' }}">
-                                        <b>{{ $mensajeEtapa1 }}</b>
+                                        <b>{!! $mensajeEtapa1 !!}</b>
                                     </div>
                                 @endif
                             </div>
                             <div class="col-lg-2 col-md-2 col-sm-12 clase__mensaje">
                                 @if($mensajeEtapa2)
                                     <div class="tracking-message {{ $etapaActual >= 2 ? 'text-dark' : 'text-muted' }}">
-                                        <b>{{ $mensajeEtapa2 }}</b>
+                                        <b>{!! $mensajeEtapa2 !!}</b>
                                     </div>
                                 @endif
                             </div>
                             <div class="col-lg-2 col-md-2 col-sm-12 clase__mensaje">
                                 @if($mensajeEtapa3)
                                     <div class="tracking-message {{ $etapaActual >= 3 ? 'text-dark' : 'text-muted' }}">
-                                        <b>{{ $mensajeEtapa3 }}</b>
+                                        <b>{!! $mensajeEtapa3 !!}</b>
                                     </div>
                                 @endif
                             </div>
                             <div class="col-lg-2 col-md-2 col-sm-12 clase__mensaje">
                                 @if($mensajeEtapa4)
                                     <div class="tracking-message {{ $etapaActual >= 4 ? 'text-dark' : 'text-muted' }}">
-                                        <b>{{ $mensajeEtapa4 }}</b>
+                                        <b>{!! $mensajeEtapa4 !!}</b>
                                     </div>
                                 @endif
                             </div>
                             <div class="col-lg-2 col-md-2 col-sm-12 clase__mensaje">
                                 @if($mensajeEtapa5)
                                     <div class="tracking-message {{ $etapaActual >= 5 ? 'text-dark' : 'text-muted' }}">
-                                        <b>{{ $mensajeEtapa5 }}</b>
+                                        <b>{!! $mensajeEtapa5 !!}</b>
                                     </div>
                                 @endif
                             </div>
