@@ -39,26 +39,30 @@ class Validaredes extends Component
     public $messageRecFactApro;
     public $guiainfo = [];
     public $guia_detalle = [];
+    public $selectedGuiaIds = [];
 
     public function render(){
         $facturas_pre_prog_estado_dos = $this->guia->listar_facturas_pre_programacion_estado_dos();
         return view('livewire.programacioncamiones.validaredes', compact('facturas_pre_prog_estado_dos'));
     }
 
-    public function cambio_estado($id_factura, $estado){
+    public function cambio_estado($id_factura = null, $estado = null){
         $this->fmanual = ''; // Inicializar la variable de fecha y hora manual
-        $id = base64_decode($id_factura); // Decodificar el ID de la factura
 
-        if ($id) {
-            $this->id_guia = $id; // Asignar el ID decodificado a la propiedad id_guia
-            $this->guia_estado_aprobacion = $estado; // Asignar el estado de aprobación
-
-            // Obtener la fecha y hora actual en la zona horaria de Lima
-            $fhactual = Carbon::now('America/Lima')->format('d/m/Y - h:i a');
-
-            // Actualizar el mensaje con la fecha y hora actual
-            $this->messagePrePro = "¿Estás seguro de enviar con fecha $fhactual?";
+        if ($id_factura) {
+            $id = base64_decode($id_factura);
+            if ($id){
+                $this->id_guia = $id;
+            }
         }
+
+        if ($estado){
+            $this->guia_estado_aprobacion = $estado; // Asignar el estado de aprobación
+        }
+        // Obtener la fecha y hora actual en la zona horaria de Lima
+        $fhactual = Carbon::now('America/Lima')->format('d/m/Y - h:i a');
+        // Actualizar el mensaje con la fecha y hora actual
+        $this->messagePrePro = "¿Estás seguro de enviar con fecha $fhactual?";
     }
     public function actualizarMensaje(){
         // Si hay una fecha y hora manual, usarla; de lo contrario, usar la fecha y hora actual
@@ -76,27 +80,78 @@ class Validaredes extends Component
                 session()->flash('error_pre_pro', 'No tiene permisos para cambiar los estados de este registro.');
                 return;
             }
+            if (count($this->selectedGuiaIds) > 0) {
+                // Validar que al menos un checkbox esté seleccionado
+                $this->validate([
+                    'selectedGuiaIds' => 'required|array|min:1',
+                ], [
+                    'selectedGuiaIds.required' => 'Debe seleccionar al menos una opción.',
+                    'selectedGuiaIds.array'    => 'La selección debe ser válida.',
+                    'selectedGuiaIds.min'      => 'Debe seleccionar al menos una opción.',
+                ]);
+                DB::beginTransaction();
+                foreach ($this->selectedGuiaIds as $select) {
+                    $factura = Guia::find($select);
+                    $factura->guia_estado_aprobacion = 3;
+                    if ($factura->save()) {
+                        // Registrar en historial guias
+                        $historial = new Historialguia();
+                        $historial->id_users = Auth::id();
+                        $historial->id_guia = $select;
+                        $historial->guia_nro_doc = $factura->guia_nro_doc;
+                        $historial->historial_guia_estado_aprobacion = 3;
+                        $historial->historial_guia_fecha_hora = Carbon::now('America/Lima');
+                        $historial->historial_guia_estado = 1;
+                        $historial->save();
+                        // Buscar si ya existe un registro en la tabla facturas_mov
+                        $facturaMov = DB::table('facturas_mov')
+                            ->where('id_guia', $select)
+                            ->first();
 
-            // Validar los datos de entrada
-            $this->validate([
-                'id_guia' => 'required|integer',
-                'guia_estado_aprobacion' => 'required|integer',
-            ], [
-                'id_guia.required' => 'El identificador es obligatorio.',
-                'id_guia.integer' => 'El identificador debe ser un número entero.',
-                'guia_estado_aprobacion.required' => 'El estado es obligatorio.',
-                'guia_estado_aprobacion.integer' => 'El estado debe ser un número entero.',
-            ]);
+                        if ($facturaMov) {
+                            // Actualizar el registro existente
+                            DB::table('facturas_mov')
+                                ->where('id_guia', $select)
+                                ->update([
+                                    'fac_acept_val_rec' => $this->fmanual ? Carbon::parse($this->fmanual, 'America/Lima') : Carbon::now('America/Lima'),
+                                    'fac_env_ges_fac' => $this->fmanual ? Carbon::parse($this->fmanual, 'America/Lima') : Carbon::now('America/Lima'),
+                                ]);
+                        } else {
+                            // Crear un nuevo registro en facturas_mov
+                            DB::table('facturas_mov')->insert([
+                                'id_fac_pre_prog' => $select,
+                                'fac_acept_val_rec' => $this->fmanual ? Carbon::parse($this->fmanual, 'America/Lima') : Carbon::now('America/Lima'),
+                                'fac_env_ges_fac' => $this->fmanual ? Carbon::parse($this->fmanual, 'America/Lima') : Carbon::now('America/Lima'),
+                                'id_users_responsable' => Auth::id(), // Asignar el ID del usuario responsable
+                            ]);
+                        }
 
-            // Iniciar una transacción de base de datos
-            DB::beginTransaction();
+                        // Confirmar la transacción
+                        DB::commit();
 
-            // Buscar la factura por ID
-            $factura = Guia::find($this->id_guia);
+                        // Cerrar el modal y mostrar mensaje de éxito
+                        $this->dispatch('hidemodalPrePro');
+                        session()->flash('success', 'Factura aprobada.');
+                    } else {
+                        DB::rollBack();
+                        session()->flash('error_pre_pro', 'No se pudo cambiar el estado de la factura.');
+                    }
+                }
+                DB::commit();
+                $this->selectedGuiaIds = [];
+                $this->dispatch('hidemodalPrePro');
+                session()->flash('success', 'Guías aprobadas correctamente.');
+            } else {
+                $this->validate([
+                    'id_guia' => 'required|integer',
+                ], [
+                    'id_guia.required' => 'El identificador es obligatorio.',
+                    'id_guia.integer' => 'El identificador debe ser un número entero.',
+                ]);
 
-            if ($factura) {
+                DB::beginTransaction();
+                $factura = Guia::find($this->id_guia);
                 $factura->guia_estado_aprobacion = $this->guia_estado_aprobacion;
-
                 if ($factura->save()) {
                     // Registrar en historial guias
                     $historial = new Historialguia();
@@ -135,14 +190,15 @@ class Validaredes extends Component
 
                     // Cerrar el modal y mostrar mensaje de éxito
                     $this->dispatch('hidemodalPrePro');
-                    session()->flash('success', 'Factura aprobada.');
+                    session()->flash('success', 'Guia aprobada.');
                 } else {
                     DB::rollBack();
-                    session()->flash('error_pre_pro', 'No se pudo cambiar el estado de la factura.');
+                    session()->flash('error_pre_pro', 'No se pudo cambiar el estado de la guía.');
                 }
-            } else {
-                DB::rollBack();
-                session()->flash('error_pre_pro', 'La factura no existe.');
+                DB::commit();
+                $this->id_guia = "";
+                $this->dispatch('hidemodalPrePro');
+                session()->flash('success', 'Guia aprobada correctamente.');
             }
         } catch (\Illuminate\Validation\ValidationException $e) {
             $this->setErrorBag($e->validator->errors());
