@@ -75,7 +75,7 @@ class Guia extends Model
                     DB::raw('SUM(guias_detalles.guia_det_cantidad * guias_detalles.guia_det_peso_gramo) as total_peso'),
                     DB::raw('SUM(guias_detalles.guia_det_cantidad * guias_detalles.guia_det_volumen) as total_volumen')
                 )
-                ->groupBy('guias.id_users', 'guias.id_guia', 'guias.guia_nro_doc', 'guias.guia_fecha_emision', 'guias.guia_importe_total', 'guias.guia_nombre_cliente', 'guias.guia_direc_entrega') // Agrupamos por columnas necesarias
+                ->groupBy('guias.*', 'guias.id_users', 'guias.id_guia', 'guias.guia_nro_doc', 'guias.guia_fecha_emision', 'guias.guia_importe_total', 'guias.guia_nombre_cliente', 'guias.guia_direc_entrega') // Agrupamos por columnas necesarias
                 ->get();
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);
