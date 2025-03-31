@@ -125,7 +125,38 @@ class Guia extends Model
                     DB::raw('SUM(gd.guia_det_cantidad * gd.guia_det_peso_gramo) as total_peso'),
                     DB::raw('SUM(gd.guia_det_cantidad * gd.guia_det_volumen) as total_volumen')
                 )
-                ->groupBy('g.id_guia', 'g.guia_nro_doc', 'g.guia_fecha_emision', 'g.guia_importe_total', 'g.guia_nombre_cliente', 'g.guia_direc_entrega') // Agrupamos por columnas necesarias
+                ->groupBy('g.id_users',
+                    'g.id_guia',
+                    'g.guia_almacen_origen',
+                    'g.guia_tipo_doc',
+                    'g.guia_nro_doc',
+                    'g.guia_fecha_emision',
+                    'g.guia_tipo_movimiento',
+                    'g.guia_tipo_doc_ref',
+                    'g.guia_nro_doc_ref',
+                    'g.guia_glosa',
+                    'g.guia_fecha_proceso',
+                    'g.guia_hora_proceso',
+                    'g.guia_usuario',
+                    'g.guia_cod_cliente',
+                    'g.guia_ruc_cliente',
+                    'g.guia_nombre_cliente',
+                    'g.guia_forma_pago',
+                    'g.guia_vendedor',
+                    'g.guia_moneda',
+                    'g.guia_tipo_cambio',
+                    'g.guia_estado',
+                    'g.guia_direc_entrega',
+                    'g.guia_nro_pedido',
+                    'g.guia_importe_total',
+                    'g.guia_departamento',
+                    'g.guia_provincia',
+                    'g.guia_destrito',
+                    'g.guia_estado_aprobacion',
+                    'g.guia_estado_registro',
+                    'g.guia_fecha',
+                    'g.created_at',
+                    'g.updated_at',)
                 ->get();
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);
