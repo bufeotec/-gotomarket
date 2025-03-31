@@ -75,7 +75,38 @@ class Guia extends Model
                     DB::raw('SUM(guias_detalles.guia_det_cantidad * guias_detalles.guia_det_peso_gramo) as total_peso'),
                     DB::raw('SUM(guias_detalles.guia_det_cantidad * guias_detalles.guia_det_volumen) as total_volumen')
                 )
-                ->groupBy('guias.*', 'guias.id_users', 'guias.id_guia', 'guias.guia_nro_doc', 'guias.guia_fecha_emision', 'guias.guia_importe_total', 'guias.guia_nombre_cliente', 'guias.guia_direc_entrega') // Agrupamos por columnas necesarias
+                ->groupBy('guias.id_users',
+                    'guias.id_guia',
+                    'guias.guia_almacen_origen',
+                    'guias.guia_tipo_doc',
+                    'guias.guia_nro_doc',
+                    'guias.guia_fecha_emision',
+                    'guias.guia_tipo_movimiento',
+                    'guias.guia_tipo_doc_ref',
+                    'guias.guia_nro_doc_ref',
+                    'guias.guia_glosa',
+                    'guias.guia_fecha_proceso',
+                    'guias.guia_hora_proceso',
+                    'guias.guia_usuario',
+                    'guias.guia_cod_cliente',
+                    'guias.guia_ruc_cliente',
+                    'guias.guia_nombre_cliente',
+                    'guias.guia_forma_pago',
+                    'guias.guia_vendedor',
+                    'guias.guia_moneda',
+                    'guias.guia_tipo_cambio',
+                    'guias.guia_estado',
+                    'guias.guia_direc_entrega',
+                    'guias.guia_nro_pedido',
+                    'guias.guia_importe_total',
+                    'guias.guia_departamento',
+                    'guias.guia_provincia',
+                    'guias.guia_destrito',
+                    'guias.guia_estado_aprobacion',
+                    'guias.guia_estado_registro',
+                    'guias.guia_fecha',
+                    'guias.created_at',
+                    'guias.updated_at',)
                 ->get();
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);
