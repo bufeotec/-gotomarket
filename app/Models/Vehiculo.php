@@ -96,7 +96,35 @@ class Vehiculo extends Model
                 });
             }
             $query->groupBy(
-                'v.id_vehiculo', 'v.vehiculo_capacidad_peso', 'v.vehiculo_placa', 't.tarifa_cap_min', 't.tarifa_cap_max', 't.tarifa_estado_aprobacion', 't.id_departamento', 't.id_provincia', 't.id_distrito'
+                'v.id_vehiculo',
+                'v.id_users',
+                'v.id_transportistas',
+                'v.id_tipo_vehiculo',
+                'v.vehiculo_placa',
+                'v.vehiculo_capacidad_peso',
+                'v.vehiculo_ancho',
+                'v.vehiculo_largo',
+                'v.vehiculo_alto',
+                'v.vehiculo_capacidad_volumen',
+                'v.vehiculo_estado',
+                'v.vehiculo_microtime',
+                'v.created_at',
+                'v.updated_at',
+                't.id_transportistas',
+                't.id_users',
+                't.id_ubigeo',
+                't.transportista_ruc',
+                't.transportista_razon_social',
+                't.transportista_nom_comercial',
+                't.transportista_direccion',
+                't.transportista_correo',
+                't.transportista_telefono',
+                't.transportista_contacto',
+                't.transportista_cargo',
+                't.transportista_estado',
+                't.transportista_microtime',
+                't.created_at',
+                't.updated_at'
             );
             $result = $query->get();
         } catch (\Exception $e) {
