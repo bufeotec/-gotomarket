@@ -60,10 +60,13 @@
                         <label for="guia_estado_aprobacion" class="form-label">Estado Guía</label>
                         <select name="guia_estado_aprobacion" id="guia_estado_aprobacion" wire:model.live="guia_estado_aprobacion" class="form-select">
                             <option value="">Seleccionar...</option>
-                            <option value="11">Anulado</option>
-                            <option value="8">Entregado</option>
                             <option value="1">Creditos</option>
                             <option value="2">Despacho</option>
+                            <option value="3">Por programar</option>
+                            <option value="4">Programado</option>
+                            <option value="7">En ruta</option>
+                            <option value="11">Anulado</option>
+                            <option value="8">Entregado</option>
                         </select>
                     </div>
 
