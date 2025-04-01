@@ -130,7 +130,9 @@ class Local extends Component
 
         // Filtrar por nombre del cliente si searchGuia tiene valor
         if (!empty($this->searchGuia)) {
-            $guiasQuery->where('guia_nombre_cliente', 'like', '%' . $this->searchGuia . '%');
+            $guiasQuery->where('guia_nombre_cliente', 'like', '%' . $this->searchGuia . '%')
+            ->orWhere('guia_nro_doc', 'like', '%' . $this->searchGuia)
+            ->orWhere('guia_nro_doc_ref', 'like', '%' . $this->searchGuia);
         }
 
         $guias = $guiasQuery->get();
@@ -774,6 +776,7 @@ class Local extends Component
                 $despachoVenta->despacho_detalle_estado = 1;
                 $despachoVenta->despacho_detalle_microtime = microtime(true);
                 $despachoVenta->despacho_detalle_estado_entrega = 0;
+                $despachoVenta->despacho_venta_factura = $factura['factura'] ?? '';
 
                 if (!$despachoVenta->save()) {
                     DB::rollBack();
