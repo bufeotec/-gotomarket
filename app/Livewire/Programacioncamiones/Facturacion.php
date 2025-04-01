@@ -244,12 +244,12 @@ class Facturacion extends Component
 
             $this->validate([
                 'id_guia' => 'required|integer',
-                'guia_estado_aprobacion' => 'required|in:11,8,1,2',
+                'guia_estado_aprobacion' => 'required|in:1,2,3,4,7,11,8',
             ], [
                 'id_guia.required' => 'El identificador es obligatorio.',
                 'id_guia.integer' => 'El identificador debe ser un número entero.',
                 'guia_estado_aprobacion.required' => 'El estado de la guía es obligatorio.',
-                'guia_estado_aprobacion.in' => 'Debe seleccionar un estado válido: Anulado, Entregado, Creditos o Despacho.',
+                'guia_estado_aprobacion.in' => 'Debe seleccionar un estado válido.',
             ]);
 
             DB::beginTransaction();
