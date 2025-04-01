@@ -348,7 +348,7 @@
                     </div>
                     <div class="row mt-3">
                         <div class="col-lg-12 col-md-12 col-sm-12">
-                            <div class="contenedor-comprobante" style="max-height: 600px; overflow: auto">
+                            <div class="contenedor-comprobante" style="overflow: auto">
                                 @if($guias_estado_tres->isEmpty())
                                     <p class="text-center text-muted">No hay facturas disponibles.</p>
                                 @else
