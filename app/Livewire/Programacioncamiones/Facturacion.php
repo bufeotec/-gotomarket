@@ -30,6 +30,9 @@ class Facturacion extends Component
         $this->historialguia = new Historialguia();
         $this->guia = new Guia();
     }
+    public $fecha_hasta;
+    public $fecha_desde;
+    public $nombre_cliente = "";
     public $messagePrePro = "";
     public $id_guia = "";
     public $guia_estado_aprobacion;
@@ -39,8 +42,12 @@ class Facturacion extends Component
     public $fac_mov_area_motivo_rechazo = "";
     public $messageRecFactApro;
 
+    public function mount(){
+        $this->fecha_desde = date('Y-01-01');
+        $this->fecha_hasta = date('Y-m-d');
+    }
     public function render(){
-        $facturas_pre_prog_estadox = $this->guia->listar_facturas_pre_programacion_estadox();
+        $facturas_pre_prog_estadox = $this->guia->listar_facturas_pre_programacion_estadox($this->nombre_cliente, $this->fecha_desde, $this->fecha_hasta);
         return view('livewire.programacioncamiones.facturacion', compact('facturas_pre_prog_estadox'));
     }
     public function cambio_estado($id_guia, $estado_aprobacion){

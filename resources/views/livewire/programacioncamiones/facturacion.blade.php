@@ -161,11 +161,30 @@
             </div>
         @endif
 
+            <div class="col-lg-12">
+                <div class="row">
+                    <div class="col-lg-3 col-md-2 col-sm-12 mb-2">
+                        <label for="nombre_cliente" class="form-label">Nombre del cliente</label>
+                        <input type="text" name="nombre_cliente" id="nombre_cliente" wire:model.live="nombre_cliente" class="form-control">
+                    </div>
+                    <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
+                        <label for="fecha_desde" class="form-label">Desde</label>
+                        <input type="date" name="fecha_desde" id="fecha_desde" wire:model.live="fecha_desde" class="form-control">
+                    </div>
+                    <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
+                        <label for="fecha_hasta" class="form-label">Hasta</label>
+                        <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model.live="fecha_hasta" class="form-control">
+                    </div>
+                </div>
+            </div>
+
         <div class="col-lg-12">
             <div class="card">
                 <div class="card-body table-responsive">
                     <div class="row mb-2">
-                        <h6>Gestionar el estado de la Factura</h6>
+                        <div class="col-lg-12 ">
+                            <h6>Gestionar el estado de la Guía</h6>
+                        </div>
                     </div>
                     <div class="row">
                         <div class="col-lg-12">
