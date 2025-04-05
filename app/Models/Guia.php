@@ -115,17 +115,33 @@ class Guia extends Model
         return $result;
     }
 
-    public function listar_facturas_pre_programacion_estadox(){
+    public function listar_facturas_pre_programacion_estadox($nombre_cliente = null, $fecha_desde = null, $fecha_hasta = null){
         try {
-            $result = DB::table('guias as g')
+            $query = DB::table('guias as g')
                 ->leftJoin('guias_detalles as gd', 'g.id_guia', '=', 'gd.id_guia')
-                ->where('g.guia_estado_registro', '=', 1)
-                ->select(
-                    'g.*',
-                    DB::raw('SUM(gd.guia_det_cantidad * gd.guia_det_peso_gramo) as total_peso'),
-                    DB::raw('SUM(gd.guia_det_cantidad * gd.guia_det_volumen) as total_volumen')
-                )
-                ->groupBy('g.id_users',
+                ->where('g.guia_estado_registro', '=', 1);
+
+            // Aplicar filtro por nombre de cliente si existe
+            if (!empty($nombre_cliente)) {
+                $query->where('g.guia_nombre_cliente', 'like', '%' . $nombre_cliente . '%');
+            }
+
+            // Aplicar filtro por rango de fechas si existen
+            if (!empty($fecha_desde)) {
+                $query->whereDate('g.guia_fecha_emision', '>=', $fecha_desde);
+            }
+
+            if (!empty($fecha_hasta)) {
+                $query->whereDate('g.guia_fecha_emision', '<=', $fecha_hasta);
+            }
+
+            $result = $query->select(
+                'g.*',
+                DB::raw('SUM(gd.guia_det_cantidad * gd.guia_det_peso_gramo) as total_peso'),
+                DB::raw('SUM(gd.guia_det_cantidad * gd.guia_det_volumen) as total_volumen')
+            )
+                ->groupBy(
+                    'g.id_users',
                     'g.id_guia',
                     'g.guia_almacen_origen',
                     'g.guia_tipo_doc',
@@ -156,8 +172,10 @@ class Guia extends Model
                     'g.guia_estado_registro',
                     'g.guia_fecha',
                     'g.created_at',
-                    'g.updated_at',)
+                    'g.updated_at'
+                )
                 ->get();
+
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);
             $result = [];
