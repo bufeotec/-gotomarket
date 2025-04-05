@@ -71,16 +71,36 @@ class HistorialProgramacion extends Component
         // Lógica existente para obtener $resultado
         $resultado = $this->programacion->listar_programaciones_historial_programacion($this->desde, $this->hasta, $this->serie_correlativo, $this->estadoPro);
 
+        // Inicializar variables para las sumas
+        $totalLocal = 0;
+        $totalProvincia1 = 0;
+        $totalProvincia2 = 0;
+
+        // Variables para fletes
+        $fleteAprobadoLocal = 0;
+        $fletePenalLocal = 0;
+        $fleteAprobadoProv1 = 0;
+        $fletePenalProv1 = 0;
+        $fleteAprobadoProv2 = 0;
+        $fletePenalProv2 = 0;
+
+        // Definir el mapeo de departamentos a provincias
+        $departamentosProvincia1 = ['ANCASH', 'AYACUCHO', 'HUANCAVELICA', 'HUANUCO', 'ICA', 'JUNIN', 'LA LIBERTAD', 'LAMBAYEQUE', 'PASCO'];
+        $departamentosProvincia2 = ['AMAZONAS', 'APURIMAC', 'AREQUIPA', 'CAJAMARCA', 'CUSCO', 'LORETO', 'MADRE DE DIOS', 'MOQUEGUA', 'PIURA', 'PUNO', 'SAN MARTIN', 'TACNA', 'TUMBES', 'UCAYALI'];
+        $departamentosLocal = ['CALLAO', 'LIMA'];
+
         foreach ($resultado as $rehs) {
             $rehs->despacho = DB::table('despachos as d')
                 ->join('transportistas as t', 't.id_transportistas', '=', 'd.id_transportistas')
                 ->join('tipo_servicios as ts', 'ts.id_tipo_servicios', '=', 'd.id_tipo_servicios')
+                ->leftJoin('departamentos as dep', 'dep.id_departamento', '=', 'd.id_departamento')
                 ->where('d.id_programacion', '=', $rehs->id_programacion)
+                ->select('d.*', 't.*', 'ts.*', 'dep.departamento_nombre')
                 ->get();
 
             foreach ($rehs->despacho as $des) {
                 $totalVenta = 0;
-                $guiasProcesadas =[];
+                $guiasProcesadas = [];
                 $des->comprobantes = DB::table('despacho_ventas as dv')
                     ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
                     ->where('dv.id_despacho', '=', $des->id_despacho)
@@ -88,44 +108,167 @@ class HistorialProgramacion extends Component
                     ->get();
 
                 foreach ($des->comprobantes as $com) {
-                    // Verificar si el id_guia ya fue procesado
                     if (!in_array($com->id_guia, $guiasProcesadas)) {
-                        $precio = floatval($com->guia_importe_total);  // Usar guia_importe_total
+                        $precio = floatval($com->guia_importe_total);
                         $totalVenta += round($precio, 2);
-                        $guiasProcesadas[] = $com->id_guia; // Marcar el id_guia como procesado
+                        $guiasProcesadas[] = $com->id_guia;
                     }
                 }
                 $des->totalVentaDespacho = $totalVenta;
-                // Agregar el id_guia al objeto $des (usamos el primer id_guia encontrado)
+
+                // Determinar a qué categoría pertenece este despacho
+                if ($des->id_tipo_servicios == 1) { // Local
+                    $totalLocal += $totalVenta;
+
+                    // Calcular fletes para Local
+                    $costoTarifa = ($des->despacho_estado_modificado == 1) ? $des->despacho_monto_modificado : $des->despacho_flete;
+                    $costoMano = $des->despacho_ayudante ?? 0;
+                    $costoOtros = $des->despacho_gasto_otros ?? 0;
+                    $totalFlete = ($costoTarifa + $costoMano + $costoOtros);
+
+                    // Verificar si está aprobado
+                    $aprobado = $this->verificarAprobacion($des->id_despacho);
+
+                    if ($aprobado) {
+                        $fleteAprobadoLocal += $totalFlete;
+                    } else {
+                        $fletePenalLocal += $totalFlete;
+                    }
+
+                } elseif ($des->id_tipo_servicios == 2) { // Provincial
+                    $departamentoNombre = strtoupper(trim($des->departamento_nombre ?? ''));
+
+                    // Calcular fletes para Provincial
+                    $costoTarifa = ($des->despacho_estado_modificado == 1) ? $des->despacho_monto_modificado : $des->despacho_flete;
+                    $costoOtros = $des->despacho_gasto_otros ?? 0;
+                    $peso = $des->despacho_peso ?? 1; // Usar 1 como valor por defecto si no hay peso
+                    $totalFlete = (($costoTarifa * $peso) + $costoOtros);
+
+                    // Verificar si está aprobado
+                    $aprobado = $this->verificarAprobacion($des->id_despacho);
+
+                    if (in_array($departamentoNombre, $departamentosProvincia1)) {
+                        $totalProvincia1 += $totalVenta;
+                        if ($aprobado) {
+                            $fleteAprobadoProv1 += $totalFlete;
+                        } else {
+                            $fletePenalProv1 += $totalFlete;
+                        }
+                    } elseif (in_array($departamentoNombre, $departamentosProvincia2)) {
+                        $totalProvincia2 += $totalVenta;
+                        if ($aprobado) {
+                            $fleteAprobadoProv2 += $totalFlete;
+                        } else {
+                            $fletePenalProv2 += $totalFlete;
+                        }
+                    } elseif (!in_array($departamentoNombre, $departamentosLocal)) {
+                        // Si no es local y no está en las listas, lo consideramos como provincia 2 por defecto
+                        $totalProvincia2 += $totalVenta;
+                        if ($aprobado) {
+                            $fleteAprobadoProv2 += $totalFlete;
+                        } else {
+                            $fletePenalProv2 += $totalFlete;
+                        }
+                    }
+                }
+
                 if (count($des->comprobantes) > 0) {
                     $des->id_guia = $des->comprobantes[0]->id_guia;
                 } else {
-                    $des->id_guia = null; // O un valor por defecto si no hay comprobantes
+                    $des->id_guia = null;
                 }
             }
         }
 
-        // Nueva lógica para obtener datos de servicios_transportes
+        // Calcular los totales
+        $totalGeneral = $totalLocal + $totalProvincia1 + $totalProvincia2;
+        $totalProvincial = $totalProvincia1 + $totalProvincia2;
+
+        // Totales de fletes
+        $totalFleteAprobado = $fleteAprobadoLocal + $fleteAprobadoProv1 + $fleteAprobadoProv2;
+        $totalFletePenal = $fletePenalLocal + $fletePenalProv1 + $fletePenalProv2;
+        $totalFleteGeneral = $totalFleteAprobado + $totalFletePenal;
+
+        $totalFleteAprobadoProv = $fleteAprobadoProv1 + $fleteAprobadoProv2;
+        $totalFletePenalProv = $fletePenalProv1 + $fletePenalProv2;
+        $totalFleteProv = $totalFleteAprobadoProv + $totalFletePenalProv;
+
+        // Preparar los datos para la vista
+        $zonaDespachoData = [
+            [
+                'zona' => 'Total',
+                'valor_transportado' => number_format($totalGeneral, 2),
+                'flete_aprobado' => number_format($totalFleteAprobado, 2),
+                'flete_penal' => number_format($totalFletePenal, 2),
+                'total_flete' => number_format($totalFleteGeneral, 2)
+            ],
+            [
+                'zona' => 'Local',
+                'valor_transportado' => number_format($totalLocal, 2),
+                'flete_aprobado' => number_format($fleteAprobadoLocal, 2),
+                'flete_penal' => number_format($fletePenalLocal, 2),
+                'total_flete' => number_format(($fleteAprobadoLocal + $fletePenalLocal), 2)
+            ],
+            [
+                'zona' => 'Provincia 1',
+                'valor_transportado' => number_format($totalProvincia1, 2),
+                'flete_aprobado' => number_format($fleteAprobadoProv1, 2),
+                'flete_penal' => number_format($fletePenalProv1, 2),
+                'total_flete' => number_format(($fleteAprobadoProv1 + $fletePenalProv1), 2)
+            ],
+            [
+                'zona' => 'Provincia 2',
+                'valor_transportado' => number_format($totalProvincia2, 2),
+                'flete_aprobado' => number_format($fleteAprobadoProv2, 2),
+                'flete_penal' => number_format($fletePenalProv2, 2),
+                'total_flete' => number_format(($fleteAprobadoProv2 + $fletePenalProv2), 2)
+            ],
+            [
+                'zona' => 'Total Provincia',
+                'valor_transportado' => number_format($totalProvincial, 2),
+                'flete_aprobado' => number_format($totalFleteAprobadoProv, 2),
+                'flete_penal' => number_format($totalFletePenalProv, 2),
+                'total_flete' => number_format($totalFleteProv, 2)
+            ]
+        ];
+
+        // Resto de tu lógica existente...
         $query = DB::table('servicios_transportes')
             ->where('serv_transpt_estado', 1)
             ->whereBetween('serv_transpt_fecha_creacion', [$this->desde, $this->hasta]);
-        // Si no se ha seleccionado un tipo, por defecto muestra 1,2,3
+
         if (empty($this->estadoPro)) {
             $query->whereIn('serv_transpt_estado_aprobacion', [1, 2, 3]);
         } else {
-            // Si se selecciona un tipo, usa whereIn si es un array, de lo contrario usa where normal
             if (is_array($this->estadoPro)) {
                 $query->whereIn('serv_transpt_estado_aprobacion', $this->estadoPro);
             } else {
                 $query->where('serv_transpt_estado_aprobacion', $this->estadoPro);
             }
         }
-        // Obtener los resultados ordenados
-        $this->serviciosTransportes = $query->orderBy('serv_transpt_fecha_creacion', 'desc')->get();
 
+        $this->serviciosTransportes = $query->orderBy('serv_transpt_fecha_creacion', 'desc')->get();
         $roleId = auth()->user()->roles->first()->id ?? null;
 
-        return view('livewire.programacioncamiones.historial-programacion', compact('resultado', 'roleId'));
+        return view('livewire.programacioncamiones.historial-programacion', compact('resultado', 'roleId', 'zonaDespachoData'));
+    }
+    // Función para verificar si un despacho está aprobado
+    private function verificarAprobacion($idDespacho){
+        $liquidacionDetalle = DB::table('liquidacion_detalles')
+            ->where('id_despacho', $idDespacho)
+            ->first();
+
+        if ($liquidacionDetalle) {
+            $liquidacion = DB::table('liquidaciones')
+                ->where('id_liquidacion', $liquidacionDetalle->id_liquidacion)
+                ->first();
+
+            if ($liquidacion && $liquidacion->liquidacion_estado_aprobacion == 1) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public $currentDespachoId;
@@ -203,6 +346,21 @@ class HistorialProgramacion extends Component
             }
             $resultado = $this->programacion->listar_programaciones_historial_programacion_excel($this->desde,$this->hasta);
             $conteoDesp = 0;
+            // Inicializar variables para las sumas (igual que en la vista)
+            $totalLocal = 0;
+            $totalProvincia1 = 0;
+            $totalProvincia2 = 0;
+            // Variables para fletes
+            $fleteAprobadoLocal = 0;
+            $fletePenalLocal = 0;
+            $fleteAprobadoProv1 = 0;
+            $fletePenalProv1 = 0;
+            $fleteAprobadoProv2 = 0;
+            $fletePenalProv2 = 0;
+            // Definir el mapeo de departamentos a provincias
+            $departamentosProvincia1 = ['ANCASH', 'AYACUCHO', 'HUANCAVELICA', 'HUANUCO', 'ICA', 'JUNIN', 'LA LIBERTAD', 'LAMBAYEQUE', 'PASCO'];
+            $departamentosProvincia2 = ['AMAZONAS', 'APURIMAC', 'AREQUIPA', 'CAJAMARCA', 'CUSCO', 'LORETO', 'MADRE DE DIOS', 'MOQUEGUA', 'PIURA', 'PUNO', 'SAN MARTIN', 'TACNA', 'TUMBES', 'UCAYALI'];
+            $departamentosLocal = ['CALLAO', 'LIMA'];
             foreach($resultado as $result){
                 $totalVenta = 0;
                 $result->despacho = DB::table('despachos as d')
@@ -300,6 +458,60 @@ class HistorialProgramacion extends Component
                                 $com->peso_total_kilos = $pesoTotalGramos / 1000;
                             }
                             $des->totalVentaDespacho = $totalVenta;
+                            // Determinar a qué categoría pertenece este despacho
+                            if ($des->id_tipo_servicios == 1) { // Local
+                                $totalLocal += $totalVenta;
+
+                                // Calcular fletes para Local
+                                $costoTarifa = ($des->despacho_estado_modificado == 1) ? $des->despacho_monto_modificado : $des->despacho_flete;
+                                $costoMano = $des->despacho_ayudante ?? 0;
+                                $costoOtros = $des->despacho_gasto_otros ?? 0;
+                                $totalFlete = ($costoTarifa + $costoMano + $costoOtros);
+
+                                // Verificar si está aprobado
+                                $aprobado = $this->verificarAprobacion($des->id_despacho);
+
+                                if ($aprobado) {
+                                    $fleteAprobadoLocal += $totalFlete;
+                                } else {
+                                    $fletePenalLocal += $totalFlete;
+                                }
+
+                            } elseif ($des->id_tipo_servicios == 2) { // Provincial
+                                $departamentoNombre = strtoupper(trim($des->departamento_nombre ?? ''));
+
+                                // Calcular fletes para Provincial
+                                $costoTarifa = ($des->despacho_estado_modificado == 1) ? $des->despacho_monto_modificado : $des->despacho_flete;
+                                $costoOtros = $des->despacho_gasto_otros ?? 0;
+                                $peso = $des->despacho_peso ?? 1;
+                                $totalFlete = (($costoTarifa * $peso) + $costoOtros);
+
+                                // Verificar si está aprobado
+                                $aprobado = $this->verificarAprobacion($des->id_despacho);
+
+                                if (in_array($departamentoNombre, $departamentosProvincia1)) {
+                                    $totalProvincia1 += $totalVenta;
+                                    if ($aprobado) {
+                                        $fleteAprobadoProv1 += $totalFlete;
+                                    } else {
+                                        $fletePenalProv1 += $totalFlete;
+                                    }
+                                } elseif (in_array($departamentoNombre, $departamentosProvincia2)) {
+                                    $totalProvincia2 += $totalVenta;
+                                    if ($aprobado) {
+                                        $fleteAprobadoProv2 += $totalFlete;
+                                    } else {
+                                        $fletePenalProv2 += $totalFlete;
+                                    }
+                                } elseif (!in_array($departamentoNombre, $departamentosLocal)) {
+                                    $totalProvincia2 += $totalVenta;
+                                    if ($aprobado) {
+                                        $fleteAprobadoProv2 += $totalFlete;
+                                    } else {
+                                        $fletePenalProv2 += $totalFlete;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -346,8 +558,18 @@ class HistorialProgramacion extends Component
                 $sheet1->mergeCells('A'.$row.':Y'.$row);
                 $row++;
 
-                // Insertar la tabla después del incremento de $row
-                // Encabezados de la tabla
+                // Calcular los totales (igual que en la vista)
+                $totalGeneral = $totalLocal + $totalProvincia1 + $totalProvincia2;
+                $totalProvincial = $totalProvincia1 + $totalProvincia2;
+                // Totales de fletes
+                $totalFleteAprobado = $fleteAprobadoLocal + $fleteAprobadoProv1 + $fleteAprobadoProv2;
+                $totalFletePenal = $fletePenalLocal + $fletePenalProv1 + $fletePenalProv2;
+                $totalFleteGeneral = $totalFleteAprobado + $totalFletePenal;
+
+                $totalFleteAprobadoProv = $fleteAprobadoProv1 + $fleteAprobadoProv2;
+                $totalFletePenalProv = $fletePenalProv1 + $fletePenalProv2;
+                $totalFleteProv = $totalFleteAprobadoProv + $totalFletePenalProv;
+                // Insertar la tabla en el Excel
                 $sheet1->setCellValue('A'.$row, 'Zona de Despacho');
                 $sheet1->setCellValue('B'.$row, 'Valor Transportado (Soles sin IGV)');
                 $sheet1->setCellValue('C'.$row, 'Flete Aprobados (Soles)');
@@ -360,13 +582,13 @@ class HistorialProgramacion extends Component
                 $headerStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
 
                 $row++;
-                // Datos de la tabla
+                // Datos de la tabla con los valores calculados
                 $tableData = [
-                    ['Total', 816948.47, 21758.40, '', 21758.40],
-                    ['Local', 583328.10, 7825.13, '', 7825.13],
-                    ['Provincia 1', 105129.17, 5525.01, '', 5525.01],
-                    ['Provincia 2', 128491.20, 8408.26, '', 8408.26],
-                    ['Total Provincia', 233620.37, 13933.27, '', 13933.27]
+                    ['Total', $totalGeneral, $totalFleteAprobado, $totalFletePenal, $totalFleteGeneral],
+                    ['Local', $totalLocal, $fleteAprobadoLocal, $fletePenalLocal, ($fleteAprobadoLocal + $fletePenalLocal)],
+                    ['Provincia 1', $totalProvincia1, $fleteAprobadoProv1, $fletePenalProv1, ($fleteAprobadoProv1 + $fletePenalProv1)],
+                    ['Provincia 2', $totalProvincia2, $fleteAprobadoProv2, $fletePenalProv2, ($fleteAprobadoProv2 + $fletePenalProv2)],
+                    ['Total Provincia', $totalProvincial, $totalFleteAprobadoProv, $totalFletePenalProv, $totalFleteProv]
                 ];
 
                 foreach ($tableData as $data) {
@@ -379,6 +601,7 @@ class HistorialProgramacion extends Component
                     // Formato numérico para las columnas de valores
                     $sheet1->getStyle('B'.$row)->getNumberFormat()->setFormatCode('#,##0.00');
                     $sheet1->getStyle('C'.$row)->getNumberFormat()->setFormatCode('#,##0.00');
+                    $sheet1->getStyle('D'.$row)->getNumberFormat()->setFormatCode('#,##0.00');
                     $sheet1->getStyle('E'.$row)->getNumberFormat()->setFormatCode('#,##0.00');
 
                     // Bordes para las celdas
@@ -387,8 +610,7 @@ class HistorialProgramacion extends Component
 
                     $row++;
                 }
-
-// Espacio después de la tabla
+                // Espacio después de la tabla
                 $sheet1->setCellValue('A'.$row, "");
                 $row++;
                 /* --------------------------------------------------------------------------------- */

@@ -501,41 +501,15 @@
                                 </tr>
                             </x-slot>
                             <x-slot name="tbody">
-                                <tr>
-                                    <td>Total</td>
-                                    <td>816,948.47</td>
-                                    <td>21,758.40</td>
-                                    <td></td>
-                                    <td>21,758.40</td>
-                                </tr>
-                                <tr>
-                                    <td>Local</td>
-                                    <td>583,328.10</td>
-                                    <td>7,825.13</td>
-                                    <td></td>
-                                    <td>7,825.13</td>
-                                </tr>
-                                <tr>
-                                    <td>Provincia 1</td>
-                                    <td>105,129.17</td>
-                                    <td>5,525.01</td>
-                                    <td></td>
-                                    <td>5,525.01</td>
-                                </tr>
-                                <tr>
-                                    <td>Provincia 2</td>
-                                    <td>128,491.20</td>
-                                    <td>8,408.26</td>
-                                    <td></td>
-                                    <td>8,408.26</td>
-                                </tr>
-                                <tr>
-                                    <td>Total Provincia</td>
-                                    <td>233,620.37</td>
-                                    <td>13,933.27</td>
-                                    <td></td>
-                                    <td>13,933.27</td>
-                                </tr>
+                                @foreach($zonaDespachoData as $data)
+                                    <tr>
+                                        <td>{{ $data['zona'] }}</td>
+                                        <td>{{ $data['valor_transportado'] }}</td>
+                                        <td>{{ $data['flete_aprobado'] }}</td>
+                                        <td>{{ $data['flete_penal'] }}</td>
+                                        <td>{{ $data['total_flete'] }}</td>
+                                    </tr>
+                                @endforeach
                             </x-slot>
                         </x-table-general>
                     </div>
