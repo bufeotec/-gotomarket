@@ -26,31 +26,27 @@ class Reporteliqapro extends Component
     }
     public $desde;
     public $hasta;
-    public $fecha_programacion;
-    public $fecha_aprobacion;
+    public $ddesde;
+    public $dhasta;
+    public $filterByProgramacion = false;
     public $filteredData = [];
     public $localData = [];
     public $provincialData = [];
     public $searchdatos = false;
-
-//    public function mount(){
-//        $this->desde = date('Y-01-01');
-//        $this->hasta =  date('Y-m-d');
-//    }
-
     public function render(){
         return view('livewire.programacioncamiones.reporteliqapro');
     }
     public function buscar_datos() {
         $this->searchdatos = true;
 
-        // Validar que al menos uno de los campos tenga una fecha
-        if (empty($this->fecha_programacion) && empty($this->fecha_aprobacion) && empty($this->desde) && empty($this->hasta)) {
+        // Validación de campos vacíos
+        if (empty($this->desde) && empty($this->hasta) && empty($this->ddesde) && empty($this->dhasta)) {
             $this->localData = [];
             $this->provincialData = [];
             $this->filteredData = [];
             return;
         }
+
         $query = DB::table('guias as g')
             ->join('despacho_ventas as dv', 'g.id_guia', '=', 'dv.id_guia')
             ->join('despachos as d', 'dv.id_despacho', '=', 'd.id_despacho')
@@ -62,10 +58,11 @@ class Reporteliqapro extends Component
             ->select(
                 'p.programacion_fecha as fec_despacho',
                 'd.despacho_fecha_aprobacion as fec_aprob',
-                'dis.distrito_nombre as local',
+                'dis.distrito_nombre as distrito',
                 'prov.provincia_nombre as provincia',
                 'dep.departamento_nombre as departamento',
                 't.transportista_nom_comercial as proveedor',
+                'd.id_tipo_servicios as tiposervicio',
                 't.id_transportistas',
                 'g.guia_nro_doc_ref as fact',
                 'g.guia_importe_total as sin_igv',
@@ -73,26 +70,31 @@ class Reporteliqapro extends Component
             )
             ->where('d.despacho_estado_aprobacion', [1, 2, 3]);
 
-        // Aplicar filtros de fecha
-        if ($this->desde) {
-            $query->whereDate('g.created_at', '>=', $this->desde);
+        if ($this->filterByProgramacion) {
+            if (!empty($this->desde)) {
+                $query->whereDate('p.programacion_fecha', '>=', $this->desde);
+            }
+            if (!empty($this->hasta)) {
+                $query->whereDate('p.programacion_fecha', '<=', $this->hasta);
+            }
+        } else {
+            if (!empty($this->ddesde)) {
+                $query->whereDate('d.despacho_fecha_aprobacion', '>=', $this->ddesde);
+            }
+            if (!empty($this->dhasta)) {
+                $query->whereDate('d.despacho_fecha_aprobacion', '<=', $this->dhasta);
+            }
         }
-        if ($this->hasta) {
-            $query->whereDate('g.created_at', '<=', $this->hasta);
-        }
-        if ($this->fecha_programacion) {
-            $query->whereDate('p.programacion_fecha', $this->fecha_programacion);
-        }
-        if ($this->fecha_aprobacion) {
-            $query->whereDate('d.despacho_fecha_aprobacion', $this->fecha_aprobacion);
-        }
+
         $datos = $query->get();
+
         if ($datos->isEmpty()) {
             $this->localData = collect();
             $this->provincialData = collect();
             $this->filteredData = collect();
             return;
         }
+
         $totalesProveedor = $datos->groupBy('id_transportistas')->map(function($group) {
             return $group->sum('con_igv');
         });
@@ -102,11 +104,16 @@ class Reporteliqapro extends Component
             return $item;
         });
 
-        $this->localData = $datosConTotales->where('departamento', 'LIMA');
-        $this->provincialData = $datosConTotales->where('departamento', '!=', 'LIMA');
+        $this->localData = $datosConTotales->where('tiposervicio', 1);
+        $this->provincialData = $datosConTotales->where('tiposervicio', 2);
         $this->filteredData = $datosConTotales;
     }
+    public function setFilter($value) {
+        $this->filterByProgramacion = $value;
 
+        $this->desde = null;
+        $this->hasta = null;
+    }
     public function exportarDespachosExcel()
     {
         try {
@@ -127,29 +134,32 @@ class Reporteliqapro extends Component
                 ->select(
                     'p.programacion_fecha as fec_despacho',
                     'd.despacho_fecha_aprobacion as fec_aprob',
-                    'dis.distrito_nombre as local',
+                    'dis.distrito_nombre as distrito',
                     'prov.provincia_nombre as provincia',
                     'dep.departamento_nombre as departamento',
                     't.transportista_nom_comercial as proveedor',
+                    'd.id_tipo_servicios as tiposervicio', // Campo para determinar si es local o provincial
                     't.id_transportistas',
                     'g.guia_nro_doc_ref as fact',
                     'g.guia_importe_total as sin_igv',
                     DB::raw('g.guia_importe_total * 1.18 as con_igv')
                 )
-                ->where('d.despacho_estado_aprobacion', 1);
-
-            if ($this->desde) {
-                $query->whereDate('g.created_at', '>=', $this->desde);
-            }
-            if ($this->hasta) {
-                $query->whereDate('g.created_at', '<=', $this->hasta);
-            }
-            if ($this->fecha_programacion) {
-                $query->whereDate('p.programacion_fecha', $this->fecha_programacion);
-            }
-            if ($this->fecha_aprobacion) {
-                $query->whereDate('d.despacho_fecha_aprobacion', $this->fecha_aprobacion);
-            }
+                ->where('d.despacho_estado_aprobacion', [1, 2, 3]);
+                if ($this->filterByProgramacion) {
+                    if (!empty($this->desde)) {
+                        $query->whereDate('p.programacion_fecha', '>=', $this->desde);
+                    }
+                    if (!empty($this->hasta)) {
+                        $query->whereDate('p.programacion_fecha', '<=', $this->hasta);
+                    }
+                } else {
+                    if (!empty($this->ddesde)) {
+                        $query->whereDate('d.despacho_fecha_aprobacion', '>=', $this->ddesde);
+                    }
+                    if (!empty($this->dhasta)) {
+                        $query->whereDate('d.despacho_fecha_aprobacion', '<=', $this->dhasta);
+                    }
+                }
 
             $filteredData = $query->get();
 
@@ -158,11 +168,11 @@ class Reporteliqapro extends Component
                 return;
             }
 
-            // Separar datos en Local (Lima) y Provincial (no Lima)
-            $localData = $filteredData->where('departamento', 'LIMA');
-            $provincialData = $filteredData->where('departamento', '!=', 'LIMA');
+            // Separar datos por tipo de servicio (1=Local, 2=Provincial)
+            $localData = $filteredData->where('tiposervicio', 1);
+            $provincialData = $filteredData->where('tiposervicio', 2);
 
-            // Calcular totales como en la vista
+            // Calcular totales
             $totalLocalConIgv = $localData->sum('con_igv');
             $totalLocalSinIgv = $localData->sum('sin_igv');
             $totalProvincialConIgv = $provincialData->sum('con_igv');
@@ -216,11 +226,11 @@ class Reporteliqapro extends Component
                         $sheet->setCellValue('E'.$row, $guia->fact ?? '---');
 
                         // Formato numérico idéntico al de la vista
-                        $sheet->setCellValue('F'.$row, 'S/ ' . number_format($guia->sin_igv, 2, '.', ''));
-                        $sheet->setCellValue('G'.$row, 'S/ ' . number_format($guia->con_igv, 2, '.', ''));
+                        $sheet->setCellValue('F'.$row, 'S/ ' . number_format($guia->sin_igv, 2, '.', ','));
+                        $sheet->setCellValue('G'.$row, 'S/ ' . number_format($guia->con_igv, 2, '.', ','));
 
                         if ($firstRow) {
-                            $sheet->setCellValue('H'.$row, 'S/ ' . number_format($totalProveedorConIgv, 2, '.', ''));
+                            $sheet->setCellValue('H'.$row, 'S/ ' . number_format($totalProveedorConIgv, 2, '.', ','));
                             $firstRow = false;
                         }
 
@@ -233,9 +243,9 @@ class Reporteliqapro extends Component
                 // Total General Local (igual que en la vista)
                 $sheet->setCellValue('A'.$row, 'TOTAL GENERAL');
                 $sheet->mergeCells('A'.$row.':E'.$row);
-                $sheet->setCellValue('F'.$row, 'S/ ' . number_format($totalLocalSinIgv, 2, '.', ''));
-                $sheet->setCellValue('G'.$row, 'S/ ' . number_format($totalLocalConIgv, 2, '.', ''));
-                $sheet->setCellValue('H'.$row, 'S/ ' . number_format($totalLocalConIgv, 2, '.', ''));
+                $sheet->setCellValue('F'.$row, 'S/ ' . number_format($totalLocalSinIgv, 2, '.', ','));
+                $sheet->setCellValue('G'.$row, 'S/ ' . number_format($totalLocalConIgv, 2, '.', ','));
+                $sheet->setCellValue('H'.$row, 'S/ ' . number_format($totalLocalConIgv, 2, '.', ','));
 
                 // Estilo para el total general
                 $sheet->getStyle('A'.$row.':H'.$row)->applyFromArray([
@@ -307,11 +317,11 @@ class Reporteliqapro extends Component
                         $sheet->setCellValue('N'.$rowProvincial, $guia->fact ?? '---');
 
                         // Formato numérico idéntico al de la vista
-                        $sheet->setCellValue('O'.$rowProvincial, 'S/ ' . number_format($guia->sin_igv, 2, '.', ''));
-                        $sheet->setCellValue('P'.$rowProvincial, 'S/ ' . number_format($guia->con_igv, 2, '.', ''));
+                        $sheet->setCellValue('O'.$rowProvincial, 'S/ ' . number_format($guia->sin_igv, 2, '.', ','));
+                        $sheet->setCellValue('P'.$rowProvincial, 'S/ ' . number_format($guia->con_igv, 2, '.', ','));
 
                         if ($firstRow) {
-                            $sheet->setCellValue('Q'.$rowProvincial, 'S/ ' . number_format($totalProveedorConIgv, 2, '.', ''));
+                            $sheet->setCellValue('Q'.$rowProvincial, 'S/ ' . number_format($totalProveedorConIgv, 2, '.', ','));
                             $firstRow = false;
                         }
 
@@ -326,9 +336,9 @@ class Reporteliqapro extends Component
                 // Total General Provincial (igual que en la vista)
                 $sheet->setCellValue('J'.$rowProvincial, 'TOTAL GENERAL');
                 $sheet->mergeCells('J'.$rowProvincial.':N'.$rowProvincial);
-                $sheet->setCellValue('O'.$rowProvincial, 'S/ ' . number_format($totalProvincialSinIgv, 2, '.', ''));
-                $sheet->setCellValue('P'.$rowProvincial, 'S/ ' . number_format($totalProvincialConIgv, 2, '.', ''));
-                $sheet->setCellValue('Q'.$rowProvincial, 'S/ ' . number_format($totalProvincialConIgv, 2, '.', ''));
+                $sheet->setCellValue('O'.$rowProvincial, 'S/ ' . number_format($totalProvincialSinIgv, 2, '.', ','));
+                $sheet->setCellValue('P'.$rowProvincial, 'S/ ' . number_format($totalProvincialConIgv, 2, '.', ','));
+                $sheet->setCellValue('Q'.$rowProvincial, 'S/ ' . number_format($totalProvincialConIgv, 2, '.', ','));
 
                 // Estilo para el total general
                 $sheet->getStyle('J'.$rowProvincial.':Q'.$rowProvincial)->applyFromArray([
