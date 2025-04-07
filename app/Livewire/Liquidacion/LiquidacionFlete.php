@@ -201,32 +201,32 @@ class LiquidacionFlete extends Component
         $this->liquidacion_correlativo = '';
         $this->liquidacion_ruta_comprobante = '';
     }
-    public function seleccion_trans_edit(){
+    public function seleccion_trans_edit() {
         $value = $this->id_transportistas;
         if ($value) {
+            $id_despachos_editar = [];
+            $detalleEdi = DB::table('liquidacion_detalles')->where('id_liquidacion', '=', $this->id_liquidacion_edit)->get();
+            foreach ($detalleEdi as $item) {
+                $id_despachos_editar[] = $item->id_despacho;
+            }
 
-        $id_despachos_editar = [];
-        $detalleEdi = DB::table('liquidacion_detalles')->where('id_liquidacion', '=', $this->id_liquidacion_edit)->get();
-        foreach ($detalleEdi as $item) {
-            $id_despachos_editar[] = $item->id_despacho;
-        }
+            $queryConsult = DB::table('despachos as d')
+                ->join('programaciones as pr', 'pr.id_programacion', '=', 'd.id_programacion')
+                ->join('transportistas as t', 'd.id_transportistas', '=', 't.id_transportistas')
+                ->join('tipo_servicios as ts', 'd.id_tipo_servicios', '=', 'ts.id_tipo_servicios')
+                ->where(function ($query) use ($value) {
+                    $query->where('d.id_transportistas', $value)
+                        ->where('d.despacho_estado', 1)
+                        ->where('d.despacho_estado_aprobacion', '=', 3);
+                })
+                ->where(function ($query) use ($id_despachos_editar) {
+                    $query->where('d.despacho_liquidado', '=', 0)
+                        ->orWhere(function ($subQuery) use ($id_despachos_editar) {
+                            $subQuery->where('d.despacho_liquidado', '=', 1)
+                                ->whereIn('d.id_despacho', $id_despachos_editar);
+                        });
+                });
 
-        $queryConsult = DB::table('despachos as d')
-            ->join('programaciones as pr', 'pr.id_programacion', '=', 'd.id_programacion')
-            ->join('transportistas as t', 'd.id_transportistas', '=', 't.id_transportistas')
-            ->join('tipo_servicios as ts', 'd.id_tipo_servicios', '=', 'ts.id_tipo_servicios')
-            ->where(function ($query) use ($value) {
-                $query->where('d.id_transportistas', $value)
-                    ->where('d.despacho_estado', 1)
-                    ->where('d.despacho_estado_aprobacion', '=', 3);
-            })
-            ->where(function ($query) use ($id_despachos_editar) {
-                $query->where('d.despacho_liquidado', '=', 0)
-                    ->orWhere(function ($subQuery) use ($id_despachos_editar) {
-                        $subQuery->where('d.despacho_liquidado', '=', 1)
-                            ->whereIn('d.id_despacho', $id_despachos_editar);
-                    });
-            });
             if ($this->date_desde && $this->date_hasta) {
                 $queryConsult->whereBetween('pr.programacion_fecha', [$this->date_desde, $this->date_hasta]);
             }
@@ -237,23 +237,41 @@ class LiquidacionFlete extends Component
 
             $this->despachos = $queryConsult;
 
-
             foreach ($this->despachos as $des) {
+                // Obtener las guías asociadas al despacho
                 $des->comprobantes = DB::table('despacho_ventas as dv')
-                    ->where('id_despacho', '=', $des->id_despacho)
+                    ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
+                    ->where('dv.id_despacho', '=', $des->id_despacho)
+                    ->select('dv.*', 'g.*', 'g.guia_importe_total', 'g.guia_estado_aprobacion')
                     ->get();
+
                 $totalVenta = 0;
                 $totalVentaRestar = 0;
                 $totalPesoRestar = 0;
+
                 foreach ($des->comprobantes as $com) {
-                    $precio = floatval($com->despacho_venta_cfimporte);
-                    $pesoMenos = $com->despacho_venta_total_kg;
+                    // Obtener detalles de la guía para calcular el peso
+                    $detalles = DB::table('guias_detalles')
+                        ->where('id_guia', $com->id_guia)
+                        ->get();
+
+                    // Calcular el peso total en kilogramos
+                    $pesoTotalGramos = $detalles->sum(function ($detalle) {
+                        return $detalle->guia_det_peso_gramo * $detalle->guia_det_cantidad;
+                    });
+                    $pesoTotalKilos = $pesoTotalGramos / 1000;
+
+                    // Usar guia_importe_total en lugar de despacho_venta_cfimporte
+                    $precio = floatval($com->guia_importe_total);
                     $totalVenta += $precio;
-                    if ($com->despacho_detalle_estado_entrega == 3){
+
+                    // Verificar si el estado de aprobación es 11 (equivalente a despacho_detalle_estado_entrega == 3)
+                    if ($com->guia_estado_aprobacion == 11) {
                         $totalVentaRestar += $precio;
-                        $totalPesoRestar += $pesoMenos;
+                        $totalPesoRestar += $pesoTotalKilos;
                     }
                 }
+
                 $des->totalVentaDespacho = $totalVenta;
                 $des->totalVentaNoEntregado = $totalVentaRestar;
                 $des->totalPesoNoEntregado = $totalPesoRestar;

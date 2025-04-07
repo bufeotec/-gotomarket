@@ -268,4 +268,47 @@ class ProgramacioncamionController extends Controller
         }
     }
 
+    public function reporte_tiempos(){
+        try {
+            return view('programacion_camiones.reporte_tiempos');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
+
+    public function reporte_indicadores_valor(){
+        try {
+            return view('programacion_camiones.reporte_indicadores_valor');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
+    public function reporte_indicadores_peso(){
+        try {
+            return view('programacion_camiones.reporte_indicadores_peso');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
+
+    public function efectividad_entrega_pedidos(){
+        try {
+            return view('programacion_camiones.efectividad_entrega_pedidos');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
+
+    public function reporte_estado_documento(){
+        try {
+            return view('programacion_camiones.reporte_estado_documento');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
 }

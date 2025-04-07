@@ -436,13 +436,20 @@
                                             <td>{{ date('d-m-Y', strtotime($despacho->programacion_fecha)) }}</td>
                                             <td>
                                                 @php
-                                                    $guiasComprobante = \Illuminate\Support\Facades\DB::table('despacho_ventas')->where('id_despacho', '=', $despacho->id_despacho)->get();
+                                                    // Obtenemos las guías asociadas al despacho, uniendo con la tabla guias
+                                                    $guiasComprobante = \Illuminate\Support\Facades\DB::table('despacho_ventas as dv')
+                                                        ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
+                                                        ->where('dv.id_despacho', '=', $despacho->id_despacho)
+                                                        ->select('g.guia_nro_doc', 'dv.id_guia')
+                                                        ->get();
+
                                                     $totalGuias = count($guiasComprobante); // Contamos las guías
                                                 @endphp
+
                                                 @foreach($guiasComprobante as $indexGuias => $g)
                                                     @if($indexGuias <= 2)
                                                         <a wire:click="listar_guias_despachos({{ $despacho->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalDetalleGuias" class="cursoPointer text-primary">
-                                                            {{ $general->formatearCodigo($g->despacho_venta_guia) }}
+                                                            {{ $general->formatearCodigo($g->guia_nro_doc) }}
                                                         </a>
                                                         @if($indexGuias < 2 && $indexGuias < $totalGuias - 1)
                                                             , <!-- Mostrar la coma solo si no es el último elemento que se va a mostrar -->
@@ -454,14 +461,20 @@
                                             </td>
                                             <td>
                                                 @php
+                                                    // Calcular el total ajustado restando los no entregados (estado aprobación 11)
                                                     $totalVentaDespaDespacho = $despacho->totalVentaDespacho;
                                                     if ($despacho->totalVentaNoEntregado) {
                                                         $totalVentaDespaDespacho = $despacho->totalVentaDespacho - $despacho->totalVentaNoEntregado;
                                                     }
                                                 @endphp
+
+                                                {{-- Mostrar el total original (suma de todos los guia_importe_total) --}}
                                                 <span class="d-block">S/ {{ $general->formatoDecimal($despacho->totalVentaDespacho) }}</span>
+
+                                                {{-- Mostrar el monto no entregado (guías con estado aprobación 11) --}}
                                                 @if($despacho->totalVentaNoEntregado)
                                                     <span class="d-block text-danger">S/ -{{ $general->formatoDecimal($despacho->totalVentaNoEntregado) }}</span>
+                                                    {{-- Mostrar el total neto (total - no entregados) --}}
                                                     <b class="colorBlackComprobantes">S/ {{ $general->formatoDecimal($totalVentaDespaDespacho) }}</b>
                                                 @endif
                                             </td>

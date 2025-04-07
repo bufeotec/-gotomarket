@@ -47,7 +47,7 @@
                         </div>
                         <div class="card-body">
                             <div class="d-flex justify-content-end">
-                                <a href="{{route('Programacioncamion.reporte_estados_factura')}}" class="btn btn-success">Ingresar</a>
+                                <a href="{{route('Programacioncamion.reporte_estado_documento')}}" class="btn btn-success">Ingresar</a>
                             </div>
                         </div>
                     </div>
@@ -60,7 +60,7 @@
                 </div>
                 <div class="card-body">
                     <div class="d-flex justify-content-end">
-                        <a href="{{route('Programacioncamion.reporte_estados_factura')}}" class="btn btn-success">Ingresar</a>
+                        <a href="{{route('Programacioncamion.reporte_tiempos')}}" class="btn btn-success">Ingresar</a>
                     </div>
                 </div>
             </div>
@@ -73,7 +73,7 @@
                 </div>
                 <div class="card-body">
                     <div class="d-flex justify-content-end">
-                        <a href="{{route('Programacioncamion.reporte_estados_factura')}}" class="btn btn-success">Ingresar</a>
+                        <a href="{{route('Programacioncamion.efectividad_entrega_pedidos')}}" class="btn btn-success">Ingresar</a>
                     </div>
                 </div>
             </div>
@@ -86,7 +86,7 @@
                 </div>
                 <div class="card-body">
                     <div class="d-flex justify-content-end">
-                        <a href="{{route('Programacioncamion.reporte_estados_factura')}}" class="btn btn-success">Ingresar</a>
+                        <a href="{{route('Programacioncamion.reporte_indicadores_valor')}}" class="btn btn-success">Ingresar</a>
                     </div>
                 </div>
             </div>
@@ -99,7 +99,7 @@
                 </div>
                 <div class="card-body">
                     <div class="d-flex justify-content-end">
-                        <a href="{{route('Programacioncamion.reporte_estados_factura')}}" class="btn btn-success">Ingresar</a>
+                        <a href="{{route('Programacioncamion.reporte_indicadores_peso')}}" class="btn btn-success">Ingresar</a>
                     </div>
                 </div>
             </div>
