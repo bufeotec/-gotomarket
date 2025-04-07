@@ -166,7 +166,7 @@
                                                             <td>{{ $ta->guia_nro_doc }}</td>
                                                             <td>{{ $ta->guia_almacen_origen }}</td>
                                                             <td>{{ $ta->guia_tipo_doc }}</td>
-                                                            <td>{{ $ta->guia_fecha_emision ? $general->obtenerNombreFecha($ta->guia_fecha_emision, 'DateTime', 'DateTime') : '-' }}</td>
+                                                            <td>{{ $ta->guia_fecha_emision ? $general->obtenerNombreFecha($ta->guia_fecha_emision, 'DateTime', 'Date') : '-' }}</td>
                                                             <td>{{ $ta->guia_tipo_movimiento }}</td>
                                                             <td>{{ $ta->guia_nro_doc_ref }}</td>
                                                             <td>{{ $ta->guia_glosa }}</td>
@@ -399,7 +399,7 @@
                             @foreach($guia_detalle as $detalle)
                                 <tr>
                                     <td>{{ $detalle->guia_det_almacen_salida ?? '-' }}</td>
-                                    <td>{{ $detalle->guia_det_fecha_emision ? $general->obtenerNombreFecha($detalle->guia_det_fecha_emision, 'DateTime', 'DateTime') : '-' }}</td>
+                                    <td>{{ $detalle->guia_det_fecha_emision ? $general->obtenerNombreFecha($detalle->guia_det_fecha_emision, 'DateTime', 'Date') : '-' }}</td>
                                     <td>{{ $detalle->guia_det_estado ?? '-'}}</td>
                                     <td>{{ $detalle->guia_det_tipo_documento ?? '-' }}</td>
                                     <td>{{ $detalle->guia_det_nro_documento ?? '-'}}</td>
