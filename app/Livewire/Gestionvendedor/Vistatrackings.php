@@ -158,12 +158,12 @@ class Vistatrackings extends Component
         $this->resetMensajes();
 
         // Mensaje de etapa 0 (Fecha de Emisión)
-        $fechaEmision = $this->general->obtenerNombreFecha($preProg->guia_fecha_emision, 'DateTime', 'DateTime');
+        $fechaEmision = $this->general->obtenerNombreFecha($preProg->guia_fecha_emision, 'DateTime', 'Date');
         $this->mensajeEtapa0 = $fechaEmision . '<br>' . 'Fecha de emisión de la guía.';
 
         // Procesar historial
         foreach ($historialGuia as $registro) {
-            $fechaHora = $this->general->obtenerNombreFecha($registro->historial_guia_fecha_hora, 'DateTime', 'DateTime');
+            $fechaHora = $this->general->obtenerNombreFecha($registro->historial_guia_fecha_hora, 'DateTime', 'Date');
             $estado = $registro->historial_guia_estado_aprobacion;
 
             if ($estado == 1) {
