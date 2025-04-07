@@ -34,6 +34,9 @@
                 <button class="btn btn-success btn-sm text-white mt-4" wire:click="generar_excel_entrega_pedidos" wire:loading.attr="disabled"><i class="fa-solid fa-file-excel"></i> Exportar</button>
             </div>
         @endif
+        <div class="col-lg-12 col-md-12 col-sm-12">
+            <div class="loader mt-2" wire:loading wire:target="buscar_entrega_pedido"></div>
+        </div>
     </div>
 
     {{--    RESULTADO--}}
@@ -177,41 +180,76 @@
             }
 
             // Verificar y preparar datos
-            const meses = Array.isArray(datosGrafico.meses) ? datosGrafico.meses : [];
+            const mesesDatos = Array.isArray(datosGrafico.meses) ? datosGrafico.meses : [];
             const totalDespachados = Array.isArray(datosGrafico.total_despachados) ? datosGrafico.total_despachados : [];
             const enviosSinDevolucion = Array.isArray(datosGrafico.envios_sin_devolucion) ? datosGrafico.envios_sin_devolucion : [];
             const porcentajeEfectividad = Array.isArray(datosGrafico.porcentaje_efectividad) ? datosGrafico.porcentaje_efectividad : [];
 
+            // Generar todos los meses del año hasta el mes actual
+            const mesesEspanol = [
+                'ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN',
+                'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'
+            ];
+
+            const añoActual = new Date().getFullYear();
+            const mesActual = new Date().getMonth(); // 0-11
+
+            let mesesCompletos = [];
+            let dataTotalDespachados = [];
+            let dataEnviosSinDevolucion = [];
+            let dataPorcentajeEfectividad = [];
+
+            // Generar array de todos los meses desde enero hasta el mes actual
+            for (let i = 0; i <= mesActual; i++) {
+                const etiquetaMes = mesesEspanol[i] + ' ' + añoActual;
+                mesesCompletos.push(etiquetaMes);
+
+                // Buscar si hay datos para este mes
+                const indice = mesesDatos.findIndex(m => m === etiquetaMes);
+
+                if (indice !== -1) {
+                    // Hay datos para este mes
+                    dataTotalDespachados.push(totalDespachados[indice]);
+                    dataEnviosSinDevolucion.push(enviosSinDevolucion[indice]);
+                    dataPorcentajeEfectividad.push(porcentajeEfectividad[indice]);
+                } else {
+                    // No hay datos para este mes
+                    dataTotalDespachados.push(0);
+                    dataEnviosSinDevolucion.push(0);
+                    dataPorcentajeEfectividad.push(0);
+                }
+            }
+
             console.log('Datos procesados para gráfico de despachos:', {
-                meses,
-                totalDespachados,
-                enviosSinDevolucion,
-                porcentajeEfectividad
+                mesesCompletos,
+                dataTotalDespachados,
+                dataEnviosSinDevolucion,
+                dataPorcentajeEfectividad
             });
 
             // Crear nuevo gráfico
             graficoEfectividadDespachos = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: meses,
+                    labels: mesesCompletos,
                     datasets: [
                         {
                             label: 'Pedidos Entregados',
-                            data: totalDespachados,
+                            data: dataTotalDespachados,
                             backgroundColor: 'rgba(54, 162, 235, 0.7)',
                             borderColor: 'rgba(54, 162, 235, 1)',
                             borderWidth: 1
                         },
                         {
                             label: 'Entregado sin Devolución',
-                            data: enviosSinDevolucion,
+                            data: dataEnviosSinDevolucion,
                             backgroundColor: 'rgba(255, 159, 64, 0.7)',
                             borderColor: 'rgba(255, 159, 64, 1)',
                             borderWidth: 1
                         },
                         {
                             label: '% Entregas sin Devolución',
-                            data: porcentajeEfectividad,
+                            data: dataPorcentajeEfectividad,
                             type: 'line',
                             borderColor: 'rgba(169, 169, 169, 1)',
                             borderWidth: 2,
@@ -221,7 +259,7 @@
                         },
                         {
                             label: '% Obj Entrega sin Dev.',
-                            data: Array(meses.length).fill(95),
+                            data: Array(mesesCompletos.length).fill(95),
                             type: 'line',
                             borderColor: 'rgba(255, 204, 0, 1)',
                             borderWidth: 1,
@@ -268,41 +306,76 @@
             }
 
             // Verificar y preparar datos
-            const meses = Array.isArray(datosGrafico.meses) ? datosGrafico.meses : [];
+            const mesesDatos = Array.isArray(datosGrafico.meses) ? datosGrafico.meses : [];
             const montoTotalDespachados = Array.isArray(datosGrafico.monto_total_despachados) ? datosGrafico.monto_total_despachados : [];
             const montoSinDevolucion = Array.isArray(datosGrafico.monto_sin_devolucion) ? datosGrafico.monto_sin_devolucion : [];
             const porcentajeEfectividadValor = Array.isArray(datosGrafico.porcentaje_efectividad_valor) ? datosGrafico.porcentaje_efectividad_valor : [];
 
+            // Generar todos los meses del año hasta el mes actual
+            const mesesEspanol = [
+                'ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN',
+                'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'
+            ];
+
+            const añoActual = new Date().getFullYear();
+            const mesActual = new Date().getMonth(); // 0-11
+
+            let mesesCompletos = [];
+            let dataMontoTotalDespachados = [];
+            let dataMontoSinDevolucion = [];
+            let dataPorcentajeEfectividadValor = [];
+
+            // Generar array de todos los meses desde enero hasta el mes actual
+            for (let i = 0; i <= mesActual; i++) {
+                const etiquetaMes = mesesEspanol[i] + ' ' + añoActual;
+                mesesCompletos.push(etiquetaMes);
+
+                // Buscar si hay datos para este mes
+                const indice = mesesDatos.findIndex(m => m === etiquetaMes);
+
+                if (indice !== -1) {
+                    // Hay datos para este mes
+                    dataMontoTotalDespachados.push(montoTotalDespachados[indice]);
+                    dataMontoSinDevolucion.push(montoSinDevolucion[indice]);
+                    dataPorcentajeEfectividadValor.push(porcentajeEfectividadValor[indice]);
+                } else {
+                    // No hay datos para este mes
+                    dataMontoTotalDespachados.push(0);
+                    dataMontoSinDevolucion.push(0);
+                    dataPorcentajeEfectividadValor.push(0);
+                }
+            }
+
             console.log('Datos procesados para gráfico de valor:', {
-                meses,
-                montoTotalDespachados,
-                montoSinDevolucion,
-                porcentajeEfectividadValor
+                mesesCompletos,
+                dataMontoTotalDespachados,
+                dataMontoSinDevolucion,
+                dataPorcentajeEfectividadValor
             });
 
             // Crear nuevo gráfico
             graficoEfectividadValor = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: meses,
+                    labels: mesesCompletos,
                     datasets: [
                         {
                             label: 'Monto Total Despachado',
-                            data: montoTotalDespachados,
+                            data: dataMontoTotalDespachados,
                             backgroundColor: 'rgba(54, 162, 235, 0.7)',
                             borderColor: 'rgba(54, 162, 235, 1)',
                             borderWidth: 1
                         },
                         {
                             label: 'Valor sin Devolución',
-                            data: montoSinDevolucion,
+                            data: dataMontoSinDevolucion,
                             backgroundColor: 'rgba(255, 159, 64, 0.7)',
                             borderColor: 'rgba(255, 159, 64, 1)',
                             borderWidth: 1
                         },
                         {
                             label: '% Efectividad Valor',
-                            data: porcentajeEfectividadValor,
+                            data: dataPorcentajeEfectividadValor,
                             type: 'line',
                             borderColor: 'rgba(169, 169, 169, 1)',
                             borderWidth: 2,
@@ -312,7 +385,7 @@
                         },
                         {
                             label: '% Obj Entrega sin Dev.',
-                            data: Array(meses.length).fill(95),
+                            data: Array(mesesCompletos.length).fill(95),
                             type: 'line',
                             borderColor: 'rgba(255, 204, 0, 1)',
                             borderWidth: 1,

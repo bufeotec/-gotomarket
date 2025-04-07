@@ -214,7 +214,7 @@
                                                 </td>
                                                 <td>
                                                     <span class="d-block tamanhoTablaComprobantes">
-                                                        {{ $factura->guia_fecha_emision ? $me->obtenerNombreFecha($factura->guia_fecha_emision, 'DateTime', 'DateTime') : '-' }}
+                                                        {{ $factura->guia_fecha_emision ? $me->obtenerNombreFecha($factura->guia_fecha_emision, 'DateTime', 'Date') : '-' }}
                                                     </span>
                                                 </td>
                                                 <td>

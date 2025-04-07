@@ -476,6 +476,10 @@
                                 <th>Capacidad mínima</th>
                                 <th>Capacidad máxima</th>
                                 <th>Monto de la tarifa sin IGV</th>
+                                @if($tarifario->contains('id_tipo_servicio', 2))
+                                    <th>Departamento - Provincia</th>
+                                @endif
+                                <th>Estado aprobación</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
@@ -507,12 +511,31 @@
                                                 {{ $ta->id_tipo_servicio == 1 ? '/ VIAJE' : ($ta->id_tipo_servicio == 2 ? '/ kg' : '') }}
                                             </small>
                                         </td>
+                                        @if($ta->id_tipo_servicios == 2)
+                                            <td>
+                                                @if($ta->id_tipo_servicios == 2)
+                                                    @php
+                                                        $departamento = \Illuminate\Support\Facades\DB::table('departamentos')
+                                                        ->where('id_departamento','=',$ta->id_departamento)->first();
+                                                        $provincia = \Illuminate\Support\Facades\DB::table('provincias')
+                                                        ->where('id_provincia','=',$ta->id_provincia)->first();
+                                                    @endphp
+                                                    <div class="col-lg-5 col-md-3 col-sm-4 mb-3">
+                                                        <p>{{ $departamento ? $departamento->departamento_nombre : '' }} - {{ $provincia ? $provincia->provincia_nombre : '' }}</p>
+                                                    </div>
+                                                @endif
+                                            </td>
+                                        @endif
+                                        <td>
+                                            <span class="font-bold badge {{$ta->tarifa_estado_aprobacion == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
+                                                {{$ta->tarifa_estado_aprobacion == 1 ? 'Aprobado ' : 'Pendiente'}}
+                                            </span>
+                                        </td>
                                         <td>
                                             <span class="font-bold badge {{$ta->tarifa_estado == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
                                                 {{$ta->tarifa_estado == 1 ? 'Habilitado ' : 'Desabilitado'}}
                                             </span>
                                         </td>
-
                                         <td>
                                             @php
                                                 $rol = \Illuminate\Support\Facades\Auth::user()->roles->first();

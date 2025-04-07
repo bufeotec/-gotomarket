@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Livewire\Programacioncamiones;
+use App\Models\Guia;
+use App\Models\Serviciotransporte;
 use App\Models\Tarifario;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -31,6 +33,8 @@ class Mixto extends Component
     private $departamento;
     private $tarifario;
     private $general;
+    private $guia;
+    private $serviciotransporte;
 
     public function __construct()
     {
@@ -45,6 +49,8 @@ class Mixto extends Component
         $this->departamento = new Departamento();
         $this->tarifario = new Tarifario();
         $this->general = new General();
+        $this->guia = new Guia();
+        $this->serviciotransporte = new Serviciotransporte();
     }
 
     public $tipoServicioSeleccionado = 1;
@@ -88,9 +94,14 @@ class Mixto extends Component
     public $id_programacion_edit = '';
     public $id_despacho_edit = '';
     public $checkInput = '';
+    public $guias_estado_tres = [];
+    public $serv_transp = [];
+    public $guiainfo = [];
+    public $guia_detalle = [];
+    public $searchGuia = [];
+    public $selectedServTrns = [];
     /* ---------------------------------- */
-    public function mount($id = null)
-    {
+    public function mount($id = null){
         $this->id_transportistas = null;
         $this->selectedVehiculo = null;
         $this->showBotonListo = null;
@@ -111,8 +122,7 @@ class Mixto extends Component
 //        $this->buscar_facturas_clientes();
     }
 
-    public function render()
-    {
+    public function render(){
         $tipo_servicio_local_provincial = $this->tiposervicio->listar_tipo_servicio_local_provincial();
 //        $listar_transportistas = $this->transportista->listar_transportista_sin_id();
         $listar_departamento = $this->departamento->lista_departamento();
@@ -137,6 +147,45 @@ class Mixto extends Component
         }else{
             $listar_transportistasProvinciales = [];
         }
+
+        // Obtener las guías con estado 3
+        $guiasQuery = Guia::where('guia_estado_aprobacion', 3);
+
+        // Filtrar por nombre del cliente si searchGuia tiene valor
+        if (!empty($this->searchGuia)) {
+            $guiasQuery->where('guia_nombre_cliente', 'like', '%' . $this->searchGuia . '%')
+                ->orWhere('guia_nro_doc', 'like', '%' . $this->searchGuia)
+                ->orWhere('guia_nro_doc_ref', 'like', '%' . $this->searchGuia);
+        }
+
+        $guias = $guiasQuery->get();
+
+        // Calcular el peso y volumen total para cada guía
+        $this->guias_estado_tres = $guias->map(function ($guia) {
+            $detalles = DB::table('guias_detalles')
+                ->where('id_guia', $guia->id_guia)
+                ->get();
+
+            $pesoTotalGramos = $detalles->sum(function ($detalle) {
+                return $detalle->guia_det_peso_gramo * $detalle->guia_det_cantidad;
+            });
+
+            $pesoTotalKilos = $pesoTotalGramos / 1000;
+
+            $volumenTotal = $detalles->sum(function ($detalle) {
+                return $detalle->guia_det_volumen * $detalle->guia_det_cantidad;
+            });
+
+            $guia->peso_total = $pesoTotalKilos;
+            $guia->volumen_total = $volumenTotal;
+
+            return $guia;
+        });
+
+        $servTransp = Serviciotransporte::where('serv_transpt_estado_aprobacion', 0);
+
+        $servicio = $servTransp->get();
+        $this->serv_transp = $servicio;
 
         return view('livewire.programacioncamiones.mixto', compact('tipo_servicio_local_provincial', 'listar_transportistas', 'listar_transportistas', 'listar_departamento','listar_transportistasProvinciales'));
     }
@@ -540,63 +589,85 @@ class Mixto extends Component
         }
     }
 
-    public function seleccionarFactura($CFTD, $CFNUMSER, $CFNUMDOC){
-        // Validar que la factura no exista en el array selectedFacturas
-        $comprobanteExiste = collect($this->selectedFacturasLocal)->first(function ($factura) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
-            return $factura['CFTD'] === $CFTD
-                && $factura['CFNUMSER'] === $CFNUMSER
-                && $factura['CFNUMDOC'] === $CFNUMDOC;
-        });
+    public function seleccionarFactura($id_guia){
+        // Buscar la factura por su ID
+        $factura = Guia::find($id_guia);
 
-        if ($comprobanteExiste) {
-            // Mostrar un mensaje de error si la factura ya fue agregada
-            session()->flash('error', 'Este comprobante ya fue agregado.');
+        if (!$factura) {
+            session()->flash('error', 'Guía no encontrada.');
             return;
         }
 
-        // Buscar la factura en el array filteredFacturas
-        $factura = $this->filteredFacturasYClientes->first(function ($f) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
-            return $f->CFTD === $CFTD
-                && $f->CFNUMSER === $CFNUMSER
-                && $f->CFNUMDOC === $CFNUMDOC;
+        // Validar que la factura no esté ya en el array selectedFacturas
+        $comprobanteExiste = collect($this->selectedFacturasLocal)->first(function ($facturaSeleccionada) use ($factura) {
+            return $facturaSeleccionada['id_guia'] === $factura->id_guia;
         });
 
-        if ($factura->total_kg <= 0 || $factura->total_volumen <= 0){
-            session()->flash('error', 'El peso o el volumen deben ser mayores a 0.');
+        if ($comprobanteExiste) {
+            session()->flash('error', 'Esta guía ya fue agregada.');
+            return;
+        }
+
+        // Calcular el peso y volumen total para la guía seleccionada
+        $detalles = DB::table('guias_detalles')
+            ->where('id_guia', $factura->id_guia)
+            ->get();
+
+        // Calcular el peso total en kilogramos
+        $pesoTotalGramos = $detalles->sum(function ($detalle) {
+            return $detalle->guia_det_peso_gramo * $detalle->guia_det_cantidad;
+        });
+
+        // Convertir el peso total a kilogramos
+        $pesoTotalKilos = $pesoTotalGramos / 1000;
+
+        $volumenTotal = $detalles->sum(function ($detalle) {
+            return $detalle->guia_det_volumen * $detalle->guia_det_cantidad;
+        });
+
+        // Validar que el peso y volumen sean mayores a 0
+        if ($pesoTotalKilos <= 0 || $volumenTotal <= 0) {
+            session()->flash('error', 'El peso o el volumen deben ser mayores a 0. Verifique los detalles de la guía.');
             return;
         }
         // Agregar la factura seleccionada y actualizar el peso y volumen total
         $this->selectedFacturasLocal[] = [
-            'CFTD' => $CFTD, // tipo de comprobantes
-            'CFNUMSER' => $CFNUMSER, // serie del comprobante
-            'CFNUMDOC' => $CFNUMDOC, // numero del comprobante
-            'total_kg' => $factura->total_kg,
-            'total_volumen' => $factura->total_volumen,
-            'CNOMCLI' => $factura->CNOMCLI, // Nombre cliente
-            'CCODCLI' => $factura->CCODCLI, // Código del cliente
-            'CFIMPORTE' => $factura->CFIMPORTE, // importe
-            //'CFCODMON' => $factura->CFCODMON, // código de moneda
-            'guia' => $factura->CFTEXGUIA, // guia
-            'isChecked' => false,
-            'GREFECEMISION' => $factura->GREFECEMISION, // fecha de emision de la guía
-            'LLEGADADIRECCION' => $factura->LLEGADADIRECCION,// Dirección de destino
-            'LLEGADAUBIGEO' => $factura->LLEGADAUBIGEO,// Código del ubigeo
-            'DEPARTAMENTO' => $factura->DEPARTAMENTO,// Departamento
-            'PROVINCIA' => $factura->PROVINCIA,// Provincia
-            'DISTRITO' => $factura->DISTRITO,// Distrito
+            'id_guia' => $factura->id_guia,
+            'guia_almacen_origen' => $factura->guia_almacen_origen,
+            'guia_tipo_doc' => $factura->guia_tipo_doc,
+            'guia_nro_doc' => $factura->guia_nro_doc,
+            'guia_fecha_emision' => $factura->guia_fecha_emision,
+            'guia_tipo_movimiento' => $factura->guia_tipo_movimiento,
+            'guia_tipo_doc_ref' => $factura->guia_tipo_doc_ref,
+            'guia_nro_doc_ref' => $factura->guia_nro_doc_ref,
+            'guia_glosa' => $factura->guia_glosa,
+            'guia_fecha_proceso' => $factura->guia_fecha_proceso,
+            'guia_hora_proceso' => $factura->guia_hora_proceso,
+            'guia_usuario' => $factura->guia_usuario,
+            'guia_cod_cliente' => $factura->guia_cod_cliente,
+            'guia_ruc_cliente' => $factura->guia_ruc_cliente,
+            'guia_nombre_cliente' => $factura->guia_nombre_cliente,
+            'guia_forma_pago' => $factura->guia_forma_pago,
+            'guia_vendedor' => $factura->guia_vendedor,
+            'guia_moneda' => $factura->guia_moneda,
+            'guia_tipo_cambio' => $factura->guia_tipo_cambio,
+            'guia_estado' => $factura->guia_estado,
+            'guia_direc_entrega' => $factura->guia_direc_entrega,
+            'guia_nro_pedido' => $factura->guia_nro_pedido,
+            'guia_importe_total' => $factura->guia_importe_total,
+            'guia_departamento' => $factura->guia_departamento,
+            'guia_provincia' => $factura->guia_provincia,
+            'guia_destrito' => $factura->guia_destrito,
+            'peso_total' => $pesoTotalKilos,
+            'volumen_total' => $volumenTotal,
         ];
-        $this->pesoTotal += $factura->total_kg;
-        $this->volumenTotal += $factura->total_volumen;
-//        $importe = $this->general->formatoDecimal($factura->CFIMPORTE);
-//        $this->importeTotalVenta += floatval($importe);
-        $importe = $factura->CFIMPORTE;
-        $importe = floatval($importe);
+        $this->pesoTotal += $pesoTotalKilos;
+        $this->volumenTotal += $volumenTotal;
+
+        $importes = $factura->guia_importe_total;
+        $importe = floatval($importes);
         $this->importeTotalVenta += $importe;
 
-        // Eliminar la factura de la lista de facturas filtradas
-        $this->filteredFacturasYClientes = $this->filteredFacturasYClientes->filter(function ($f) use ($CFNUMDOC) {
-            return $f->CFNUMDOC !== $CFNUMDOC;
-        });
         // Actualizar lista de vehículos sugeridos
         $this->listar_vehiculos_lo();
         $this->validarVehiculoSeleccionado();
@@ -619,47 +690,43 @@ class Mixto extends Component
     }
 
 
-    public function actualizarFactura($CFTD, $CFNUMSER, $CFNUMDOC, $isChecked){
+    public function actualizarFactura($id_guia, $isChecked){
         if ($isChecked) {
-            $this->duplicar_comprobante($CFTD, $CFNUMSER, $CFNUMDOC);
+            $this->duplicar_comprobante($id_guia);
         } else {
-            $this->eliminarFacturaProvincial($CFTD, $CFNUMSER, $CFNUMDOC);
+            $this->eliminarFacturaProvincial($id_guia);
         }
     }
 
     public $clienteseleccionado = [];
-    public function duplicar_comprobante($CFTD, $CFNUMSER, $CFNUMDOC){
+    public function duplicar_comprobante($id_guia){
         // Buscar la factura en la tabla Local
-        $factura = collect($this->selectedFacturasLocal)->first(function ($f) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
-            return $f['CFTD'] === $CFTD &&
-                $f['CFNUMSER'] === $CFNUMSER &&
-                $f['CFNUMDOC'] === $CFNUMDOC;
+        $factura = collect($this->selectedFacturasLocal)->first(function ($f) use ($id_guia) {
+            return $f['id_guia'] === $id_guia;
         });
         if (!$factura) {
             session()->flash('error', 'Comprobante no encontrado en la tabla Local.');
             return;
         }
-        $codiCli = $factura['CCODCLI'];
-        $nombCli = $factura['CNOMCLI'];
-        $DEPARTAMENTO = $factura['DEPARTAMENTO'];
-        $PROVINCIA = $factura['PROVINCIA'];
-        $DISTRITO = $factura['DISTRITO'];
-        $direccionLlegada = $factura['LLEGADADIRECCION'];
+        $guia_ruc_cliente = $factura['guia_ruc_cliente'];
+        $guia_nombre_cliente = $factura['guia_nombre_cliente'];
+        $guia_departamento = $factura['guia_departamento'];
+        $guia_provincia = $factura['guia_provincia'];
+        $guia_destrito = $factura['guia_destrito'];
+        $guia_direc_entrega = $factura['guia_direc_entrega'];
 
-        $validarExisteCliente =  collect($this->clientes_provinciales)->first(function ($cliente) use ($codiCli,$nombCli,$DEPARTAMENTO,$PROVINCIA,$DISTRITO,$direccionLlegada) {
-            return $cliente['codigoCliente'] === $codiCli
-                && $cliente['nombreCliente'] === $nombCli
-                && $cliente['ubiDepar'] == $DEPARTAMENTO
-                && $cliente['ubiPro'] == $PROVINCIA
-                && $cliente['ubiDis'] == $DISTRITO
-                && $cliente['ubiDirc'] == $direccionLlegada;
+        $validarExisteCliente =  collect($this->clientes_provinciales)->first(function ($cliente) use ($guia_ruc_cliente,$guia_nombre_cliente,$guia_departamento,$guia_provincia,$guia_destrito,$guia_direc_entrega) {
+            return $cliente['guia_ruc_cliente'] === $guia_ruc_cliente
+                && $cliente['guia_nombre_cliente'] === $guia_nombre_cliente
+                && $cliente['guia_departamento'] == $guia_departamento
+                && $cliente['guia_provincia'] == $guia_provincia
+                && $cliente['guia_destrito'] == $guia_destrito
+                && $cliente['guia_direc_entrega'] == $guia_direc_entrega;
         });
         if ($validarExisteCliente){ // si existe el cliente
             // Verificar si el comprobante ya existe en los comprobantes del cliente
             $existeComprobante = collect($validarExisteCliente['comprobantes'] ?? [])->contains(function ($comprobante) use ($factura) {
-                return $comprobante['CFTD'] === $factura['CFTD'] &&
-                    $comprobante['CFNUMSER'] === $factura['CFNUMSER'] &&
-                    $comprobante['CFNUMDOC'] === $factura['CFNUMDOC'];
+                return $comprobante['id_guia'] === $factura['id_guia'];
             });
             if ($existeComprobante) {
                 session()->flash('error', 'El comprobante ya está duplicado para este cliente.');
@@ -667,30 +734,60 @@ class Mixto extends Component
             }
             // Agregar el comprobante al cliente existente
             foreach ($this->clientes_provinciales as &$cliente) {
-                if ($cliente['codigoCliente'] == $codiCli && $cliente['nombreCliente'] == $nombCli && $cliente['ubiDepar'] == $DEPARTAMENTO && $cliente['ubiPro'] == $PROVINCIA && $cliente['ubiDis'] == $DISTRITO && $cliente['ubiDirc'] == $direccionLlegada) {
+                // Calcular el peso y volumen total para la guía seleccionada
+                $detalles = DB::table('guias_detalles')
+                    ->where('id_guia', $factura->id_guia)
+                    ->get();
+
+                // Calcular el peso total en kilogramos
+                $pesoTotalGramos = $detalles->sum(function ($detalle) {
+                    return $detalle->guia_det_peso_gramo * $detalle->guia_det_cantidad;
+                });
+
+                // Convertir el peso total a kilogramos
+                $pesoTotalKilos = $pesoTotalGramos / 1000;
+
+                $volumenTotal = $detalles->sum(function ($detalle) {
+                    return $detalle->guia_det_volumen * $detalle->guia_det_cantidad;
+                });
+                if ($cliente['guia_ruc_cliente'] == $guia_ruc_cliente && $cliente['guia_nombre_cliente'] == $guia_nombre_cliente && $cliente['guia_departamento'] == $guia_departamento && $cliente['guia_provincia'] == $guia_provincia && $cliente['guia_destrito'] == $guia_destrito && $cliente['guia_direc_entrega'] == $guia_direc_entrega) {
                     $cliente['comprobantes'][] = [
-                        'CFTD' => $factura['CFTD'],
-                        'CFNUMSER' => $factura['CFNUMSER'],
-                        'CFNUMDOC' => $factura['CFNUMDOC'],
-                        'total_kg' => $factura['total_kg'],
-                        'total_volumen' => $factura['total_volumen'],
-                        'CFIMPORTE' => $factura['CFIMPORTE'],
-//                        'CFCODMON' => $factura['CFCODMON'],
-                        'guia' => $factura['guia'], // guia
-                        'GREFECEMISION' => $factura['GREFECEMISION'], // fecha de emision de la guía
-                        'LLEGADADIRECCION' => $factura['LLEGADADIRECCION'],// Dirección de destino
-                        'LLEGADAUBIGEO' => $factura['LLEGADAUBIGEO'],// Código del ubigeo
-                        'DEPARTAMENTO' => $factura['DEPARTAMENTO'],// Departamento
-                        'PROVINCIA' => $factura['PROVINCIA'],// Provincia
-                        'DISTRITO' => $factura['DISTRITO'],// Distrito
+                        'id_guia' => $factura->id_guia,
+                        'guia_almacen_origen' => $factura->guia_almacen_origen,
+                        'guia_tipo_doc' => $factura->guia_tipo_doc,
+                        'guia_nro_doc' => $factura->guia_nro_doc,
+                        'guia_fecha_emision' => $factura->guia_fecha_emision,
+                        'guia_tipo_movimiento' => $factura->guia_tipo_movimiento,
+                        'guia_tipo_doc_ref' => $factura->guia_tipo_doc_ref,
+                        'guia_nro_doc_ref' => $factura->guia_nro_doc_ref,
+                        'guia_glosa' => $factura->guia_glosa,
+                        'guia_fecha_proceso' => $factura->guia_fecha_proceso,
+                        'guia_hora_proceso' => $factura->guia_hora_proceso,
+                        'guia_usuario' => $factura->guia_usuario,
+                        'guia_cod_cliente' => $factura->guia_cod_cliente,
+                        'guia_ruc_cliente' => $factura->guia_ruc_cliente,
+                        'guia_nombre_cliente' => $factura->guia_nombre_cliente,
+                        'guia_forma_pago' => $factura->guia_forma_pago,
+                        'guia_vendedor' => $factura->guia_vendedor,
+                        'guia_moneda' => $factura->guia_moneda,
+                        'guia_tipo_cambio' => $factura->guia_tipo_cambio,
+                        'guia_estado' => $factura->guia_estado,
+                        'guia_direc_entrega' => $factura->guia_direc_entrega,
+                        'guia_nro_pedido' => $factura->guia_nro_pedido,
+                        'guia_importe_total' => $factura->guia_importe_total,
+                        'guia_departamento' => $factura->guia_departamento,
+                        'guia_provincia' => $factura->guia_provincia,
+                        'guia_destrito' => $factura->guia_destrito,
+                        'peso_total' => $pesoTotalKilos,
+                        'volumen_total' => $volumenTotal,
                     ];
                     break;
                 }
             }
         }else{ // ingresar cliente nuevo
             $this->clientes_provinciales[] = [
-                'codigoCliente' =>  $factura['CCODCLI'],
-                'nombreCliente' =>  $factura['CNOMCLI'],
+                'guia_ruc_cliente' =>  $factura['guia_ruc_cliente'],
+                'guia_nombre_cliente' =>  $factura['guia_nombre_cliente'],
                 'total_kg' =>  0,
                 'total_volumen' =>  0,
                 'id_transportista' =>  null,
@@ -705,39 +802,51 @@ class Mixto extends Component
                 'provincia' =>  null,
                 'distrito' =>  null,
                 'listo' =>  null,
-                'ubiDepar' =>  $DEPARTAMENTO,
-                'ubiPro' =>  $PROVINCIA,
-                'ubiDis' =>  $DISTRITO,
-                'ubiDirc' =>  $direccionLlegada,
+                'guia_departamento' =>  $guia_departamento,
+                'guia_provincia' =>  $guia_provincia,
+                'guia_destrito' =>  $guia_destrito,
+                'guia_direc_entrega' =>  $guia_direc_entrega,
                 'comprobantes' => [
                     [
-                        'CFTD' => $factura['CFTD'],
-                        'CFNUMSER' => $factura['CFNUMSER'],
-                        'CFNUMDOC' => $factura['CFNUMDOC'],
-                        'total_kg' => $factura['total_kg'],
-                        'total_volumen' => $factura['total_volumen'],
-                        'CFIMPORTE' => $factura['CFIMPORTE'],
-//                        'CFCODMON' => $factura['CFCODMON'],
-                        'guia' => $factura['guia'],
-                        'GREFECEMISION' => $factura['GREFECEMISION'],
-                        'LLEGADADIRECCION' => $factura['LLEGADADIRECCION'],
-                        'LLEGADAUBIGEO' => $factura['LLEGADAUBIGEO'],
-                        'DEPARTAMENTO' => $factura['DEPARTAMENTO'],
-                        'PROVINCIA' => $factura['PROVINCIA'],
-                        'DISTRITO' => $factura['DISTRITO'],
+                        'id_guia' => $factura['id_guia'],
+                        'guia_almacen_origen' => $factura['guia_almacen_origen'],
+                        'guia_tipo_doc' => $factura['guia_tipo_doc'],
+                        'guia_nro_doc' => $factura['guia_nro_doc'],
+                        'guia_fecha_emision' => $factura['guia_fecha_emision'],
+                        'guia_tipo_movimiento' => $factura['guia_tipo_movimiento'],
+                        'guia_tipo_doc_ref' => $factura['guia_tipo_doc_ref'],
+                        'guia_nro_doc_ref' => $factura['guia_nro_doc_ref'],
+                        'guia_glosa' => $factura['guia_glosa'],
+                        'guia_fecha_proceso' => $factura['guia_fecha_proceso'],
+                        'guia_hora_proceso' => $factura['guia_hora_proceso'],
+                        'guia_usuario' => $factura['guia_usuario'],
+                        'guia_cod_cliente' => $factura['PROVINCIA'],
+                        'guia_ruc_cliente' => $factura['guia_ruc_cliente'],
+                        'guia_nombre_cliente' => $factura['guia_nombre_cliente'],
+                        'guia_forma_pago' => $factura['guia_forma_pago'],
+                        'guia_vendedor' => $factura['guia_vendedor'],
+                        'guia_moneda' => $factura['guia_moneda'],
+                        'guia_tipo_cambio' => $factura['guia_tipo_cambio'],
+                        'guia_estado' => $factura['guia_estado'],
+                        'guia_direc_entrega' => $factura['guia_direc_entrega'],
+                        'guia_nro_pedido' => $factura['guia_nro_pedido'],
+                        'guia_importe_total' => $factura['guia_importe_total'],
+                        'guia_departamento' => $factura['guia_departamento'],
+                        'guia_provincia' => $factura['guia_provincia'],
+                        'guia_destrito' => $factura['guia_destrito'],
+                        'peso_total' => $factura['peso_total'],
+                        'volumen_total' => $factura['volumen_total'],
                     ]
                 ]
             ];
         }
     }
-    public function eliminarFacturaProvincial($CFTD, $CFNUMSER, $CFNUMDOC,$indexCliente = null){
+    public function eliminarFacturaProvincial($id_guia,$indexCliente = null){
         foreach ($this->clientes_provinciales as $index => &$cliente) {
             // Filtrar comprobantes del cliente actual
             $cliente['comprobantes'] = collect($cliente['comprobantes'])
-                ->filter(function ($comprobante) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
-                    return !($comprobante['CFTD'] === $CFTD &&
-                        $comprobante['CFNUMSER'] === $CFNUMSER &&
-                        $comprobante['CFNUMDOC'] === $CFNUMDOC);
+                ->filter(function ($comprobante) use ($id_guia) {
+                    return !($comprobante['id_guia'] === $id_guia);
                 })
                 ->values()
                 ->toArray();
@@ -767,11 +876,11 @@ class Mixto extends Component
     }
 
 
-    public function eliminarFacturaSeleccionada($CFTD, $CFNUMSER, $CFNUMDOC){
-        $this->eliminarFacturaProvincial($CFTD,$CFNUMSER,$CFNUMDOC);
+    public function eliminarFacturaSeleccionada($id_guia){
+        $this->eliminarFacturaProvincial($id_guia);
 
         foreach ($this->selectedFacturasLocal as $index => $factura) {
-            if ($factura['CFTD'] == $CFTD && $factura['CFNUMSER'] == $CFNUMSER && $factura['CFNUMDOC'] == $CFNUMDOC) {
+            if ($factura['id_guia'] == $id_guia) {
                 $this->pesoTotal -= $factura['total_kg'];
                 $this->volumenTotal -= $factura['total_volumen'];
                 $this->importeTotalVenta =  $this->importeTotalVenta - $factura['CFIMPORTE'];
@@ -780,10 +889,11 @@ class Mixto extends Component
                 break;
             }
         }
-        // Verifica si no quedan facturas seleccionadas
-        if (empty($this->selectedFacturasLocal)) {
+        // Verifica si no quedan facturas ni servicios de transporte seleccionados
+        if (empty($this->selectedFacturas) && empty($this->selectedServTrns)) {
             $this->pesoTotal = 0;
             $this->volumenTotal = 0;
+            $this->importeTotalVenta = 0;
         }
         // Reindexar el array `selectedFacturasLocal` después de eliminar elementos
         $this->selectedFacturasLocal = array_values($this->selectedFacturasLocal);

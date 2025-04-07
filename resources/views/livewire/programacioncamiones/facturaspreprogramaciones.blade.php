@@ -34,7 +34,7 @@
 
                                 <div class="col-lg-3">
                                     <strong style="color: #8c1017">Fecha de Emision:</strong>
-                                    <p>{{ $guiaSeleccionada['FECHA_EMISION'] ? $me->obtenerNombreFecha($guiaSeleccionada['FECHA_EMISION'], 'DateTime', 'DateTime') : '-' }}</p>
+                                    <p>{{ $guiaSeleccionada['FECHA_EMISION'] ? $me->obtenerNombreFecha($guiaSeleccionada['FECHA_EMISION'], 'DateTime', 'Date') : '-' }}</p>
                                 </div>
 
                                 <div class="col-lg-3">
@@ -200,7 +200,7 @@
                                 @foreach($detallesGuia as $detalle)
                                     <tr>
                                         <td>{{ $detalle->ALMACEN_SALIDA ?? '-' }}</td>
-                                        <td>{{ $detalle->FECHA_EMISION ? $me->obtenerNombreFecha($detalle->FECHA_EMISION, 'DateTime', 'DateTime') : '-' }}</td>
+                                        <td>{{ $detalle->FECHA_EMISION ? $me->obtenerNombreFecha($detalle->FECHA_EMISION, 'DateTime', 'Date') : '-' }}</td>
                                         <td>{{ $detalle->ESTADO ?? '-'}}</td>
                                         <td>{{ $detalle->TIPO_DOCUMENTO ?? '-' }}</td>
                                         <td>{{ $detalle->NRO_DOCUMENTO ?? '-'}}</td>
@@ -315,7 +315,7 @@
                                                                         <td style="width: 32%">
                                                                             <span class="tamanhoTablaComprobantes">
                                                                                 <b class="colorBlackComprobantes">
-                                                                                    {{ isset($guia->{'FECHA_EMISION'}) ? $me->obtenerNombreFecha($guia->{'FECHA_EMISION'},'DateTime', 'DateTime') : 'Sin fecha' }}
+                                                                                    {{ isset($guia->{'FECHA_EMISION'}) ? $me->obtenerNombreFecha($guia->{'FECHA_EMISION'},'DateTime', 'Date') : 'Sin fecha' }}
                                                                                 </b>
                                                                             </span>
                                                                             <span class="d-block tamanhoTablaComprobantes">

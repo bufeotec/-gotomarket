@@ -112,157 +112,115 @@ class Reportetiempos extends Component
         $this->prepararDatosParaGrafico();
     }
 
-    public function prepararDatosParaGrafico()
-    {
+    public function prepararDatosParaGrafico(){
+        // Solo procedemos si hay datos filtrados
+        if (empty($this->filteredData)) {
+            return;
+        }
+
         $mesesEspanol = [
             1 => 'ENE', 2 => 'FEB', 3 => 'MAR', 4 => 'ABR',
             5 => 'MAY', 6 => 'JUN', 7 => 'JUL', 8 => 'AGO',
             9 => 'SEP', 10 => 'OCT', 11 => 'NOV', 12 => 'DIC'
         ];
 
-        // 1. Procesamos los datos ya obtenidos en $this->filteredData
-        $datosPorMes = [];
-        $datosIndividualesPorZona = [
-            'LOCAL' => [],
-            'PROVINCIA 1' => [],
-            'PROVINCIA 2' => []
-        ];
+        // Obtener mes inicial y final del rango de fechas
+        $mesInicial = date('n', strtotime($this->desde));
+        $mesFinal = date('n', strtotime($this->hasta));
+        $anioInicial = date('y', strtotime($this->desde));
+        $anioFinal = date('y', strtotime($this->hasta));
 
-        foreach ($this->filteredData as $item) {
-            $fecha = $this->tipo_reporte === 'emision'
-                ? $item->fecha_emision
-                : $item->fec_programacion;
+        // Inicializar array solo con los meses seleccionados
+        $mesesCompletos = [];
 
-            $mesNumero = date('n', strtotime($fecha));
-            $anio = date('y', strtotime($fecha));
-            $mesKey = $mesesEspanol[$mesNumero] . '-' . $anio;
-            $zona = $item->zona;
-
-            // Almacenar datos individuales por zona
-            if (!isset($datosIndividualesPorZona[$zona])) {
-                $datosIndividualesPorZona[$zona] = [];
-            }
-
-            // Guardar el dato individual con información completa de la guía
-            $datosIndividualesPorZona[$zona][] = [
-                'fecha_emision' => $item->fecha_emision,
-                'fecha_entrega' => $item->fecha_entrega,
-                'fecha_programacion' => $item->fec_programacion,
-                'dias_entrega' => $item->dias_entrega,
-                'departamento' => $item->departamento,
-                'tipo_servicio' => $item->tipo_servicio,
-                'cumple_objetivo' => $item->cumple_objetivo,
-                'mes' => $mesKey
-            ];
-
-            // Continuar con el procesamiento por mes como antes
-            if (!isset($datosPorMes[$mesKey])) {
-                $datosPorMes[$mesKey] = [
-                    'mes' => $mesesEspanol[$mesNumero],
+        // Si es el mismo año
+        if ($anioInicial == $anioFinal) {
+            for ($i = $mesInicial; $i <= $mesFinal; $i++) {
+                $mesKey = $mesesEspanol[$i] . '-' . $anioInicial;
+                $mesesCompletos[$mesKey] = [
+                    'mes' => $mesesEspanol[$i],
                     'LOCAL' => ['suma' => 0, 'count' => 0],
                     'PROVINCIA 1' => ['suma' => 0, 'count' => 0],
                     'PROVINCIA 2' => ['suma' => 0, 'count' => 0],
                 ];
             }
-
-            $datosPorMes[$mesKey][$zona]['suma'] += $item->dias_entrega;
-            $datosPorMes[$mesKey][$zona]['count']++;
+        } else {
+            // Si hay cambio de año, manejar meses de ambos años
+            // Meses del primer año
+            for ($i = $mesInicial; $i <= 12; $i++) {
+                $mesKey = $mesesEspanol[$i] . '-' . $anioInicial;
+                $mesesCompletos[$mesKey] = [
+                    'mes' => $mesesEspanol[$i],
+                    'LOCAL' => ['suma' => 0, 'count' => 0],
+                    'PROVINCIA 1' => ['suma' => 0, 'count' => 0],
+                    'PROVINCIA 2' => ['suma' => 0, 'count' => 0],
+                ];
+            }
+            // Meses del segundo año
+            for ($i = 1; $i <= $mesFinal; $i++) {
+                $mesKey = $mesesEspanol[$i] . '-' . $anioFinal;
+                $mesesCompletos[$mesKey] = [
+                    'mes' => $mesesEspanol[$i],
+                    'LOCAL' => ['suma' => 0, 'count' => 0],
+                    'PROVINCIA 1' => ['suma' => 0, 'count' => 0],
+                    'PROVINCIA 2' => ['suma' => 0, 'count' => 0],
+                ];
+            }
         }
 
-        // 2. Si no hay datos, mostrar el mes actual con ceros
-        if (empty($datosPorMes)) {
-            $mesActualNumero = date('n');
-            $anioActual = date('y');
-            $mesKey = $mesesEspanol[$mesActualNumero] . '-' . $anioActual;
-            $datosPorMes[$mesKey] = [
-                'mes' => $mesesEspanol[$mesActualNumero],
-                'LOCAL' => ['suma' => 0, 'count' => 0],
-                'PROVINCIA 1' => ['suma' => 0, 'count' => 0],
-                'PROVINCIA 2' => ['suma' => 0, 'count' => 0],
-            ];
+        // Procesar los datos filtrados directamente de $this->filteredData
+        foreach ($this->filteredData as $item) {
+            // Determinar la fecha a usar según el tipo de reporte
+            $fechaReferencia = $this->tipo_reporte === 'emision' ? $item->fecha_emision : $item->fec_programacion;
+
+            // Obtener mes y año de la fecha de referencia
+            $mes_num = date('n', strtotime($fechaReferencia));
+            $anio_num = date('Y', strtotime($fechaReferencia));
+            $anio_corto = substr($anio_num, -2); // Últimos 2 dígitos del año
+
+            // Crear la clave del mes
+            $mesKey = $mesesEspanol[$mes_num] . '-' . $anio_corto;
+
+            // Solo procesar si está dentro del rango de meses que hemos inicializado
+            if (isset($mesesCompletos[$mesKey])) {
+                // Obtener la zona del registro
+                $zona = $item->zona;
+
+                // Sumar los días de entrega a la zona correspondiente
+                if (isset($mesesCompletos[$mesKey][$zona])) {
+                    $mesesCompletos[$mesKey][$zona]['suma'] += $item->dias_entrega;
+                    $mesesCompletos[$mesKey][$zona]['count']++;
+                }
+            }
         }
 
-        // 3. Ordenar los meses cronológicamente
-        uksort($datosPorMes, function($a, $b) use ($mesesEspanol) {
-            $mesA = substr($a, 0, 3);
-            $mesB = substr($b, 0, 3);
-            $mesNumA = array_search($mesA, $mesesEspanol);
-            $mesNumB = array_search($mesB, $mesesEspanol);
-            $anioA = substr($a, 4, 2);
-            $anioB = substr($b, 4, 2);
-
-            return strcmp("20{$anioA}-{$mesNumA}", "20{$anioB}-{$mesNumB}");
-        });
-
-        // 4. Preparar datos para el gráfico
+        // Preparar datos para el gráfico
         $meses = [];
         $tiempoLima = [];
         $tiempoProvincia = [];
 
-        foreach ($datosPorMes as $mesKey => $data) {
+        foreach ($mesesCompletos as $mesKey => $data) {
             $meses[] = $data['mes'];
 
             // Tiempo Lima (Local)
             $countLocal = $data['LOCAL']['count'];
             $tiempoLima[] = $countLocal > 0
-                ? round($data['LOCAL']['suma'] / $countLocal, 2) // 2 decimales como en la tabla
+                ? round($data['LOCAL']['suma'] / $countLocal, 1)
                 : 0;
 
             // Tiempo Provincia (combinando Prov 1 y 2)
             $sumaProvincia = $data['PROVINCIA 1']['suma'] + $data['PROVINCIA 2']['suma'];
             $countProvincia = $data['PROVINCIA 1']['count'] + $data['PROVINCIA 2']['count'];
             $tiempoProvincia[] = $countProvincia > 0
-                ? round($sumaProvincia / $countProvincia, 2) // 2 decimales como en la tabla
+                ? round($sumaProvincia / $countProvincia, 1)
                 : 0;
         }
 
-        // Almacenar los datos individuales en una propiedad para que estén disponibles
-        $this->datosIndividualesGuias = $datosIndividualesPorZona;
-
-        // 5. Calcular métricas adicionales por zona
-        $metricasPorZona = [];
-        foreach ($datosIndividualesPorZona as $zona => $guias) {
-            if (count($guias) > 0) {
-                // Calcular el cumplimiento de objetivo por zona
-                $totalGuias = count($guias);
-                $guiasCumplenObjetivo = array_filter($guias, function ($guia) {
-                    return $guia['cumple_objetivo'] == 1;
-                });
-                $porcentajeCumplimiento = $totalGuias > 0
-                    ? round((count($guiasCumplenObjetivo) / $totalGuias) * 100, 2)
-                    : 0;
-
-                // Calcular tiempo promedio de entrega
-                $tiempoTotal = array_sum(array_column($guias, 'dias_entrega'));
-                $tiempoPromedio = $totalGuias > 0
-                    ? round($tiempoTotal / $totalGuias, 2)
-                    : 0;
-
-                $metricasPorZona[$zona] = [
-                    'total_guias' => $totalGuias,
-                    'guias_cumplen_objetivo' => count($guiasCumplenObjetivo),
-                    'porcentaje_cumplimiento' => $porcentajeCumplimiento,
-                    'tiempo_promedio' => $tiempoPromedio
-                ];
-            } else {
-                $metricasPorZona[$zona] = [
-                    'total_guias' => 0,
-                    'guias_cumplen_objetivo' => 0,
-                    'porcentaje_cumplimiento' => 0,
-                    'tiempo_promedio' => 0
-                ];
-            }
-        }
-
-        // Almacenar las métricas calculadas
-        $this->metricasPorZona = $metricasPorZona;
-
-        // 6. Enviar datos al frontend
+        // Enviar datos al frontend
         $this->dispatch('actualizarGraficoTiempoEntrega', [
             'meses' => $meses,
             'tiempo_lima' => $tiempoLima,
-            'tiempo_provincia' => $tiempoProvincia,
-            'metricas_por_zona' => $metricasPorZona
+            'tiempo_provincia' => $tiempoProvincia
         ]);
     }
 

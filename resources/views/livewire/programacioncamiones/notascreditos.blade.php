@@ -48,7 +48,7 @@
                                             <tr>
                                                 <td>{{$a}}</td>
                                                 <td>{{ $detalle->not_cred_det_almacen_entrada }}</td>
-                                                <td>{{ $general->obtenerNombreFecha($detalle->not_cred_det_fecha_emision,'DateTime', 'DateTime')}}</td>
+                                                <td>{{ $general->obtenerNombreFecha($detalle->not_cred_det_fecha_emision,'DateTime', 'Date')}}</td>
                                                 <td>{{ $detalle->not_cred_det_estado }}</td>
                                                 <td>{{ $detalle->not_cred_det_tipo_doc }}</td>
                                                 <td>{{ $detalle->not_cred_det_nro_doc }}</td>
@@ -123,7 +123,7 @@
                             @foreach($detallesGuia as $detalle)
                                 <tr>
                                     <td>{{ $detalle->guia_det_almacen_salida ?? '-' }}</td>
-                                    <td>{{ $detalle->guia_det_fecha_emision ? $general->obtenerNombreFecha($detalle->guia_det_fecha_emision, 'DateTime', 'DateTime') : '-' }}</td>
+                                    <td>{{ $detalle->guia_det_fecha_emision ? $general->obtenerNombreFecha($detalle->guia_det_fecha_emision, 'DateTime', 'Date') : '-' }}</td>
                                     <td>{{ $detalle->guia_det_estado ?? '-'}}</td>
                                     <td>{{ $detalle->guia_det_tipo_documento ?? '-' }}</td>
                                     <td>{{ $detalle->guia_det_nro_documento ?? '-'}}</td>
@@ -456,7 +456,7 @@
                                         </td>
                                         <td>{{$lnc->not_cred_motivo_descripcion}}</td>
                                         <td>{{$lnc->not_cred_nro_doc_ref}}</td>
-                                        <td>{{$general->obtenerNombreFecha($lnc->not_cred_fecha_emision,'DateTime', 'DateTime')}}</td>
+                                        <td>{{$general->obtenerNombreFecha($lnc->not_cred_fecha_emision,'DateTime', 'Date')}}</td>
                                         <td>{{$lnc->not_cred_ruc_cliente}}</td>
                                         <td>{{$lnc->not_cred_nombre_cliente}}</td>
                                         <td>{{$lnc->not_cred_forma_pago}}</td>
