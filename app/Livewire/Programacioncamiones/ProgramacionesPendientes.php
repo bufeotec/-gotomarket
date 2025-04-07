@@ -65,6 +65,7 @@ class ProgramacionesPendientes extends Component
             $re->despacho = DB::table('despachos as d')
                 ->join('transportistas as t', 't.id_transportistas', '=', 'd.id_transportistas')
                 ->join('tipo_servicios as ts', 'ts.id_tipo_servicios', '=', 'd.id_tipo_servicios')
+                ->leftJoin('tarifarios as tar', 'tar.id_tarifario', '=', 'd.id_tarifario')
                 ->where('d.id_programacion', '=', $re->id_programacion)
                 ->get();
 
