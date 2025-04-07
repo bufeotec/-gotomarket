@@ -243,8 +243,7 @@ class Efectividadentregapedidos extends Component
         $this->dispatch('actualizarGraficoValor', $this->datosMensualesValorGrafico[0] ?? $this->datosMensualesValorGrafico);
     }
 
-    public function render()
-    {
+    public function render(){
         $view = view('livewire.programacioncamiones.efectividadentregapedidos', [
             'reporte' => $this->reporteData,
             'reporteValores' => $this->reporteValoresData,

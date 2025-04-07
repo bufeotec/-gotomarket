@@ -85,6 +85,12 @@ Route::prefix('Programacioncamion')->middleware(['auth', 'canMenu:Programacionca
     route::get('/aprobar_entregado',[ProgramacioncamionController::class ,'aprobar_entregado'])->name('Gestionvendedor.aprobar_entregado')->middleware('verifyUserStatus')->middleware('can:aprobar_entregado');
     route::get('/tracking',[ProgramacioncamionController::class ,'tracking'])->name('Programacioncamion.tracking')->middleware('verifyUserStatus')->middleware('can:tracking');
     route::get('/vistatracking', [ProgramacioncamionController::class, 'vistatracking'])->name('Programacioncamion.vistatracking')->middleware('verifyUserStatus')->middleware('can:vistatracking');
+    route::get('/reporte_liq_apro', [ProgramacioncamionController::class, 'reporte_liq_apro'])->name('Programacioncamion.reporte_liq_apro')->middleware('verifyUserStatus')->middleware('can:reporte_liq_apro');
+    route::get('/efectividad_entrega_pedidos', [ProgramacioncamionController::class, 'efectividad_entrega_pedidos'])->name('Programacioncamion.efectividad_entrega_pedidos')->middleware('verifyUserStatus')->middleware('can:efectividad_entrega_pedidos');
+    route::get('/reporte_estado_documento', [ProgramacioncamionController::class, 'reporte_estado_documento'])->name('Programacioncamion.reporte_estado_documento')->middleware('verifyUserStatus')->middleware('can:reporte_estado_documento');
+    route::get('/reporte_tiempos', [ProgramacioncamionController::class, 'reporte_tiempos'])->name('Programacioncamion.reporte_tiempos')->middleware('verifyUserStatus')->middleware('can:reporte_tiempos');
+    route::get('/reporte_indicadores_valor', [ProgramacioncamionController::class, 'reporte_indicadores_valor'])->name('Programacioncamion.reporte_indicadores_valor')->middleware('verifyUserStatus')->middleware('can:reporte_indicadores_valor');
+    route::get('/reporte_indicadores_peso', [ProgramacioncamionController::class, 'reporte_indicadores_peso'])->name('Programacioncamion.reporte_indicadores_peso')->middleware('verifyUserStatus')->middleware('can:reporte_indicadores_peso');
 });
 Route::prefix('Liquidacionflete')->middleware(['auth', 'canMenu:Liquidacionflete'])->group(function () {
     /* LIQUIDACION */

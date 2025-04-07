@@ -293,4 +293,22 @@ class ProgramacioncamionController extends Controller
             return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
         }
     }
+
+    public function efectividad_entrega_pedidos(){
+        try {
+            return view('programacion_camiones.efectividad_entrega_pedidos');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
+
+    public function reporte_estado_documento(){
+        try {
+            return view('programacion_camiones.reporte_estado_documento');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
 }
