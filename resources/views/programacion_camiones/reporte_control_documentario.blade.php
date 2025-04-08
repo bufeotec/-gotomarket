@@ -47,7 +47,7 @@
                         </div>
                         <div class="card-body">
                             <div class="d-flex justify-content-end">
-                                <a href="{{route('Programacioncamion.reporte_estado_documento')}}" class="btn btn-success">Ingresar</a>
+                                <a href="{{route('Programacioncamion.efectividad_entrega_pedidos')}}" class="btn btn-success">Ingresar</a>
                             </div>
                         </div>
                     </div>
@@ -73,7 +73,7 @@
                 </div>
                 <div class="card-body">
                     <div class="d-flex justify-content-end">
-                        <a href="{{route('Programacioncamion.efectividad_entrega_pedidos')}}" class="btn btn-success">Ingresar</a>
+                        <a href="{{route('Programacioncamion.reporte_estado_documento')}}" class="btn btn-success">Ingresar</a>
                     </div>
                 </div>
             </div>
@@ -112,7 +112,7 @@
                 </div>
                 <div class="card-body">
                     <div class="d-flex justify-content-end">
-                        <a href="{{route('Programacioncamion.reporte_estados_factura')}}" class="btn btn-success">Ingresar</a>
+                        <a href="{{route('Despachotransporte.reporte_programacion_despacho')}}" class="btn btn-success">Ingresar</a>
                     </div>
                 </div>
             </div>

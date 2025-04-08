@@ -126,7 +126,8 @@ class Local extends Component
         $facturas_pre_prog_estado_dos = $this->guia->listar_facturas_pre_programacion_estado_dos();
 
         // Obtener las guías con estado 3
-        $guiasQuery = Guia::where('guia_estado_aprobacion', 3);
+        $guiasQuery = Guia::where('guia_estado_aprobacion', 3)
+            ->where('guia_departamento', 'LIMA');
 
         // Filtrar por nombre del cliente si searchGuia tiene valor
         if (!empty($this->searchGuia)) {
@@ -159,7 +160,9 @@ class Local extends Component
             return $guia;
         });
 
-        $servTransp = Serviciotransporte::where('serv_transpt_estado_aprobacion', 0);
+        $servTransp = Serviciotransporte::where('serv_transpt_estado_aprobacion', 0)
+            ->where('id_departamento', 15);
+
         $servicio = $servTransp->get();
         $this->serv_transp = $servicio;
 
@@ -424,7 +427,7 @@ class Local extends Component
             'guia_departamento' => $factura->guia_departamento,
             'guia_provincia' => $factura->guia_provincia,
             'guia_destrito' => $factura->guia_destrito,
-            'peso_total' => $pesoTotalKilos, // Peso en kilogramos
+            'peso_total' => $pesoTotalKilos,
             'volumen_total' => $volumenTotal,
         ];
 
@@ -679,9 +682,10 @@ class Local extends Component
             foreach ($this->selectedFacturas as $factura) {
                 $existe = DB::table('despacho_ventas as dv')
                     ->join('despachos as d', 'd.id_despacho', '=', 'dv.id_despacho')
-                    ->where('d.despacho_estado_aprobacion', '<>', 4)
+                    ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
+                    ->where('g.guia_estado_aprobacion', '<>', 9)
                     ->where('dv.id_guia', $factura['id_guia'])
-                    ->whereIn('dv.despacho_detalle_estado_entrega', [0, 1, 2])
+                    ->whereIn('g.guia_estado_aprobacion', [7, 4, 8])
                     ->orderBy('dv.id_despacho_venta', 'desc')
                     ->exists();
                 if ($existe) {
@@ -693,9 +697,10 @@ class Local extends Component
                 foreach ($this->selectedServTrns as $servTrn) {
                     $existe = DB::table('despacho_ventas as dv')
                         ->join('despachos as d', 'd.id_despacho', '=', 'dv.id_despacho')
-                        ->where('d.despacho_estado_aprobacion', '<>', 4)
+                        ->join('servicios_transportes as st', 'dv.id_serv_transpt', '=', 'st.id_serv_transpt')
+                        ->where('st.serv_transpt_estado_aprobacion', '<>', 3)
                         ->where('dv.id_serv_transpt', $servTrn['id_serv_transpt'])
-                        ->whereIn('dv.despacho_detalle_estado_entrega', [0, 1, 2])
+                        ->whereIn('st.serv_transpt_estado_aprobacion', [0, 1, 2, 4, 5])
                         ->orderBy('dv.id_despacho_venta', 'desc')
                         ->exists();
                     if ($existe) {

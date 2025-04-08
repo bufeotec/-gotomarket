@@ -57,6 +57,9 @@
                 <button class="btn btn-success btn-sm text-white mt-4" wire:click="generar_excel_estado_documentos" wire:loading.attr="disabled"><i class="fa-solid fa-file-excel"></i> Exportar</button>
             </div>
         @endif
+        <div class="col-lg-12 col-md-12 col-sm-12">
+            <div class="loader mt-2" wire:loading wire:target="buscar_estado_documento"></div>
+        </div>
     </div>
 
     @if(count($resultados) > 0)

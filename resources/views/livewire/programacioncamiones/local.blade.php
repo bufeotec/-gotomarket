@@ -24,7 +24,7 @@
 
                                 <div class="col-lg-3">
                                     <strong style="color: #8c1017">Fecha Emisión:</strong>
-                                    <p>{{ $guiainfo->guia_fecha_emision ? $me->obtenerNombreFecha($guiainfo->guia_fecha_emision, 'DateTime', 'DateTime') : '-' }}</p>
+                                    <p>{{ $guiainfo->guia_fecha_emision ? $me->obtenerNombreFecha($guiainfo->guia_fecha_emision, 'DateTime', 'Date') : '-' }}</p>
                                 </div>
 
                                 <div class="col-lg-3">
@@ -133,7 +133,7 @@
                             @foreach($guia_detalle as $detalle)
                                 <tr>
                                     <td>{{ $detalle->guia_det_almacen_salida ?? '-' }}</td>
-                                    <td>{{ $detalle->guia_det_fecha_emision ? $me->obtenerNombreFecha($detalle->guia_det_fecha_emision, 'DateTime', 'DateTime') : '-' }}</td>
+                                    <td>{{ $detalle->guia_det_fecha_emision ? $me->obtenerNombreFecha($detalle->guia_det_fecha_emision, 'DateTime', 'Date') : '-' }}</td>
                                     <td>{{ $detalle->guia_det_estado ?? '-'}}</td>
                                     <td>{{ $detalle->guia_det_tipo_documento ?? '-' }}</td>
                                     <td>{{ $detalle->guia_det_nro_documento ?? '-'}}</td>
@@ -375,7 +375,7 @@
                                                     </td>
                                                     <td>
                                                         <span class="tamanhoTablaComprobantes">
-                                                            <b class="colorBlackComprobantes">{{ $me->obtenerNombreFecha($factura->guia_fecha_emision,'DateTime', 'DateTime')}}</b>
+                                                            <b class="colorBlackComprobantes">{{ $me->obtenerNombreFecha($factura->guia_fecha_emision,'DateTime', 'Date')}}</b>
                                                         </span>
                                                     </td>
                                                     <td>
