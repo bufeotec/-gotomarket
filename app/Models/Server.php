@@ -221,8 +221,8 @@ class  Server extends Model
         try {
             $result = array();
             $client = new \GuzzleHttp\Client();
-//            $url = "http://127.0.0.1/api_goto/public/api/v1/list_detalles_r_documents";
-            $url = "http://161.132.173.106:8081/api_goto/public/api/v1/list_detalles_r_documents";
+            $url = "http://127.0.0.1/api_goto/public/api/v1/list_detalles_r_documents";
+//            $url = "http://161.132.173.106:8081/api_goto/public/api/v1/list_detalles_r_documents";
 
 
             $response = $client->post($url, [
@@ -254,8 +254,8 @@ class  Server extends Model
         try {
             $result = array();
             $client = new \GuzzleHttp\Client();
-//            $url = "http://127.0.0.1/api_goto/public/api/v1/list_info_guia";
-            $url = "http://161.132.173.106:8081/api_goto/public/api/v1/list_info_guia";
+            $url = "http://127.0.0.1/api_goto/public/api/v1/list_info_guia";
+//            $url = "http://161.132.173.106:8081/api_goto/public/api/v1/list_info_guia";
 
 
             $response = $client->post($url, [
