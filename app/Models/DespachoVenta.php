@@ -41,6 +41,33 @@ class DespachoVenta extends Model
         }
         return $result;
     }
+    public function listar_guias_antiguas() {
+            try {
+                $result = DB::table('despacho_ventas')
+                    ->select('id_despacho_venta','despacho_venta_guia')
+                    ->whereNull('id_guia')
+                    ->where('despacho_detalle_estado_entrega', 2)
+                    ->groupBy('id_despacho_venta','despacho_venta_guia')
+                    ->orderByDesc('id_despacho_venta')
+                    ->get();
+
+            } catch (\Exception $e) {
+                $this->logs->insertarLog($e);
+                $result = [];
+            }
+            return $result;
+    }
+    public function listar_guia_existente($num) {
+            try {
+                $result = DB::table('guias')
+                    ->where('guia_nro_doc','=',$num)
+                    ->first();
+            } catch (\Exception $e) {
+                $this->logs->insertarLog($e);
+                $result = false;
+            }
+            return $result;
+    }
 
     public function listar_despacho_nota_credito($id_despacho_venta = null){
         try {
