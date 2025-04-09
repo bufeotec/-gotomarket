@@ -17,6 +17,14 @@
     {{--    CUANDO BUSQUO--}}
     <div class="row align-items-center mt-2">
         <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
+            <label for="tipo_reporte" class="form-label">Tipo de reporte</label>
+            <select name="tipo_reporte" id="tipo_reporte" wire:model.live="tipo_reporte" class="form-select">
+                <option value="">Seleccionar...</option>
+                <option value="emision">F. Emisión</option>
+                <option value="programacion">F. Programación</option>
+            </select>
+        </div>
+        <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
             <label for="fecha_desde" class="form-label">Desde</label>
             <input type="date" name="fecha_desde" id="fecha_desde" wire:model="desde" class="form-control">
         </div>

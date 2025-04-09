@@ -30,9 +30,12 @@ class Reporteindicadoresvalor extends Component
 
     public $xdesde;
     public $xhasta;
+    public $tipo_reporte = 'emision'; // Valor por defecto
     public $filteredData = [];
     public $summary = [];
     public $searchdatos = false;
+    public $datosGraficoFleteTotal = [];
+    public $datosGraficoFleteLimaProvincia = [];
 
     // Objetivos fijos como en la imagen
     public $objetivos = [
@@ -72,8 +75,8 @@ class Reporteindicadoresvalor extends Component
             return;
         }
 
-        // 1. Obtenemos los despachos únicos con guías (incluyendo la relación con guías)
-        $despachos = DB::table('despachos as d')
+        // Base query para despachos
+        $despachosQuery = DB::table('despachos as d')
             ->select(
                 'd.id_despacho',
                 'd.despacho_costo_total as flete',
@@ -82,27 +85,46 @@ class Reporteindicadoresvalor extends Component
             )
             ->leftJoin('departamentos as dep', 'd.id_departamento', '=', 'dep.id_departamento')
             ->join('despacho_ventas as dv', 'd.id_despacho', '=', 'dv.id_despacho')
-            ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia') // Aquí está el cambio clave
-            ->whereDate('d.despacho_fecha_aprobacion', '>=', $this->xdesde)
-            ->whereDate('d.despacho_fecha_aprobacion', '<=', $this->xhasta)
-            ->groupBy('d.id_despacho', 'd.despacho_costo_total', 'd.id_tipo_servicios', 'dep.departamento_nombre')
-            ->get();
+            ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
+            ->where('d.despacho_estado_aprobacion', '!=', 4);
 
-        // 2. Obtenemos la suma de guías por despacho (igual que antes)
-        $guiasPorDespacho = DB::table('despachos as d')
+        // Base query para guías por despacho
+        $guiasPorDespachoQuery = DB::table('despachos as d')
             ->join('despacho_ventas as dv', 'd.id_despacho', '=', 'dv.id_despacho')
             ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
             ->select(
                 'd.id_despacho',
                 DB::raw('SUM(g.guia_importe_total) as valor_transportado')
-            )
-            ->whereDate('d.despacho_fecha_aprobacion', '>=', $this->xdesde)
-            ->whereDate('d.despacho_fecha_aprobacion', '<=', $this->xhasta)
+            );
+
+        // Aplicar filtro por tipo de fecha
+        if ($this->tipo_reporte == 'despacho') {
+            // Filtrar por fecha de despacho
+            $despachosQuery->whereDate('d.despacho_fecha_aprobacion', '>=', $this->xdesde)
+                ->whereDate('d.despacho_fecha_aprobacion', '<=', $this->xhasta);
+
+            $guiasPorDespachoQuery->whereDate('d.despacho_fecha_aprobacion', '>=', $this->xdesde)
+                ->whereDate('d.despacho_fecha_aprobacion', '<=', $this->xhasta);
+        } else {
+            // Filtrar por fecha de emisión (default)
+            $despachosQuery->whereDate('g.guia_fecha_emision', '>=', $this->xdesde)
+                ->whereDate('g.guia_fecha_emision', '<=', $this->xhasta);
+
+            $guiasPorDespachoQuery->whereDate('g.guia_fecha_emision', '>=', $this->xdesde)
+                ->whereDate('g.guia_fecha_emision', '<=', $this->xhasta);
+        }
+
+        // Ejecutar consultas
+        $despachos = $despachosQuery
+            ->groupBy('d.id_despacho', 'd.despacho_costo_total', 'd.id_tipo_servicios', 'dep.departamento_nombre')
+            ->get();
+
+        $guiasPorDespacho = $guiasPorDespachoQuery
             ->groupBy('d.id_despacho')
             ->get()
             ->keyBy('id_despacho');
 
-        // 3. Combinamos los datos y determinamos la zona
+        // Procesar datos como antes
         $this->filteredData = $despachos->map(function($despacho) use ($guiasPorDespacho) {
             $departamento = strtoupper($despacho->departamento ?? '');
 
@@ -167,11 +189,9 @@ class Reporteindicadoresvalor extends Component
             9 => 'SEP', 10 => 'OCT', 11 => 'NOV', 12 => 'DIC'
         ];
 
-        // Primero obtenemos el rango de meses completo
         $fechaDesde = Carbon::parse($this->xdesde);
         $fechaHasta = Carbon::parse($this->xhasta);
 
-        // Creamos un array con todos los meses en el rango
         $mesesCompletos = [];
         $current = $fechaDesde->copy();
         while ($current <= $fechaHasta) {
@@ -183,79 +203,105 @@ class Reporteindicadoresvalor extends Component
             $current->addMonth();
         }
 
-        // Consulta para Flete Total (despachos únicos con guías)
-        $despachosFleteTotal = DB::table('despachos as d')
-            ->select(
-                DB::raw('MONTH(d.despacho_fecha_aprobacion) as mes'),
-                DB::raw('YEAR(d.despacho_fecha_aprobacion) as anio'),
-                DB::raw('SUM(d.despacho_costo_total) as flete_total')
+        // Consulta para Flete Total - Corregida para evitar sumas duplicadas
+        $fleteTotalQuery = DB::table(function($query) {
+            $query->select(
+                'despachos.id_despacho',
+                'despachos.despacho_costo_total',
+                DB::raw($this->tipo_reporte == 'despacho' ?
+                    'despachos.despacho_fecha_aprobacion as fecha_referencia' :
+                    'guias.guia_fecha_emision as fecha_referencia')
             )
-            ->whereIn('d.id_despacho', function($query) {
-                $query->select('dv.id_despacho')
-                    ->from('despacho_ventas as dv')
-                    ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
-                    ->whereDate('dv.created_at', '>=', $this->xdesde)
-                    ->whereDate('dv.created_at', '<=', $this->xhasta);
-            })
-            ->whereDate('d.despacho_fecha_aprobacion', '>=', $this->xdesde)
-            ->whereDate('d.despacho_fecha_aprobacion', '<=', $this->xhasta)
-            ->groupBy(DB::raw('YEAR(d.despacho_fecha_aprobacion)'), DB::raw('MONTH(d.despacho_fecha_aprobacion)'))
+                ->from('despachos')
+                ->join('despacho_ventas', 'despachos.id_despacho', '=', 'despacho_ventas.id_despacho')
+                ->join('guias', 'despacho_ventas.id_guia', '=', 'guias.id_guia')
+                ->where('despachos.despacho_estado_aprobacion', '!=', 4);
+
+            if ($this->tipo_reporte == 'despacho') {
+                $query->whereDate('despachos.despacho_fecha_aprobacion', '>=', $this->xdesde)
+                    ->whereDate('despachos.despacho_fecha_aprobacion', '<=', $this->xhasta);
+            } else {
+                $query->whereDate('guias.guia_fecha_emision', '>=', $this->xdesde)
+                    ->whereDate('guias.guia_fecha_emision', '<=', $this->xhasta);
+            }
+
+            $query->groupBy('despachos.id_despacho');
+        })->select(
+            DB::raw('MONTH(fecha_referencia) as mes'),
+            DB::raw('YEAR(fecha_referencia) as anio'),
+            DB::raw('SUM(despacho_costo_total) as flete_total')
+        )
+            ->groupBy('mes', 'anio')
             ->get()
             ->keyBy(function($item) use ($mesesEspanol) {
                 return $mesesEspanol[$item->mes] . '-' . substr($item->anio, 2, 2);
             });
 
-        // Procesar datos para Flete Total (asegurando todos los meses)
+        // Procesar datos para Flete Total
         $mesesFleteTotal = [];
         $fleteTotal = [];
         foreach ($mesesCompletos as $mes) {
             $mesesFleteTotal[] = $mes['key'];
-            $fleteTotal[] = isset($despachosFleteTotal[$mes['key']]) ? (float)$despachosFleteTotal[$mes['key']]->flete_total : 0;
+            $fleteTotal[] = isset($fleteTotalQuery[$mes['key']]) ? (float)$fleteTotalQuery[$mes['key']]->flete_total : 0;
         }
 
-        // Consulta para Flete Lima y Provincia (despachos únicos con guías)
-        $despachosFleteLimaProvincia = DB::table('despachos as d')
-            ->select(
-                DB::raw('MONTH(d.despacho_fecha_aprobacion) as mes'),
-                DB::raw('YEAR(d.despacho_fecha_aprobacion) as anio'),
-                DB::raw('SUM(CASE WHEN d.id_tipo_servicios = 1 OR (dep.departamento_nombre IN ("LIMA", "CALLAO"))
-                THEN d.despacho_costo_total ELSE 0 END) as flete_lima'),
-                DB::raw('SUM(CASE WHEN dep.departamento_nombre NOT IN ("LIMA", "CALLAO")
-                THEN d.despacho_costo_total ELSE 0 END) as flete_provincia')
+        // Consulta para Flete Lima y Provincia - Corregida para evitar sumas duplicadas
+        $fleteLimaProvinciaQuery = DB::table(function($query) {
+            $query->select(
+                'despachos.id_despacho',
+                'despachos.despacho_costo_total',
+                'despachos.id_tipo_servicios',
+                'departamentos.departamento_nombre',
+                DB::raw($this->tipo_reporte == 'despacho' ?
+                    'despachos.despacho_fecha_aprobacion as fecha_referencia' :
+                    'guias.guia_fecha_emision as fecha_referencia')
             )
-            ->leftJoin('departamentos as dep', 'd.id_departamento', '=', 'dep.id_departamento')
-            ->whereIn('d.id_despacho', function($query) {
-                $query->select('dv.id_despacho')
-                    ->from('despacho_ventas as dv')
-                    ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
-                    ->whereDate('dv.created_at', '>=', $this->xdesde)
-                    ->whereDate('dv.created_at', '<=', $this->xhasta);
-            })
-            ->whereDate('d.despacho_fecha_aprobacion', '>=', $this->xdesde)
-            ->whereDate('d.despacho_fecha_aprobacion', '<=', $this->xhasta)
-            ->groupBy(DB::raw('YEAR(d.despacho_fecha_aprobacion)'), DB::raw('MONTH(d.despacho_fecha_aprobacion)'))
+                ->from('despachos')
+                ->leftJoin('departamentos', 'despachos.id_departamento', '=', 'departamentos.id_departamento')
+                ->join('despacho_ventas', 'despachos.id_despacho', '=', 'despacho_ventas.id_despacho')
+                ->join('guias', 'despacho_ventas.id_guia', '=', 'guias.id_guia')
+                ->where('despachos.despacho_estado_aprobacion', '!=', 4);
+
+            if ($this->tipo_reporte == 'despacho') {
+                $query->whereDate('despachos.despacho_fecha_aprobacion', '>=', $this->xdesde)
+                    ->whereDate('despachos.despacho_fecha_aprobacion', '<=', $this->xhasta);
+            } else {
+                $query->whereDate('guias.guia_fecha_emision', '>=', $this->xdesde)
+                    ->whereDate('guias.guia_fecha_emision', '<=', $this->xhasta);
+            }
+
+            $query->groupBy('despachos.id_despacho');
+        })->select(
+            DB::raw('MONTH(fecha_referencia) as mes'),
+            DB::raw('YEAR(fecha_referencia) as anio'),
+            DB::raw('SUM(CASE WHEN id_tipo_servicios = 1 OR (departamento_nombre IN ("LIMA", "CALLAO"))
+                THEN despacho_costo_total ELSE 0 END) as flete_lima'),
+            DB::raw('SUM(CASE WHEN departamento_nombre NOT IN ("LIMA", "CALLAO")
+                THEN despacho_costo_total ELSE 0 END) as flete_provincia')
+        )
+            ->groupBy('mes', 'anio')
             ->get()
             ->keyBy(function($item) use ($mesesEspanol) {
                 return $mesesEspanol[$item->mes] . '-' . substr($item->anio, 2, 2);
             });
 
-        // Procesar datos para Flete Lima y Provincia (asegurando todos los meses)
+        // Procesar datos para Flete Lima y Provincia
         $mesesFleteLimaProvincia = [];
         $fleteLima = [];
         $fleteProvincia = [];
         foreach ($mesesCompletos as $mes) {
             $mesesFleteLimaProvincia[] = $mes['key'];
 
-            if (isset($despachosFleteLimaProvincia[$mes['key']])) {
-                $fleteLima[] = (float)$despachosFleteLimaProvincia[$mes['key']]->flete_lima;
-                $fleteProvincia[] = (float)$despachosFleteLimaProvincia[$mes['key']]->flete_provincia;
+            if (isset($fleteLimaProvinciaQuery[$mes['key']])) {
+                $fleteLima[] = (float)$fleteLimaProvinciaQuery[$mes['key']]->flete_lima;
+                $fleteProvincia[] = (float)$fleteLimaProvinciaQuery[$mes['key']]->flete_provincia;
             } else {
                 $fleteLima[] = 0;
                 $fleteProvincia[] = 0;
             }
         }
 
-        // Asignar datos con valores por defecto si están vacíos
+        // Asignar datos para los gráficos
         $this->datosGraficoFleteTotal = [
             'meses' => $mesesFleteTotal,
             'flete_total' => $fleteTotal

@@ -82,6 +82,7 @@ class Reporteindicadorespeso extends Component
             ->leftJoin('departamentos as dep', 'd.id_departamento', '=', 'dep.id_departamento')
             ->join('despacho_ventas as dv', 'd.id_despacho', '=', 'dv.id_despacho')
             ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
+            ->where('d.despacho_estado_aprobacion', '!=', 4)
             ->whereDate('d.despacho_fecha_aprobacion', '>=', $this->ydesde)
             ->whereDate('d.despacho_fecha_aprobacion', '<=', $this->yhasta)
             ->groupBy('d.id_despacho', 'd.despacho_costo_total', 'd.id_tipo_servicios', 'dep.departamento_nombre')

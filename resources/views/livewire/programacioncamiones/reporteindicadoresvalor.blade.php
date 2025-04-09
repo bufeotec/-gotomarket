@@ -16,12 +16,20 @@
     @endif
     <div class="row align-items-center">
         <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-            <label class="form-label">F. Desde (Aprobación)</label>
+            <label for="tipo_reporte" class="form-label">Tipo de reporte</label>
+            <select name="tipo_reporte" id="tipo_reporte" wire:model.live="tipo_reporte" class="form-select">
+                <option value="">Seleccionar...</option>
+                <option value="emision">F. Emisión</option>
+                <option value="despacho">F. Despacho</option>
+            </select>
+        </div>
+        <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
+            <label class="form-label">Desde</label>
             <input type="date" wire:model.live="xdesde" class="form-control" min="2025-01-01">
         </div>
 
         <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-            <label class="form-label">F. Hasta (Aprobación)</label>
+            <label class="form-label">Hasta</label>
             <input type="date" wire:model.live="xhasta" class="form-control" min="2025-01-01">
         </div>
 
