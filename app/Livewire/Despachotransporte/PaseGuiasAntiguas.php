@@ -86,32 +86,33 @@ class PaseGuiasAntiguas extends Component
                     if($Guia->save()){
                         $buscar_datos_detalle_guia = $this->server->obtenerDetalleRemision($buscar_datos_guia['NRO_DOC']);
                         if($buscar_datos_detalle_guia){
+                            $id_guia = $this->server->listar_guia_guardada($buscar_datos_guia['NRO_DOC'])->id_guia;
                             foreach ($buscar_datos_detalle_guia as $dg){
                                 $GuiaDetalle = new Guiadetalle();
                                 $GuiaDetalle->id_users = 4;
-                                $GuiaDetalle->id_guia  = $Guia->id_guia;
-                                $GuiaDetalle->guia_det_almacen_salida = $dg['ALMACEN_SALIDA'];
-                                $GuiaDetalle->guia_det_fecha_emision = $dg['FECHA_EMISION'];
-                                $GuiaDetalle->guia_det_estado = $dg['ESTADO'];
-                                $GuiaDetalle->guia_det_tipo_documento = $dg['TIPO_DOCUMENTO'];
-                                $GuiaDetalle->guia_det_nro_documento = $dg['NRO_DOCUMENTO'];
-                                $GuiaDetalle->guia_det_nro_linea = $dg['NRO_LINEA'];
-                                $GuiaDetalle->guia_det_cod_producto = $dg['COD_PRODUCTO'];
-                                $GuiaDetalle->guia_det_descripcion_producto = $dg['DESCRIPCION_PRODUCTO'];
-                                $GuiaDetalle->guia_det_lote = $dg['LOTE'];
-                                $GuiaDetalle->guia_det_unidad = $dg['UNIDAD'];
-                                $GuiaDetalle->guia_det_cantidad = $dg['CANTIDAD'];
-                                $GuiaDetalle->guia_det_precio_unit_final_inc_igv = $dg['PRECIO_UNIT_FINAL_INC_IGV'];
-                                $GuiaDetalle->guia_det_precio_unit_antes_descuente_inc_igv = $dg['PRECIO_UNIT_ANTES_DESCUENTO_INC_IGV'];
-                                $GuiaDetalle->guia_det_descuento_total_sin_igv = $dg['DESCUENTO_TOTAL_SIN_IGV'];
-                                $GuiaDetalle->guia_det_igv_total = $dg['IGV_TOTAL'];
-                                $GuiaDetalle->guia_det_importe_total_inc_igv = $dg['IMPORTE_TOTAL_INC_IGV'];
-                                $GuiaDetalle->guia_det_moneda = $dg['MONEDA'];
-                                $GuiaDetalle->guia_det_tipo_cambio = $dg['TIPO_CAMBIO'];
-                                $GuiaDetalle->guia_det_peso_gramo = $dg['PESO_GRAMOS'];
-                                $GuiaDetalle->guia_det_volumen = $dg['VOLUMEN_CM3'];
-                                $GuiaDetalle->guia_det_peso_total_gramo = $dg['PESO_TOTAL_GRAMOS'];
-                                $GuiaDetalle->guia_det_volumen_total = $dg['VOLUMEN_TOTAL_CM3'];
+                                $GuiaDetalle->id_guia  = $id_guia;
+                                $GuiaDetalle->guia_det_almacen_salida = $dg->ALMACEN_SALIDA ?: null;
+                                $GuiaDetalle->guia_det_fecha_emision = $dg->FECHA_EMISION ?: null;
+                                $GuiaDetalle->guia_det_estado = $dg->ESTADO ?: null;
+                                $GuiaDetalle->guia_det_tipo_documento = $dg->TIPO_DOCUMENTO ?: null;
+                                $GuiaDetalle->guia_det_nro_documento = $dg->NRO_DOCUMENTO ?: null;
+                                $GuiaDetalle->guia_det_nro_linea = $dg->NRO_LINEA ?: null;
+                                $GuiaDetalle->guia_det_cod_producto = $dg->COD_PRODUCTO ?: null;
+                                $GuiaDetalle->guia_det_descripcion_producto = $dg->DESCRIPCION_PRODUCTO ?: null;
+                                $GuiaDetalle->guia_det_lote = $dg->LOTE ?: null;
+                                $GuiaDetalle->guia_det_unidad = $dg->UNIDAD ?: null;
+                                $GuiaDetalle->guia_det_cantidad = $dg->CANTIDAD ?: null;
+                                $GuiaDetalle->guia_det_precio_unit_final_inc_igv = $dg->PRECIO_UNIT_FINAL_INC_IGV ?: null;
+                                $GuiaDetalle->guia_det_precio_unit_antes_descuente_inc_igv = $dg->PRECIO_UNIT_ANTES_DESCUENTO_INC_IGV ?: null;
+                                $GuiaDetalle->guia_det_descuento_total_sin_igv = $dg->DESCUENTO_TOTAL_SIN_IGV ?: null;
+                                $GuiaDetalle->guia_det_igv_total = $dg->IGV_TOTAL ?: null;
+                                $GuiaDetalle->guia_det_importe_total_inc_igv = $dg->IMPORTE_TOTAL_INC_IGV ?: null;
+                                $GuiaDetalle->guia_det_moneda = $dg->MONEDA ?: null;
+                                $GuiaDetalle->guia_det_tipo_cambio = $dg->TIPO_CAMBIO ?: null;
+                                $GuiaDetalle->guia_det_peso_gramo = $dg->PESO_GRAMOS ?: null;
+                                $GuiaDetalle->guia_det_volumen = $dg->VOLUMEN_CM3 ?: null;
+                                $GuiaDetalle->guia_det_peso_total_gramo = $dg->PESO_TOTAL_GRAMOS ?: null;
+                                $GuiaDetalle->guia_det_volumen_total = $dg->VOLUMEN_TOTAL_CM3 ?: null;
                                 if($GuiaDetalle->save()){
                                     $contador_detalles_ingresados++;
                                 };

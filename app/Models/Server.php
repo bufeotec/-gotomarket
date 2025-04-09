@@ -250,6 +250,20 @@ class  Server extends Model
 
         return $result;
     }
+
+    public function listar_guia_guardada($num_doc){
+        try {
+            $result = DB::table('guias')
+                ->where('guia_nro_doc','=',$num_doc)
+                ->first();
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+
+        return $result;
+    }
+
     public function obtenerGuia_x_numdoc($num_doc){
         try {
             $result = array();
