@@ -3,30 +3,38 @@
         $general = new \App\Models\General();
     @endphp
     {{--BUSCAR--}}
-    <div class="row">
-        <div class="col-lg-12 mb-2">
-            <button class="btn btn-info" wire:click="setFilter(true)">Filtrar por Programación</button>
-            <button class="btn btn-info" wire:click="setFilter(false)">Filtrar por Despacho</button>
-
-            <button class="btn bg-primary text-white" wire:click="buscar_datos">
-                <i class="fa fa-search"></i> BUSCAR
-            </button>
-
-            @if(count($filteredData) > 0)
-                <button class="btn btn-success text-white" wire:click.prevent="exportarDespachosExcel">
-                    <i class="fa-solid fa-file-excel"></i> Exportar
-                </button>
-            @endif
+    <div class="row align-items-center">
+        <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
+            <label for="tipo_reporte" class="form-label">Tipo de reporte</label>
+            <select name="tipo_reporte" id="tipo_reporte" wire:model.live="tipo_reporte" class="form-select">
+                <option value="">Seleccionar...</option>
+                <option value="despacho">F. Despacho</option>
+                <option value="programacion">F. Programación</option>
+            </select>
         </div>
 
         <div class="col-lg-2 mb-2">
             <label class="form-label">Desde</label>
             <input type="date" wire:model.defer="desde" class="form-control" min="2025-01-01">
         </div>
+
         <div class="col-lg-2 mb-2">
             <label class="form-label">Hasta</label>
             <input type="date" wire:model.defer="hasta" class="form-control" min="2025-01-01">
         </div>
+        <div class="col-lg-2 mt-4 mb-2">
+            <button class="btn bg-primary text-white" wire:click="buscar_datos">
+                <i class="fa fa-search"></i> BUSCAR
+            </button>
+        </div>
+
+        @if(count($filteredData) > 0)
+            <div class="col-lg-2 mt-4 mb-2">
+                <button class="btn btn-success text-white" wire:click.prevent="exportarDespachosExcel">
+                    <i class="fa-solid fa-file-excel"></i> Exportar
+                </button>
+            </div>
+        @endif
     </div>
 
     @if($searchdatos)

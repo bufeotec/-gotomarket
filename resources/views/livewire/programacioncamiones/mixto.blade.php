@@ -131,13 +131,13 @@
                                                                 <tr>
                                                                     <td style="width: 39.6%">
                                                                          <span class="tamanhoTablaComprobantes">
-                                                                            <b class="colorBlackComprobantes">{{ date('d/m/Y',strtotime($com['GREFECEMISION'])) }}</b>
+                                                                            <b class="colorBlackComprobantes">{{ date('d/m/Y',strtotime($com['guia_fecha_emision'])) }}</b>
                                                                         </span>
                                                                         <span class="d-block tamanhoTablaComprobantes">
-                                                                            {{ $com['CFNUMSER'] }} - {{ $com['CFNUMDOC'] }}
+                                                                            {{ $com['guia_nro_doc'] }}
                                                                         </span>
                                                                         @php
-                                                                            $guia2Pro = $me->formatearCodigo($com['guia'])
+                                                                            $guia2Pro = $me->formatearCodigo($com['guia_nro_doc_ref'])
                                                                         @endphp
                                                                         <span class="d-block tamanhoTablaComprobantes">
                                                                             {{ $guia2Pro }}
@@ -145,20 +145,20 @@
                                                                     </td>
                                                                     <td style="width: 32.2%">
                                                                         <span class="d-block tamanhoTablaComprobantes">
-                                                                            <b class="colorBlackComprobantes">{{ $me->formatoDecimal($com['CFIMPORTE'])  }}</b>
+                                                                            <b class="colorBlackComprobantes">{{ $me->formatoDecimal($com['guia_importe_total'])  }}</b>
                                                                         </span>
                                                                     </td>
                                                                     <td>
                                                                         @php
                                                                             $modalProPeso = "0";
-                                                                            if ($com['total_kg']){
-                                                                                $modalProPeso = $me->formatoDecimal($com['total_kg']);
+                                                                            if ($com['peso_total']){
+                                                                                $modalProPeso = $me->formatoDecimal($com['peso_total']);
                                                                             }
                                                                         @endphp
                                                                         @php
                                                                             $modalProVolumen = "0";
-                                                                            if ($com['total_volumen']){
-                                                                                $modalProVolumen = $me->formatoDecimal($com['total_volumen']);
+                                                                            if ($com['volumen_total']){
+                                                                                $modalProVolumen = $me->formatoDecimal($com['volumen_total']);
                                                                             }
                                                                         @endphp
                                                                         <span class="d-block tamanhoTablaComprobantes">
@@ -172,7 +172,7 @@
                                                                 <tr style="border-top: 2px solid transparent;">
                                                                     <td colspan="3" style="padding-top: 0">
                                                                          <span class="d-block tamanhoTablaComprobantes">
-                                                                                {{ $com['LLEGADADIRECCION'] }} <br> UBIGEO: <b style="color: black">{{ $com['DEPARTAMENTO'] }} - {{ $com['PROVINCIA'] }} - {{ $com['DISTRITO'] }}</b>
+                                                                                {{ $com['guia_direc_entrega'] }} <br> UBIGEO: <b style="color: black">{{ $com['guia_departamento'] }} - {{ $com['guia_provincia'] }} - {{ $com['guia_destrito'] }}</b>
                                                                          </span>
                                                                     </td>
                                                                 </tr>
@@ -232,9 +232,11 @@
                             @if($montoSelect)
                                 <small class="textTotalComprobantesSeleccionados me-2">
                                     @php
-                                        $divisor = $imporTotalPro != 0 ? $imporTotalPro : 1;
-                                        $toVenta = (($precioTotal + $otros_gastos) / $divisor) * 100;
-                                        $toVenta = number_format($toVenta, 2, '.', ''); // Formatea con 2 decimales
+                                    // SOLO IMPORTE DE VENTA SE DIVIDE ENTRE 1.18 (SIN IGV)
+                                    $importeTotalVentaSinIgv = $imporTotalPro / 1.18;
+                                    $divisor = $importeTotalVentaSinIgv != 0 ? $importeTotalVentaSinIgv : 1;
+                                    $toVenta = (($precioTotal + $otros_gastos) / $divisor) * 100;
+                                    $toVenta = number_format($toVenta, 2, '.', ''); // Formatea con 2 decimales
                                     @endphp
                                     F / V: <b class="colorBlackComprobantes">{{$me->formatoDecimal($precioTotal + $otros_gastos) }}</b> / <b class="colorBlackComprobantes">{{$me->formatoDecimal($imporTotalPro)}}</b> =  <span>{{ $me->formatoDecimal($toVenta)}} %</span>
                                 </small>
@@ -757,7 +759,7 @@
 
                                         <tbody>
                                         @foreach($guias_estado_tres as $factura)
-                                            @if (!in_array($factura->id_guia, array_column($selectedFacturas, 'id_guia')))
+                                            @if (!in_array($factura->id_guia, array_column($selectedFacturasLocal, 'id_guia')))
                                                 <tr>
                                                     <td>
                                                         <button class="btn btn-success btn-sm text-white mb-2 cursoPointer" wire:click="seleccionarFactura({{ $factura->id_guia }})">
@@ -822,81 +824,81 @@
                     </div>
                 </div>
             </div>
-            <div class="card">
-                <div class="card-body">
-                    <div class="row mb-3">
-                        <h6>SERVICIO TRANSPORTE</h6>
-                    </div>
-                    <div class="row mt-3">
-                        <div class="col-lg-12 col-md-12 col-sm-12">
-                            <div class="contenedor-comprobante" style="max-height: 600px; overflow: auto">
-                                @if($serv_transp->isEmpty())
-                                    <p class="text-center text-muted">No hay facturas disponibles.</p>
-                                @else
-                                    <table class="table table-responsive ">
-                                        <thead style="background: #E7E7FF; color: #696cff">
-                                        <tr>
-                                            <th>#</th>
-                                            <th style="font-size: 14px">Codigo</th>
-                                            <th style="font-size: 14px">Motivo</th>
-                                            <th style="font-size: 14px">Remitente</th>
-                                            <th style="font-size: 14px">Destinatario</th>
-                                            <th style="font-size: 14px">Peso y Volumen</th>
-                                        </tr>
-                                        </thead>
+{{--            <div class="card">--}}
+{{--                <div class="card-body">--}}
+{{--                    <div class="row mb-3">--}}
+{{--                        <h6>SERVICIO TRANSPORTE</h6>--}}
+{{--                    </div>--}}
+{{--                    <div class="row mt-3">--}}
+{{--                        <div class="col-lg-12 col-md-12 col-sm-12">--}}
+{{--                            <div class="contenedor-comprobante" style="max-height: 600px; overflow: auto">--}}
+{{--                                @if($serv_transp->isEmpty())--}}
+{{--                                    <p class="text-center text-muted">No hay facturas disponibles.</p>--}}
+{{--                                @else--}}
+{{--                                    <table class="table table-responsive ">--}}
+{{--                                        <thead style="background: #E7E7FF; color: #696cff">--}}
+{{--                                        <tr>--}}
+{{--                                            <th>#</th>--}}
+{{--                                            <th style="font-size: 14px">Codigo</th>--}}
+{{--                                            <th style="font-size: 14px">Motivo</th>--}}
+{{--                                            <th style="font-size: 14px">Remitente</th>--}}
+{{--                                            <th style="font-size: 14px">Destinatario</th>--}}
+{{--                                            <th style="font-size: 14px">Peso y Volumen</th>--}}
+{{--                                        </tr>--}}
+{{--                                        </thead>--}}
 
-                                        <tbody>
-                                        @foreach($serv_transp as $factura)
-                                            @if (!in_array($factura->id_serv_transpt, array_column($selectedServTrns, 'id_serv_transpt')))
-                                                <tr>
-                                                    <td>
-                                                        <button class="btn btn-success btn-sm text-white mb-2 cursoPointer" wire:click="seleccionarServTrns({{ $factura->id_serv_transpt }})">
-                                                            <i class="fa-solid fa-check"></i>
-                                                        </button>
-                                                    </td>
-                                                    <td>
-                                                        <span class="tamanhoTablaComprobantes">
-                                                            <b class="colorBlackComprobantes">{{ $factura->serv_transpt_codigo }}</b>
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <span class="d-block tamanhoTablaComprobantes">
-                                                            {{ $factura->serv_transpt_motivo }}
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <span class="d-block tamanhoTablaComprobantes">
-                                                             {{ $factura->serv_transpt_remitente_ruc }} <br><br>
-                                                            {{ $factura->serv_transpt_remitente_razon_social }} <br><br>
-                                                            {{ $factura->serv_transpt_remitente_direccion }}
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <span class="d-block tamanhoTablaComprobantes">
-                                                            {{ $factura->serv_transpt_destinatario_ruc }} <br><br>
-                                                            {{ $factura->serv_transpt_destinatario_razon_social }} <br><br>
-                                                            {{ $factura->serv_transpt_destinatario_direccion }}
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <span class="d-block tamanhoTablaComprobantes">
-                                                            <b class="colorBlackComprobantes">{{ $me->formatoDecimal($factura->serv_transpt_peso)}} kg</b>
-                                                        </span>
-                                                        <span class="d-block tamanhoTablaComprobantes">
-                                                            <b class="colorBlackComprobantes">{{ $me->formatoDecimal($factura->serv_transpt_volumen)}} cm³</b>
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            @endif
-                                        @endforeach
-                                        </tbody>
-                                    </table>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+{{--                                        <tbody>--}}
+{{--                                        @foreach($serv_transp as $factura)--}}
+{{--                                            @if (!in_array($factura->id_serv_transpt, array_column($selectedServTrns, 'id_serv_transpt')))--}}
+{{--                                                <tr>--}}
+{{--                                                    <td>--}}
+{{--                                                        <button class="btn btn-success btn-sm text-white mb-2 cursoPointer" wire:click="seleccionarServTrns({{ $factura->id_serv_transpt }})">--}}
+{{--                                                            <i class="fa-solid fa-check"></i>--}}
+{{--                                                        </button>--}}
+{{--                                                    </td>--}}
+{{--                                                    <td>--}}
+{{--                                                        <span class="tamanhoTablaComprobantes">--}}
+{{--                                                            <b class="colorBlackComprobantes">{{ $factura->serv_transpt_codigo }}</b>--}}
+{{--                                                        </span>--}}
+{{--                                                    </td>--}}
+{{--                                                    <td>--}}
+{{--                                                        <span class="d-block tamanhoTablaComprobantes">--}}
+{{--                                                            {{ $factura->serv_transpt_motivo }}--}}
+{{--                                                        </span>--}}
+{{--                                                    </td>--}}
+{{--                                                    <td>--}}
+{{--                                                        <span class="d-block tamanhoTablaComprobantes">--}}
+{{--                                                             {{ $factura->serv_transpt_remitente_ruc }} <br><br>--}}
+{{--                                                            {{ $factura->serv_transpt_remitente_razon_social }} <br><br>--}}
+{{--                                                            {{ $factura->serv_transpt_remitente_direccion }}--}}
+{{--                                                        </span>--}}
+{{--                                                    </td>--}}
+{{--                                                    <td>--}}
+{{--                                                        <span class="d-block tamanhoTablaComprobantes">--}}
+{{--                                                            {{ $factura->serv_transpt_destinatario_ruc }} <br><br>--}}
+{{--                                                            {{ $factura->serv_transpt_destinatario_razon_social }} <br><br>--}}
+{{--                                                            {{ $factura->serv_transpt_destinatario_direccion }}--}}
+{{--                                                        </span>--}}
+{{--                                                    </td>--}}
+{{--                                                    <td>--}}
+{{--                                                        <span class="d-block tamanhoTablaComprobantes">--}}
+{{--                                                            <b class="colorBlackComprobantes">{{ $me->formatoDecimal($factura->serv_transpt_peso)}} kg</b>--}}
+{{--                                                        </span>--}}
+{{--                                                        <span class="d-block tamanhoTablaComprobantes">--}}
+{{--                                                            <b class="colorBlackComprobantes">{{ $me->formatoDecimal($factura->serv_transpt_volumen)}} cm³</b>--}}
+{{--                                                        </span>--}}
+{{--                                                    </td>--}}
+{{--                                                </tr>--}}
+{{--                                            @endif--}}
+{{--                                        @endforeach--}}
+{{--                                        </tbody>--}}
+{{--                                    </table>--}}
+{{--                                @endif--}}
+{{--                            </div>--}}
+{{--                        </div>--}}
+{{--                    </div>--}}
+{{--                </div>--}}
+{{--            </div>--}}
 
             <!-- Overlay y Spinner solo al seleccionar una factura -->
             <div wire:loading wire:target="seleccionarFactura" class="overlay__eliminar">
@@ -1132,8 +1134,12 @@
                                                 @if($costoTotal && $importeTotalVenta)
                                                     <small class="textTotalComprobantesSeleccionados me-2">
                                                         @php
-                                                            $divisor2 = $importeTotalVenta != 0 ? $importeTotalVenta : 1;
-                                                            $to = ($costoTotal / $divisor2) * 100;
+                                                            // Solo el importe de venta se divide entre 1.18 (sin IGV)
+                                                        $importeTotalVentaSinIgv = $importeTotalVenta / 1.18;
+
+                                                        // El costo total se mantiene con IGV (no se divide)
+                                                        $divisor2 = $importeTotalVentaSinIgv != 0 ? $importeTotalVentaSinIgv : 1;
+                                                        $to = ($costoTotal / $divisor2) * 100;
                                                         @endphp
                                                         F / V: <b class="colorBlackComprobantes">{{$me->formatoDecimal($costoTotal)}}</b> / <b class="colorBlackComprobantes">{{$me->formatoDecimal($importeTotalVenta)}}</b> =  <span>{{ $me->formatoDecimal($to) }} %</span>
                                                     </small>
@@ -1162,6 +1168,7 @@
                                                 <x-table-general>
                                                     <x-slot name="thead">
                                                         <tr>
+                                                            <th>Check</th>
                                                             <th>Fecha emisión guía</th>
                                                             <th>Guía</th>
                                                             <th>Factura</th>
@@ -1243,19 +1250,20 @@
                                                 <x-table-general>
                                                     <x-slot name="thead">
                                                         <tr>
-                                                            <th class="">Serie / Guía</th>
-                                                            <th class="">F. Emisión</th>
-                                                            <th class="">Importe sin IGV</th>
-                                                            <th class="">Peso y Volumen</th>
-                                                            <th class="">Dirección</th>
-                                                            <th class="">Acciones</th>
+                                                            <th>Fecha emisión guía</th>
+                                                            <th>Guía</th>
+                                                            <th>Factura</th>
+                                                            <th>Nombre del cliente</th>
+                                                            <th>Peso y Volumen</th>
+                                                            <th>Dirección</th>
+                                                            <th>Acciones</th>
                                                         </tr>
                                                     </x-slot>
                                                     <x-slot name="tbody">
                                                         @foreach($clientes_provinciales as $indexCliete => $cli)
                                                             <tr>
                                                                 <td colspan="4">
-                                                                    <h6 class="mb-0">{{ $cli['guia_nombre_cliente'] }}</h6>
+                                                                    <h6 class="mb-0">{{ $cli['nombreCliente'] }}</h6>
                                                                 </td>
                                                                 <td colspan="3">
                                                                     <a
@@ -1270,69 +1278,44 @@
                                                             @foreach($cli['comprobantes'] as $comprobantes)
                                                                 <tr>
                                                                     <td>
-                                                                <span class="d-block tamanhoTablaComprobantes">
-                                                                    {{ $comprobantes['CFNUMSER'] }} - {{ $comprobantes['CFNUMDOC'] }}
-                                                                </span>
-                                                                        @php
-                                                                            $guia2 = $me->formatearCodigo($comprobantes['guia'])
-                                                                        @endphp
-                                                                        <span class="d-block tamanhoTablaComprobantes">
-                                                                    {{ $guia2 }}
-                                                                </span>
-                                                                    </td>
-                                                                    @php
-                                                                        $importe = "0";
-                                                                        if ($comprobantes['CFIMPORTE']){
-                                                                            $importe = $me->formatoDecimal($comprobantes['CFIMPORTE']);
-                                                                        }
-                                                                    @endphp
-                                                                    @php
-                                                                        $feFor = "";
-                                                                        if ($comprobantes['GREFECEMISION']){
-                                                                            $feFor = $me->obtenerNombreFecha($comprobantes['GREFECEMISION'],'DateTime','Date');
-                                                                        }
-                                                                    @endphp
-                                                                    <td>
-                                                                <span class="d-block tamanhoTablaComprobantes">
-                                                                    {{ $feFor }}
-                                                                </span>
+                                                                    <span class="d-block">
+                                                                        {{ $me->obtenerNombreFecha($comprobantes['guia_fecha_emision'], 'DateTime', 'Date') }}
+                                                                    </span>
                                                                     </td>
                                                                     <td>
-                                                                <span class="d-block tamanhoTablaComprobantes">
-                                                                    <b class="colorBlackComprobantes">{{ $importe }}</b>
-                                                                </span>
-                                                                    </td>
-                                                                    @php
-                                                                        $pesoTabla = "0";
-                                                                        if ($comprobantes['total_kg']){
-                                                                            $pesoTabla = $me->formatoDecimal($comprobantes['total_kg']);
-                                                                        }
-                                                                    @endphp
-                                                                    @php
-                                                                        $volumenTabla = "0";
-                                                                        if ($comprobantes['total_volumen']){
-                                                                            $volumenTabla = $me->formatoDecimal($comprobantes['total_volumen']);
-                                                                        }
-                                                                    @endphp
-                                                                    <td>
-                                                                <span class="d-block tamanhoTablaComprobantes">
-                                                                    <b class="colorBlackComprobantes">{{ $pesoTabla }}  kg</b>
-                                                                </span>
-                                                                        <span class="d-block tamanhoTablaComprobantes">
-                                                                    <b class="colorBlackComprobantes">{{ $volumenTabla }} cm³</b>
-                                                                </span>
+                                                                    <span class="d-block">
+                                                                        {{ $comprobantes['guia_nro_doc'] }}
+                                                                    </span>
                                                                     </td>
                                                                     <td>
-                                                                 <span class="d-block tamanhoTablaComprobantes">
-                                                                     {{ $comprobantes['LLEGADADIRECCION'] }}
-                                                                 </span>
+                                                                    <span class="d-block">
+                                                                        {{ $comprobantes['guia_nro_doc_ref'] }}
+                                                                    </span>
+                                                                    </td>
+                                                                    <td>
+                                                                    <span class="d-block">
+                                                                        {{ $comprobantes['guia_nombre_cliente'] }}
+                                                                    </span>
+                                                                    </td>
+                                                                    <td>
+                                                                    <span class="d-block">
+                                                                        <b class="colorBlackComprobantes">{{ $me->formatoDecimal($comprobantes['peso_total']) }} kg</b>
+                                                                    </span>
+                                                                        <span class="d-block">
+                                                                        <b class="colorBlackComprobantes">{{ $me->formatoDecimal($comprobantes['volumen_total']) }} cm³</b>
+                                                                    </span>
+                                                                    </td>
+                                                                    <td>
+                                                                    <span class="d-block">
+                                                                        {{ $comprobantes['guia_direc_entrega'] }}
+                                                                    </span>
                                                                         <br>
-                                                                        <span class="d-block tamanhoTablaComprobantes" style="color: black;font-weight: bold">
-                                                                     {{ $comprobantes['DEPARTAMENTO'] }} - {{ $comprobantes['PROVINCIA'] }}- {{ $comprobantes['DISTRITO'] }}
-                                                                </span>
+                                                                        <span class="d-block" style="color: black;font-weight: bold">
+                                                                        {{ $comprobantes['guia_departamento'] }} - {{ $comprobantes['guia_provincia'] }} - {{ $comprobantes['guia_destrito'] }}
+                                                                    </span>
                                                                     </td>
                                                                     <td>
-                                                                        <a wire:click="eliminarFacturaProvincial('{{ $comprobantes['CFTD'] }}', '{{ $comprobantes['CFNUMSER'] }}', '{{ $comprobantes['CFNUMDOC'] }}',{{$indexCliete}})"
+                                                                        <a wire:click="eliminarFacturaProvincial('{{ $comprobantes['id_guia'] }}',{{$indexCliete}})"
                                                                            class="btn btn-danger btn-sm text-white">
                                                                             <i class="fas fa-trash-alt"></i>
                                                                         </a>
@@ -1352,7 +1335,7 @@
                         </div>
 
                         <!-- Loading indicador -->
-                        <div wire:loading wire:target="eliminarFacturaSeleccionada, eliminarSeleccion" class="overlay__eliminar">
+                        <div wire:loading wire:target="eliminarFacturaSeleccionada, eliminarFacturaProvincial" class="overlay__eliminar">
                             <div class="spinner__container__eliminar">
                                 <div class="spinner__eliminar"></div>
                             </div>

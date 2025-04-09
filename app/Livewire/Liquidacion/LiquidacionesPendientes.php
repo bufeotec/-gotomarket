@@ -54,13 +54,42 @@ class LiquidacionesPendientes extends Component
     }
     public function listar_guias_despachos($id){
         try {
-            $this->guiasAsociadasDespachos = DB::table('despacho_ventas as dv')
-                ->select('dv.*','p.programacion_fecha')
-                ->join('despachos as d','d.id_despacho','=','dv.id_despacho' )
-                ->join('programaciones as p','p.id_programacion','=','d.id_programacion' )
-                ->where('dv.id_despacho','=',$id)->get();
+            // Obtener las guías básicas primero
+            $guias = DB::table('despacho_ventas as dv')
+                ->select('dv.*', 'p.programacion_fecha', 'g.*')
+                ->join('despachos as d', 'd.id_despacho', '=', 'dv.id_despacho')
+                ->join('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
+                ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
+                ->where('dv.id_despacho', '=', $id)
+                ->get();
 
-        }catch (\Exception $e){
+            // Calcular peso y volumen para cada guía
+            $guiasConPeso = $guias->map(function($guia) {
+                $detalles = DB::table('guias_detalles')
+                    ->where('id_guia', $guia->id_guia)
+                    ->get();
+
+                // Calcular peso total en gramos y convertirlo a kilos
+                $pesoTotalGramos = $detalles->sum(function($detalle) {
+                    return $detalle->guia_det_peso_gramo * $detalle->guia_det_cantidad;
+                });
+                $pesoTotalKilos = $pesoTotalGramos / 1000;
+
+                // Calcular volumen total
+                $volumenTotal = $detalles->sum(function($detalle) {
+                    return $detalle->guia_det_volumen * $detalle->guia_det_cantidad;
+                });
+
+                // Agregar los nuevos campos al objeto guía
+                $guia->peso_total = $pesoTotalKilos;
+                $guia->volumen_total = $volumenTotal;
+
+                return $guia;
+            });
+
+            $this->guiasAsociadasDespachos = $guiasConPeso;
+
+        } catch (\Exception $e) {
             $this->logs->insertarLog($e);
         }
     }

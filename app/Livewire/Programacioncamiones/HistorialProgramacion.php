@@ -1017,9 +1017,7 @@ class HistorialProgramacion extends Component
                                         ->join('despacho_ventas as dv','dv.id_despacho','=','d.id_despacho')
                                         ->join('transportistas as t','t.id_transportistas','=','d.id_transportistas')
                                         ->where('d.id_programacion','=',$resPro->id_programacion)
-                                        ->where('dv.despacho_venta_cftd','=',$comproba->despacho_venta_cftd)
-                                        ->where('dv.despacho_venta_cfnumser','=',$comproba->despacho_venta_cfnumser)
-                                        ->where('dv.despacho_venta_cfnumdoc','=',$comproba->despacho_venta_cfnumdoc)
+                                        ->where('dv.id_guia','=',$comproba->id_guia)
                                         ->where('d.id_tipo_servicios','=',2)->first();
 
 
@@ -1040,10 +1038,11 @@ class HistorialProgramacion extends Component
 
                                     if ($osMixtoProgramacion && $ingreExcelMixto){
 //                                        $rowMixto = $row;
-                                        $totalImporteComprobanteDespachoPro = DB::table('despacho_ventas')
-                                            ->where('id_despacho','=',$osMixtoProgramacion->id_despacho)
+                                        $totalImporteComprobanteDespachoPro = DB::table('despacho_ventas as dv')
+                                            ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
+                                            ->where('dv.id_despacho','=',$osMixtoProgramacion->id_despacho)
 //                                            ->where('despacho_detalle_estado_entrega','=',2)
-                                            ->sum('despacho_venta_cfimporte');
+                                            ->sum('g.guia_importe_total');
 
                                         $InformacionDespachoMixto = DB::table('despachos')
                                             ->where('id_despacho','=',$osMixtoProgramacion->id_despacho)

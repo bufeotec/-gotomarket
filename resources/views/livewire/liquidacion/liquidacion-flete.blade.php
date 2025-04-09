@@ -221,15 +221,15 @@
                                         @foreach($guiasAsociadasDespachos as $ta)
                                             <tr>
                                                 <td>{{$conteo}}</td>
-                                                <td>{{$general->formatearCodigo($ta->despacho_venta_guia)}}</td>
+                                                <td>{{$general->formatearCodigo($ta->guia_nro_doc)}}</td>
                                                 <td>
-                                                    {{date('d-m-Y',strtotime($ta->despacho_venta_grefecemision))}}
+                                                    {{date('d-m-Y',strtotime($ta->guia_fecha_emision))}}
                                                 </td>
-                                                <td>{{$ta->despacho_venta_cnomcli}}</td>
-                                                <td>{{$ta->despacho_venta_factura}}</td>
-                                                <td>S/ {{$general->formatoDecimal($ta->despacho_venta_cfimporte)}}</td>
+                                                <td>{{$ta->guia_nombre_cliente}}</td>
+                                                <td>{{$ta->guia_nro_doc_ref}}</td>
+                                                <td>S/ {{$general->formatoDecimal($ta->guia_importe_total)}}</td>
                                                 <td>{{ date('d-m-Y',strtotime($ta->programacion_fecha)) }}</td>
-                                                <td>{{$general->formatoDecimal($ta->despacho_venta_total_kg)}} Kg</td>
+                                                <td>{{$general->formatoDecimal($ta->peso_total)}} Kg</td>
                                             </tr>
                                             @php $conteo++; @endphp
                                         @endforeach
@@ -449,7 +449,7 @@
                                                 @foreach($guiasComprobante as $indexGuias => $g)
                                                     @if($indexGuias <= 2)
                                                         <a wire:click="listar_guias_despachos({{ $despacho->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalDetalleGuias" class="cursoPointer text-primary">
-                                                            {{ $general->formatearCodigo($g->guia_nro_doc) }}
+                                                            {{ $g->guia_nro_doc }}
                                                         </a>
                                                         @if($indexGuias < 2 && $indexGuias < $totalGuias - 1)
                                                             , <!-- Mostrar la coma solo si no es el último elemento que se va a mostrar -->

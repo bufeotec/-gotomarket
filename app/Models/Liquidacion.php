@@ -57,13 +57,14 @@ class Liquidacion extends Model
 
                     foreach ($re->detalles as $des){
                         $des->comprobantes = DB::table('despacho_ventas as dv')
-                            ->where('id_despacho', '=', $des->id_despacho)
+                            ->join('guias as g','dv.id_guia','=','g.id_guia')
+                            ->where('dv.id_despacho', '=', $des->id_despacho)
                             ->get();
                         $totalVenta = 0;
                         $totalVentaRestar = 0;
                         $totalPesoRestar = 0;
                         foreach ($des->comprobantes as $com) {
-                            $precio = floatval($com->despacho_venta_cfimporte);
+                            $precio = floatval($com->guia_importe_total);
                             $pesoMenos = $com->despacho_venta_total_kg;
                             $totalVenta += $precio;
                             if ($com->despacho_detalle_estado_entrega == 3){
@@ -185,10 +186,10 @@ class Liquidacion extends Model
         try {
             // se debe traer los transportistas que tenga liquidación
             $result = DB::table('liquidaciones as li')
-            ->join('transportistas as tr', 'li.id_transportistas', '=', 'tr.id_transportistas')
-            ->join('users as u', 'u.id_users', '=', 'li.id_users')
-            ->where('li.liquidacion_estado', '=', 1)
-            ->where('li.liquidacion_estado_aprobacion', '=',1);
+                ->join('transportistas as tr', 'li.id_transportistas', '=', 'tr.id_transportistas')
+                ->join('users as u', 'u.id_users', '=', 'li.id_users')
+                ->where('li.liquidacion_estado', '=', 1)
+                ->where('li.liquidacion_estado_aprobacion', '=',1);
 
             if ($desde && $hasta){
                 $result->whereBetween(DB::raw('DATE(li.created_at)'), [$desde, $hasta]);
@@ -213,10 +214,14 @@ class Liquidacion extends Model
                     $detalles_liquidacion = DB::table('liquidacion_detalles as ld')
                         ->join('despachos as d','d.id_despacho','=','ld.id_despacho')
                         ->join('tipo_servicios as ts','ts.id_tipo_servicios','=','d.id_tipo_servicios')
+                        ->leftJoin('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
+                        ->leftJoin('departamentos as dep', 'dep.id_departamento', '=', 'd.id_departamento')
+                        ->leftJoin('provincias as prov', 'prov.id_provincia', '=', 'd.id_provincia')
                         ->where('ld.id_liquidacion','=',$li->id_liquidacion)->get();
 
                     $textProvin = null;
                     $provinciasProcesadas = []; // Almacenar nombres de provincias temporalmente
+
                     foreach ($detalles_liquidacion as $li_de){
                         $datelleDespacho = DB::table('liquidacion_gastos')->where('id_liquidacion_detalle','=',$li_de->id_liquidacion_detalle)->get();
 
@@ -242,7 +247,25 @@ class Liquidacion extends Model
                                 $provinciasProcesadas[] = $li_de->tipo_servicio_concepto; // Agregar a la lista de provincias
                             }
                         }
+
+                        // Guardar información de fechas y ubicación en el objeto $li
+                        if (!isset($li->programacion_fecha) && isset($li_de->programacion_fecha)) {
+                            $li->programacion_fecha = $li_de->programacion_fecha;
+                        }
+
+                        if (!isset($li->despacho_fecha_aprobacion) && isset($li_de->despacho_fecha_aprobacion)) {
+                            $li->despacho_fecha_aprobacion = $li_de->despacho_fecha_aprobacion;
+                        }
+
+                        if (!isset($li->departamento_nombre) && isset($li_de->departamento_nombre)) {
+                            $li->departamento_nombre = $li_de->departamento_nombre;
+                        }
+
+                        if (!isset($li->provincia_nombre) && isset($li_de->provincia_nombre)) {
+                            $li->provincia_nombre = $li_de->provincia_nombre;
+                        }
                     }
+
                     $totalIngresosSinIgv+=$totalDespachoMontoLiquidado;
                     $li->total_sin_igv = $totalIngresosSinIgv;
                     // Concatenar provincias con separador solo si hay más de una
@@ -253,8 +276,6 @@ class Liquidacion extends Model
                     $li->servicios = $textProvin ? $textProvin : '-';
                 }
             }
-
-
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);
             $result = [];
@@ -295,13 +316,14 @@ class Liquidacion extends Model
 
                 foreach ($re->detalles as $des){
                     $des->comprobantes = DB::table('despacho_ventas as dv')
-                        ->where('id_despacho', '=', $des->id_despacho)
+                        ->join('guias as g', 'dv.id_guia', 'g.id_guia')
+                        ->where('dv.id_despacho', '=', $des->id_despacho)
                         ->get();
                     $totalVenta = 0;
                     $totalVentaRestar = 0;
                     $totalPesoRestar = 0;
                     foreach ($des->comprobantes as $com) {
-                        $precio = floatval($com->despacho_venta_cfimporte);
+                        $precio = floatval($com->guia_importe_total);
                         $pesoMenos = $com->despacho_venta_total_kg;
                         $totalVenta += $precio;
                         if ($com->despacho_detalle_estado_entrega == 3){

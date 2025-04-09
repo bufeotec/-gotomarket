@@ -452,6 +452,7 @@
                                                 <td>{{$des->transportista_nom_comercial}}</td>
                                                 <td>S/ {{$general->formatoDecimal($des->totalVentaDespacho)}}</td>
                                                 <td>{{$general->formatoDecimal($des->despacho_peso)}} kg</td>
+
                                                 @php
                                                     $indi = "";
                                                     if ($des->id_vehiculo){
@@ -463,6 +464,7 @@
                                                     }
                                                 @endphp
                                                 <td style="color: {{$general->obtenerColorPorPorcentaje($indi)}}">{{ $indi > 0 ? $indi.'%' : '-' }}</td>
+
                                                 @php
                                                     $styleColor = "text-danger";
                                                     if ($des->despacho_estado_modificado == 1){
