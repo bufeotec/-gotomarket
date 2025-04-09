@@ -187,14 +187,23 @@ class  Server extends Model
                 if (count($result) > 0){
                     // Iteramos sobre el resultado
                     foreach ($result as $key => $re) {
-                        // Verificamos si existe el despacho en la tabla 'despacho_ventas'
+                        //Con esto verifico si la guia ya existe
                         $validarExistencia = DB::table('guias')
-                            ->where('guia_nro_doc', $re->NRO_DOC)
+                            ->where('guia_nro_doc','=', $re->NRO_DOC)
                             ->orderBy('id_guia','desc')
                             ->exists();
 
+                        //Ahora falta verificar si es antigua, pero debo buscar por factura en la tabla despacho ventas
+                        $nroDocRefFormateado = substr($re->NRO_DOC_REF, 0, 4) . '-' . substr($re->NRO_DOC_REF, 4);
+                        $antigua = DB::table('despacho_ventas')
+                            ->whereNull('id_guia')  // Más claro que ->where('id_guia', '=', null)
+                            ->where('despacho_venta_factura', $nroDocRefFormateado)
+                            ->whereNotIn('despacho_detalle_estado_entrega', [0, 1, 2])
+                            ->exists();
+
+
                         // Si existe, eliminamos el registro de $result
-                        if ($validarExistencia) {
+                        if ($validarExistencia || $antigua) {
                             unset($result[$key]); // Elimina el elemento del array
                         }
                     }
@@ -214,6 +223,39 @@ class  Server extends Model
             $client = new \GuzzleHttp\Client();
 //            $url = "http://127.0.0.1/api_goto/public/api/v1/list_detalles_r_documents";
             $url = "http://161.132.173.106:8081/api_goto/public/api/v1/list_detalles_r_documents";
+
+
+            $response = $client->post($url, [
+                'form_params' => [
+                    'num_doc' => $num_doc,
+                ],
+            ]);
+//            // Enviar solicitud GET sin parámetros
+//            $response = $client->post($url);
+            //HOLA
+
+            // Procesar la respuesta
+            $body = $response->getBody()->getContents();
+            $responseData = json_decode($body);
+
+
+            if ($responseData->code === 200){
+                $result = collect($responseData->data);
+            }
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+
+        return $result;
+    }
+    public function obtenerGuia_x_numdoc($num_doc){
+        try {
+            $result = array();
+            $client = new \GuzzleHttp\Client();
+//            $url = "http://127.0.0.1/api_goto/public/api/v1/list_info_guia";
+            $url = "http://161.132.173.106:8081/api_goto/public/api/v1/list_info_guia";
 
 
             $response = $client->post($url, [

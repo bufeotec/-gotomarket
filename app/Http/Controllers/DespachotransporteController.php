@@ -76,6 +76,14 @@ class DespachotransporteController extends Controller
             return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
         }
     }
+    public function guias_antiguas(){
+        try {
+            return view('registroflete.pase_guias_antiguas');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
 
     public function programar_despachos(){
         try {

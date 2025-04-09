@@ -138,4 +138,5 @@ Route::prefix('Despachotransporte')->middleware(['auth', 'canMenu:Despachotransp
 
     route::get('/editar_liquidaciones',[DespachotransporteController::class ,'editar_liquidaciones'])->name('Despachotransporte.editar_liquidaciones')->middleware('verifyUserStatus')->middleware('can:editar_liquidaciones');
     route::get('/editar_programaciones',[DespachotransporteController::class ,'editar_programaciones'])->name('Despachotransporte.editar_programaciones')->middleware('verifyUserStatus')->middleware('can:editar_programaciones');
+    route::get('/guias_antiguas',[DespachotransporteController::class ,'guias_antiguas'])->name('Despachotransporte.guias_antiguas')->middleware('verifyUserStatus')->middleware('can:guias_antiguas');
 });
