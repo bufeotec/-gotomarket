@@ -154,7 +154,7 @@
                                                                 </td>
                                                                 <td style="width: 32.2%">
                                                                     <span class="d-block tamanhoTablaComprobantes">
-                                                                        {{ $me->formatoDecimal($guia->guia_importe_total ?? 0) }}
+                                                                        {{ $me->formatoDecimal(($guia->guia_importe_total ?? 0) / 1.18) }}
                                                                     </span>
                                                                 </td>
                                                                 <td style="width: 32.2%">
@@ -216,88 +216,90 @@
         </div>
 
         <div class="col-lg-7">
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-body table-responsive">
-                                <div class="row">
-                                    <div class="col-lg-12">
-                                        <div class="row align-items-center">
-                                            <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <h6 class="mb-0">Guías Recepcionadas</h6>
-                                                </div>
-                                            </div>
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-body table-responsive">
+                            <div class="row">
+                                <div class="col-lg-12 mb-3">
+                                    <div class="row align-items-center">
+                                        <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
+                                            <h6 class="mb-0">Guías Recepcionadas</h6>
+                                        </div>
+                                        <div class="col-lg-6 col-md-6 col-sm-12 mb-2 text-end">
+                                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalFacApro" id="sendButton" disabled>
+                                                Enviar
+                                            </button>
                                         </div>
                                     </div>
-                                    <div class="col-lg-12 col-md-12 col-sm-12">
-                                        <div class="contenedor-comprobante" style="max-height: 600px; overflow: auto">
-                                            @if(count($facturasCreditoAprobadas) > 0)
-                                                <x-table-general id="ederTable">
-                                                    <x-slot name="thead">
+                                </div>
+                                <div class="col-lg-12 col-md-12 col-sm-12">
+                                    <div class="contenedor-comprobante" style="max-height: 600px; overflow: auto">
+                                        @if(count($facturasCreditoAprobadas) > 0)
+                                            <x-table-general id="ederTable">
+                                                <x-slot name="thead">
+                                                    <tr>
+                                                        <th class="">
+                                                            <input class="form-check-input" type="checkbox" wire:model="selectAll" id="selectAll" onchange="toggleAllCheckboxes(this)">
+                                                        </th>
+                                                        <th class="">Guía / Factura</th>
+                                                        <th class="">F. Emisión</th>
+                                                        <th class="">Importe sin IGV</th>
+                                                        <th class="">Nombre Cliente</th>
+                                                        <th class="">Dirección</th>
+                                                        <th class="">Acciones</th>
+                                                    </tr>
+                                                </x-slot>
+                                                <x-slot name="tbody">
+                                                    @foreach($facturasCreditoAprobadas as $factura)
                                                         <tr>
-                                                            <th class="">
-                                                                <input class="form-check-input" type="checkbox" wire:model="selectAll" id="selectAll" onchange="toggleAllCheckboxes(this)">
-                                                            </th>
-                                                            <th class="">Guía / Factura</th>
-                                                            <th class="">F. Emisión</th>
-                                                            <th class="">Importe sin IGV</th>
-                                                            <th class="">Nombre Cliente</th>
-                                                            <th class="">Dirección</th>
-                                                            <th class="">Acciones</th>
-                                                        </tr>
-                                                    </x-slot>
-                                                    <x-slot name="tbody">
-                                                        @foreach($facturasCreditoAprobadas as $factura)
-                                                            <tr>
-                                                                <td>
-                                                                    <input class="form-check-input" type="checkbox" wire:model="selectedItems" value="{{ (string) $factura->id_guia }}" onchange="toggleButton()">
-                                                                </td>
-                                                                <td>
+                                                            <td>
+                                                                <input class="form-check-input" type="checkbox" wire:model="selectedItems" value="{{ (string) $factura->id_guia }}" onchange="toggleButton()">
+                                                            </td>
+                                                            <td>
                                                                 <span class="d-block tamanhoTablaComprobantes">
                                                                     {{ $factura->guia_nro_doc }} - {{ $factura->guia_nro_doc_ref }}
                                                                 </span>
-                                                                </td>
-                                                                <td>
+                                                            </td>
+                                                            <td>
                                                                 <span class="d-block tamanhoTablaComprobantes">
                                                                     {{ $me->obtenerNombreFecha($factura->guia_fecha_emision, 'DateTime', 'Date')}}
                                                                 </span>
-                                                                </td>
-                                                                <td>
+                                                            </td>
+                                                            <td>
                                                                 <span class="d-block tamanhoTablaComprobantes">
-                                                                    <b class="colorBlackComprobantes">{{ $me->formatoDecimal($factura->guia_importe_total ?? 0) }}</b>
+                                                                    <b class="colorBlackComprobantes">
+                                                                        @php
+                                                                            $importe = floatval($factura->guia_importe_total ?? 0); // Forzar conversión a número
+                                                                            echo $me->formatoDecimal($importe / 1.18);
+                                                                        @endphp
+                                                                    </b>
                                                                 </span>
-                                                                </td>
-                                                                <td>
+                                                            </td>
+                                                            <td>
                                                                 <span class="d-block tamanhoTablaComprobantes">
                                                                     {{ $factura->guia_nombre_cliente }}
                                                                 </span>
-                                                                </td>
-                                                                <td>
+                                                            </td>
+                                                            <td>
                                                                 <span class="d-block tamanhoTablaComprobantes">
                                                                     {{ $factura->guia_direc_entrega }}
                                                                 </span>
-                                                                </td>
-                                                                <td>
-                                                                    <x-btn-accion class="btn btn-success btn-sm text-white" wire:click="enviar_fac_apro('{{ base64_encode($factura->id_guia) }}')" data-bs-toggle="modal" data-bs-target="#modalFacApro">
-                                                                        <x-slot name="message">
-                                                                            <i class="fa-solid fa-check"></i>
-                                                                        </x-slot>
-                                                                    </x-btn-accion>
-                                                                </td>
-                                                            </tr>
-                                                        @endforeach
-                                                    </x-slot>
-                                                </x-table-general>
-                                                <div class="col-lg-12 mt-3 ms-2 ">
-                                                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalFacApro" id="sendButton" disabled>
-                                                        Enviar
-                                                    </button>
-                                                </div>
-                                            @else
-                                                <p>No hay facturas aprobadas para crédito.</p>
-                                            @endif
-                                        </div>
+                                                            </td>
+                                                            <td>
+                                                                <x-btn-accion class="btn btn-success btn-sm text-white" wire:click="enviar_fac_apro('{{ base64_encode($factura->id_guia) }}')" data-bs-toggle="modal" data-bs-target="#modalFacApro">
+                                                                    <x-slot name="message">
+                                                                        <i class="fa-solid fa-check"></i>
+                                                                    </x-slot>
+                                                                </x-btn-accion>
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                </x-slot>
+                                            </x-table-general>
+                                        @else
+                                            <p>No hay facturas aprobadas para crédito.</p>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -305,6 +307,7 @@
                     </div>
                 </div>
             </div>
+        </div>
     </div>
 </div>
 <script>

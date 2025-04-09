@@ -496,7 +496,7 @@
                                     <th>Zona de Despacho</th>
                                     <th>Valor Transportado (Soles sin IGV)</th>
                                     <th>Flete Aprobados (Soles)</th>
-                                    <th>Flete Penal. De Aprobación</th>
+                                    <th>Flete Pend. De Aprobación</th>
                                     <th>Total Flete (Soles)</th>
                                 </tr>
                             </x-slot>

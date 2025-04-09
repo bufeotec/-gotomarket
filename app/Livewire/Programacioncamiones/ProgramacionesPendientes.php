@@ -112,22 +112,20 @@ class ProgramacionesPendientes extends Component
                 ->first();
 
             if ($this->listar_detalle_despacho) {
-                // Obtener los id_guia desde despacho_ventas usando el id_despacho
-                $id_guias = DB::table('despacho_ventas')
-                    ->where('id_despacho', '=', $id)
-                    ->pluck('id_guia')
-                    ->toArray();
-
-                // Obtener los comprobantes relacionados con los id_guia
+                // Obtener las guías únicas relacionadas con el despacho
                 $this->listar_detalle_despacho->comprobantes = DB::table('despacho_ventas as dv')
                     ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
-                    ->whereIn('dv.id_guia', $id_guias)
+                    ->where('dv.id_despacho', '=', $id)
+                    ->select('g.*') // Selecciona solo las columnas de la guía
+                    ->distinct()
                     ->get();
 
-                // Obtener los servicios de transporte relacionados con el despacho
+                // Obtener los servicios de transporte únicos relacionados con el despacho
                 $this->listar_detalle_despacho->servicios_transportes = DB::table('despacho_ventas as dv')
                     ->join('servicios_transportes as st', 'st.id_serv_transpt', '=', 'dv.id_serv_transpt')
                     ->where('dv.id_despacho', '=', $id)
+                    ->select('st.*') // Selecciona solo las columnas del servicio de transporte
+                    ->distinct()
                     ->get();
             }
         } catch (\Exception $e) {

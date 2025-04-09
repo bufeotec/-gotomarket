@@ -18,29 +18,32 @@ use Illuminate\Support\Facades\Log;
 class Reporteliqapro extends Component
 {
     use WithPagination, WithoutUrlPagination;
+
     private $logs;
     private $guia;
+
     public function __construct(){
         $this->logs = new Logs();
         $this->guia = new Guia();
     }
+
     public $desde;
     public $hasta;
-    public $ddesde;
-    public $dhasta;
-    public $filterByProgramacion = false;
+    public $tipo_reporte = ''; // 'despacho' o 'programacion'
     public $filteredData = [];
     public $localData = [];
     public $provincialData = [];
     public $searchdatos = false;
+
     public function render(){
         return view('livewire.programacioncamiones.reporteliqapro');
     }
+
     public function buscar_datos() {
         $this->searchdatos = true;
 
         // Validación de campos vacíos
-        if (empty($this->desde) && empty($this->hasta) && empty($this->ddesde) && empty($this->dhasta)) {
+        if (empty($this->desde) || empty($this->hasta) || empty($this->tipo_reporte)) {
             $this->localData = [];
             $this->provincialData = [];
             $this->filteredData = [];
@@ -56,8 +59,8 @@ class Reporteliqapro extends Component
             ->leftJoin('provincias as prov', 'd.id_provincia', '=', 'prov.id_provincia')
             ->leftJoin('distritos as dis', 'd.id_distrito', '=', 'dis.id_distrito')
             ->select(
-                'p.programacion_fecha as fec_despacho',
-                'd.despacho_fecha_aprobacion as fec_aprob',
+                'p.programacion_fecha as fec_programacion',
+                'd.despacho_fecha_aprobacion as fec_despacho',
                 'dis.distrito_nombre as distrito',
                 'prov.provincia_nombre as provincia',
                 'dep.departamento_nombre as departamento',
@@ -70,20 +73,13 @@ class Reporteliqapro extends Component
             )
             ->where('d.despacho_estado_aprobacion', [1, 2, 3]);
 
-        if ($this->filterByProgramacion) {
-            if (!empty($this->desde)) {
-                $query->whereDate('p.programacion_fecha', '>=', $this->desde);
-            }
-            if (!empty($this->hasta)) {
-                $query->whereDate('p.programacion_fecha', '<=', $this->hasta);
-            }
-        } else {
-            if (!empty($this->ddesde)) {
-                $query->whereDate('d.despacho_fecha_aprobacion', '>=', $this->ddesde);
-            }
-            if (!empty($this->dhasta)) {
-                $query->whereDate('d.despacho_fecha_aprobacion', '<=', $this->dhasta);
-            }
+        // Aplicar filtro según el tipo seleccionado
+        if ($this->tipo_reporte == 'programacion') {
+            $query->whereDate('p.programacion_fecha', '>=', $this->desde)
+                ->whereDate('p.programacion_fecha', '<=', $this->hasta);
+        } else { // 'despacho' por defecto
+            $query->whereDate('d.despacho_fecha_aprobacion', '>=', $this->desde)
+                ->whereDate('d.despacho_fecha_aprobacion', '<=', $this->hasta);
         }
 
         $datos = $query->get();
@@ -107,12 +103,6 @@ class Reporteliqapro extends Component
         $this->localData = $datosConTotales->where('tiposervicio', 1);
         $this->provincialData = $datosConTotales->where('tiposervicio', 2);
         $this->filteredData = $datosConTotales;
-    }
-    public function setFilter($value) {
-        $this->filterByProgramacion = $value;
-
-        $this->desde = null;
-        $this->hasta = null;
     }
     public function exportarDespachosExcel()
     {
