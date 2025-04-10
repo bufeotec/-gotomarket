@@ -125,7 +125,7 @@
                 </div>
                 <div class="card-body">
                     <div class="d-flex justify-content-end">
-                        <a href="{{route('Programacioncamion.reporte_liq_apro')}}" class="btn btn-success">Ingresar</a>
+                        <a href="{{route('Despachotransporte.reporte_flete_aprobados')}}" class="btn btn-success">Ingresar</a>
                     </div>
                 </div>
             </div>

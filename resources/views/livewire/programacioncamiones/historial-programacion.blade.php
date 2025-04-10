@@ -152,6 +152,9 @@
                                                     @if($listar_detalle_despacho->despacho_estado_aprobacion == 2 || $listar_detalle_despacho->despacho_estado_aprobacion == 3)
                                                         <th>Estado del comprobante</th>
                                                     @endif
+                                                    @if($listar_detalle_despacho->despacho_estado_aprobacion == 3 && !$this->verificarAprobacion($listar_detalle_despacho->id_despacho))
+                                                        <th>Cambio de estado</th>
+                                                    @endif
                                                 </tr>
                                             </x-slot>
 
@@ -186,9 +189,21 @@
                                                                         </select>
                                                                     @else
                                                                         <span class="font-bold badge  {{$ta->guia_estado_aprobacion == 8 ? 'bg-label-success' : 'bg-label-danger'}}">
-                                                                        {{$ta->guia_estado_aprobacion == 8 ? 'ENTREGADO ' : 'NO ENTREGADO'}}
-                                                                    </span>
+                                                                            {{$ta->guia_estado_aprobacion == 8 ? 'ENTREGADO ' : 'NO ENTREGADO'}}
+                                                                        </span>
                                                                     @endif
+                                                                </td>
+                                                            @endif
+                                                            @if($listar_detalle_despacho->despacho_estado_aprobacion == 3 && !$this->verificarAprobacion($listar_detalle_despacho->id_despacho))
+                                                                <td>
+                                                                    <select
+                                                                        name="estadoComprobante[{{ $indexComprobantes }}]"
+                                                                        class="form-control form-select"
+                                                                        wire:model="estadoComprobante.{{ $listar_detalle_despacho->id_despacho }}_{{ $ta->id_despacho_venta }}"
+                                                                    >
+                                                                        <option value="8">Entregado</option>
+                                                                        <option value="11">No entregado</option>
+                                                                    </select>
                                                                 </td>
                                                             @endif
                                                         </tr>
@@ -293,7 +308,7 @@
                                         </div>
                                     @endif
                                     <div class="col-lg-12 col-md-12 col-sm-12 mt-4 text-end">
-                                        @if($listar_detalle_despacho->despacho_estado_aprobacion == 2)
+                                        @if($listar_detalle_despacho->despacho_estado_aprobacion == 2 || $listar_detalle_despacho->despacho_estado_aprobacion == 3)
                                             <button class="btn  text-white bg-primary" type="submit">Guardar Estados de Comprobantes</button>
                                         @endif
                                     </div>

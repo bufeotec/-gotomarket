@@ -62,6 +62,7 @@
                                     <th class="text-center">Zona</th>
                                     <th class="text-center">Promedio Tiempo de entrega</th>
                                     <th class="text-center">Guias que cumplen</th>
+                                    <th class="text-center">Objetivo (días)</th>
                                 </tr>
                             </x-slot>
                             <x-slot name="tbody">
@@ -88,6 +89,7 @@
                                         $promedio = $data['count'] > 0 ? round($data['suma'] / $data['count'], 2) : 0;
 
                                         $resultados[$zona] = [
+                                            'objetivo' => $this->objetivos[$zona],
                                             'promedio' => $promedio,
                                             'cumplen' => $data['cumplen']
                                         ];
@@ -99,6 +101,7 @@
                                         <td class="text-center">{{ $zona }}</td>
                                         <td class="text-center">{{ $data['promedio'] }}</td>
                                         <td class="text-center">{{ $data['cumplen'] }}</td>
+                                        <td class="text-center">{{ $data['objetivo'] }}</td>
                                     </tr>
                                 @endforeach
                             </x-slot>

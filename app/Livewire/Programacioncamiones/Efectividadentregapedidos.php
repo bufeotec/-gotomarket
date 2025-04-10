@@ -87,14 +87,32 @@ class Efectividadentregapedidos extends Component
         $enviosSinDevolucion = $totalDespachados - $despachosConDevolucion;
         $indicadorEfectividad = ($totalDespachados > 0) ? round(($enviosSinDevolucion / $totalDespachados) * 100, 2) : 0;
 
-        // Cálculo de valores monetarios
-        $montoTotalDespachados = (clone $valoresQuery)
-            ->sum('d.despacho_costo_total');
+        // Cálculo de valores monetarios - MODIFICADO para usar guia_importe_total
+        $montoTotalDespachados = DB::table('despachos as d')
+            ->join('despacho_ventas as dv', 'dv.id_despacho', '=', 'd.id_despacho')
+            ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
+            ->whereNotNull('d.despacho_numero_correlativo')
+            ->when($this->tipo_reporte == 'programacion', function($query) {
+                $query->join('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
+                    ->whereBetween('p.programacion_fecha', [$this->desde, $this->hasta]);
+            }, function($query) {
+                $query->whereBetween('g.guia_fecha_emision', [$this->desde, $this->hasta]);
+            })
+            ->sum(DB::raw('g.guia_importe_total / 1.18'));
 
-        $montoConDevolucion = (clone $valoresQuery)
+        $montoConDevolucion = DB::table('despachos as d')
+            ->join('despacho_ventas as dv', 'dv.id_despacho', '=', 'd.id_despacho')
+            ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
             ->join('notas_creditos as nc', 'nc.not_cred_nro_doc_ref', '=', 'g.guia_nro_doc_ref')
             ->where('nc.not_cred_motivo', '1') // 1 = devolución
-            ->sum('d.despacho_costo_total');
+            ->whereNotNull('d.despacho_numero_correlativo')
+            ->when($this->tipo_reporte == 'programacion', function($query) {
+                $query->join('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
+                    ->whereBetween('p.programacion_fecha', [$this->desde, $this->hasta]);
+            }, function($query) {
+                $query->whereBetween('g.guia_fecha_emision', [$this->desde, $this->hasta]);
+            })
+            ->sum(DB::raw('g.guia_importe_total / 1.18'));
 
         $montoSinDevolucion = $montoTotalDespachados - $montoConDevolucion;
         $indicadorEfectividadValor = ($montoTotalDespachados > 0) ? round(($montoSinDevolucion / $montoTotalDespachados) * 100, 2) : 0;
@@ -178,15 +196,12 @@ class Efectividadentregapedidos extends Component
             ->select(
                 DB::raw('MONTH(MIN(g.guia_fecha_emision)) as mes'),
                 DB::raw('YEAR(MIN(g.guia_fecha_emision)) as anio'),
-                DB::raw('d.id_despacho'),
-                DB::raw('MAX(d.despacho_costo_total) as monto_total'),
-                DB::raw('MAX(CASE WHEN EXISTS (
-                    SELECT 1 FROM despacho_ventas dv
-                    JOIN guias g2 ON g2.id_guia = dv.id_guia
-                    JOIN notas_creditos nc ON nc.not_cred_nro_doc_ref = g2.guia_nro_doc_ref
-                    WHERE dv.id_despacho = d.id_despacho
+                DB::raw('SUM(g.guia_importe_total / 1.18) as monto_total'),
+                DB::raw('SUM(CASE WHEN EXISTS (
+                    SELECT 1 FROM notas_creditos nc
+                    WHERE nc.not_cred_nro_doc_ref = g.guia_nro_doc_ref
                     AND nc.not_cred_motivo = 1
-                ) THEN d.despacho_costo_total ELSE 0 END) as monto_con_devolucion')
+                ) THEN g.guia_importe_total / 1.18 ELSE 0 END) as monto_con_devolucion')
             )
             ->join('despacho_ventas as dv', 'dv.id_despacho', '=', 'd.id_despacho')
             ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
@@ -290,56 +305,70 @@ class Efectividadentregapedidos extends Component
                 return;
             }
 
-            // Primero obtener los despachos únicos
-            $despachos = DB::table('despachos as d')
+            // Consulta para obtener las guías con todos los datos requeridos
+            $query = DB::table('guias as g')
+                ->join('despacho_ventas as dv', 'dv.id_guia', '=', 'g.id_guia')
+                ->join('despachos as d', 'd.id_despacho', '=', 'dv.id_despacho')
+                ->leftJoin('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
+                ->leftJoin('historial_guias as hg', function($join) {
+                    $join->on('hg.id_guia', '=', 'g.id_guia')
+                        ->where('hg.historial_guia_estado_aprobacion', '=', 8);
+                })
+                ->leftJoin('notas_creditos as nc', function($join) {
+                    $join->on('nc.not_cred_nro_doc_ref', '=', 'g.guia_nro_doc_ref')
+                        ->where('nc.not_cred_motivo', '=', 1);
+                })
                 ->whereNotNull('d.despacho_numero_correlativo')
-                ->whereBetween('d.despacho_fecha_aprobacion', [$this->desde, $this->hasta])
-                ->select('d.id_despacho')
-                ->get()
-                ->pluck('id_despacho');
-
-            // Luego obtener los datos agrupados por despacho
-            $datos = DB::table('despachos as d')
-                ->join('despacho_ventas as dv', 'dv.id_despacho', '=', 'd.id_despacho')
-                ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
-                ->leftJoin('notas_creditos as nc', 'nc.not_cred_nro_doc_ref', '=', 'g.guia_nro_doc_ref')
-                ->whereIn('d.id_despacho', $despachos)
                 ->select(
-                    'd.id_despacho',
+                    'g.guia_fecha_emision',
+                    'g.guia_nro_doc',
+                    'g.guia_nombre_cliente',
+                    'g.guia_nro_doc_ref',
+                    'g.guia_importe_total',
                     'd.despacho_numero_correlativo',
                     'd.despacho_estado_aprobacion',
-                    'd.despacho_fecha_aprobacion',
-                    'd.despacho_costo_total',
-                    DB::raw('MIN(g.guia_fecha_emision) as primera_fecha_emision'),
-                    DB::raw('GROUP_CONCAT(DISTINCT g.guia_nro_doc SEPARATOR ", ") as guias'),
-                    DB::raw('GROUP_CONCAT(DISTINCT g.guia_nombre_cliente SEPARATOR ", ") as clientes'),
-                    DB::raw('GROUP_CONCAT(DISTINCT g.guia_nro_doc_ref SEPARATOR ", ") as facturas'),
-                    DB::raw('GROUP_CONCAT(DISTINCT g.guia_departamento SEPARATOR ", ") as departamentos'),
-                    DB::raw('GROUP_CONCAT(DISTINCT g.guia_provincia SEPARATOR ", ") as provincias'),
-                    DB::raw('SUM(CASE WHEN nc.not_cred_motivo = 1 THEN 1 ELSE 0 END) as cantidad_nc')
-                )
-                ->groupBy('d.id_despacho', 'd.despacho_numero_correlativo', 'd.despacho_estado_aprobacion',
-                    'd.despacho_fecha_aprobacion', 'd.despacho_costo_total')
-                ->get();
+                    'p.programacion_fecha as fecha_despacho',
+                    'hg.historial_guia_fecha_hora as fecha_entrega',
+                    'g.guia_departamento',
+                    'g.guia_provincia',
+                    'g.guia_direc_entrega',
+                    DB::raw('CASE WHEN nc.id_not_cred IS NOT NULL THEN 1 ELSE 0 END as tiene_nc'),
+                    DB::raw('CASE WHEN nc.id_not_cred IS NOT NULL THEN g.guia_importe_total ELSE 0 END as monto_nc')
+                );
+
+            // Aplicar filtro por tipo de fecha
+            if ($this->tipo_reporte == 'programacion') {
+                $query->whereBetween('p.programacion_fecha', [$this->desde, $this->hasta]);
+            } else {
+                $query->whereBetween('g.guia_fecha_emision', [$this->desde, $this->hasta]);
+            }
+
+            $guias = $query->get();
 
             // Crear el archivo Excel
             $spreadsheet = new Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
 
-            // Encabezados directamente en celdas
-            $sheet->setCellValue('A1', 'Fecha de Emisión de Guía');
-            $sheet->setCellValue('B1', 'N° Guía(s)');
-            $sheet->setCellValue('C1', 'Cliente(s)');
-            $sheet->setCellValue('D1', 'N° Factura(s)/Boleta(s)');
-            $sheet->setCellValue('E1', 'Valor Venta sin IGV');
-            $sheet->setCellValue('F1', 'N° OS');
-            $sheet->setCellValue('G1', 'Estado de OS');
-            $sheet->setCellValue('H1', 'Fecha de Despacho');
-            $sheet->setCellValue('I1', 'Fecha de Entrega');
-            $sheet->setCellValue('J1', 'Cantidad NC - Motivo 1');
-            $sheet->setCellValue('K1', 'Departamento');
-            $sheet->setCellValue('L1', 'Provincia');
-            $sheet->setCellValue('M1', 'Zona de despacho asignada');
+            // Encabezados
+            $headers = [
+                'Fecha de Emisión de Guía',
+                'N° Guía',
+                'Cliente',
+                'N° Factura / Boleta',
+                'Valor Venta sin IGV',
+                'N° OS',
+                'Estado de OS',
+                'Fecha de Despacho de Guía',
+                'Fecha de entrega de Guía',
+                'Cantidad NC con Motivo 1',
+                'Monto NC - Motivo 1',
+                'DEPARTAMENTO',
+                'PROVINCIA',
+                'ZONA DE DESPACHO ASIGNADA'
+            ];
+
+            // Escribir encabezados
+            $sheet->fromArray($headers, null, 'A1');
 
             // Estilo para los encabezados
             $headerStyle = [
@@ -348,20 +377,24 @@ class Efectividadentregapedidos extends Component
                 'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
                     'startColor' => ['rgb' => 'FFE699']]
             ];
-            $sheet->getStyle('A1:M1')->applyFromArray($headerStyle);
+            $sheet->getStyle('A1:N1')->applyFromArray($headerStyle);
 
             // Llenar datos
             $row = 2;
-            foreach ($datos as $d) {
-                $sheet->setCellValue('A'.$row, $d->primera_fecha_emision);
-                $sheet->setCellValue('B'.$row, $d->guias);
-                $sheet->setCellValue('C'.$row, $d->clientes);
-                $sheet->setCellValue('D'.$row, $d->facturas);
-                $sheet->setCellValue('E'.$row, $d->despacho_costo_total);
-                $sheet->setCellValue('F'.$row, $d->despacho_numero_correlativo);
+            foreach ($guias as $guia) {
+                $sheet->setCellValue('A'.$row, $guia->guia_fecha_emision);
+                $sheet->setCellValue('B'.$row, $guia->guia_nro_doc);
+                $sheet->setCellValue('C'.$row, $guia->guia_nombre_cliente);
+                $sheet->setCellValue('D'.$row, $guia->guia_nro_doc_ref);
+
+                // Valor sin IGV (dividir entre 1.18)
+                $valorSinIgv = $guia->guia_importe_total / 1.18;
+                $sheet->setCellValue('E'.$row, $valorSinIgv);
+
+                $sheet->setCellValue('F'.$row, $guia->despacho_numero_correlativo);
 
                 // Mapear estado de OS
-                $estado = match($d->despacho_estado_aprobacion) {
+                $estado = match($guia->despacho_estado_aprobacion) {
                     0 => 'Pendiente',
                     1 => 'Aprobado',
                     2 => 'En camino',
@@ -371,32 +404,30 @@ class Efectividadentregapedidos extends Component
                 };
                 $sheet->setCellValue('G'.$row, $estado);
 
-                // Para departamento y provincia, tomamos el primero si hay múltiples
-                $departamentos = explode(", ", $d->departamentos);
-                $provincias = explode(", ", $d->provincias);
-
-                $sheet->setCellValue('H'.$row, $d->despacho_fecha_aprobacion);
-                $sheet->setCellValue('I'.$row, '');
-                $sheet->setCellValue('J'.$row, $d->cantidad_nc);
-                $sheet->setCellValue('K'.$row, $departamentos[0] ?? '');
-                $sheet->setCellValue('L'.$row, $provincias[0] ?? '');
-                $sheet->setCellValue('M'.$row, '');
+                $sheet->setCellValue('H'.$row, $guia->fecha_despacho);
+                $sheet->setCellValue('I'.$row, $guia->fecha_entrega ? date('Y-m-d', strtotime($guia->fecha_entrega)) : '');
+                $sheet->setCellValue('J'.$row, $guia->tiene_nc);
+                $sheet->setCellValue('K'.$row, $guia->tiene_nc ? ($guia->monto_nc / 1.18) : 0); // Monto sin IGV
+                $sheet->setCellValue('L'.$row, $guia->guia_departamento);
+                $sheet->setCellValue('M'.$row, $guia->guia_provincia);
+                $sheet->setCellValue('N'.$row, $guia->guia_direc_entrega);
 
                 // Formato para valores numéricos
                 $sheet->getStyle('E'.$row)->getNumberFormat()->setFormatCode('#,##0.00');
+                $sheet->getStyle('K'.$row)->getNumberFormat()->setFormatCode('#,##0.00');
                 $sheet->getStyle('J'.$row)->getNumberFormat()->setFormatCode('0');
 
                 $row++;
             }
 
             // Autoajustar columnas
-            foreach(range('A','M') as $columnID) {
+            foreach(range('A','N') as $columnID) {
                 $sheet->getColumnDimension($columnID)->setAutoSize(true);
             }
 
             // Formatear el nombre del archivo Excel
             $nombre_excel = sprintf(
-                "reporte_por_despachos_%s_a_%s.xlsx",
+                "reporte_por_guias_%s_a_%s.xlsx",
                 date('d-m-Y', strtotime($this->desde)),
                 date('d-m-Y', strtotime($this->hasta))
             );
