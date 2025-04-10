@@ -1340,7 +1340,7 @@ class HistorialProgramacion extends Component
                                 // Actualizar el campo guia_estado_aprobacion en la tabla guias
                                 DB::table('guias')
                                     ->where('id_guia', $despachoVenta->id_guia)
-                                    ->update(['guia_estado_aprobacion' => 7]);
+                                    ->update(['guia_estado_aprobacion' => 7, 'updated_at' => now('America/Lima')]);
 
                                 // Obtener el guia_nro_doc desde la tabla guias
                                 $guia = DB::table('guias')
@@ -1412,7 +1412,7 @@ class HistorialProgramacion extends Component
                             // Actualizar el campo guia_estado_aprobacion en la tabla guias
                             DB::table('guias')
                                 ->where('id_guia', $despachoVenta->id_guia)
-                                ->update(['guia_estado_aprobacion' => 7]);
+                                ->update(['guia_estado_aprobacion' => 7, 'updated_at' => now('America/Lima')]);
 
                             // Obtener el guia_nro_doc desde la tabla guias
                             $guia = DB::table('guias')
@@ -1540,7 +1540,7 @@ class HistorialProgramacion extends Component
                 // Actualizar estado en guías
                 DB::table('guias')
                     ->where('id_guia', $despachoVenta->id_guia)
-                    ->update(['guia_estado_aprobacion' => $es]);
+                    ->update(['guia_estado_aprobacion' => $es, 'updated_at' => now('America/Lima')]);
 
                 // Registrar en historial_guias
                 $guia = DB::table('guias')

@@ -232,7 +232,7 @@ class ProgramacionesPendientes extends Component
                                 // Actualizar el estado en la tabla guias
                                 DB::table('guias')
                                     ->where('id_guia', $despachoVenta->id_guia)
-                                    ->update(['guia_estado_aprobacion' => $historialEstadoAprobacion]);
+                                    ->update(['guia_estado_aprobacion' => $historialEstadoAprobacion,'updated_at' => now('America/Lima')]);
 
                                 // Insertar en historial_guias
                                 DB::table('historial_guias')->insert([
