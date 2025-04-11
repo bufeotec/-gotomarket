@@ -4,6 +4,7 @@ namespace App\Livewire\Programacioncamiones;
 
 use App\Models\Guia;
 use App\Models\Logs;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
@@ -32,6 +33,12 @@ class Reportetiempos extends Component
     public $filteredData = [];
     public $searchExecuted = false;
 
+    /* ---------------------------------------- */
+    public $meses_grafico = [];
+    public $tiempoLima = [];
+    public $tiempoProvincia = [];
+
+    /* ---------------------------------------- */
     // Objetivos por zona
     public $objetivos = [
         'LOCAL' => 3,
@@ -41,195 +48,91 @@ class Reportetiempos extends Component
 
     // Clasificación de departamentos
     public $departamentos = [
-        'CALLAO' => 'LOCAL',
-        'LIMA' => 'LOCAL',
-        'ANCASH' => 'PROVINCIA 1',
-        'AYACUCHO' => 'PROVINCIA 1',
-        'HUANCAVELICA' => 'PROVINCIA 1',
-        'HUANUCO' => 'PROVINCIA 1',
-        'JUNIN' => 'PROVINCIA 1',
-        'LA LIBERTAD' => 'PROVINCIA 1',
-        'LAMBAYEQUE' => 'PROVINCIA 1',
-        'PASCO' => 'PROVINCIA 1',
-        'ICA' => 'PROVINCIA 1',
-        'AMAZONAS' => 'PROVINCIA 2',
-        'APURIMAC' => 'PROVINCIA 2',
-        'AREQUIPA' => 'PROVINCIA 2',
-        'CAJAMARCA' => 'PROVINCIA 2',
-        'CUSCO' => 'PROVINCIA 2',
-        'LORETO' => 'PROVINCIA 2',
-        'MADRE DE DIOS' => 'PROVINCIA 2',
-        'MOQUEGUA' => 'PROVINCIA 2',
+        ['CALLAO','LIMA'], // LOCAL
+        ['ANCASH', 'AYACUCHO', 'HUANCAVELICA', 'HUANUCO', 'JUNIN', 'LA LIBERTAD', 'LAMBAYEQUE', 'PASCO', 'ICA'], // PROVINCIA 1
+        ['AMAZONAS','APURIMAC','AREQUIPA','CAJAMARCA','CUSCO','LORETO','MADRE DE DIOS','MOQUEGUA'] // PROVINCIA 2
     ];
-
-    public function buscar_reporte_tiempo(){
-        $this->searchExecuted = true;
-
-        if (empty($this->desde) || empty($this->hasta)) {
-            $this->filteredData = [];
-            return;
-        }
-
-        $query = DB::table('guias as g')
-            ->join('despacho_ventas as dv', 'g.id_guia', '=', 'dv.id_guia')
-            ->join('despachos as d', 'dv.id_despacho', '=', 'd.id_despacho')
-            ->join('programaciones as p', 'd.id_programacion', '=', 'p.id_programacion')
-            ->select(
-                'g.guia_fecha_emision as fecha_emision',
-                'g.updated_at as fecha_entrega',
-                'p.programacion_fecha as fec_programacion',
-                'd.id_tipo_servicios as tipo_servicio',
-                'g.guia_departamento as departamento',
-                DB::raw('CASE
-                WHEN d.id_tipo_servicios = 1 THEN "LOCAL"
-                WHEN d.id_tipo_servicios = 2 AND g.guia_departamento IN ("' . implode('", "', array_keys($this->departamentos)) . '")
-                THEN "' . $this->departamentos['LIMA'] . '"
-                ELSE "PROVINCIA 2"
-            END as zona'),
-                DB::raw('DATEDIFF(g.updated_at, ' . ($this->tipo_reporte === 'emision' ? 'g.guia_fecha_emision' : 'p.programacion_fecha') . ') as dias_entrega'),
-                DB::raw('CASE
-                WHEN d.id_tipo_servicios = 1 AND DATEDIFF(g.updated_at, ' . ($this->tipo_reporte === 'emision' ? 'g.guia_fecha_emision' : 'p.programacion_fecha') . ') <= 3 THEN 1
-                WHEN d.id_tipo_servicios = 2 AND g.guia_departamento IN ("' . implode('", "', array_filter(array_keys($this->departamentos), function($d) { return $this->departamentos[$d] === "PROVINCIA 1"; })) . '")
-                AND DATEDIFF(g.updated_at, ' . ($this->tipo_reporte === 'emision' ? 'g.guia_fecha_emision' : 'p.programacion_fecha') . ') <= 6 THEN 1
-                WHEN d.id_tipo_servicios = 2 AND g.guia_departamento IN ("' . implode('", "', array_filter(array_keys($this->departamentos), function($d) { return $this->departamentos[$d] === "PROVINCIA 2"; })) . '")
-                AND DATEDIFF(g.updated_at, ' . ($this->tipo_reporte === 'emision' ? 'g.guia_fecha_emision' : 'p.programacion_fecha') . ') <= 8 THEN 1
-                ELSE 0
-            END as cumple_objetivo')
-            )
-            ->where('g.guia_estado_aprobacion', 8);
-
-        // Filtros por fecha
-        if ($this->tipo_reporte === 'emision') {
-            $query->whereDate('g.guia_fecha_emision', '>=', $this->desde)
-                ->whereDate('g.guia_fecha_emision', '<=', $this->hasta);
-        } elseif ($this->tipo_reporte === 'programacion') {
-            $query->whereDate('p.programacion_fecha', '>=', $this->desde)
-                ->whereDate('p.programacion_fecha', '<=', $this->hasta);
-        }
-
-        $this->filteredData = $query->get();
-        // Preparar datos para el gráfico si hay resultados
-        $this->prepararDatosParaGrafico();
-    }
-
-    public function prepararDatosParaGrafico(){
-        // Solo procedemos si hay datos filtrados
-        if (empty($this->filteredData)) {
-            return;
-        }
-
-        $mesesEspanol = [
-            1 => 'ENE', 2 => 'FEB', 3 => 'MAR', 4 => 'ABR',
-            5 => 'MAY', 6 => 'JUN', 7 => 'JUL', 8 => 'AGO',
-            9 => 'SEP', 10 => 'OCT', 11 => 'NOV', 12 => 'DIC'
-        ];
-
-        // Obtener mes inicial y final del rango de fechas
-        $mesInicial = date('n', strtotime($this->desde));
-        $mesFinal = date('n', strtotime($this->hasta));
-        $anioInicial = date('y', strtotime($this->desde));
-        $anioFinal = date('y', strtotime($this->hasta));
-
-        // Inicializar array solo con los meses seleccionados
-        $mesesCompletos = [];
-
-        // Si es el mismo año
-        if ($anioInicial == $anioFinal) {
-            for ($i = $mesInicial; $i <= $mesFinal; $i++) {
-                $mesKey = $mesesEspanol[$i] . '-' . $anioInicial;
-                $mesesCompletos[$mesKey] = [
-                    'mes' => $mesesEspanol[$i],
-                    'LOCAL' => ['suma' => 0, 'count' => 0],
-                    'PROVINCIA 1' => ['suma' => 0, 'count' => 0],
-                    'PROVINCIA 2' => ['suma' => 0, 'count' => 0],
-                ];
-            }
-        } else {
-            // Si hay cambio de año, manejar meses de ambos años
-            // Meses del primer año
-            for ($i = $mesInicial; $i <= 12; $i++) {
-                $mesKey = $mesesEspanol[$i] . '-' . $anioInicial;
-                $mesesCompletos[$mesKey] = [
-                    'mes' => $mesesEspanol[$i],
-                    'LOCAL' => ['suma' => 0, 'count' => 0],
-                    'PROVINCIA 1' => ['suma' => 0, 'count' => 0],
-                    'PROVINCIA 2' => ['suma' => 0, 'count' => 0],
-                ];
-            }
-            // Meses del segundo año
-            for ($i = 1; $i <= $mesFinal; $i++) {
-                $mesKey = $mesesEspanol[$i] . '-' . $anioFinal;
-                $mesesCompletos[$mesKey] = [
-                    'mes' => $mesesEspanol[$i],
-                    'LOCAL' => ['suma' => 0, 'count' => 0],
-                    'PROVINCIA 1' => ['suma' => 0, 'count' => 0],
-                    'PROVINCIA 2' => ['suma' => 0, 'count' => 0],
-                ];
-            }
-        }
-
-        // Procesar los datos filtrados directamente de $this->filteredData
-        foreach ($this->filteredData as $item) {
-            // Determinar la fecha a usar según el tipo de reporte
-            $fechaReferencia = $this->tipo_reporte === 'emision' ? $item->fecha_emision : $item->fec_programacion;
-
-            // Obtener mes y año de la fecha de referencia
-            $mes_num = date('n', strtotime($fechaReferencia));
-            $anio_num = date('Y', strtotime($fechaReferencia));
-            $anio_corto = substr($anio_num, -2); // Últimos 2 dígitos del año
-
-            // Crear la clave del mes
-            $mesKey = $mesesEspanol[$mes_num] . '-' . $anio_corto;
-
-            // Solo procesar si está dentro del rango de meses que hemos inicializado
-            if (isset($mesesCompletos[$mesKey])) {
-                // Obtener la zona del registro
-                $zona = $item->zona;
-
-                // Sumar los días de entrega a la zona correspondiente
-                if (isset($mesesCompletos[$mesKey][$zona])) {
-                    $mesesCompletos[$mesKey][$zona]['suma'] += $item->dias_entrega;
-                    $mesesCompletos[$mesKey][$zona]['count']++;
-                }
-            }
-        }
-
-        // Preparar datos para el gráfico
-        $meses = [];
-        $tiempoLima = [];
-        $tiempoProvincia = [];
-
-        foreach ($mesesCompletos as $mesKey => $data) {
-            $meses[] = $data['mes'];
-
-            // Tiempo Lima (Local)
-            $countLocal = $data['LOCAL']['count'];
-            $tiempoLima[] = $countLocal > 0
-                ? round($data['LOCAL']['suma'] / $countLocal, 1)
-                : 0;
-
-            // Tiempo Provincia (combinando Prov 1 y 2)
-            $sumaProvincia = $data['PROVINCIA 1']['suma'] + $data['PROVINCIA 2']['suma'];
-            $countProvincia = $data['PROVINCIA 1']['count'] + $data['PROVINCIA 2']['count'];
-            $tiempoProvincia[] = $countProvincia > 0
-                ? round($sumaProvincia / $countProvincia, 1)
-                : 0;
-        }
-
-        // Enviar datos al frontend
-        $this->dispatch('actualizarGraficoTiempoEntrega', [
-            'meses' => $meses,
-            'tiempo_lima' => $tiempoLima,
-            'tiempo_provincia' => $tiempoProvincia
-        ]);
-    }
 
     public function render(){
         return view('livewire.programacioncamiones.reportetiempos');
     }
+    public function buscar_reporte_tiempo(){
+        try {
+
+            $this->validate([
+                'desde' => 'required|date',
+                'hasta' => 'required|date|after_or_equal:desde',
+            ], [
+                'desde.required' => 'La fecha de inicio es obligatoria.',
+                'desde.date' => 'La fecha de inicio no es válida.',
+
+                'hasta.required' => 'La fecha de fin es obligatoria.',
+                'hasta.date' => 'La fecha de fin no es válida.',
+                'hasta.after_or_equal' => 'La fecha de fin debe ser igual o posterior a la fecha de inicio.',
+            ]);
+
+            $this->searchExecuted = true;
+
+            if (empty($this->desde) || empty($this->hasta)) {
+                $this->filteredData = [];
+                return;
+            }
+
+            $resultLocal =  $this->guia->listar_informacion_reporte_tiempos_atencion_pedido($this->tipo_reporte,$this->desde,$this->hasta,$this->departamentos,1);
+            $resultProvincia1 =  $this->guia->listar_informacion_reporte_tiempos_atencion_pedido($this->tipo_reporte,$this->desde,$this->hasta,$this->departamentos,2);
+            $resultProvincia2 =  $this->guia->listar_informacion_reporte_tiempos_atencion_pedido($this->tipo_reporte,$this->desde,$this->hasta,$this->departamentos,3);
+
+            $this->filteredData = [
+                number_format(round($resultLocal,2), 2, '.', ' '),
+                number_format(round($resultProvincia1,2), 2, '.', ' '),
+                number_format(round($resultProvincia2,2), 2, '.', ' '),
+            ];
+
+            $this->implementar_datos_graficos();
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->setErrorBag($e->validator->errors());
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error. Por favor, inténtelo nuevamente.');
+            return ;
+        }
+    }
+    public function implementar_datos_graficos(){
+        try {
+
+            $fechaDesde = Carbon::parse($this->desde);
+            $fechaHasta = Carbon::parse($this->hasta);
+
+            $meses = [];
+            $tiempoLima = [];
+            $tiempoProvincia = [];
+
+            while ($fechaDesde->lessThanOrEqualTo($fechaHasta)) {
+                $meses[] = ucfirst($fechaDesde->locale('es')->isoFormat('MMMM')); // Nombre del mes en español y con mayúscula inicial
+                $fechaAnhoMes = $fechaDesde->format('Y-m');
+                $tiempoLima[] =  $this->guia->listar_informacion_reporte_tiempos_atencion_pedido($this->tipo_reporte,$this->desde,$this->hasta,$this->departamentos,1,1,$fechaAnhoMes);
+                $tiempoProvincia[] =  $this->guia->listar_informacion_reporte_tiempos_atencion_pedido($this->tipo_reporte,$this->desde,$this->hasta,$this->departamentos,2,1,$fechaAnhoMes);
+                $fechaDesde->addMonth();
+            }
+
+
+            $this->dispatch('actualizarGraficoTiempoEntrega', [
+                $meses,
+                $tiempoLima,
+                $tiempoProvincia
+            ]);
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error. Por favor, inténtelo nuevamente.');
+            return ;
+        }
+    }
 
     public function exportarTiemposExcel(){
         try {
+            $this->implementar_datos_graficos();
             if (!Gate::allows('exportar_tiempos_excel')) {
                 session()->flash('error', 'No tiene permisos para generar este reporte.');
                 return;
@@ -240,52 +143,29 @@ class Reportetiempos extends Component
                 session()->flash('error', 'Faltan parámetros para generar el reporte.');
                 return;
             }
+            $desde = $this->desde;
+            $hasta = $this->hasta;
+            $tipo = $this->tipo_reporte;
 
-            $query = DB::table('guias as g')
+            $queryReporteTiemposAtencion = DB::table('guias as g')
+                ->select('g.*','dv.*','d.*','p.*','g.updated_at as fecha_entrega')
                 ->join('despacho_ventas as dv', 'g.id_guia', '=', 'dv.id_guia')
                 ->join('despachos as d', 'dv.id_despacho', '=', 'd.id_despacho')
                 ->join('programaciones as p', 'd.id_programacion', '=', 'p.id_programacion')
-                ->select(
-                    'g.guia_fecha_emision as fecha_emision',
-                    'g.guia_nro_doc as numero_guia',
-                    'g.guia_nombre_cliente as cliente',
-                    'p.programacion_fecha as fecha_despacho',
-                    'g.updated_at as fecha_entrega',
-                    DB::raw('DATEDIFF(g.updated_at, ' . ($this->tipo_reporte === 'emision' ? 'g.guia_fecha_emision' : 'p.programacion_fecha') . ') as dias_entrega'),
-                    'g.guia_estado_aprobacion as estado',
-                    'g.guia_departamento as departamento',
-                    'g.guia_provincia as provincia',
-                    'g.guia_direc_entrega as zona_despacho',
-                    DB::raw('CASE
-                    WHEN d.id_tipo_servicios = 1 THEN "LOCAL"
-                    WHEN d.id_tipo_servicios = 2 AND g.guia_departamento IN ("' . implode('", "', array_keys($this->departamentos)) . '")
-                    THEN "' . $this->departamentos['LIMA'] . '"
-                    ELSE "PROVINCIA 2"
-                END as zona'),
-                    // Agregamos esta condición para filtrar solo las que cumplen
-                    DB::raw('CASE
-                    WHEN d.id_tipo_servicios = 1 AND DATEDIFF(g.updated_at, ' . ($this->tipo_reporte === 'emision' ? 'g.guia_fecha_emision' : 'p.programacion_fecha') . ') <= 3 THEN 1
-                    WHEN d.id_tipo_servicios = 2 AND g.guia_departamento IN ("' . implode('", "', array_filter(array_keys($this->departamentos), function($d) { return $this->departamentos[$d] === "PROVINCIA 1"; })) . '")
-                    AND DATEDIFF(g.updated_at, ' . ($this->tipo_reporte === 'emision' ? 'g.guia_fecha_emision' : 'p.programacion_fecha') . ') <= 6 THEN 1
-                    WHEN d.id_tipo_servicios = 2 AND g.guia_departamento IN ("' . implode('", "', array_filter(array_keys($this->departamentos), function($d) { return $this->departamentos[$d] === "PROVINCIA 2"; })) . '")
-                    AND DATEDIFF(g.updated_at, ' . ($this->tipo_reporte === 'emision' ? 'g.guia_fecha_emision' : 'p.programacion_fecha') . ') <= 8 THEN 1
-                    ELSE 0
-                END as cumple_objetivo')
-                )
-                ->where('g.guia_estado_aprobacion', 8)
-                // Filtramos solo las guías que cumplen con el objetivo
-                ->having('cumple_objetivo', '=', 1);
+                ->where('g.guia_estado_aprobacion', 8);
 
-            // Filtros por fecha
-            if ($this->tipo_reporte === 'emision') {
-                $query->whereBetween('g.guia_fecha_emision', [$this->desde, $this->hasta]);
-            } else {
-                $query->whereBetween('p.programacion_fecha', [$this->desde, $this->hasta]);
+            if ($tipo == 1){
+                // F. Emisión
+                $queryReporteTiemposAtencion->whereDate('g.guia_fecha_emision', '>=', $desde)->whereDate('g.guia_fecha_emision', '<=', $hasta);
+            }else{
+                // F. Programación
+                $queryReporteTiemposAtencion->whereDate('p.programacion_fecha', '>=', $desde)->whereDate('p.programacion_fecha', '<=', $hasta);
             }
 
-            $filteredData = $query->get();
+            $resultConsulta = $queryReporteTiemposAtencion->get();
 
-            if ($filteredData->isEmpty()) {
+
+            if ($resultConsulta->isEmpty()) {
                 session()->flash('error', 'No hay guías que cumplan con los objetivos de tiempo en el rango de fechas seleccionado.');
                 return;
             }
@@ -328,29 +208,64 @@ class Reportetiempos extends Component
 
             // ========== LLENAR DATOS ==========
             $row = 4;
-            foreach ($filteredData as $item) {
-                $sheet->setCellValue('A'.$row, $item->fecha_emision ? date('d/m/Y', strtotime($item->fecha_emision)) : '');
-                $sheet->setCellValue('B'.$row, $item->numero_guia);
-                $sheet->setCellValue('C'.$row, $item->cliente);
-                $sheet->setCellValue('D'.$row, $item->fecha_despacho ? date('d/m/Y', strtotime($item->fecha_despacho)) : '');
-                $sheet->setCellValue('E'.$row, $item->fecha_entrega ? date('d/m/Y', strtotime($item->fecha_entrega)) : '');
-                $sheet->setCellValue('F'.$row, round($item->dias_entrega) . ' días');
+            foreach ($resultConsulta as $item) {
+                $departemento = $this->departamentos;
+
+                $departamento = strtoupper(trim($item->guia_departamento)); // Aseguramos formato
+
+                $zonaEncontrada = null;
+                foreach ($departemento as $indice => $zona) {
+                    if (in_array($departamento, $zona)) {
+                        $zonaEncontrada = $indice;
+                        break;
+                    }
+                }
+                if ($zonaEncontrada === 0) {
+                    $zona = "LOCAL";
+                } elseif ($zonaEncontrada === 1) {
+                    $zona = "PROVINCIA 1";
+                } elseif ($zonaEncontrada === 2) {
+                    $zona = "PROVINCIA 2";
+                } else {
+                    $zona = "";
+                }
+
+                if ($tipo == 1){
+                    // F. Emisión
+                    $fechaInicio = $item->guia_fecha_emision;
+                }else{
+                    // F. Programación
+                    $fechaInicio = $item->programacion_fecha;
+                }
+                $fechaFin = $item->fecha_entrega;
+                // Asegúrate de que ambas fechas estén en formato DateTime
+                $inicio = new \DateTime($fechaInicio);
+                $fin = new \DateTime($fechaFin);
+                // Calculamos diferencia en días
+                $diferencia = $inicio->diff($fin)->days;
+
+                $sheet->setCellValue('A'.$row, $item->guia_fecha_emision ? date('d/m/Y H:i:s', strtotime($item->guia_fecha_emision)) : '');
+                $sheet->setCellValue('B'.$row, $item->guia_nro_doc);
+                $sheet->setCellValue('C'.$row, $item->guia_nombre_cliente.'|'.$item->guia_ruc_cliente);
+                $sheet->setCellValue('D'.$row, $item->programacion_fecha ? date('d/m/Y', strtotime($item->programacion_fecha)) : '');
+                $sheet->setCellValue('E'.$row, $item->fecha_entrega ? date('d/m/Y H:i:s', strtotime($item->fecha_entrega)) : '');
+                $sheet->setCellValue('F'.$row, round($diferencia) . ' días');
                 $sheet->setCellValue('G'.$row, 'ENTREGADO');
-                $sheet->setCellValue('H'.$row, $item->departamento ?? 'S/N');
-                $sheet->setCellValue('I'.$row, $item->provincia ?? 'S/N');
-                $sheet->setCellValue('J'.$row, $item->zona_despacho ?? 'S/N');
+                $sheet->setCellValue('H'.$row, $item->guia_departamento ?? 'S/N');
+                $sheet->setCellValue('I'.$row, $item->guia_provincia ?? 'S/N');
+                $sheet->setCellValue('J'.$row, $zona ?? 'S/N');
 
                 $sheet->getStyle('A'.$row.':J'.$row)->getAlignment()->setHorizontal('center');
                 $row++;
             }
 
             // ========== ANCHO DE COLUMNA ==========
-            $sheet->getColumnDimension('A')->setWidth(20);
+            $sheet->getColumnDimension('A')->setWidth(28);
             $sheet->getColumnDimension('B')->setWidth(15);
-            $sheet->getColumnDimension('C')->setWidth(30);
-            $sheet->getColumnDimension('D')->setWidth(20);
-            $sheet->getColumnDimension('E')->setWidth(20);
-            $sheet->getColumnDimension('F')->setWidth(15);
+            $sheet->getColumnDimension('C')->setWidth(35);
+            $sheet->getColumnDimension('D')->setWidth(25);
+            $sheet->getColumnDimension('E')->setWidth(25);
+            $sheet->getColumnDimension('F')->setWidth(20);
             $sheet->getColumnDimension('G')->setWidth(15);
             $sheet->getColumnDimension('H')->setWidth(15);
             $sheet->getColumnDimension('I')->setWidth(15);

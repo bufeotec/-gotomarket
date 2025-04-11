@@ -2,6 +2,50 @@
     @php
         $general = new \App\Models\General();
     @endphp
+
+    <div class="row align-items-center justify-content-between">
+        <div class="col-lg-7 col-md-7 col-sm-12">
+            <div class="row align-items-center">
+                <div class="col-lg-3 col-md-3 col-sm-12 mb-2">
+                    <label for="tipo_reporte" class="form-label">Tipo de reporte</label>
+                    <select name="tipo_reporte" id="tipo_reporte" wire:model.live="tipo_reporte" class="form-select">
+                        <option value="">Seleccionar...</option>
+                        <option value="1">F. Emisión</option>
+                        <option value="2">F. Programación</option>
+                    </select>
+                </div>
+                <div class="col-lg-3 col-md-3 col-sm-12 mb-2">
+                    <label class="form-label">F. Desde</label>
+                    <input type="date" wire:model.live="desde" class="form-control" min="2025-01-01">
+                    @error('desde')
+                    <span class="message-error">{{ $message }}</span>
+                    @enderror
+                </div>
+                <div class="col-lg-3 col-md-3 col-sm-12 mb-2">
+                    <label class="form-label">F. Hasta</label>
+                    <input type="date" wire:model.live="hasta" class="form-control" min="2025-01-01">
+                    @error('hasta')
+                    <span class="message-error">{{ $message }}</span>
+                    @enderror
+                </div>
+                <div class="col-lg-3 col-md-3 col-sm-12 mt-4">
+                    <button class="btn btn-sm bg-primary text-white" wire:click="buscar_reporte_tiempo">
+                        <i class="fa fa-search"></i> BUSCAR
+                    </button>
+                </div>
+            </div>
+        </div>
+        @if($filteredData)
+            <div class="col-lg-2 col-md-2 col-sm-12 mt-4 mb-2">
+                <button class="btn btn-sm bg-success text-white" wire:click="exportarTiemposExcel">
+                    <i class="fa-solid fa-file-excel"></i> EXPORTAR
+                </button>
+            </div>
+        @endif
+    </div>
+    <div class="row">
+        <div class="loader mt-2" wire:loading wire:target="buscar_reporte_tiempo"></div>
+    </div>
     @if (session()->has('success'))
         <div class="alert alert-success alert-dismissible show fade mt-2">
             {{ session('success') }}
@@ -14,41 +58,8 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
-    <div class="row align-items-center">
-        <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-            <label for="tipo_reporte" class="form-label">Tipo de reporte</label>
-            <select name="tipo_reporte" id="tipo_reporte" wire:model.live="tipo_reporte" class="form-select">
-                <option value="">Seleccionar...</option>
-                <option value="emision">F. Emisión</option>
-                <option value="programacion">F. Programación</option>
-            </select>
-        </div>
-        <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-            <label class="form-label">F. Desde</label>
-            <input type="date" wire:model.live="desde" class="form-control" min="2025-01-01">
-        </div>
-        <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-            <label class="form-label">F. Hasta</label>
-            <input type="date" wire:model.live="hasta" class="form-control" min="2025-01-01">
-        </div>
-        <div class="col-lg-2 col-md-2 col-sm-12 mt-4">
-            <button class="btn btn-sm bg-primary text-white" wire:click="buscar_reporte_tiempo">
-                <i class="fa fa-search"></i> BUSCAR
-            </button>
-        </div>
-        @if(count($filteredData) > 0)
-            <div class="col-lg-2 col-md-2 col-sm-12 mt-4 mb-2">
-                <button class="btn btn-sm bg-success text-white" wire:click="exportarTiemposExcel">
-                    <i class="fa-solid fa-file-excel"></i> EXPORTAR
-                </button>
-            </div>
-        @endif
-        <div class="col-lg-12 col-md-12 col-sm-12">
-            <div class="loader mt-2" wire:loading wire:target="buscar_reporte_tiempo"></div>
-        </div>
-    </div>
 
-    @if(count($filteredData) > 0)
+    @if($filteredData)
         <div class="row mt-4">
             <div class="col-lg-12">
                 <h6>REPORTE RESUMEN</h6>
@@ -61,49 +72,25 @@
                                 <tr>
                                     <th class="text-center">Zona</th>
                                     <th class="text-center">Promedio Tiempo de entrega</th>
-                                    <th class="text-center">Guias que cumplen</th>
                                     <th class="text-center">Objetivo (días)</th>
                                 </tr>
                             </x-slot>
                             <x-slot name="tbody">
-                                @php
-                                    // Inicializamos acumuladores
-                                    $datos = [
-                                        'LOCAL' => ['suma' => 0, 'count' => 0, 'cumplen' => 0],
-                                        'PROVINCIA 1' => ['suma' => 0, 'count' => 0, 'cumplen' => 0],
-                                        'PROVINCIA 2' => ['suma' => 0, 'count' => 0, 'cumplen' => 0],
-                                    ];
-
-                                    foreach ($filteredData as $resultado) {
-                                        $zona = $resultado->zona;
-                                        if ($resultado->cumple_objetivo) {
-                                            $datos[$zona]['suma'] += $resultado->dias_entrega;
-                                            $datos[$zona]['count']++;
-                                            $datos[$zona]['cumplen']++;
-                                        }
-                                    }
-
-                                    // Calculamos resultados
-                                    $resultados = [];
-                                    foreach ($datos as $zona => $data) {
-                                        $promedio = $data['count'] > 0 ? round($data['suma'] / $data['count'], 2) : 0;
-
-                                        $resultados[$zona] = [
-                                            'objetivo' => $this->objetivos[$zona],
-                                            'promedio' => $promedio,
-                                            'cumplen' => $data['cumplen']
-                                        ];
-                                    }
-                                @endphp
-
-                                @foreach ($resultados as $zona => $data)
                                     <tr>
-                                        <td class="text-center">{{ $zona }}</td>
-                                        <td class="text-center">{{ $data['promedio'] }}</td>
-                                        <td class="text-center">{{ $data['cumplen'] }}</td>
-                                        <td class="text-center">{{ $data['objetivo'] }}</td>
+                                        <td class="text-center">Local</td>
+                                        <td class="text-center">{{ $filteredData[0] }}</td>
+                                        <td class="text-center">3</td>
                                     </tr>
-                                @endforeach
+                                    <tr>
+                                        <td class="text-center">Provincia 1</td>4
+                                        <td class="text-center">{{ $filteredData[1] }}</td>
+                                        <td class="text-center">6</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center">Provincia 2</td>
+                                        <td class="text-center">{{ $filteredData[2]}}</td>
+                                        <td class="text-center">8</td>
+                                    </tr>
                             </x-slot>
                         </x-table-general>
                     </div>
@@ -124,144 +111,117 @@
                 </div>
             </div>
         </div>
-    @elseif($searchExecuted && (empty($desde) || empty($hasta)))
-        <div class="alert alert-info alert-dismissible show fade mt-2">
-            Debes seleccionar un rango de fecha válido.
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @elseif($searchExecuted)
-        <div class="alert alert-danger alert-dismissible show fade mt-2">
-            No hay datos disponibles para mostrar con los filtros seleccionados.
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
     @endif
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</div>
 
-    <script>
-        // Variable global para el gráfico
-        let graficoTiempoEntrega = null;
 
-        // Función para inicializar o actualizar el gráfico de Tiempos de Entrega
-        function actualizarGraficoTiempoEntrega(data) {
-            const canvas = document.getElementById('graficoTiempoEntrega');
-            if (!canvas) return;
 
-            // Extraer el primer elemento si data es un array
-            const chartData = Array.isArray(data) ? data[0] : data;
 
-            // Verificar estructura de datos
-            if (!chartData || !chartData.meses || !chartData.tiempo_lima || !chartData.tiempo_provincia) {
-                console.error('Datos incorrectos para gráfico de tiempos de entrega:', chartData);
-                return;
-            }
+<script>
+    let miGrafico = null;
+    function generarG(meses,lima,provincia) {
+        const canvas = document.getElementById('graficoTiempoEntrega');
+        if (!canvas) {
+            console.warn("Canvas 'graficoTiempoEntrega' no encontrado.");
+            return;
+        }
+        const ctx = canvas.getContext('2d');
 
-            const ctx = canvas.getContext('2d');
+        // Destruye gráfico anterior si ya existe
+        if (miGrafico) {
+            miGrafico.destroy();
+        }
 
-            // Destruir gráfico anterior si existe
-            if (graficoTiempoEntrega) {
-                graficoTiempoEntrega.destroy();
-            }
-
-            // Crear nuevo gráfico
-            graficoTiempoEntrega = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: chartData.meses,
-                    datasets: [
-                        {
-                            label: 'Tiempo Lima (Local)',
-                            data: chartData.tiempo_lima,
-                            backgroundColor: 'rgba(54, 162, 235, 0.7)', // Azul
-                            borderColor: 'rgba(54, 162, 235, 1)',
-                            borderWidth: 1
+        miGrafico = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: meses,
+                datasets: [
+                    {
+                        label: 'Tiempo Lima (Local)',
+                        data: lima,
+                        backgroundColor: 'rgba(54, 162, 235, 0.7)', // Azul
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Tiempo Provincia',
+                        data: provincia,
+                        backgroundColor: 'rgba(255, 159, 64, 0.7)', // Naranja
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Obj. Lima',
+                        data: Array(meses.length).fill(3), // Objetivo de 3 días
+                        borderColor: 'rgba(255, 206, 86, 1)', // Amarillo
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        type: 'line',
+                        pointRadius: 0
+                    },
+                    {
+                        label: 'Obj. Provincia',
+                        data: Array(meses.length).fill(7), // Objetivo promedio de 7 días (entre Prov 1 y 2)
+                        borderColor: 'rgba(255, 99, 132, 1)', // Rojo
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        type: 'line',
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Días'
                         },
-                        {
-                            label: 'Tiempo Provincia',
-                            data: chartData.tiempo_provincia,
-                            backgroundColor: 'rgba(255, 159, 64, 0.7)', // Naranja
-                            borderColor: 'rgba(255, 159, 64, 1)',
-                            borderWidth: 1
-                        },
-                        {
-                            label: 'Obj. Lima',
-                            data: Array(chartData.meses.length).fill(3), // Objetivo de 3 días
-                            borderColor: 'rgba(255, 206, 86, 1)', // Amarillo
-                            borderWidth: 2,
-                            borderDash: [5, 5],
-                            type: 'line',
-                            pointRadius: 0
-                        },
-                        {
-                            label: 'Obj. Provincia',
-                            data: Array(chartData.meses.length).fill(7), // Objetivo promedio de 7 días (entre Prov 1 y 2)
-                            borderColor: 'rgba(255, 99, 132, 1)', // Rojo
-                            borderWidth: 2,
-                            borderDash: [5, 5],
-                            type: 'line',
-                            pointRadius: 0
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Días'
-                            },
-                            ticks: {
-                                precision: 0
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Meses'
-                            }
+                        ticks: {
+                            precision: 0
                         }
                     },
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    if (context.parsed.y !== null) {
-                                        label += context.parsed.y + ' días';
-                                    }
-                                    return label;
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Meses'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
                                 }
+                                if (context.parsed.y !== null) {
+                                    label += context.parsed.y + ' días';
+                                }
+                                return label;
                             }
                         }
                     }
                 }
-            });
-        }
-
-        // Inicialización cuando el DOM está listo
-        document.addEventListener('DOMContentLoaded', function() {
-            // Configurar eventos Livewire
-            if (typeof Livewire !== 'undefined') {
-                Livewire.on('actualizarGraficoTiempoEntrega', function(data) {
-                    setTimeout(() => {
-                        try {
-                            actualizarGraficoTiempoEntrega(data);
-                        } catch (error) {
-                            console.error('Error al actualizar gráfico de tiempos de entrega:', error);
-                        }
-                    }, 100);
-                });
             }
         });
-    </script>
+    }
+    document.addEventListener('livewire:init', () => {
+        Livewire.on('actualizarGraficoTiempoEntrega', (meses) => {
+            setTimeout(() => {
+                generarG(meses[0][0], meses[0][1], meses[0][2]);
+            }, 200); // Espera 200ms, puedes ajustar si hace falta
+        });
+    });
 
-</div>
+</script>
+
