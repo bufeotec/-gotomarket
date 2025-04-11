@@ -1189,7 +1189,7 @@ class Mixto extends Component
             $idsGuias = array_column($comprobantesLocales, 'id_guia');
             DB::table('guias')
                 ->whereIn('id_guia', $idsGuias)
-                ->update(['guia_estado_aprobacion' => 4]);
+                ->update(['guia_estado_aprobacion' => 4, 'updated_at' => now('America/Lima')]);
             // Guardar en historial_guias
             foreach ($comprobantesLocales as $factura) {
                 // Obtener el número de documento de la guía
@@ -1278,7 +1278,7 @@ class Mixto extends Component
                 $idsGuias = array_column($cliente['comprobantes'], 'id_guia');
                 DB::table('guias')
                     ->whereIn('id_guia', $idsGuias)
-                    ->update(['guia_estado_aprobacion' => 4]);
+                    ->update(['guia_estado_aprobacion' => 4, 'updated_at' => now('America/Lima')]);
                 // Guardar en historial_guias
                 foreach ($cliente['comprobantes'] as $factura) {
                     // Obtener el número de documento de la guía

@@ -1065,7 +1065,7 @@ class Local extends Component
             $idsGuias = array_column($this->selectedFacturas, 'id_guia');
             DB::table('guias')
                 ->whereIn('id_guia', $idsGuias)
-                ->update(['guia_estado_aprobacion' => 4]);
+                ->update(['guia_estado_aprobacion' => 4, 'updated_at' => now('America/Lima')]);
             // Guardar en historial_guias
             foreach ($this->selectedFacturas as $factura) {
                 // Obtener el número de documento de la guía
