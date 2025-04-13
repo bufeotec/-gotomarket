@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Programacioncamiones;
 
+use App\Models\General;
 use App\Models\Guia;
 use App\Models\Logs;
 use Carbon\Carbon;
@@ -21,10 +22,12 @@ class Reportetiempos extends Component
 
     private $logs;
     private $guia;
+    private $general;
 
     public function __construct(){
         $this->logs = new Logs();
         $this->guia = new Guia();
+        $this->general = new General();
     }
 
     public $desde;
@@ -47,12 +50,11 @@ class Reportetiempos extends Component
     ];
 
     // Clasificación de departamentos
-    public $departamentos = [
-        ['CALLAO','LIMA'], // LOCAL
-        ['ANCASH', 'AYACUCHO', 'HUANCAVELICA', 'HUANUCO', 'JUNIN', 'LA LIBERTAD', 'LAMBAYEQUE', 'PASCO', 'ICA'], // PROVINCIA 1
-        ['AMAZONAS','APURIMAC','AREQUIPA','CAJAMARCA','CUSCO','LORETO','MADRE DE DIOS','MOQUEGUA'] // PROVINCIA 2
-    ];
+    public $departamentos = [];
 
+    public function mount(){
+        $this->departamentos = $this->general->listar_departamento_zona();
+    }
     public function render(){
         return view('livewire.programacioncamiones.reportetiempos');
     }

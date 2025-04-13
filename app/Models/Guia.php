@@ -110,6 +110,91 @@ class Guia extends Model
 
         return $result;
     }
+    public function listar_informacion_reporte_indicador_de_valor_transportado($tipo, $desde, $hasta,$arrayDe,$type,$typeGrafico = null,$mesGrafico = null){
+        try {
+
+            $queryReporteTiemposAtencion = DB::table('despachos as d')
+                ->select('d.id_despacho')
+                ->join('despacho_ventas as dv', 'd.id_despacho', '=', 'dv.id_despacho')
+                ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
+                ->where('d.despacho_estado_aprobacion', '!=', 4);
+
+
+            if ($typeGrafico){
+
+                $anio = substr($mesGrafico, 0, 4);
+                $mes = substr($mesGrafico, 5, 2);
+
+                if ($tipo == 1){ // F. Emisión
+                    $queryReporteTiemposAtencion->whereYear('g.guia_fecha_emision', $anio)->whereMonth('g.guia_fecha_emision', $mes);
+                }else{ // F. Programación
+                    $queryReporteTiemposAtencion->whereYear('d.despacho_fecha_aprobacion', $anio)->whereMonth('d.despacho_fecha_aprobacion', $mes);
+                }
+
+                if ($typeGrafico == 2){ // Grafico de flete lima o provincia
+
+                    if ($type == 1){ // LOCAL
+                        $queryReporteTiemposAtencion->whereIn('g.guia_departamento',$arrayDe[0]);
+
+                    }elseif ($type == 2){ // PROVINCIAS
+                        $queryReporteTiemposAtencion->whereIn('g.guia_departamento', array_merge($arrayDe[1], $arrayDe[2]));
+                    }
+
+                }
+
+            }else{
+                if ($tipo == 1){
+                    // F. Emisión
+                    $queryReporteTiemposAtencion->whereDate('g.guia_fecha_emision', '>=', $desde)
+                        ->whereDate('g.guia_fecha_emision', '<=', $hasta);
+
+                }else{
+                    // F. Programación
+                    $queryReporteTiemposAtencion->whereDate('d.despacho_fecha_aprobacion', '>=', $desde)
+                        ->whereDate('d.despacho_fecha_aprobacion', '<=', $hasta);
+                }
+
+                if ($type == 1){ // LOCAL
+                    $queryReporteTiemposAtencion->whereIn('g.guia_departamento',$arrayDe[0]);
+                }elseif ($type == 2){ // PROVINCIA 1
+                    $queryReporteTiemposAtencion->whereIn('g.guia_departamento',$arrayDe[1]);
+                }elseif ($type == 3){ // PROVINCIA 2
+                    $queryReporteTiemposAtencion->whereIn('g.guia_departamento',$arrayDe[2]);
+                }
+            }
+
+            $result = $queryReporteTiemposAtencion->distinct()->pluck('d.id_despacho');
+
+            // Sumar costos de despacho
+            $totalDespachos = DB::table('despachos')
+                ->whereIn('id_despacho', $result)
+                ->sum('despacho_costo_total');
+
+            // Sumar detalles de guías asociadas
+            $totalDetalles = DB::table('guias as g')
+                ->join('despacho_ventas as dv', 'g.id_guia', '=', 'dv.id_guia')
+                ->whereIn('dv.id_despacho', $result)
+                ->sum('g.guia_importe_total');
+
+            if ($typeGrafico){
+
+                $result = $totalDespachos;
+
+            }else{
+                $result = [
+                    'total_despacho' => $totalDespachos,
+                    'total_detalles' => $totalDetalles,
+                    'porcentaje' => $totalDetalles != 0 ? ($totalDespachos / $totalDetalles) * 100 : 0
+                ];
+                $result = (object)$result;
+            }
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = 0;
+        }
+
+        return $result;
+    }
 
     public function listar_guia_x_id($id){
         try {

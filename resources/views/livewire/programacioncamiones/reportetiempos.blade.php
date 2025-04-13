@@ -8,7 +8,7 @@
             <div class="row align-items-center">
                 <div class="col-lg-3 col-md-3 col-sm-12 mb-2">
                     <label for="tipo_reporte" class="form-label">Tipo de reporte</label>
-                    <select name="tipo_reporte" id="tipo_reporte" wire:model.live="tipo_reporte" class="form-select">
+                    <select name="tipo_reporte" id="tipo_reporte" wire:model="tipo_reporte" class="form-select">
                         <option value="">Seleccionar...</option>
                         <option value="1">F. Emisión</option>
                         <option value="2">F. Programación</option>
@@ -16,14 +16,14 @@
                 </div>
                 <div class="col-lg-3 col-md-3 col-sm-12 mb-2">
                     <label class="form-label">F. Desde</label>
-                    <input type="date" wire:model.live="desde" class="form-control" min="2025-01-01">
+                    <input type="date" wire:model="desde" class="form-control" min="2025-01-01">
                     @error('desde')
                     <span class="message-error">{{ $message }}</span>
                     @enderror
                 </div>
                 <div class="col-lg-3 col-md-3 col-sm-12 mb-2">
                     <label class="form-label">F. Hasta</label>
-                    <input type="date" wire:model.live="hasta" class="form-control" min="2025-01-01">
+                    <input type="date" wire:model="hasta" class="form-control" min="2025-01-01">
                     @error('hasta')
                     <span class="message-error">{{ $message }}</span>
                     @enderror
