@@ -2,6 +2,54 @@
     @php
         $general = new \App\Models\General();
     @endphp
+
+    <div class="row align-items-center justify-content-between">
+        <div class="col-lg-8 col-md-8 col-sm-12">
+            <div class="row align-items-center7">
+                <div class="col-lg-3 col-md-3 col-sm-12 mb-2">
+                    <label for="tipo_reporte" class="form-label">Tipo de reporte</label>
+                    <select name="tipo_reporte" id="tipo_reporte" wire:model="tipo_reporte" class="form-select">
+                        <option value="">Seleccionar...</option>
+                        <option value="1">F. Emisión</option>
+                        <option value="2">F. Despacho</option>
+                    </select>
+                </div>
+                <div class="col-lg-3 col-md-3 col-sm-12 mb-2">
+                    <label class="form-label">Desde</label>
+                    <input type="date" wire:model="xdesde" class="form-control" min="2025-01-01">
+                      @error('xdesde')
+                    <span class="message-error">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <div class="col-lg-3 col-md-3 col-sm-12 mb-2">
+                    <label class="form-label">Hasta</label>
+                    <input type="date" wire:model="xhasta" class="form-control" min="2025-01-01">
+                      @error('xhasta')
+                    <span class="message-error">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <div class="col-lg-3 col-md-3 col-sm-12 mt-4 mb-2">
+                    <button class="btn btn-sm bg-primary text-white mt-2" wire:click="buscar_reporte_valor">
+                        <i class="fa fa-search"></i> BUSCAR
+                    </button>
+                </div>
+            </div>
+        </div>
+        @if(count($filteredData) > 0)
+            <div class="col-lg-2 col-md-2 col-sm-12 mt-4 mb-2">
+                <button class="btn btn-sm bg-success text-white" wire:click.prevent="exportarReporteValorExcel">
+                    <i class="fa-solid fa-file-excel"></i> EXPORTAR
+                </button>
+            </div>
+        @endif
+    </div>
+
+    <div class="row">
+        <div class="loader mt-2" wire:loading wire:target="buscar_reporte_valor"></div>
+    </div>
+
     @if (session()->has('success'))
         <div class="alert alert-success alert-dismissible show fade mt-2">
             {{ session('success') }}
@@ -14,46 +62,9 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
-    <div class="row align-items-center">
-        <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-            <label for="tipo_reporte" class="form-label">Tipo de reporte</label>
-            <select name="tipo_reporte" id="tipo_reporte" wire:model.live="tipo_reporte" class="form-select">
-                <option value="">Seleccionar...</option>
-                <option value="emision">F. Emisión</option>
-                <option value="despacho">F. Despacho</option>
-            </select>
-        </div>
-        <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-            <label class="form-label">Desde</label>
-            <input type="date" wire:model.live="xdesde" class="form-control" min="2025-01-01">
-        </div>
-
-        <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-            <label class="form-label">Hasta</label>
-            <input type="date" wire:model.live="xhasta" class="form-control" min="2025-01-01">
-        </div>
-
-        <div class="col-lg-2 col-md-2 col-sm-12 mt-4 mb-2">
-            <button class="btn btn-sm bg-primary text-white" wire:click="buscar_reporte_valor">
-                <i class="fa fa-search"></i> BUSCAR
-            </button>
-        </div>
-
-        @if(count($filteredData) > 0)
-            <div class="col-lg-2 col-md-2 col-sm-12 mt-4 mb-2">
-                <button class="btn btn-sm bg-success text-white" wire:click.prevent="exportarReporteValorExcel">
-                    <i class="fa-solid fa-file-excel"></i> EXPORTAR
-                </button>
-            </div>
-        @endif
-
-        <div class="col-lg-12 col-md-12 col-sm-12">
-            <div class="loader mt-2" wire:loading wire:target="buscar_reporte_valor"></div>
-        </div>
-    </div>
 
     @if($searchdatos && count($filteredData) > 0)
-        <div class="row mt-3">
+        <div class="row mt-5">
             <div class="col-lg-12">
                 <h6>REPORTE RESUMEN DE DESPACHOS</h6>
             </div>
@@ -71,13 +82,45 @@
                                 </tr>
                             </x-slot>
                             <x-slot name="tbody">
-                                @foreach(['Total', 'Local', 'Provincia 1', 'Provincia 2'] as $zona)
+                                @php
+                                    $totalGeneralFlete = 0;
+                                    $totalGeneralDetalle = 0;
+                                    foreach($valoresPorzona as  $zon1){
+                                        $totalGeneralFlete+= $zon1->total_despacho;
+                                        $totalGeneralDetalle+= $zon1->total_detalles;
+                                    }
+                                    $por = $totalGeneralDetalle != 0 ? ($totalGeneralFlete / $totalGeneralDetalle) * 100 : 0
+                                @endphp
+                                <tr>
+                                    <td>TOTAL</td>
+                                    <td class="text-center">S/ {{ $general->formatoDecimal($totalGeneralFlete ?? 0)}}</td>
+                                    <td class="text-center">S/ {{ $general->formatoDecimal($totalGeneralDetalle ?? 0)}}</td>
+                                    <td class="text-center">{{ $general->formatoDecimal($por ?? 0) }}%</td>
+                                    <td class="text-center">3.9%</td>
+                                </tr>
+                                @foreach($valoresPorzona as $indexZona => $zon)
+                                    @php
+                                        $zonaText = "";
+                                        $zonaOb = "";
+                                        if ($indexZona == 0){
+                                            $zonaText = 'LOCAL';
+                                            $zonaOb = 1.9;
+
+                                        }elseif ($indexZona == 1){
+                                            $zonaText = 'PROVINCIA 1';
+                                            $zonaOb = 5.5;
+
+                                        }elseif ($indexZona == 2){
+                                            $zonaText = 'PROVINCIA 2';
+                                            $zonaOb = 9.5;
+                                        }
+                                    @endphp
                                     <tr>
-                                        <td>{{ $zona }}</td>
-                                        <td class="text-center">S/ {{ $general->formatoDecimal($summary[$zona]['flete'] ?? 0)}}</td>
-                                        <td class="text-center">S/ {{ $general->formatoDecimal($summary[$zona]['valor'] ?? 0)}}</td>
-                                        <td class="text-center">{{ $general->formatoDecimal($summary[$zona]['porcentaje'] ?? 0) }}%</td>
-                                        <td class="text-center">{{ $objetivos[$zona] ?? 0 }}%</td>
+                                        <td>{{ $zonaText }}</td>
+                                        <td class="text-center">S/ {{ $general->formatoDecimal($zon->total_despacho ?? 0)}}</td>
+                                        <td class="text-center">S/ {{ $general->formatoDecimal($zon->total_detalles ?? 0)}}</td>
+                                        <td class="text-center">{{ $general->formatoDecimal($zon->porcentaje ?? 0) }}%</td>
+                                        <td class="text-center">{{ $zonaOb ?? 0 }}%</td>
                                     </tr>
                                 @endforeach
                             </x-slot>
@@ -119,26 +162,15 @@
         </div>
     @endif
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
     <script>
         // Variables globales para los gráficos
         let graficoFleteTotal = null;
         let graficoFleteLimaProvincia = null;
 
         // Función para inicializar o actualizar el gráfico de Flete Total
-        function actualizarGraficoFleteTotal(data) {
+        function actualizarGraficoFleteTotal(meses,valores) {
             const canvas = document.getElementById('graficoFleteTotal');
             if (!canvas) return;
-
-            // Extraer el primer elemento si data es un array
-            const chartData = Array.isArray(data) ? data[0] : data;
-
-            // Verificar estructura de datos
-            if (!chartData || !chartData.meses || !chartData.flete_total) {
-                console.error('Datos incorrectos para gráfico de flete total:', chartData);
-                return;
-            }
 
             const ctx = canvas.getContext('2d');
 
@@ -151,18 +183,18 @@
             graficoFleteTotal = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: chartData.meses,
+                    labels: meses,
                     datasets: [
                         {
                             label: 'Flete Total',
-                            data: chartData.flete_total,
+                            data: valores,
                             backgroundColor: 'rgba(169, 169, 169, 0.7)', // Gris
                             borderColor: 'rgba(169, 169, 169, 1)',
                             borderWidth: 1
                         },
                         {
                             label: 'Obj. Total 2025',
-                            data: Array(chartData.meses.length).fill(3.9), // Objetivo del 3.9%
+                            data: Array(meses.length).fill(3.9), // Objetivo del 3.9%
                             borderColor: 'rgba(255, 206, 86, 1)', // Amarillo
                             borderWidth: 2,
                             borderDash: [5, 5],
@@ -218,18 +250,10 @@
         }
 
         // Función para inicializar o actualizar el gráfico de Flete Lima y Provincia
-        function actualizarGraficoFleteLimaProvincia(data) {
+        function actualizarGraficoFleteLimaProvincia(meses,lima,provincia) {
             const canvas = document.getElementById('graficoFleteLimaProvincia');
             if (!canvas) return;
 
-            // Extraer el primer elemento si data es un array
-            const chartData = Array.isArray(data) ? data[0] : data;
-
-            // Verificar estructura de datos
-            if (!chartData || !chartData.meses || !chartData.flete_lima || !chartData.flete_provincia) {
-                console.error('Datos incorrectos para gráfico de flete lima/provincia:', chartData);
-                return;
-            }
 
             const ctx = canvas.getContext('2d');
 
@@ -242,25 +266,25 @@
             graficoFleteLimaProvincia = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: chartData.meses,
+                    labels: meses,
                     datasets: [
                         {
                             label: 'Flete Lima',
-                            data: chartData.flete_lima,
+                            data: lima,
                             backgroundColor: 'rgba(54, 162, 235, 0.7)', // Azul
                             borderColor: 'rgba(54, 162, 235, 1)',
                             borderWidth: 1
                         },
                         {
                             label: 'Flete Provincia',
-                            data: chartData.flete_provincia,
+                            data: provincia,
                             backgroundColor: 'rgba(255, 159, 64, 0.7)', // Naranja
                             borderColor: 'rgba(255, 159, 64, 1)',
                             borderWidth: 1
                         },
                         {
                             label: 'Obj. Lima',
-                            data: Array(chartData.meses.length).fill(1.9), // Objetivo del 1.9%
+                            data: Array(meses.length).fill(1.9), // Objetivo del 1.9%
                             borderColor: 'rgba(54, 162, 235, 1)', // Azul
                             borderWidth: 2,
                             borderDash: [5, 5],
@@ -269,7 +293,7 @@
                         },
                         {
                             label: 'Obj. Provincia',
-                            data: Array(chartData.meses.length).fill(5.5), // Objetivo del 5.5%
+                            data: Array(meses.length).fill(5.5), // Objetivo del 5.5%
                             borderColor: 'rgba(255, 159, 64, 1)', // Naranja
                             borderWidth: 2,
                             borderDash: [5, 5],
@@ -328,20 +352,19 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Configurar eventos Livewire
             if (typeof Livewire !== 'undefined') {
-                Livewire.on('actualizarGraficoFleteTotal', function(data) {
+                Livewire.on('actualizarGraficoTotal', function(data) {
                     setTimeout(() => {
                         try {
-                            actualizarGraficoFleteTotal(data);
+                            actualizarGraficoFleteTotal(data[0][0], data[0][1]);
                         } catch (error) {
                             console.error('Error al actualizar gráfico de flete total:', error);
                         }
                     }, 100);
                 });
-
-                Livewire.on('actualizarGraficoFleteLimaProvincia', function(data) {
+                Livewire.on('actualizarGraficoFleteMes', function(data) {
                     setTimeout(() => {
                         try {
-                            actualizarGraficoFleteLimaProvincia(data);
+                            actualizarGraficoFleteLimaProvincia(data[0][0], data[0][1], data[0][2]);
                         } catch (error) {
                             console.error('Error al actualizar gráfico de flete lima/provincia:', error);
                         }

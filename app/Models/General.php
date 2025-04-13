@@ -15,6 +15,14 @@ class General extends Model
         parent::__construct();
         $this->logs = new Logs();
     }
+    public function listar_departamento_zona(){
+        $departamentos = [
+            ['CALLAO','LIMA'], // LOCAL
+            ['ANCASH', 'AYACUCHO', 'HUANCAVELICA', 'HUANUCO', 'JUNIN', 'LA LIBERTAD', 'LAMBAYEQUE', 'PASCO', 'ICA'], // PROVINCIA 1
+            ['AMAZONAS','APURIMAC','AREQUIPA','CAJAMARCA','CUSCO','LORETO','MADRE DE DIOS','MOQUEGUA'] // PROVINCIA 2
+        ];
+        return $departamentos;
+    }
 
     public function consultar_documento($tipo,$num){
         try {

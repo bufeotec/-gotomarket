@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Programacioncamiones;
 
+use App\Models\General;
 use App\Models\Guia;
 use App\Models\Logs;
 use Carbon\Carbon;
@@ -22,10 +23,12 @@ class Reporteindicadoresvalor extends Component
 
     private $logs;
     private $guia;
+    private $general;
 
     public function __construct(){
         $this->logs = new Logs();
         $this->guia = new Guia();
+        $this->general = new General();
     }
 
     public $xdesde;
@@ -37,6 +40,7 @@ class Reporteindicadoresvalor extends Component
     public $datosGraficoFleteTotal = [];
     public $datosGraficoFleteLimaProvincia = [];
 
+    public $valoresPorzona = [];
     // Objetivos fijos como en la imagen
     public $objetivos = [
         'Total' => 3.90,
@@ -45,425 +49,10 @@ class Reporteindicadoresvalor extends Component
         'Provincia 2' => 9.50
     ];
 
-    public $departamentos = [
-        'LIMA' => 'LOCAL',
-        'CALLAO' => 'LOCAL',
-        'ANCASH' => 'PROVINCIA 1',
-        'ICA' => 'PROVINCIA 1',
-        'HUANCAVELICA' => 'PROVINCIA 1',
-        'HUANUCO' => 'PROVINCIA 1',
-        'LAMBAYEQUE' => 'PROVINCIA 1',
-        'LA LIBERTAD' => 'PROVINCIA 1',
-        'JUNIN' => 'PROVINCIA 1',
-        'PASCO' => 'PROVINCIA 1',
-        'AYACUCHO' => 'PROVINCIA 1',
-        'APURIMAC' => 'PROVINCIA 2',
-        'AMAZONAS' => 'PROVINCIA 2',
-        'AREQUIPA' => 'PROVINCIA 2',
-        'CAJAMARCA' => 'PROVINCIA 2',
-        'CUSCO' => 'PROVINCIA 2',
-        'LORETO' => 'PROVINCIA 2',
-        'MADRE DE DIOS' => 'PROVINCIA 2',
-        'MOQUEGUA' => 'PROVINCIA 2',
-    ];
-
-    public function buscar_reporte_valor() {
-        $this->searchdatos = true;
-
-        if (empty($this->xdesde) || empty($this->xhasta)) {
-            $this->filteredData = [];
-            return;
-        }
-
-        // Base query para despachos
-        $despachosQuery = DB::table('despachos as d')
-            ->select(
-                'd.id_despacho',
-                'd.despacho_costo_total as flete',
-                'd.id_tipo_servicios as tipo_servicio',
-                'dep.departamento_nombre as departamento'
-            )
-            ->leftJoin('departamentos as dep', 'd.id_departamento', '=', 'dep.id_departamento')
-            ->join('despacho_ventas as dv', 'd.id_despacho', '=', 'dv.id_despacho')
-            ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
-            ->where('d.despacho_estado_aprobacion', '!=', 4);
-
-        // Base query para guías por despacho
-        $guiasPorDespachoQuery = DB::table('despachos as d')
-            ->join('despacho_ventas as dv', 'd.id_despacho', '=', 'dv.id_despacho')
-            ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
-            ->select(
-                'd.id_despacho',
-                DB::raw('SUM(g.guia_importe_total) as valor_transportado')
-            );
-
-        // Aplicar filtro por tipo de fecha
-        if ($this->tipo_reporte == 'despacho') {
-            // Filtrar por fecha de despacho
-            $despachosQuery->whereDate('d.despacho_fecha_aprobacion', '>=', $this->xdesde)
-                ->whereDate('d.despacho_fecha_aprobacion', '<=', $this->xhasta);
-
-            $guiasPorDespachoQuery->whereDate('d.despacho_fecha_aprobacion', '>=', $this->xdesde)
-                ->whereDate('d.despacho_fecha_aprobacion', '<=', $this->xhasta);
-        } else {
-            // Filtrar por fecha de emisión (default)
-            $despachosQuery->whereDate('g.guia_fecha_emision', '>=', $this->xdesde)
-                ->whereDate('g.guia_fecha_emision', '<=', $this->xhasta);
-
-            $guiasPorDespachoQuery->whereDate('g.guia_fecha_emision', '>=', $this->xdesde)
-                ->whereDate('g.guia_fecha_emision', '<=', $this->xhasta);
-        }
-
-        // Ejecutar consultas
-        $despachos = $despachosQuery
-            ->groupBy('d.id_despacho', 'd.despacho_costo_total', 'd.id_tipo_servicios', 'dep.departamento_nombre')
-            ->get();
-
-        $guiasPorDespacho = $guiasPorDespachoQuery
-            ->groupBy('d.id_despacho')
-            ->get()
-            ->keyBy('id_despacho');
-
-        // Procesar datos como antes
-        $this->filteredData = $despachos->map(function($despacho) use ($guiasPorDespacho) {
-            $departamento = strtoupper($despacho->departamento ?? '');
-
-            $zona = 'Otra';
-            if ($despacho->tipo_servicio == 1) {
-                $zona = 'Local';
-            } elseif (in_array($departamento, ['LIMA', 'CALLAO'])) {
-                $zona = 'Local';
-            } elseif (in_array($departamento, ['ANCASH', 'ICA', 'HUANCAVELICA', 'HUANUCO', 'LAMBAYEQUE', 'LA LIBERTAD', 'JUNIN', 'PASCO', 'AYACUCHO'])) {
-                $zona = 'Provincia 1';
-            } elseif (in_array($departamento, ['APURIMAC', 'AMAZONAS', 'AREQUIPA', 'CAJAMARCA', 'CUSCO', 'LORETO', 'MADRE DE DIOS', 'MOQUEGUA'])) {
-                $zona = 'Provincia 2';
-            }
-
-            return (object) [
-                'flete' => $despacho->flete,
-                'valor_transportado' => $guiasPorDespacho[$despacho->id_despacho]->valor_transportado ?? 0,
-                'zona' => $zona
-            ];
-        });
-
-        $this->calculateSummary();
-        $this->obtenerDatosGraficos();
+    public $departamentos = [];
+    public function mount(){
+        $this->departamentos = $this->general->listar_departamento_zona();
     }
-
-    public function calculateSummary() {
-        $summary = [
-            'Total' => ['flete' => 0, 'valor' => 0, 'porcentaje' => 0],
-            'Local' => ['flete' => 0, 'valor' => 0, 'porcentaje' => 0],
-            'Provincia 1' => ['flete' => 0, 'valor' => 0, 'porcentaje' => 0],
-            'Provincia 2' => ['flete' => 0, 'valor' => 0, 'porcentaje' => 0],
-        ];
-
-        foreach ($this->filteredData as $resultado) {
-            $zona = $resultado->zona;
-
-            if (isset($summary[$zona])) {
-                $summary[$zona]['flete'] += $resultado->flete;
-                $summary[$zona]['valor'] += $resultado->valor_transportado;
-
-                $summary['Total']['flete'] += $resultado->flete;
-                $summary['Total']['valor'] += $resultado->valor_transportado;
-            }
-        }
-
-        // Calculamos porcentajes solo si hay valor transportado
-        foreach ($summary as $zona => &$data) {
-            if ($data['valor'] > 0) {
-                $data['porcentaje'] = round(($data['flete'] / $data['valor']) * 100, 2);
-            } else {
-                $data['porcentaje'] = 0;
-            }
-        }
-
-        $this->summary = $summary;
-    }
-
-    public function obtenerDatosGraficos() {
-        $mesesEspanol = [
-            1 => 'ENE', 2 => 'FEB', 3 => 'MAR', 4 => 'ABR',
-            5 => 'MAY', 6 => 'JUN', 7 => 'JUL', 8 => 'AGO',
-            9 => 'SEP', 10 => 'OCT', 11 => 'NOV', 12 => 'DIC'
-        ];
-
-        $fechaDesde = Carbon::parse($this->xdesde);
-        $fechaHasta = Carbon::parse($this->xhasta);
-
-        $mesesCompletos = [];
-        $current = $fechaDesde->copy();
-        while ($current <= $fechaHasta) {
-            $mesesCompletos[] = [
-                'mes' => $current->month,
-                'anio' => $current->year,
-                'key' => $mesesEspanol[$current->month] . '-' . substr($current->year, 2, 2)
-            ];
-            $current->addMonth();
-        }
-
-        // Consulta para Flete Total - Corregida para evitar sumas duplicadas y problemas con only_full_group_by
-        $fleteTotalQuery = DB::table(function($query) {
-            $query->select(
-                'despachos.id_despacho',
-                'despachos.despacho_costo_total'
-            );
-
-            // Determinar qué campo de fecha usar
-            if ($this->tipo_reporte == 'despacho') {
-                $query->addSelect('despachos.despacho_fecha_aprobacion as fecha_referencia');
-            } else {
-                $query->addSelect('guias.guia_fecha_emision as fecha_referencia');
-            }
-
-            $query->from('despachos')
-                ->join('despacho_ventas', 'despachos.id_despacho', '=', 'despacho_ventas.id_despacho')
-                ->join('guias', 'despacho_ventas.id_guia', '=', 'guias.id_guia')
-                ->where('despachos.despacho_estado_aprobacion', '!=', 4);
-
-            if ($this->tipo_reporte == 'despacho') {
-                $query->whereDate('despachos.despacho_fecha_aprobacion', '>=', $this->xdesde)
-                    ->whereDate('despachos.despacho_fecha_aprobacion', '<=', $this->xhasta);
-            } else {
-                $query->whereDate('guias.guia_fecha_emision', '>=', $this->xdesde)
-                    ->whereDate('guias.guia_fecha_emision', '<=', $this->xhasta);
-            }
-
-            // Incluimos fecha_referencia en el GROUP BY para evitar error de sql_mode=only_full_group_by
-            if ($this->tipo_reporte == 'despacho') {
-                $query->groupBy('despachos.id_despacho', 'despachos.despacho_costo_total', 'despachos.despacho_fecha_aprobacion');
-            } else {
-                $query->groupBy('despachos.id_despacho', 'despachos.despacho_costo_total', 'guias.guia_fecha_emision');
-            }
-        })->select(
-            DB::raw('MONTH(fecha_referencia) as mes'),
-            DB::raw('YEAR(fecha_referencia) as anio'),
-            DB::raw('SUM(despacho_costo_total) as flete_total')
-        )
-            ->groupBy('mes', 'anio')
-            ->get()
-            ->keyBy(function($item) use ($mesesEspanol) {
-                return $mesesEspanol[$item->mes] . '-' . substr($item->anio, 2, 2);
-            });
-
-        // Procesar datos para Flete Total
-        $mesesFleteTotal = [];
-        $fleteTotal = [];
-        foreach ($mesesCompletos as $mes) {
-            $mesesFleteTotal[] = $mes['key'];
-            $fleteTotal[] = isset($fleteTotalQuery[$mes['key']]) ? (float)$fleteTotalQuery[$mes['key']]->flete_total : 0;
-        }
-
-        // Consulta para Flete Lima y Provincia - Corregida para evitar sumas duplicadas y problemas con only_full_group_by
-        $fleteLimaProvinciaQuery = DB::table(function($query) {
-            $query->select(
-                'despachos.id_despacho',
-                'despachos.despacho_costo_total',
-                'despachos.id_tipo_servicios',
-                'departamentos.departamento_nombre'
-            );
-
-            // Determinar qué campo de fecha usar
-            if ($this->tipo_reporte == 'despacho') {
-                $query->addSelect('despachos.despacho_fecha_aprobacion as fecha_referencia');
-            } else {
-                $query->addSelect('guias.guia_fecha_emision as fecha_referencia');
-            }
-
-            $query->from('despachos')
-                ->leftJoin('departamentos', 'despachos.id_departamento', '=', 'departamentos.id_departamento')
-                ->join('despacho_ventas', 'despachos.id_despacho', '=', 'despacho_ventas.id_despacho')
-                ->join('guias', 'despacho_ventas.id_guia', '=', 'guias.id_guia')
-                ->where('despachos.despacho_estado_aprobacion', '!=', 4);
-
-            if ($this->tipo_reporte == 'despacho') {
-                $query->whereDate('despachos.despacho_fecha_aprobacion', '>=', $this->xdesde)
-                    ->whereDate('despachos.despacho_fecha_aprobacion', '<=', $this->xhasta);
-            } else {
-                $query->whereDate('guias.guia_fecha_emision', '>=', $this->xdesde)
-                    ->whereDate('guias.guia_fecha_emision', '<=', $this->xhasta);
-            }
-
-            // Incluimos fecha_referencia en el GROUP BY para evitar error de sql_mode=only_full_group_by
-            if ($this->tipo_reporte == 'despacho') {
-                $query->groupBy('despachos.id_despacho', 'despachos.despacho_costo_total', 'despachos.id_tipo_servicios',
-                    'departamentos.departamento_nombre', 'despachos.despacho_fecha_aprobacion');
-            } else {
-                $query->groupBy('despachos.id_despacho', 'despachos.despacho_costo_total', 'despachos.id_tipo_servicios',
-                    'departamentos.departamento_nombre', 'guias.guia_fecha_emision');
-            }
-        })->select(
-            DB::raw('MONTH(fecha_referencia) as mes'),
-            DB::raw('YEAR(fecha_referencia) as anio'),
-            DB::raw('SUM(CASE WHEN id_tipo_servicios = 1 OR (departamento_nombre IN ("LIMA", "CALLAO"))
-                THEN despacho_costo_total ELSE 0 END) as flete_lima'),
-            DB::raw('SUM(CASE WHEN departamento_nombre NOT IN ("LIMA", "CALLAO")
-                THEN despacho_costo_total ELSE 0 END) as flete_provincia')
-        )
-            ->groupBy('mes', 'anio')
-            ->get()
-            ->keyBy(function($item) use ($mesesEspanol) {
-                return $mesesEspanol[$item->mes] . '-' . substr($item->anio, 2, 2);
-            });
-
-        // Procesar datos para Flete Lima y Provincia
-        $mesesFleteLimaProvincia = [];
-        $fleteLima = [];
-        $fleteProvincia = [];
-        foreach ($mesesCompletos as $mes) {
-            $mesesFleteLimaProvincia[] = $mes['key'];
-
-            if (isset($fleteLimaProvinciaQuery[$mes['key']])) {
-                $fleteLima[] = (float)$fleteLimaProvinciaQuery[$mes['key']]->flete_lima;
-                $fleteProvincia[] = (float)$fleteLimaProvinciaQuery[$mes['key']]->flete_provincia;
-            } else {
-                $fleteLima[] = 0;
-                $fleteProvincia[] = 0;
-            }
-        }
-
-        // Asignar datos para los gráficos
-        $this->datosGraficoFleteTotal = [
-            'meses' => $mesesFleteTotal,
-            'flete_total' => $fleteTotal
-        ];
-
-        $this->datosGraficoFleteLimaProvincia = [
-            'meses' => $mesesFleteLimaProvincia,
-            'flete_lima' => $fleteLima,
-            'flete_provincia' => $fleteProvincia
-        ];
-
-        // Emitir eventos para actualizar los gráficos
-        $this->dispatch('actualizarGraficoFleteTotal', $this->datosGraficoFleteTotal);
-        $this->dispatch('actualizarGraficoFleteLimaProvincia', $this->datosGraficoFleteLimaProvincia);
-    }
-
-//    public function obtenerDatosGraficos() {
-//        $mesesEspanol = [
-//            1 => 'ENE', 2 => 'FEB', 3 => 'MAR', 4 => 'ABR',
-//            5 => 'MAY', 6 => 'JUN', 7 => 'JUL', 8 => 'AGO',
-//            9 => 'SEP', 10 => 'OCT', 11 => 'NOV', 12 => 'DIC'
-//        ];
-//
-//        $fechaDesde = Carbon::parse($this->xdesde);
-//        $fechaHasta = Carbon::parse($this->xhasta);
-//
-//        $mesesCompletos = [];
-//        $current = $fechaDesde->copy();
-//        while ($current <= $fechaHasta) {
-//            $mesesCompletos[] = [
-//                'mes' => $current->month,
-//                'anio' => $current->year,
-//                'key' => $mesesEspanol[$current->month] . '-' . substr($current->year, 2, 2)
-//            ];
-//            $current->addMonth();
-//        }
-//
-//        // SOLUCIÓN: Modificamos la consulta para eliminar duplicados
-//        // Primero obtenemos los despachos únicos con la fecha correcta
-//        $uniqueDespachoQuery = DB::table('despachos')
-//            ->select(
-//                'despachos.id_despacho',
-//                'despachos.despacho_costo_total',
-//                'despachos.id_tipo_servicios',
-//                'departamentos.departamento_nombre'
-//            );
-//
-//        // Determinar qué campo de fecha usar y agregarlo a la consulta
-//        if ($this->tipo_reporte == 'despacho') {
-//            $uniqueDespachoQuery->addSelect(DB::raw('DATE(despachos.despacho_fecha_aprobacion) as fecha_referencia'));
-//            $uniqueDespachoQuery->whereDate('despachos.despacho_fecha_aprobacion', '>=', $this->xdesde)
-//                ->whereDate('despachos.despacho_fecha_aprobacion', '<=', $this->xhasta);
-//        } else {
-//            // Para emisión, necesitamos usar la primera fecha de emisión de guía por despacho
-//            $uniqueDespachoQuery->leftJoin(DB::raw('(
-//            SELECT dv.id_despacho, MIN(g.guia_fecha_emision) as primera_fecha_emision
-//            FROM despacho_ventas dv
-//            JOIN guias g ON dv.id_guia = g.id_guia
-//            GROUP BY dv.id_despacho
-//        ) as fecha_guias'), 'despachos.id_despacho', '=', 'fecha_guias.id_despacho');
-//
-//            $uniqueDespachoQuery->addSelect(DB::raw('fecha_guias.primera_fecha_emision as fecha_referencia'));
-//            $uniqueDespachoQuery->whereRaw('fecha_guias.primera_fecha_emision >= ?', [$this->xdesde])
-//                ->whereRaw('fecha_guias.primera_fecha_emision <= ?', [$this->xhasta]);
-//        }
-//
-//        $uniqueDespachoQuery->leftJoin('departamentos', 'despachos.id_departamento', '=', 'departamentos.id_departamento')
-//            ->where('despachos.despacho_estado_aprobacion', '!=', 4);
-//
-//        // Flete Total por mes
-//        $fleteTotalQuery = DB::table(DB::raw("({$uniqueDespachoQuery->toSql()}) as despachos"))
-//            ->mergeBindings($uniqueDespachoQuery)
-//            ->select(
-//                DB::raw('MONTH(fecha_referencia) as mes'),
-//                DB::raw('YEAR(fecha_referencia) as anio'),
-//                DB::raw('SUM(despacho_costo_total) as flete_total')
-//            )
-//            ->groupBy('mes', 'anio')
-//            ->get()
-//            ->keyBy(function($item) use ($mesesEspanol) {
-//                return $mesesEspanol[$item->mes] . '-' . substr($item->anio, 2, 2);
-//            });
-//
-//        // Flete Lima y Provincia por mes
-//        $fleteLimaProvinciaQuery = DB::table(DB::raw("({$uniqueDespachoQuery->toSql()}) as despachos"))
-//            ->mergeBindings($uniqueDespachoQuery)
-//            ->select(
-//                DB::raw('MONTH(fecha_referencia) as mes'),
-//                DB::raw('YEAR(fecha_referencia) as anio'),
-//                DB::raw('SUM(CASE WHEN id_tipo_servicios = 1 OR (departamento_nombre IN ("LIMA", "CALLAO"))
-//                    THEN despacho_costo_total ELSE 0 END) as flete_lima'),
-//                DB::raw('SUM(CASE WHEN departamento_nombre NOT IN ("LIMA", "CALLAO")
-//                    THEN despacho_costo_total ELSE 0 END) as flete_provincia')
-//            )
-//            ->groupBy('mes', 'anio')
-//            ->get()
-//            ->keyBy(function($item) use ($mesesEspanol) {
-//                return $mesesEspanol[$item->mes] . '-' . substr($item->anio, 2, 2);
-//            });
-//
-//        // Procesar datos para Flete Total
-//        $mesesFleteTotal = [];
-//        $fleteTotal = [];
-//        foreach ($mesesCompletos as $mes) {
-//            $mesesFleteTotal[] = $mes['key'];
-//            $fleteTotal[] = isset($fleteTotalQuery[$mes['key']]) ? (float)$fleteTotalQuery[$mes['key']]->flete_total : 0;
-//        }
-//
-//        // Procesar datos para Flete Lima y Provincia
-//        $mesesFleteLimaProvincia = [];
-//        $fleteLima = [];
-//        $fleteProvincia = [];
-//        foreach ($mesesCompletos as $mes) {
-//            $mesesFleteLimaProvincia[] = $mes['key'];
-//
-//            if (isset($fleteLimaProvinciaQuery[$mes['key']])) {
-//                $fleteLima[] = (float)$fleteLimaProvinciaQuery[$mes['key']]->flete_lima;
-//                $fleteProvincia[] = (float)$fleteLimaProvinciaQuery[$mes['key']]->flete_provincia;
-//            } else {
-//                $fleteLima[] = 0;
-//                $fleteProvincia[] = 0;
-//            }
-//        }
-//
-//        // Asignar datos para los gráficos
-//        $this->datosGraficoFleteTotal = [
-//            'meses' => $mesesFleteTotal,
-//            'flete_total' => $fleteTotal
-//        ];
-//
-//        $this->datosGraficoFleteLimaProvincia = [
-//            'meses' => $mesesFleteLimaProvincia,
-//            'flete_lima' => $fleteLima,
-//            'flete_provincia' => $fleteProvincia
-//        ];
-//
-//        // Emitir eventos para actualizar los gráficos
-//        $this->dispatch('actualizarGraficoFleteTotal', $this->datosGraficoFleteTotal);
-//        $this->dispatch('actualizarGraficoFleteLimaProvincia', $this->datosGraficoFleteLimaProvincia);
-//    }
 
     public function render(){
         if ($this->searchdatos) {
@@ -491,112 +80,207 @@ class Reporteindicadoresvalor extends Component
         return view('livewire.programacioncamiones.reporteindicadoresvalor');
     }
 
+    public function buscar_reporte_valor() {
+        try {
+            $this->searchdatos = true;
+
+            $this->validate([
+                'xdesde' => 'required|date',
+                'xhasta' => 'required|date|after_or_equal:xdesde',
+            ], [
+                'xdesde.required' => 'La fecha de inicio es obligatoria.',
+                'xdesde.date' => 'La fecha de inicio no es válida.',
+
+                'xhasta.required' => 'La fecha de fin es obligatoria.',
+                'xhasta.date' => 'La fecha de fin no es válida.',
+                'xhasta.after_or_equal' => 'La fecha de fin debe ser igual o posterior a la fecha de inicio.',
+            ]);
+            if (empty($this->xdesde) || empty($this->xhasta)) {
+                $this->filteredData = [];
+                return;
+            }
+            $this->valoresPorzona = [];
+            $local = $this->guia->listar_informacion_reporte_indicador_de_valor_transportado($this->tipo_reporte,$this->xdesde,$this->xhasta,$this->departamentos,1);
+            $provincia1 = $this->guia->listar_informacion_reporte_indicador_de_valor_transportado($this->tipo_reporte,$this->xdesde,$this->xhasta,$this->departamentos,2);
+            $provincia2 = $this->guia->listar_informacion_reporte_indicador_de_valor_transportado($this->tipo_reporte,$this->xdesde,$this->xhasta,$this->departamentos,3);
+
+            $this->valoresPorzona = array_merge($this->valoresPorzona, [$local, $provincia1, $provincia2]);
+
+            // Base query para despachos
+            $despachosQuery = DB::table('despachos as d')
+                ->select(
+                    'd.id_despacho',
+                    'd.despacho_costo_total as flete',
+                    'd.id_tipo_servicios as tipo_servicio',
+                    'dep.departamento_nombre as departamento'
+                )
+                ->leftJoin('departamentos as dep', 'd.id_departamento', '=', 'dep.id_departamento')
+                ->join('despacho_ventas as dv', 'd.id_despacho', '=', 'dv.id_despacho')
+                ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
+                ->where('d.despacho_estado_aprobacion', '!=', 4);
+
+            // Base query para guías por despacho
+            $guiasPorDespachoQuery = DB::table('despachos as d')
+                ->join('despacho_ventas as dv', 'd.id_despacho', '=', 'dv.id_despacho')
+                ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
+                ->select(
+                    'd.id_despacho',
+                    DB::raw('SUM(g.guia_importe_total) as valor_transportado')
+                );
+
+            // Aplicar filtro por tipo de fecha
+            if ($this->tipo_reporte == 'despacho') {
+                // Filtrar por fecha de despacho
+                $despachosQuery->whereDate('d.despacho_fecha_aprobacion', '>=', $this->xdesde)
+                    ->whereDate('d.despacho_fecha_aprobacion', '<=', $this->xhasta);
+
+                $guiasPorDespachoQuery->whereDate('d.despacho_fecha_aprobacion', '>=', $this->xdesde)
+                    ->whereDate('d.despacho_fecha_aprobacion', '<=', $this->xhasta);
+            } else {
+
+                // Filtrar por fecha de emisión (default)
+                $despachosQuery->whereDate('g.guia_fecha_emision', '>=', $this->xdesde)
+                    ->whereDate('g.guia_fecha_emision', '<=', $this->xhasta);
+
+                $guiasPorDespachoQuery->whereDate('g.guia_fecha_emision', '>=', $this->xdesde)
+                    ->whereDate('g.guia_fecha_emision', '<=', $this->xhasta);
+            }
+
+            // Ejecutar consultas
+            $despachos = $despachosQuery
+                ->groupBy('d.id_despacho', 'd.despacho_costo_total', 'd.id_tipo_servicios', 'dep.departamento_nombre')
+                ->get();
+
+            $guiasPorDespacho = $guiasPorDespachoQuery
+                ->groupBy('d.id_despacho')
+                ->get()
+                ->keyBy('id_despacho');
+
+            // Procesar datos como antes
+            $this->filteredData = $despachos->map(function($despacho) use ($guiasPorDespacho) {
+                $departamento = strtoupper($despacho->departamento ?? '');
+
+                $zona = 'Otra';
+                if ($despacho->tipo_servicio == 1) {
+                    $zona = 'Local';
+                } elseif (in_array($departamento, ['LIMA', 'CALLAO'])) {
+                    $zona = 'Local';
+                } elseif (in_array($departamento, ['ANCASH', 'ICA', 'HUANCAVELICA', 'HUANUCO', 'LAMBAYEQUE', 'LA LIBERTAD', 'JUNIN', 'PASCO', 'AYACUCHO'])) {
+                    $zona = 'Provincia 1';
+                } elseif (in_array($departamento, ['APURIMAC', 'AMAZONAS', 'AREQUIPA', 'CAJAMARCA', 'CUSCO', 'LORETO', 'MADRE DE DIOS', 'MOQUEGUA'])) {
+                    $zona = 'Provincia 2';
+                }
+
+                return (object) [
+                    'flete' => $despacho->flete,
+                    'valor_transportado' => $guiasPorDespacho[$despacho->id_despacho]->valor_transportado ?? 0,
+                    'zona' => $zona
+                ];
+            });
+
+            $this->generalGraficoTotalMes();
+            $this->generalGraficoFleteMes();
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->setErrorBag($e->validator->errors());
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error. Por favor, inténtelo nuevamente.');
+            return ;
+        }
+    }
+
+    public function generalGraficoTotalMes(){
+        try {
+            $fechaDesde = Carbon::parse($this->xdesde);
+            $fechaHasta = Carbon::parse($this->xhasta);
+            $meses = [];
+            $totalMes = [];
+            while ($fechaDesde->lessThanOrEqualTo($fechaHasta)) {
+                $meses[] = ucfirst($fechaDesde->locale('es')->isoFormat('MMMM')); // Nombre del mes en español y con mayúscula inicial
+                $fechaAnhoMes = $fechaDesde->format('Y-m');
+                $totalMes[] = $this->guia->listar_informacion_reporte_indicador_de_valor_transportado($this->tipo_reporte,$this->xdesde,$this->xhasta,$this->departamentos,1,1,$fechaAnhoMes);
+                $fechaDesde->addMonth();
+            }
+            $this->dispatch('actualizarGraficoTotal', [
+                $meses,
+                $totalMes
+            ]);
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+    }
+    public function generalGraficoFleteMes(){
+        try {
+            $fechaDesde = Carbon::parse($this->xdesde);
+            $fechaHasta = Carbon::parse($this->xhasta);
+            $meses = [];
+            $totalLima = [];
+            $totalProvincial = [];
+            while ($fechaDesde->lessThanOrEqualTo($fechaHasta)) {
+                $meses[] = ucfirst($fechaDesde->locale('es')->isoFormat('MMMM')); // Nombre del mes en español y con mayúscula inicial
+                $fechaAnhoMes = $fechaDesde->format('Y-m');
+                $totalLima[] = $this->guia->listar_informacion_reporte_indicador_de_valor_transportado($this->tipo_reporte,$this->xdesde,$this->xhasta,$this->departamentos,1,2,$fechaAnhoMes);
+                $totalProvincial[] = $this->guia->listar_informacion_reporte_indicador_de_valor_transportado($this->tipo_reporte,$this->xdesde,$this->xhasta,$this->departamentos,2,2,$fechaAnhoMes);
+                $fechaDesde->addMonth();
+            }
+            $this->dispatch('actualizarGraficoFleteMes', [
+                $meses,
+                $totalLima,
+                $totalProvincial
+            ]);
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+    }
+
     public function exportarReporteValorExcel(){
         try {
+            $this->validate([
+                'xdesde' => 'required|date',
+                'xhasta' => 'required|date|after_or_equal:xdesde',
+            ], [
+                'xdesde.required' => 'La fecha de inicio es obligatoria.',
+                'xdesde.date' => 'La fecha de inicio no es válida.',
+
+                'xhasta.required' => 'La fecha de fin es obligatoria.',
+                'xhasta.date' => 'La fecha de fin no es válida.',
+                'xhasta.after_or_equal' => 'La fecha de fin debe ser igual o posterior a la fecha de inicio.',
+            ]);
+
             if (!Gate::allows('exportar_reporte_valor_excel')) {
                 session()->flash('error', 'No tiene permisos para generar este reporte.');
                 return;
             }
 
-            if (empty($this->xdesde) || empty($this->xhasta)) {
-                session()->flash('error', 'Debe especificar un rango de fechas para generar el reporte.');
-                return;
-            }
+            $desde = $this->xdesde;
+            $hasta = $this->xhasta;
+            $tipo = $this->tipo_reporte;
 
             // Obtenemos los despachos con sus guías
             $despachos = DB::table('despachos as d')
-                ->select(
-                    'd.id_despacho',
-                    'd.despacho_fecha_aprobacion',
-                    'd.despacho_numero_correlativo',
-                    'd.despacho_costo_total',
-                    'd.id_tipo_servicios',
-                    'd.despacho_estado_aprobacion',
-                    'g.guia_departamento',
-                    'g.guia_provincia',
-                    'g.guia_direc_entrega',
-                    'g.id_guia',
-                    DB::raw('MIN(g.guia_fecha_emision) as fecha_guia_ss'),
-                    DB::raw('SUM(g.guia_importe_total) as valor_transportado'),
-                    DB::raw('CASE
-                    WHEN d.id_tipo_servicios = 1 THEN "Local"
-                    WHEN d.id_tipo_servicios = 2 AND g.guia_departamento IN ("LIMA", "CALLAO") THEN "Local"
-                    WHEN d.id_tipo_servicios = 2 AND g.guia_departamento IN ("ANCASH", "ICA", "HUANCAVELICA", "HUANUCO", "LAMBAYEQUE", "LA LIBERTAD", "JUNIN", "PASCO", "AYACUCHO") THEN "Provincia 1"
-                    WHEN d.id_tipo_servicios = 2 AND g.guia_departamento IN ("APURIMAC", "AMAZONAS", "AREQUIPA", "CAJAMARCA", "CUSCO", "LORETO", "MADRE DE DIOS", "MOQUEGUA") THEN "Provincia 2"
-                    ELSE "Otra"
-                END as zona')
-                )
                 ->join('despacho_ventas as dv', 'd.id_despacho', '=', 'dv.id_despacho')
                 ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
-                ->whereDate('d.despacho_fecha_aprobacion', '>=', $this->xdesde)
-                ->whereDate('d.despacho_fecha_aprobacion', '<=', $this->xhasta)
-                ->groupBy(
-                    'd.id_despacho',
-                    'd.despacho_fecha_aprobacion',
-                    'd.despacho_numero_correlativo',
-                    'd.despacho_costo_total',
-                    'd.id_tipo_servicios',
-                    'd.despacho_estado_aprobacion',
-                    'g.guia_departamento',
-                    'g.guia_provincia',
-                    'g.guia_direc_entrega',
-                    'g.id_guia'
-                )
-                ->get();
+                ->where('d.despacho_estado_aprobacion', '!=', 4);
+
+            if ($tipo == 1){
+                // F. Emisión
+                $despachos->whereDate('g.guia_fecha_emision', '>=', $desde)
+                    ->whereDate('g.guia_fecha_emision', '<=', $hasta);
+
+            }else{
+                // F. Programación
+                $despachos->whereDate('d.despacho_fecha_aprobacion', '>=', $desde)
+                    ->whereDate('d.despacho_fecha_aprobacion', '<=', $hasta);
+            }
+
+            $despachos = $despachos->orderBy('d.despacho_numero_correlativo','asc')->get();
 
             if ($despachos->isEmpty()) {
                 session()->flash('error', 'No hay datos para exportar en el rango de fechas seleccionado.');
                 return;
-            }
-
-            // Procesar los despachos para determinar si son mixtos
-            $processedDespachos = [];
-            $uniqueDespachos = [];
-
-            foreach ($despachos as $despacho) {
-                // Verificar si ya procesamos este despacho
-                if (isset($uniqueDespachos[$despacho->id_despacho])) {
-                    continue;
-                }
-
-                // Verificar si es mixto
-                $validarMixto = DB::table('despacho_ventas as dv')
-                    ->join('despachos as d', 'd.id_despacho', '=', 'dv.id_despacho')
-                    ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
-                    ->join('guias_detalles as gd', 'gd.id_guia', '=', 'g.id_guia')
-                    ->where('dv.id_guia', '=', $despacho->id_guia)
-                    ->where('dv.id_despacho', '<>', $despacho->id_despacho)
-                    ->where('d.id_programacion', '=', $despacho->id_programacion ?? null)
-                    ->where('d.id_tipo_servicios', '=', 2)
-                    ->first();
-
-                $typeComprop = $validarMixto ? 3 : $despacho->id_tipo_servicios;
-
-                $tipoOS = match ($typeComprop) {
-                    1 => 'LOCAL',
-                    2 => 'PROVINCIAL',
-                    3 => 'MIXTO',
-                    default => '',
-                };
-
-                // Solo agregar despachos únicos (máximo 4)
-                if (!isset($uniqueDespachos[$despacho->id_despacho]) && count($uniqueDespachos) < 4) {
-                    $processedDespachos[] = (object) [
-                        'despacho_fecha_aprobacion' => $despacho->despacho_fecha_aprobacion,
-                        'fecha_guia_ss' => $despacho->fecha_guia_ss,
-                        'despacho_numero_correlativo' => $despacho->despacho_numero_correlativo,
-                        'valor_transportado' => $despacho->valor_transportado,
-                        'despacho_costo_total' => $despacho->despacho_costo_total,
-                        'tipo_os' => $tipoOS,
-                        'despacho_estado_aprobacion' => $despacho->despacho_estado_aprobacion,
-                        'guia_departamento' => $despacho->guia_departamento,
-                        'guia_provincia' => $despacho->guia_provincia,
-                        'guia_direc_entrega' => $despacho->guia_direc_entrega,
-                        'zona' => $despacho->zona
-                    ];
-
-                    $uniqueDespachos[$despacho->id_despacho] = true;
-                }
             }
 
             $spreadsheet = new Spreadsheet();
@@ -623,7 +307,7 @@ class Reporteindicadoresvalor extends Component
                 'N° de OS',
                 'Valor Transportado (S/)',
                 'Flete / Monto de OS (S/)',
-                'Tipo de OS(Local, Mixto o Provincia)',
+                'Tipo de OS',
                 'Estado de OS',
                 'Departamento',
                 'Provincia',
@@ -636,16 +320,38 @@ class Reporteindicadoresvalor extends Component
 
             // ========== LLENAR DATOS ==========
             $row = 4;
-            foreach ($processedDespachos as $despacho) {
-                $sheet->setCellValue('A'.$row, date('d/m/Y', strtotime($despacho->despacho_fecha_aprobacion)));
-                $sheet->setCellValue('B'.$row, $despacho->fecha_guia_ss ? date('d/m/Y', strtotime($despacho->fecha_guia_ss)) : '');
-                $sheet->setCellValue('C'.$row, $despacho->despacho_numero_correlativo);
-                $sheet->setCellValue('D'.$row, $despacho->valor_transportado ?? 0);
-                $sheet->setCellValue('E'.$row, $despacho->despacho_costo_total);
-                $sheet->setCellValue('F'.$row, $despacho->tipo_os);
+            foreach ($despachos as $desp) {
+                /*  SE VA SABER SI ESA GUIA ES MIXTA O NO */
+                $validarTipoOs = DB::table('programaciones as p')
+                    ->join('despachos as d','d.id_programacion','=','p.id_programacion')
+                    ->join('despacho_ventas as dv','dv.id_despacho','=','d.id_despacho')
+                    ->join('guias as g','g.id_guia','=','dv.id_guia')
+                    ->where('g.id_guia','=',$desp->id_guia)
+                    ->where('d.id_despacho','<>',$desp->id_despacho)
+                    ->where('d.id_programacion','=',$desp->id_programacion)
+                    ->first();
+
+                $tipoOs = "";
+                if ($validarTipoOs){
+                    $tipoOs = "MIXTO";
+                }else{
+                    if ($desp->id_tipo_servicios == 1){
+                        $tipoOs = "LOCAL";
+                    }elseif ($desp->id_tipo_servicios == 2){
+                        $tipoOs = "PROVINCIAL";
+                    }
+                }
+                $departemento = $this->departamentos;
+
+                $sheet->setCellValue('A'.$row, date('d/m/Y', strtotime($desp->despacho_fecha_aprobacion)));
+                $sheet->setCellValue('B'.$row, $desp->guia_fecha_emision ? date('d/m/Y', strtotime($desp->guia_fecha_emision)) : '');
+                $sheet->setCellValue('C'.$row, $desp->despacho_numero_correlativo);
+                $sheet->setCellValue('D'.$row, $desp->guia_importe_total ?? 0);
+                $sheet->setCellValue('E'.$row, $desp->despacho_costo_total);
+                $sheet->setCellValue('F'.$row, $tipoOs);
 
                 // Estado de OS
-                $estadoOS = match($despacho->despacho_estado_aprobacion) {
+                $estadoOS = match($desp->despacho_estado_aprobacion) {
                     0 => 'Pendiente',
                     1 => 'Aprobado',
                     2 => 'En camino',
@@ -655,9 +361,29 @@ class Reporteindicadoresvalor extends Component
                 };
                 $sheet->setCellValue('G'.$row, $estadoOS);
 
-                $sheet->setCellValue('H'.$row, $despacho->guia_departamento ?? 'S/N');
-                $sheet->setCellValue('I'.$row, $despacho->guia_provincia ?? 'S/N');
-                $sheet->setCellValue('J'.$row, $despacho->guia_direc_entrega ?? 'S/N');
+
+                $departamento = strtoupper(trim($desp->guia_departamento)); // Aseguramos formato
+
+                $zonaEncontrada = null;
+                foreach ($departemento as $indice => $zona) {
+                    if (in_array($departamento, $zona)) {
+                        $zonaEncontrada = $indice;
+                        break;
+                    }
+                }
+                if ($zonaEncontrada === 0) {
+                    $zona = "LOCAL";
+                } elseif ($zonaEncontrada === 1) {
+                    $zona = "PROVINCIA 1";
+                } elseif ($zonaEncontrada === 2) {
+                    $zona = "PROVINCIA 2";
+                } else {
+                    $zona = "";
+                }
+
+                $sheet->setCellValue('H'.$row, $desp->guia_departamento ?? 'S/N');
+                $sheet->setCellValue('I'.$row, $desp->guia_provincia ?? 'S/N');
+                $sheet->setCellValue('J'.$row, $zona ?? 'S/N');
 
                 // Formato numérico para valores
                 $sheet->getStyle('D'.$row.':E'.$row)->getNumberFormat()->setFormatCode('#,##0.00');
@@ -668,11 +394,11 @@ class Reporteindicadoresvalor extends Component
             // ========== ANCHO DE COLUMNA ==========
             $sheet->getColumnDimension('A')->setWidth(15);
             $sheet->getColumnDimension('B')->setWidth(20);
-            $sheet->getColumnDimension('C')->setWidth(12);
-            $sheet->getColumnDimension('D')->setWidth(20);
-            $sheet->getColumnDimension('E')->setWidth(18);
-            $sheet->getColumnDimension('F')->setWidth(25);
-            $sheet->getColumnDimension('G')->setWidth(12);
+            $sheet->getColumnDimension('C')->setWidth(14);
+            $sheet->getColumnDimension('D')->setWidth(22);
+            $sheet->getColumnDimension('E')->setWidth(23);
+            $sheet->getColumnDimension('F')->setWidth(16);
+            $sheet->getColumnDimension('G')->setWidth(14);
             $sheet->getColumnDimension('H')->setWidth(15);
             $sheet->getColumnDimension('I')->setWidth(15);
             $sheet->getColumnDimension('J')->setWidth(35);
@@ -697,7 +423,9 @@ class Reporteindicadoresvalor extends Component
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             ])->deleteFileAfterSend(true);
 
-        } catch (\Exception $e) {
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->setErrorBag($e->validator->errors());
+        }catch (\Exception $e) {
             $this->logs->insertarLog($e);
             session()->flash('error', 'Ocurrió un error al generar el reporte: ' . $e->getMessage());
             return redirect()->back();
