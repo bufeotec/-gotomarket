@@ -181,7 +181,7 @@ class Liquidacion extends Model
 //        }
 //        return $result;
 //    }
-    public function listar_liquidacion_aprobadas_excel($search,$desde, $hasta)
+    public function listar_liquidacion_aprobadas_excel($search, $desde, $hasta, $tipo_reporte = null)
     {
         try {
             // se debe traer los transportistas que tenga liquidación
@@ -189,11 +189,30 @@ class Liquidacion extends Model
                 ->join('transportistas as tr', 'li.id_transportistas', '=', 'tr.id_transportistas')
                 ->join('users as u', 'u.id_users', '=', 'li.id_users')
                 ->where('li.liquidacion_estado', '=', 1)
-                ->where('li.liquidacion_estado_aprobacion', '=',1);
+                ->where('li.liquidacion_estado_aprobacion', '=', 1)
+                ->orderBy('li.id_liquidacion');
 
-            if ($desde && $hasta){
-                $result->whereBetween(DB::raw('DATE(li.created_at)'), [$desde, $hasta]);
+            // Aplicar filtro por tipo de fecha
+            if ($desde && $hasta) {
+                if ($tipo_reporte == 1) {
+                    // Filtro por fecha de programación
+                    $result->whereExists(function ($query) use ($desde, $hasta) {
+                        $query->select(DB::raw(1))
+                            ->from('liquidacion_detalles as ld')
+                            ->join('despachos as d', 'd.id_despacho', '=', 'ld.id_despacho')
+                            ->join('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
+                            ->whereColumn('ld.id_liquidacion', 'li.id_liquidacion')
+                            ->whereBetween(DB::raw('DATE(p.programacion_fecha)'), [$desde, $hasta]);
+                    });
+                } elseif ($tipo_reporte == 2) {
+                    // Filtro por fecha de aprobación
+                    $result->whereBetween(DB::raw('DATE(li.liquidacion_fecha_aprobacion)'), [$desde, $hasta]);
+                } else {
+                    // Filtro por defecto (fecha de creación)
+                    $result->whereBetween(DB::raw('DATE(li.created_at)'), [$desde, $hasta]);
+                }
             }
+
             if ($search) {
                 $result->where(function ($q) use ($search) {
                     $q->where('li.liquidacion_serie', 'like', '%' . $search . '%')
@@ -206,49 +225,56 @@ class Liquidacion extends Model
                         ->orWhere('u.last_name', 'like', '%' . $search . '%');
                 });
             }
+
             $result = $result->orderBy('tr.id_transportistas')->get();
-            if (count($result) > 0){
-                foreach ($result as $li){
+
+            if (count($result) > 0) {
+                foreach ($result as $li) {
                     $totalIngresosSinIgv = 0;
                     $totalDespachoMontoLiquidado = 0;
                     $detalles_liquidacion = DB::table('liquidacion_detalles as ld')
-                        ->join('despachos as d','d.id_despacho','=','ld.id_despacho')
-                        ->join('tipo_servicios as ts','ts.id_tipo_servicios','=','d.id_tipo_servicios')
+                        ->join('despachos as d', 'd.id_despacho', '=', 'ld.id_despacho')
+                        ->join('tipo_servicios as ts', 'ts.id_tipo_servicios', '=', 'd.id_tipo_servicios')
                         ->leftJoin('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
                         ->leftJoin('departamentos as dep', 'dep.id_departamento', '=', 'd.id_departamento')
                         ->leftJoin('provincias as prov', 'prov.id_provincia', '=', 'd.id_provincia')
-                        ->where('ld.id_liquidacion','=',$li->id_liquidacion)->get();
+                        ->where('ld.id_liquidacion', '=', $li->id_liquidacion)
+                        ->get();
 
                     $textProvin = null;
-                    $provinciasProcesadas = []; // Almacenar nombres de provincias temporalmente
+                    $provinciasProcesadas = [];
 
-                    foreach ($detalles_liquidacion as $li_de){
-                        $datelleDespacho = DB::table('liquidacion_gastos')->where('id_liquidacion_detalle','=',$li_de->id_liquidacion_detalle)->get();
+                    foreach ($detalles_liquidacion as $li_de) {
+                        $datelleDespacho = DB::table('liquidacion_gastos')
+                            ->where('id_liquidacion_detalle', '=', $li_de->id_liquidacion_detalle)
+                            ->get();
 
                         $costoTarifa = 0;
                         $costoMano = 0;
                         $costoOtros = 0;
                         $pesoFinalLiquidacion = 0;
 
-                        if (count($datelleDespacho) >= 3){
+                        if (count($datelleDespacho) >= 3) {
                             $costoTarifa = $datelleDespacho[0]->liquidacion_gasto_monto;
                             $costoMano = $datelleDespacho[1]->liquidacion_gasto_monto;
                             $costoOtros = $datelleDespacho[2]->liquidacion_gasto_monto;
-                            $pesoFinalLiquidacion = $datelleDespacho[3]->liquidacion_gasto_monto;
+                            $pesoFinalLiquidacion = $datelleDespacho[3]->liquidacion_gasto_monto ?? 1;
                         }
-                        if ($li_de->id_tipo_servicios == 1){
+
+                        if ($li_de->id_tipo_servicios == 1) {
                             $totalDespachoMontoLiquidado += $costoTarifa + $costoMano + $costoOtros;
-                        }else{
+                        } else {
                             $totalDespachoMontoLiquidado += ($costoTarifa * $pesoFinalLiquidacion) + $costoMano + $costoOtros;
                         }
-                        if ($li_de->id_tipo_servicios){
+
+                        if ($li_de->id_tipo_servicios) {
                             $provinci = $li_de->tipo_servicio_concepto;
                             if ($provinci) {
-                                $provinciasProcesadas[] = $li_de->tipo_servicio_concepto; // Agregar a la lista de provincias
+                                $provinciasProcesadas[] = $li_de->tipo_servicio_concepto;
                             }
                         }
 
-                        // Guardar información de fechas y ubicación en el objeto $li
+                        // Guardar información de fechas y ubicación
                         if (!isset($li->programacion_fecha) && isset($li_de->programacion_fecha)) {
                             $li->programacion_fecha = $li_de->programacion_fecha;
                         }
@@ -266,14 +292,14 @@ class Liquidacion extends Model
                         }
                     }
 
-                    $totalIngresosSinIgv+=$totalDespachoMontoLiquidado;
+                    $totalIngresosSinIgv += $totalDespachoMontoLiquidado;
                     $li->total_sin_igv = $totalIngresosSinIgv;
-                    // Concatenar provincias con separador solo si hay más de una
+
                     if (!empty($provinciasProcesadas)) {
-                        $provinciasProcesadas = array_unique($provinciasProcesadas); // Eliminar duplicados
-                        $textProvin = implode(' | ', $provinciasProcesadas); // Concatenar usando ' | ' entre las provincias
+                        $provinciasProcesadas = array_unique($provinciasProcesadas);
+                        $textProvin = implode(' | ', $provinciasProcesadas);
                     }
-                    $li->servicios = $textProvin ? $textProvin : '-';
+                    $li->servicios = $textProvin ?: '-';
                 }
             }
         } catch (\Exception $e) {
@@ -282,8 +308,7 @@ class Liquidacion extends Model
         }
         return $result;
     }
-    public function listar_liquidacion_aprobadas_new($search,$desde, $hasta)
-    {
+    public function listar_liquidacion_aprobadas_new($search, $desde, $hasta, $tipo_reporte = null){
         try {
             $result = DB::table('liquidaciones as li')
                 ->select('li.*','tr.transportista_nom_comercial','tr.transportista_razon_social','u.name','u.last_name','li.created_at as creacion_liquidacion')
@@ -291,9 +316,32 @@ class Liquidacion extends Model
                 ->join('users as u', 'li.id_users', '=', 'u.id_users')
                 ->where('li.liquidacion_estado', '=', 1)
                 ->whereIn('li.liquidacion_estado_aprobacion', [1,2]);
-            if ($desde && $hasta){
-                $result->whereBetween(DB::raw('DATE(li.created_at)'), [$desde, $hasta]);
+
+            // Filtro por tipo de fecha
+            if ($tipo_reporte == 1) {
+                // Filtro por fecha de programación
+                if ($desde && $hasta) {
+                    $result->whereExists(function ($query) use ($desde, $hasta) {
+                        $query->select(DB::raw(1))
+                            ->from('liquidacion_detalles as ld')
+                            ->join('despachos as d', 'd.id_despacho', '=', 'ld.id_despacho')
+                            ->join('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
+                            ->whereColumn('ld.id_liquidacion', 'li.id_liquidacion')
+                            ->whereBetween(DB::raw('DATE(p.programacion_fecha)'), [$desde, $hasta]);
+                    });
+                }
+            } elseif ($tipo_reporte == 2) {
+                // Filtro por fecha de aprobación
+                if ($desde && $hasta) {
+                    $result->whereBetween(DB::raw('DATE(li.liquidacion_fecha_aprobacion)'), [$desde, $hasta]);
+                }
+            } else {
+                // Filtro por defecto (fecha de creación)
+                if ($desde && $hasta) {
+                    $result->whereBetween(DB::raw('DATE(li.created_at)'), [$desde, $hasta]);
+                }
             }
+
             if ($search) {
                 $result->where(function ($q) use ($search) {
                     $q->where('li.liquidacion_serie', 'like', '%' . $search . '%')
@@ -306,42 +354,72 @@ class Liquidacion extends Model
                         ->orWhere('u.last_name', 'like', '%' . $search . '%');
                 });
             }
+
             $result = $result->orderBy('li.id_liquidacion','desc')->get();
-            foreach ($result as $re){
+
+            foreach ($result as $re) {
                 $re->detalles = DB::table('liquidacion_detalles as ld')
                     ->join('despachos as d','d.id_despacho','=','ld.id_despacho')
                     ->join('programaciones as pr','pr.id_programacion','=','d.id_programacion')
                     ->join('tipo_servicios as ts','ts.id_tipo_servicios','=','d.id_tipo_servicios')
                     ->where('ld.id_liquidacion','=',$re->id_liquidacion)->get();
 
-                foreach ($re->detalles as $des){
+                $totalSinIGV = 0;
+                foreach ($re->detalles as $des) {
                     $des->comprobantes = DB::table('despacho_ventas as dv')
                         ->join('guias as g', 'dv.id_guia', 'g.id_guia')
                         ->where('dv.id_despacho', '=', $des->id_despacho)
                         ->get();
+
                     $totalVenta = 0;
                     $totalVentaRestar = 0;
                     $totalPesoRestar = 0;
+
                     foreach ($des->comprobantes as $com) {
                         $precio = floatval($com->guia_importe_total);
                         $pesoMenos = $com->despacho_venta_total_kg;
                         $totalVenta += $precio;
-                        if ($com->despacho_detalle_estado_entrega == 3){
+                        if ($com->despacho_detalle_estado_entrega == 3) {
                             $totalVentaRestar += $precio;
                             $totalPesoRestar += $pesoMenos;
                         }
                     }
+
                     $des->totalVentaDespacho = $totalVenta;
                     $des->totalVentaNoEntregado = $totalVentaRestar;
                     $des->totalPesoNoEntregado = $totalPesoRestar;
+
+                    // Calcular total sin IGV para la liquidación
+                    $gastos = DB::table('liquidacion_gastos')
+                        ->where('id_liquidacion_detalle', $des->id_liquidacion_detalle)
+                        ->get();
+
+                    $costoTotal = 0;
+                    if (count($gastos) >= 3) {
+                        $costoTarifa = $gastos[0]->liquidacion_gasto_monto;
+                        $costoMano = $gastos[1]->liquidacion_gasto_monto;
+                        $costoOtros = $gastos[2]->liquidacion_gasto_monto;
+                        $pesoFinal = $gastos[3]->liquidacion_gasto_monto ?? 1;
+
+                        if ($des->id_tipo_servicios == 1) {
+                            $costoTotal = $costoTarifa + $costoMano + $costoOtros;
+                        } else {
+                            $costoTotal = ($costoTarifa * $pesoFinal) + $costoMano + $costoOtros;
+                        }
+                    }
+
+                    $totalSinIGV += $costoTotal;
                 }
+
+                $re->total_sin_igv = $totalSinIGV;
             }
+
+            return $result;
 
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);
-            $result = [];
+            return [];
         }
-        return $result;
     }
     public function listar_liquidacion($desde, $hasta)
     {

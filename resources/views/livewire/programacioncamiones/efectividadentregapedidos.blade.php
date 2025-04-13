@@ -20,8 +20,8 @@
             <label for="tipo_reporte" class="form-label">Tipo de reporte</label>
             <select name="tipo_reporte" id="tipo_reporte" wire:model.live="tipo_reporte" class="form-select">
                 <option value="">Seleccionar...</option>
-                <option value="emision">F. Emisión</option>
-                <option value="programacion">F. Programación</option>
+                <option value="1">F. Emisión</option>
+                <option value="2">F. Programación</option>
             </select>
         </div>
         <div class="col-lg-2 col-md-2 col-sm-12 mb-2">

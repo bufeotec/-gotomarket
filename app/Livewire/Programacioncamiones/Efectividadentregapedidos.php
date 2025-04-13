@@ -18,7 +18,7 @@ class Efectividadentregapedidos extends Component
     }
     public $desde;
     public $hasta;
-    public $tipo_reporte = 'emision'; // Valor por defecto
+    public $tipo_reporte = ''; // Valor por defecto
     public $reporteData = [];
     public $reporteValoresData = [];
     public $mostrarResultados = false;
@@ -59,7 +59,7 @@ class Efectividadentregapedidos extends Component
             ->whereNotNull('d.despacho_numero_correlativo');
 
         // Aplicar filtro por tipo de fecha
-        if ($this->tipo_reporte == 'programacion') {
+        if ($this->tipo_reporte == '2') {
             // Filtrar por fecha de programación
             $despachosQuery->join('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
                 ->whereBetween('p.programacion_fecha', [$this->desde, $this->hasta]);
@@ -92,7 +92,7 @@ class Efectividadentregapedidos extends Component
             ->join('despacho_ventas as dv', 'dv.id_despacho', '=', 'd.id_despacho')
             ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
             ->whereNotNull('d.despacho_numero_correlativo')
-            ->when($this->tipo_reporte == 'programacion', function($query) {
+            ->when($this->tipo_reporte == '2', function($query) {
                 $query->join('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
                     ->whereBetween('p.programacion_fecha', [$this->desde, $this->hasta]);
             }, function($query) {
@@ -106,7 +106,7 @@ class Efectividadentregapedidos extends Component
             ->join('notas_creditos as nc', 'nc.not_cred_nro_doc_ref', '=', 'g.guia_nro_doc_ref')
             ->where('nc.not_cred_motivo', '1') // 1 = devolución
             ->whereNotNull('d.despacho_numero_correlativo')
-            ->when($this->tipo_reporte == 'programacion', function($query) {
+            ->when($this->tipo_reporte == '2', function($query) {
                 $query->join('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
                     ->whereBetween('p.programacion_fecha', [$this->desde, $this->hasta]);
             }, function($query) {
@@ -139,7 +139,7 @@ class Efectividadentregapedidos extends Component
             )
             ->whereNotNull('d.despacho_numero_correlativo');
 
-        if ($this->tipo_reporte == 'programacion') {
+        if ($this->tipo_reporte == '2') {
             $datosMensualesQuery->select(
                 DB::raw('MONTH(p.programacion_fecha) as mes'),
                 DB::raw('YEAR(p.programacion_fecha) as anio'),
@@ -207,7 +207,7 @@ class Efectividadentregapedidos extends Component
             ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
             ->whereNotNull('d.despacho_numero_correlativo');
 
-        if ($this->tipo_reporte == 'programacion') {
+        if ($this->tipo_reporte == '2') {
             $datosMensualesValoresQuery->join('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
                 ->whereBetween('p.programacion_fecha', [$this->desde, $this->hasta]);
         } else {
@@ -337,7 +337,7 @@ class Efectividadentregapedidos extends Component
                 );
 
             // Aplicar filtro por tipo de fecha
-            if ($this->tipo_reporte == 'programacion') {
+            if ($this->tipo_reporte == '2') {
                 $query->whereBetween('p.programacion_fecha', [$this->desde, $this->hasta]);
             } else {
                 $query->whereBetween('g.guia_fecha_emision', [$this->desde, $this->hasta]);

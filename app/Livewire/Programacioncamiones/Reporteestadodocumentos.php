@@ -20,6 +20,9 @@ class Reporteestadodocumentos extends Component
     public $hasta;
     public $resultados = [];
     public $mostrarFechas = false;
+    public $detallesZona = [];
+    public $cargandoDetalles = false;
+    public $zonaSeleccionada = '';
 
     // Definimos los umbrales de alerta según la segunda imagen
     public $alertas = [
@@ -52,11 +55,10 @@ class Reporteestadodocumentos extends Component
         }
     }
 
-    public function obtenerDocumentosExcedidos(){
+    public function obtenerDocumentosExcedidos() {
         $hoy = Carbon::now('America/Lima');
         $resultados = [];
 
-        // Si se seleccionó un estado específico
         if($this->guia_estado_aprobacion) {
             $estado = $this->guia_estado_aprobacion;
             $diasAlerta = $this->alertas[$estado] ?? 0;
@@ -77,7 +79,6 @@ class Reporteestadodocumentos extends Component
                 ];
             }
         } else {
-            // Si no se seleccionó estado, mostrar todos
             foreach($this->alertas as $estado => $diasAlerta) {
                 $query = DB::table('guias')
                     ->where('guia_estado_aprobacion', $estado)
@@ -90,8 +91,8 @@ class Reporteestadodocumentos extends Component
                         'zona' => $this->obtenerNombreEstado($estado),
                         'promedio' => number_format($query->avg(DB::raw("DATEDIFF('$hoy', updated_at)")), 2),
                         'cantidad' => $cantidad,
-                        'estado_id' => $estado,
-                        'guias' => $query->get()->toArray()
+                        'estado_id' => $estado
+                        // Eliminamos 'guias' para no cargarlos inicialmente
                     ];
                 }
             }
@@ -100,10 +101,22 @@ class Reporteestadodocumentos extends Component
         return $resultados;
     }
 
+    public function cargarDetalles($estado, $nombreZona) {
+        $this->cargandoDetalles = true;
+        $this->zonaSeleccionada = $nombreZona;
+
+        $this->detallesZona = DB::table('guias')
+            ->where('guia_estado_aprobacion', $estado)
+            ->whereRaw("DATEDIFF(?, updated_at) > ?", [Carbon::now('America/Lima'), $this->alertas[$estado] ?? 0])
+            ->get()
+            ->toArray();
+
+        $this->cargandoDetalles = false;
+    }
+
     public function obtenerHistorial(){
         $hoy = Carbon::now('America/Lima');
         $resultados = [];
-
         // Validar fechas
         if(empty($this->desde)) {
             session()->flash('error', 'Debe seleccionar una fecha de inicio');
@@ -123,14 +136,14 @@ class Reporteestadodocumentos extends Component
             $query = DB::table('guias')
                 ->where('guia_estado_aprobacion', $estado)
                 ->whereBetween('guia_fecha_emision', [$this->desde, $this->hasta])
-                ->whereRaw("DATEDIFF(?, updated_at) > ?", [$hoy, $diasAlerta]);
+                ->whereRaw("DATEDIFF(?, guia_fecha_emision) > ?", [$hoy, $diasAlerta]);
 
             $cantidad = $query->count();
 
             if($cantidad > 0) {
                 $resultados[] = [
                     'zona' => $this->obtenerNombreEstado($estado),
-                    'promedio' => number_format($query->avg(DB::raw("DATEDIFF('$hoy', updated_at)")), 2),
+                    'promedio' => number_format($query->avg(DB::raw("DATEDIFF('$hoy', guia_fecha_emision)")), 2),
                     'cantidad' => $cantidad,
                     'estado_id' => $estado,
                     'guias' => $query->get()->toArray()
@@ -142,14 +155,14 @@ class Reporteestadodocumentos extends Component
                 $query = DB::table('guias')
                     ->where('guia_estado_aprobacion', $estado)
                     ->whereBetween('guia_fecha_emision', [$this->desde, $this->hasta])
-                    ->whereRaw("DATEDIFF(?, updated_at) > ?", [$hoy, $diasAlerta]);
+                    ->whereRaw("DATEDIFF(?, guia_fecha_emision) > ?", [$hoy, $diasAlerta]);
 
                 $cantidad = $query->count();
 
                 if($cantidad > 0) {
                     $resultados[] = [
                         'zona' => $this->obtenerNombreEstado($estado),
-                        'promedio' => number_format($query->avg(DB::raw("DATEDIFF('$hoy', updated_at)")), 2),
+                        'promedio' => number_format($query->avg(DB::raw("DATEDIFF('$hoy', guia_fecha_emision)")), 2),
                         'cantidad' => $cantidad,
                         'estado_id' => $estado,
                         'guias' => $query->get()->toArray()
@@ -223,14 +236,14 @@ class Reporteestadodocumentos extends Component
                     $guias = DB::table('guias')
                         ->where('guia_estado_aprobacion', $estado)
                         ->whereBetween('guia_fecha_emision', [$this->desde, $this->hasta])
-                        ->whereRaw("DATEDIFF(?, updated_at) > ?", [$hoy, $diasAlerta])
+                        ->whereRaw("DATEDIFF(?, guia_fecha_emision) > ?", [$hoy, $diasAlerta])
                         ->get();
                 } else {
                     foreach($this->alertas as $estado => $diasAlerta) {
                         $guiasEstado = DB::table('guias')
                             ->where('guia_estado_aprobacion', $estado)
                             ->whereBetween('guia_fecha_emision', [$this->desde, $this->hasta])
-                            ->whereRaw("DATEDIFF(?, updated_at) > ?", [$hoy, $diasAlerta])
+                            ->whereRaw("DATEDIFF(?, guia_fecha_emision) > ?", [$hoy, $diasAlerta])
                             ->get()
                             ->toArray();
 
