@@ -4,6 +4,11 @@
     @endphp
 
     <div class="row">
+        <div class="col-lg-3 col-md-6 col-sm-12 mb-3 position-relative">
+            <input type="text" class="form-control w-100 me-4 ps-5 rounded-pill"  wire:model.live="buscar_guia" placeholder="Buscar guía">
+            <i class="fas fa-search position-absolute"
+               style="left: 30px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
+        </div>
         <div class="col-lg-2 col-md-6 col-sm-12 mb-3">
             <input type="date" name="desde" id="desde" wire:model.live="desde" class="form-control" min="2025-01-01">
         </div>

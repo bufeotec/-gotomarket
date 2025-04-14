@@ -47,23 +47,25 @@
         @endif
 
         <div class="col-lg-2 col-md-3 col-sm-12 mt-4">
-            <button class="btn btn-sm bg-primary text-white" wire:click="buscar_estado_documento">
+            <button class="btn btn-sm bg-primary text-white" wire:click="buscar_estado_documento" wire:loading.attr="disabled">
                 <i class="fa fa-search"></i> BUSCAR
             </button>
         </div>
 
-        @if($resultados)
+        @if(count($resultados) > 0)
             <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-                <button class="btn btn-success btn-sm text-white mt-4" wire:click="generar_excel_estado_documentos" wire:loading.attr="disabled"><i class="fa-solid fa-file-excel"></i> Exportar</button>
+                <button class="btn btn-success btn-sm text-white mt-4" wire:click="generar_excel_estado_documentos" wire:loading.attr="disabled">
+                    <i class="fa-solid fa-file-excel"></i> Exportar
+                </button>
             </div>
         @endif
+
         <div class="col-lg-12 col-md-12 col-sm-12">
-            <div class="loader mt-2" wire:loading wire:target="buscar_estado_documento"></div>
+            <div class="loader mt-2" wire:loading wire:target="buscar_estado_documento, generar_excel_estado_documentos"></div>
         </div>
     </div>
 
     @if(count($resultados) > 0)
-
         <div class="col-lg-12 col-md-12 col-sm-12">
             <div class="card">
                 <div class="card-body">
@@ -81,15 +83,16 @@
                         <tbody>
                         @foreach($resultados as $resultado)
                             <tr>
-                                <td>{{ $resultado['zona'] }}</td>
-                                <td>{{ $resultado['promedio'] }} días</td>
-                                <td>{{ $resultado['cantidad'] }}</td>
+                                <td>{{ $resultado->zona }}</td>
+                                <td>{{ $resultado->promedio }} días</td>
+                                <td>{{ $resultado->cantidad }}</td>
                                 @if($tipo_reporte == 1)
                                     <td>
-                                        <button wire:click="cargarDetalles('{{ $resultado['estado_id'] }}', '{{ $resultado['zona'] }}')"
+                                        <button wire:click="cargar_detalles('{{ $resultado->estado_id }}', '{{ $resultado->zona }}')"
                                                 class="btn btn-sm btn-primary"
                                                 data-bs-toggle="collapse"
-                                                data-bs-target="#detalle-container">
+                                                data-bs-target="#detalle-{{ $resultado->estado_id }}"
+                                                wire:loading.attr="disabled">
                                             Ver Detalle
                                         </button>
                                     </td>
@@ -106,9 +109,7 @@
             <div id="detalle-{{ $detallesZona[0]->guia_estado_aprobacion ?? '' }}" class="collapse mt-3 show">
                 <div class="card">
                     <div class="card-body">
-                        <h6>
-                            Zona: {{ $zonaSeleccionada }}
-                        </h6>
+                        <h6>Zona: {{ $zonaSeleccionada }}</h6>
                         @if($cargandoDetalles)
                             <div class="text-center py-4">
                                 <div class="spinner-border text-primary" role="status">
@@ -120,7 +121,7 @@
                                 <x-table-general id="facturasPreProgTable">
                                     <x-slot name="thead">
                                         <tr>
-                                            <th></th>
+                                            <th>#</th>
                                             <th>Guía</th>
                                             <th>Fecha Emisión</th>
                                             <th>Tipo de Movimiento</th>
@@ -141,13 +142,13 @@
                                             <tr>
                                                 <td>{{ $index + 1 }}</td>
                                                 <td>{{ $guia->guia_nro_doc ?? '-' }}</td>
-                                                <td>{{ $guia->guia_fecha_emision ? $general->obtenerNombreFecha($guia->guia_fecha_emision, 'DateTime', 'DateTime') : '-' }}</td>
+                                                <td>{{ $guia->guia_fecha_emision ? \Carbon\Carbon::parse($guia->guia_fecha_emision)->format('d/m/Y H:i:s') : '-' }}</td>
                                                 <td>{{ $guia->guia_tipo_movimiento ?? '-' }}</td>
                                                 <td>{{ $guia->guia_tipo_doc_ref ?? '-' }}</td>
                                                 <td>{{ $guia->guia_nro_doc_ref ?? '-' }}</td>
                                                 <td>{{ $guia->guia_glosa ?? '-' }}</td>
-                                                <td>{{ $guia->guia_estado ?? '-' }}</td>
-                                                <td>{{ $general->formatoDecimal($guia->guia_importe_total ?? 0) }}</td>
+                                                <td>{{ $zonas[$guia->guia_estado_aprobacion]['nombre'] ?? '-' }}</td>
+                                                <td>{{ number_format($guia->guia_importe_total ?? 0, 2) }}</td>
                                                 <td>{{ $guia->guia_moneda ?? '-' }}</td>
                                                 <td>{{ $guia->guia_direc_entrega ?? '-' }}</td>
                                                 <td>{{ $guia->guia_departamento ?? '-' }}</td>
@@ -163,7 +164,7 @@
                 </div>
             </div>
         @endif
-    @elseif($tipo_reporte)
+    @elseif($tipo_reporte && !$cargandoDetalles)
         <div class="alert alert-danger alert-dismissible show fade mt-2">
             No se encontraron guías que excedan el tiempo de atención.
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>

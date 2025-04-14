@@ -1326,6 +1326,7 @@ class Mixto extends Component
         $this->selectedFacturas = [];
         $this->pesoTotal = 0;
         $this->volumenTotal = 0;
+        $this->importeTotalVenta = 0;
         $this->selectedFacturasLocal = [];
         $this->selectedFacturasProvincial = [];
         $this->transportistasPorCliente = [];
