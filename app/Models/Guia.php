@@ -468,4 +468,247 @@ class Guia extends Model
             return [];
         }
     }
+
+    public function obtener_datos_efectividad_pedidos($tipoReporte, $desde, $hasta, $tipoDato = 'cantidad'){
+        try {
+            $result = DB::table('despachos as d')
+                ->join('despacho_ventas as dv', 'dv.id_despacho', '=', 'd.id_despacho')
+                ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
+                ->whereNotNull('d.despacho_numero_correlativo');
+
+            // Aplicar filtro por tipo de fecha
+            if ($tipoReporte == '2') {
+                $result->join('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
+                    ->whereBetween('p.programacion_fecha', [$desde, $hasta]);
+            } else {
+                $result->whereBetween('g.guia_fecha_emision', [$desde, $hasta]);
+            }
+
+            if ($tipoDato === 'cantidad') {
+                // Primero obtenemos todos los despachos únicos con su programación
+                $despachos = $result->select('d.id_despacho', 'd.id_programacion')->distinct()->get();
+
+                // Agrupamos despachos por programación para identificar mixtos
+                $despachosPorProgramacion = [];
+                foreach ($despachos as $despacho) {
+                    $despachosPorProgramacion[$despacho->id_programacion][] = $despacho->id_despacho;
+                }
+
+                // Contamos despachos únicos considerando los mixtos
+                $despachosUnicos = [];
+                foreach ($despachosPorProgramacion as $programacion => $idsDespachos) {
+                    // Verificar si es mixto (más de un despacho con la misma programación)
+                    if (count($idsDespachos) > 1) {
+                        // Si es mixto, contamos como un solo despacho
+                        $despachosUnicos[] = $idsDespachos[0]; // Tomamos el primero como representante
+                    } else {
+                        // Si no es mixto, lo agregamos normal
+                        $despachosUnicos[] = $idsDespachos[0];
+                    }
+                }
+
+                $total = count($despachosUnicos);
+
+                // Despachos con devolución (aplicando misma lógica de mixtos)
+                $conDevolucionQuery = DB::table('despachos as d')
+                    ->join('despacho_ventas as dv', 'dv.id_despacho', '=', 'd.id_despacho')
+                    ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
+                    ->join('notas_creditos as nc', 'nc.not_cred_nro_doc_ref', '=', 'g.guia_nro_doc_ref')
+                    ->where('nc.not_cred_motivo', '1')
+                    ->whereNotNull('d.despacho_numero_correlativo');
+
+                if ($tipoReporte == '2') {
+                    $conDevolucionQuery->join('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
+                        ->whereBetween('p.programacion_fecha', [$desde, $hasta]);
+                } else {
+                    $conDevolucionQuery->whereBetween('g.guia_fecha_emision', [$desde, $hasta]);
+                }
+
+                $despachosConDev = $conDevolucionQuery->select('d.id_despacho', 'd.id_programacion')->distinct()->get();
+
+                // Procesamos despachos con devolución considerando mixtos
+                $despachosConDevUnicos = [];
+                $programacionesConDev = [];
+
+                foreach ($despachosConDev as $despacho) {
+                    $programacionesConDev[$despacho->id_programacion][] = $despacho->id_despacho;
+                }
+
+                foreach ($programacionesConDev as $programacion => $idsDespachos) {
+                    if (count($idsDespachos) > 1) {
+                        // Es mixto, contar como uno
+                        if (in_array($idsDespachos[0], $despachosUnicos)) {
+                            $despachosConDevUnicos[] = $idsDespachos[0];
+                        }
+                    } else {
+                        if (in_array($idsDespachos[0], $despachosUnicos)) {
+                            $despachosConDevUnicos[] = $idsDespachos[0];
+                        }
+                    }
+                }
+
+                $conDevolucion = count($despachosConDevUnicos);
+                $sinDevolucion = $total - $conDevolucion;
+                $porcentajeEfectividad = ($total > 0) ? round(($sinDevolucion / $total) * 100, 2) : 0;
+
+                return [
+                    'total' => $total,
+                    'con_devolucion' => $conDevolucion,
+                    'sin_devolucion' => $sinDevolucion,
+                    'porcentaje_efectividad' => $porcentajeEfectividad
+                ];
+            } else {
+                // Para valores monetarios, no aplicamos la lógica de mixtos, sumamos normalmente
+                $total = $result->sum(DB::raw('g.guia_importe_total / 1.18'));
+
+                $conDevolucion = $result->clone()
+                    ->join('notas_creditos as nc', 'nc.not_cred_nro_doc_ref', '=', 'g.guia_nro_doc_ref')
+                    ->where('nc.not_cred_motivo', '1')
+                    ->sum(DB::raw('g.guia_importe_total / 1.18'));
+
+                $sinDevolucion = $total - $conDevolucion;
+                $porcentajeEfectividad = ($total > 0) ? round(($sinDevolucion / $total) * 100, 2) : 0;
+
+                return [
+                    'total' => $total,
+                    'con_devolucion' => $conDevolucion,
+                    'sin_devolucion' => $sinDevolucion,
+                    'porcentaje_efectividad' => $porcentajeEfectividad
+                ];
+            }
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = 0;
+        }
+
+        return $result;
+    }
+
+    public function obtener_datos_mensuales_efectividad_pedidos($tipoReporte, $desde, $hasta, $tipoDato = 1){
+        try {
+            $result = DB::table('despachos as d')
+                ->join('despacho_ventas as dv', 'dv.id_despacho', '=', 'd.id_despacho')
+                ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
+                ->whereNotNull('d.despacho_numero_correlativo');
+
+            // Subconsulta para identificar despachos mixtos
+            $subqueryMixto = DB::table('despachos as d2')
+                ->join('despacho_ventas as dv2', 'dv2.id_despacho', '=', 'd2.id_despacho')
+                ->join('guias as g2', 'g2.id_guia', '=', 'dv2.id_guia')
+                ->join('guias_detalles as gd2', 'gd2.id_guia', '=', 'g2.id_guia')
+                ->whereColumn('d2.id_programacion', 'd.id_programacion')
+                ->where('d2.id_tipo_servicios', 2)
+                ->select(DB::raw('1'))
+                ->limit(1);
+
+            // Seleccionar campos según tipo de dato
+            if ($tipoDato === 1) {
+                $result->select(
+                    DB::raw('YEAR(' . ($tipoReporte == '2' ? 'p.programacion_fecha' : 'g.guia_fecha_emision') . ') as anio'),
+                    DB::raw('MONTH(' . ($tipoReporte == '2' ? 'p.programacion_fecha' : 'g.guia_fecha_emision') . ') as mes'),
+                    DB::raw('COUNT(DISTINCT CASE
+                    WHEN EXISTS (' . $subqueryMixto->toSql() . ') THEN d.id_programacion
+                    ELSE d.id_despacho
+                END) as total'),
+                    DB::raw('SUM(CASE WHEN EXISTS (
+                    SELECT 1 FROM notas_creditos nc
+                    WHERE nc.not_cred_nro_doc_ref = g.guia_nro_doc_ref
+                    AND nc.not_cred_motivo = 1
+                ) THEN 1 ELSE 0 END) as con_devolucion')
+                )->mergeBindings($subqueryMixto);
+            } else {
+                $result->select(
+                    DB::raw('YEAR(' . ($tipoReporte == '2' ? 'p.programacion_fecha' : 'g.guia_fecha_emision') . ') as anio'),
+                    DB::raw('MONTH(' . ($tipoReporte == '2' ? 'p.programacion_fecha' : 'g.guia_fecha_emision') . ') as mes'),
+                    DB::raw('SUM(g.guia_importe_total / 1.18) as total'),
+                    DB::raw('SUM(CASE WHEN EXISTS (
+                    SELECT 1 FROM notas_creditos nc
+                    WHERE nc.not_cred_nro_doc_ref = g.guia_nro_doc_ref
+                    AND nc.not_cred_motivo = 1
+                ) THEN g.guia_importe_total / 1.18 ELSE 0 END) as con_devolucion')
+                );
+            }
+
+            // Aplicar filtro por tipo de fecha
+            if ($tipoReporte == '2') {
+                $result->join('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
+                    ->whereBetween('p.programacion_fecha', [$desde, $hasta])
+                    ->groupBy(DB::raw('YEAR(p.programacion_fecha)'), DB::raw('MONTH(p.programacion_fecha)'));
+            } else {
+                $result->whereBetween('g.guia_fecha_emision', [$desde, $hasta])
+                    ->groupBy(DB::raw('YEAR(g.guia_fecha_emision)'), DB::raw('MONTH(g.guia_fecha_emision)'));
+            }
+
+            return $result->orderBy('anio', 'asc')->orderBy('mes', 'asc')->get();
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = 0;
+        }
+
+        return $result;
+    }
+
+    public function obtenerReporteEstadoDocumentos($estado = null, $tipoReporte, $desde = null, $hasta = null, $diasLimite){
+        try {
+            $result = DB::table('guias')
+                ->select(
+                    'guia_estado_aprobacion as estado_id',
+                    DB::raw('CASE guia_estado_aprobacion
+                WHEN 1 THEN "Créditos"
+                WHEN 3 THEN "Pendiente de Programación"
+                WHEN 4 THEN "Programado"
+                WHEN 7 THEN "En camino"
+                ELSE "Desconocido" END as zona'),
+                    DB::raw('ROUND(AVG(DATEDIFF(NOW(), updated_at)), 2) as promedio'),
+                    DB::raw('COUNT(*) as cantidad')
+                )
+                ->whereIn('guia_estado_aprobacion', [1, 3, 4, 7]);
+
+            // Filtro por estado específico
+            if ($estado) {
+                $result->where('guia_estado_aprobacion', $estado);
+            }
+
+            // Filtro por fechas para historial
+            if ($tipoReporte == 2) {
+                $result->whereBetween('guia_fecha_emision', [$desde, $hasta]);
+            }
+
+            // Filtro por días excedidos según el estado
+            $result->where(function($q) use ($diasLimite) {
+                foreach ($diasLimite as $estadoId => $dias) {
+                    $q->orWhere(function($sub) use ($estadoId, $dias) {
+                        $sub->where('guia_estado_aprobacion', $estadoId)
+                            ->whereRaw('DATEDIFF(NOW(), updated_at) > ?', [$dias]);
+                    });
+                }
+            });
+
+            return $result->groupBy('guia_estado_aprobacion', 'zona')->get();
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = 0;
+        }
+
+        return $result;
+    }
+
+    public function obtenerDetallesZona($estado, $tipoReporte, $desde, $hasta, $diasAlerta){
+        try {
+            $result = DB::table('guias')
+                ->where('guia_estado_aprobacion', $estado)
+                ->whereRaw("DATEDIFF(NOW(), updated_at) > ?", [$diasAlerta]);
+
+            if ($tipoReporte == 2) {
+                $result->whereBetween('guia_fecha_emision', [$desde, $hasta]);
+            }
+
+            return $result->get();
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = 0;
+        }
+
+        return $result;
+    }
 }
