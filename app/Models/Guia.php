@@ -195,6 +195,121 @@ class Guia extends Model
 
         return $result;
     }
+    public function listar_informacion_reporte_indicador_de_peso($desde, $hasta,$arrayDe,$type,$typeGrafico = null,$mesGrafico = null){
+        try {
+
+            $resultDespachos = DB::table('despachos as d')
+                ->select('d.id_despacho',)
+                ->join('despacho_ventas as dv', 'd.id_despacho', '=', 'dv.id_despacho')
+                ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
+                ->where('d.despacho_estado_aprobacion', '!=', 4);
+
+            if ($typeGrafico){
+                $anio = substr($mesGrafico, 0, 4);
+                $mes = substr($mesGrafico, 5, 2);
+
+                $resultDespachos->whereYear('d.despacho_fecha_aprobacion', $anio)->whereMonth('d.despacho_fecha_aprobacion', $mes);
+
+            }else{
+                $resultDespachos->whereDate('d.despacho_fecha_aprobacion', '>=', $desde)->whereDate('d.despacho_fecha_aprobacion', '<=', $hasta);
+            }
+            if ($typeGrafico){
+                if ($typeGrafico == 2){
+
+                    if ($type == 1){ // LOCAL
+                        $resultDespachos->whereIn('g.guia_departamento',$arrayDe[0]);
+
+                    }elseif ($type == 2){ // PROVINCIAS
+
+                        $resultDespachos->whereIn('g.guia_departamento', array_merge($arrayDe[1], $arrayDe[2]));
+                    }
+                }else{
+                    if ($type == 1){ // LOCAL
+                        $resultDespachos->whereIn('g.guia_departamento',$arrayDe[0]);
+                    }elseif ($type == 2){ // PROVINCIA 1
+                        $resultDespachos->whereIn('g.guia_departamento',$arrayDe[1]);
+                    }elseif ($type == 3){ // PROVINCIA 2
+                        $resultDespachos->whereIn('g.guia_departamento',$arrayDe[2]);
+                    }
+                }
+            }else{
+                if ($type == 1){ // LOCAL
+                    $resultDespachos->whereIn('g.guia_departamento',$arrayDe[0]);
+                }elseif ($type == 2){ // PROVINCIA 1
+                    $resultDespachos->whereIn('g.guia_departamento',$arrayDe[1]);
+                }elseif ($type == 3){ // PROVINCIA 2
+                    $resultDespachos->whereIn('g.guia_departamento',$arrayDe[2]);
+                }
+            }
+
+            $resultDespachos = $resultDespachos->distinct()->get();
+
+            foreach ($resultDespachos as $re){
+
+                $re->detalle = DB::table('despacho_ventas as dv')
+                    ->select('dv.id_despacho', 'g.id_guia', 'st.serv_transpt_peso')
+                    ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
+                    ->leftJoin('servicios_transportes as st', 'dv.id_serv_transpt', '=', 'st.id_serv_transpt')
+                    ->where('dv.id_despacho', '=', $re->id_despacho)->get();
+
+            }
+            $totalFlete = 0;
+            $pesoTotalKilos = 0;
+            // 3. Calculamos el peso para cada despacho
+            foreach ($resultDespachos as $ite) {
+
+                $despa = DB::table('despachos')->where('id_despacho','=',$ite->id_despacho)->first();
+
+                foreach ($ite->detalle as $deta){
+
+                    if ($deta->id_guia) {
+
+                        $detallesGuia = DB::table('guias_detalles')
+                            ->where('id_guia', '=', $deta->id_guia)
+                            ->get();
+
+                        $pesoTotalGramos = $detallesGuia->sum(function ($detalle) {
+                            return $detalle->guia_det_peso_gramo * $detalle->guia_det_cantidad;
+                        });
+                        $pesoTotalKilos += $pesoTotalGramos / 1000;
+                    }
+                    // Sumar peso de servicio de transporte (si existe)
+                    if ($deta->serv_transpt_peso) {
+                        $pesoTotalKilos += $deta->serv_transpt_peso;
+                    }
+                }
+                if ($despa){
+                    $totalFlete += $despa->despacho_costo_total;
+                }
+            }
+
+            if ($typeGrafico){
+
+                if ($typeGrafico == 1){
+
+                    $result = $pesoTotalKilos / 1000; // convertir a toneladas
+
+                }else{
+
+                    $result = $pesoTotalKilos > 0 ? round($totalFlete / $pesoTotalKilos, 2) : 0;
+                }
+            }else{
+                $result = [
+                    'costoTotal' => $totalFlete,
+                    'pesoKilos' => $pesoTotalKilos,
+                    'porcentaje' => $pesoTotalKilos > 0 ? round($totalFlete / $pesoTotalKilos, 3) : 0
+                ];
+                $result = (object)$result;
+            }
+
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = 0;
+        }
+
+        return $result;
+    }
 
     public function listar_guia_x_id($id){
         try {

@@ -2,30 +2,34 @@
     @php
         $general = new \App\Models\General();
     @endphp
-    <div class="row align-items-center">
-        <div class="col-lg-2 col-md-6 col-sm-12 mb-2">
-            <label class="form-label">F. Desde</label>
-            <input type="date" wire:model.live="ydesde" class="form-control" min="2025-01-01">
+    <div class="row align-items-center justify-content-between">
+        <div class="col-lg-7">
+            <div class="row align-items-center">
+                <div class="col-lg-4 col-md-4 col-sm-12 mb-2">
+                    <label class="form-label">F. Desde</label>
+                    <input type="date" wire:model="ydesde" class="form-control" min="2025-01-01">
+                </div>
+                <div class="col-lg-4 col-md-4 col-sm-12 mb-2">
+                    <label class="form-label">F. Hasta</label>
+                    <input type="date" wire:model="yhasta" class="form-control" min="2025-01-01">
+                </div>
+                <div class="col-lg-4 col-md-4 col-sm-12 mt-4 mb-2">
+                    <button class="btn btn-sm bg-primary text-white" wire:click="buscar_reporte_peso">
+                        <i class="fa fa-search"></i> BUSCAR
+                    </button>
+                </div>
+            </div>
         </div>
-        <div class="col-lg-2 col-md-6 col-sm-12 mb-2">
-            <label class="form-label">F. Hasta</label>
-            <input type="date" wire:model.live="yhasta" class="form-control" min="2025-01-01">
-        </div>
-        <div class="col-lg-2 col-md-2 col-sm-12 mt-4 mb-2">
-            <button class="btn btn-sm bg-primary text-white" wire:click="buscar_reporte_peso">
-                <i class="fa fa-search"></i> BUSCAR
-            </button>
-        </div>
-        @if(count($filtrarData) > 0)
-            <div class="col-lg-2 col-md-2 col-sm-12 mt-4 mb-2">
-                <button class="btn btn-sm bg-success text-white" wire:click.prevent="exportarReportePesoExcel">
+        <div class="col-lg-2 col-md-2 col-sm-12 text-end">
+            @if(count($filtrarData) > 0)
+                <button class="btn btn-sm bg-success text-white mt-4" wire:click="exportarReportePesoExcel">
                     <i class="fa-solid fa-file-excel"></i> EXPORTAR
                 </button>
-            </div>
-        @endif
-        <div class="col-lg-12 col-md-12 col-sm-12">
-            <div class="loader mt-2" wire:loading wire:target="buscar_reporte_peso"></div>
+            @endif
         </div>
+    </div>
+    <div class="row">
+        <div class="loader mt-2" wire:loading wire:target="buscar_reporte_peso"></div>
     </div>
 
     @if($searchdatos && count($filtrarData) > 0)
@@ -47,14 +51,45 @@
                                 </tr>
                             </x-slot>
                             <x-slot name="tbody">
-                                @foreach(['Total', 'Local', 'Provincia 1', 'Provincia 2'] as $zona)
-                                    <tr>
-                                        <td>{{ $zona }}</td>
-                                        <td class="text-center">{{ $general->formatoDecimal($summary[$zona]['flete'] ?? 0)}}</td>
-                                        <td class="text-center">{{ $general->formatoDecimal($summary[$zona]['peso'] ?? 0)}}</td>
-                                        <td class="text-center">{{ $general->formatoDecimal($summary[$zona]['indicador'] ?? 0) }}%</td>
+                                @php
+                                    $totalGeneralFlete = 0;
+                                    $pesoTranspo = 0;
+                                    foreach($filtrarData as  $zon1){
+                                        $totalGeneralFlete+= $zon1->costoTotal;
+                                        $pesoTranspo += $zon1->pesoKilos;
+                                    }
+                                    $por = $pesoTranspo != 0 ? round($totalGeneralFlete / $pesoTranspo, 3) : 0
+                                @endphp
+                                <tr>
+                                    <td>TOTAL</td>
+                                    <td class="text-center">{{ $general->formatoDecimal($totalGeneralFlete ?? 0)}}</td>
+                                    <td class="text-center">{{ $general->formatoDecimal($pesoTranspo ?? 0)}}</td>
+                                    <td class="text-center">{{ $general->formatoDecimal($por ?? 0) }}%</td>
+                                    <td class="text-center">0.35</td>
+                                </tr>
+                                @foreach($filtrarData as $indexZona => $zon)
+                                    @php
+                                        $zonaText = "";
+                                        $zonaOb = "";
+                                        if ($indexZona == 0){
+                                            $zonaText = 'LOCAL';
+                                            $zonaOb = 0.15;
 
-                                        <td class="text-center">{{ number_format($summary[$zona]['objetivo'], 2) }}</td>
+                                        }elseif ($indexZona == 1){
+                                            $zonaText = 'PROVINCIA 1';
+                                            $zonaOb = 0.55;
+
+                                        }elseif ($indexZona == 2){
+                                            $zonaText = 'PROVINCIA 2';
+                                            $zonaOb = 0.85;
+                                        }
+                                    @endphp
+                                    <tr>
+                                        <td>{{ $zonaText }}</td>
+                                        <td class="text-center"> {{ $general->formatoDecimal($zon->costoTotal ?? 0)}}</td>
+                                        <td class="text-center"> {{ $general->formatoDecimal($zon->pesoKilos ?? 0)}}</td>
+                                        <td class="text-center">{{ $general->formatoDecimal($zon->porcentaje ?? 0) }}%</td>
+                                        <td class="text-center">{{ $zonaOb ?? 0 }}</td>
                                     </tr>
                                 @endforeach
                             </x-slot>
@@ -104,18 +139,9 @@
         let graficoFleteSolesKilo = null;
 
         // Función para inicializar o actualizar el gráfico de peso
-        function actualizarGraficoPeso(data) {
+        function actualizarGraficoPeso(meses,Lima,ProvinciaOne,provinciaTwoe) {
             const canvas = document.getElementById('graficoPesoTonelada');
             if (!canvas) return;
-
-            // Extraer el primer elemento si data es un array
-            const chartData = Array.isArray(data) ? data[0] : data;
-
-            // Verificar estructura de datos
-            if (!chartData || !chartData.meses || !chartData.peso_local || !chartData.peso_provincia1 || !chartData.peso_provincia2) {
-                console.error('Datos incorrectos para gráfico de peso:', chartData);
-                return;
-            }
 
             const ctx = canvas.getContext('2d');
 
@@ -128,25 +154,25 @@
             graficoPesoTonelada = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: chartData.meses,
+                    labels: meses,
                     datasets: [
                         {
                             label: 'Peso Lima (Ton)',
-                            data: chartData.peso_local,
+                            data: Lima,
                             backgroundColor: 'rgba(54, 162, 235, 0.7)',
                             borderColor: 'rgba(54, 162, 235, 1)',
                             borderWidth: 1
                         },
                         {
                             label: 'Peso Provincia 1 (Ton)',
-                            data: chartData.peso_provincia1,
+                            data: ProvinciaOne,
                             backgroundColor: 'rgba(255, 159, 64, 0.7)',
                             borderColor: 'rgba(255, 159, 64, 1)',
                             borderWidth: 1
                         },
                         {
                             label: 'Peso Provincia 2 (Ton)',
-                            data: chartData.peso_provincia2,
+                            data: provinciaTwoe,
                             backgroundColor: 'rgba(169,169,169,0.27)',
                             borderColor: 'rgba(169, 169, 169, 1)',
                             borderWidth: 1
@@ -188,18 +214,12 @@
         }
 
         // Función para inicializar o actualizar el gráfico de flete
-        function actualizarGraficoFlete(data) {
+        function actualizarGraficoFlete(meses,Lima,ProvinciaOne,provinciaTwoe) {
             const canvas = document.getElementById('graficoFleteSolesKilo');
             if (!canvas) return;
-
-            // Extraer el primer elemento si data es un array
-            const chartData = Array.isArray(data) ? data[0] : data;
-
-            // Verificar estructura de datos
-            if (!chartData || !chartData.meses || !chartData.flete_local || !chartData.flete_provincia) {
-                console.error('Datos incorrectos para gráfico de flete:', chartData);
-                return;
-            }
+            console.log(meses);
+            console.log(Lima);
+            console.log(ProvinciaOne);
 
             const ctx = canvas.getContext('2d');
 
@@ -212,11 +232,11 @@
             graficoFleteSolesKilo = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: chartData.meses,
+                    labels: meses,
                     datasets: [
                         {
                             label: 'Soles x Kilo Lima',
-                            data: chartData.flete_local,
+                            data: Lima,
                             borderColor: 'rgba(54, 162, 235, 1)',
                             backgroundColor: 'rgba(54, 162, 235, 0.1)',
                             borderWidth: 2,
@@ -225,7 +245,7 @@
                         },
                         {
                             label: 'Soles x Kilo Prov.',
-                            data: chartData.flete_provincia,
+                            data: ProvinciaOne,
                             backgroundColor: 'rgba(255, 159, 64, 0.7)',
                             borderColor: 'rgba(255, 159, 64, 1)',
                             borderWidth: 2,
@@ -234,7 +254,7 @@
                         },
                         {
                             label: 'Obj. Lima',
-                            data: Array(chartData.meses.length).fill(0.12),
+                            data: Array(meses.length).fill(0.12),
                             borderColor: 'rgba(54, 162, 235, 1)',
                             borderWidth: 1,
                             borderDash: [5, 5],
@@ -242,7 +262,7 @@
                         },
                         {
                             label: 'Obj. Prov.',
-                            data: Array(chartData.meses.length).fill(0.55),
+                            data: Array(meses.length).fill(0.55),
                             borderColor: 'rgba(255, 159, 64, 1)',
                             borderWidth: 1,
                             borderDash: [5, 5],
@@ -288,20 +308,20 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Configurar eventos Livewire
             if (typeof Livewire !== 'undefined') {
-                Livewire.on('actualizarGraficoPeso', function(data) {
+                Livewire.on('generarGraficoPesoToneladas', function(data) {
                     setTimeout(() => {
                         try {
-                            actualizarGraficoPeso(data);
+                            actualizarGraficoPeso(data[0][0], data[0][1], data[0][2],data[0][3]);
                         } catch (error) {
                             console.error('Error al actualizar gráfico de peso:', error);
                         }
                     }, 100);
                 });
 
-                Livewire.on('actualizarGraficoFlete', function(data) {
+                Livewire.on('generarGraficoPesoKilos', function(data) {
                     setTimeout(() => {
                         try {
-                            actualizarGraficoFlete(data);
+                            actualizarGraficoFlete(data[0][0], data[0][1], data[0][2],data[0][3]);
                         } catch (error) {
                             console.error('Error al actualizar gráfico de flete:', error);
                         }
