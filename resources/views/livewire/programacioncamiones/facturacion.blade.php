@@ -168,11 +168,11 @@
                         <input type="text" name="nombre_cliente" id="nombre_cliente" wire:model.live="nombre_cliente" class="form-control">
                     </div>
                     <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-                        <label for="fecha_desde" class="form-label">Desde</label>
+                        <label for="fecha_desde" class="form-label">Desde (Fecha emisión)</label>
                         <input type="date" name="fecha_desde" id="fecha_desde" wire:model.live="fecha_desde" class="form-control">
                     </div>
                     <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-                        <label for="fecha_hasta" class="form-label">Hasta</label>
+                        <label for="fecha_hasta" class="form-label">Hasta (Fecha emisión)</label>
                         <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model.live="fecha_hasta" class="form-control">
                     </div>
                     <div class="col-lg-2 col-md-3 col-sm-12 mb-2 mt-4">
