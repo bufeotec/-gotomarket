@@ -195,7 +195,7 @@ class Guia extends Model
 
         return $result;
     }
-    public function listar_informacion_reporte_indicador_de_peso($desde, $hasta,$arrayDe,$type,$typeGrafico = null,$mesGrafico = null){
+    public function listar_informacion_reporte_indicador_de_peso($tipo, $desde, $hasta,$arrayDe,$type,$typeGrafico = null,$mesGrafico = null){
         try {
 
             $resultDespachos = DB::table('despachos as d')
@@ -208,13 +208,13 @@ class Guia extends Model
                 $anio = substr($mesGrafico, 0, 4);
                 $mes = substr($mesGrafico, 5, 2);
 
-                $resultDespachos->whereYear('d.despacho_fecha_aprobacion', $anio)->whereMonth('d.despacho_fecha_aprobacion', $mes);
+                if ($tipo == 1){ // F. Emisión
+                    $resultDespachos->whereYear('g.guia_fecha_emision', $anio)->whereMonth('g.guia_fecha_emision', $mes);
+                }else{ // F. Programación
+                    $resultDespachos->whereYear('d.despacho_fecha_aprobacion', $anio)->whereMonth('d.despacho_fecha_aprobacion', $mes);
+                }
 
-            }else{
-                $resultDespachos->whereDate('d.despacho_fecha_aprobacion', '>=', $desde)->whereDate('d.despacho_fecha_aprobacion', '<=', $hasta);
-            }
-            if ($typeGrafico){
-                if ($typeGrafico == 2){
+                if ($typeGrafico == 2){ // Grafico de flete lima o provincia
 
                     if ($type == 1){ // LOCAL
                         $resultDespachos->whereIn('g.guia_departamento',$arrayDe[0]);
@@ -223,7 +223,8 @@ class Guia extends Model
 
                         $resultDespachos->whereIn('g.guia_departamento', array_merge($arrayDe[1], $arrayDe[2]));
                     }
-                }else{
+
+                } else {
                     if ($type == 1){ // LOCAL
                         $resultDespachos->whereIn('g.guia_departamento',$arrayDe[0]);
                     }elseif ($type == 2){ // PROVINCIA 1
@@ -232,7 +233,19 @@ class Guia extends Model
                         $resultDespachos->whereIn('g.guia_departamento',$arrayDe[2]);
                     }
                 }
-            }else{
+
+            } else {
+                if ($tipo == 1){
+                    // F. Emisión
+                    $resultDespachos->whereDate('g.guia_fecha_emision', '>=', $desde)
+                        ->whereDate('g.guia_fecha_emision', '<=', $hasta);
+
+                }else{
+                    // F. Programación
+                    $resultDespachos->whereDate('d.despacho_fecha_aprobacion', '>=', $desde)
+                        ->whereDate('d.despacho_fecha_aprobacion', '<=', $hasta);
+                }
+
                 if ($type == 1){ // LOCAL
                     $resultDespachos->whereIn('g.guia_departamento',$arrayDe[0]);
                 }elseif ($type == 2){ // PROVINCIA 1

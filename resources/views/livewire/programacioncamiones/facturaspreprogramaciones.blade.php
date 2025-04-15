@@ -255,7 +255,7 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="row mb-2">
-                            <h6>DOCUMENTOS</h6>
+                            <h6>GUÍAS</h6>
                         </div>
                         <div class="row">
                             <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
@@ -266,7 +266,7 @@
                             </div>
                             <div class="col-lg-9 col-md-9 col-sm-12 mb-2">
                                 <div class="position-relative">
-                                    <input type="text" class="form-control bg-dark text-white rounded-pill ps-5 custom-placeholder" placeholder="Buscar documento" wire:model="searchGuia" style="border: none; outline: none;" />
+                                    <input type="text" class="form-control bg-dark text-white rounded-pill ps-5 custom-placeholder" placeholder="Buscar guía" wire:model="searchGuia" style="border: none; outline: none;" />
                                     <i class="fas fa-search position-absolute" style="left: 15px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
                                 </div>
                             </div>
@@ -337,14 +337,6 @@
                                                                                 {{ ($guia->{'NOMBRE_CLIENTE'}) ?? 'Desconocido' }}
                                                                             </span>
                                                                         </td>
-{{--                                                                        <td>--}}
-{{--                                                                <span class="d-block tamanhoTablaComprobantes">--}}
-{{--                                                                    <b class="colorBlackComprobantes">{{ number_format($guia->PESO_GRAMOS ?? 0, 2) }} kg</b>--}}
-{{--                                                                </span>--}}
-{{--                                                                            <span class="d-block tamanhoTablaComprobantes">--}}
-{{--                                                                    <b class="colorBlackComprobantes">{{ number_format($guia->VOLUMEN_TOTAL_CM3 ?? 0, 2) }} cm³</b>--}}
-{{--                                                                </span>--}}
-{{--                                                                        </td>--}}
                                                                     </tr>
                                                                     <tr style="border-top: 2px solid transparent;">
                                                                         <td colspan="3" style="padding-top: 0">
@@ -419,7 +411,7 @@
                                         <div class="row align-items-center">
                                             <div class="col-lg-5 col-md-12 col-sm-12 mb-2">
                                                 <div class="d-flex justify-content-between align-items-center">
-                                                    <h6 class="mb-0">Documentos Seleccionados</h6>
+                                                    <h6 class="mb-0">Guías Seleccionados</h6>
                                                 </div>
                                             </div>
                                             @if(count($selectedGuias) > 0)
@@ -462,8 +454,8 @@
                                                     @foreach($selectedGuias as $factura)
                                                         <tr>
                                                             <td>{{ $factura['NRO_DOC'] ?? 'No disponible' }}</td>
-                                                            <td>{{ \Carbon\Carbon::parse($factura['FECHA_EMISION'])->format('d/m/Y') ?? 'Sin fecha' }}</td>
-                                                            <td>{{ number_format($factura['IMPORTE_TOTAL'], 2) ?? '0.00' }}</td>
+                                                            <td>{{ $me->obtenerNombreFecha($factura['FECHA_EMISION'], 'DateTime', 'Date') ?? 'Sin fecha' }}</td>
+                                                            <td>S/ {{ $me->formatoDecimal(($factura['IMPORTE_TOTAL'] ?? 0) / 1.18) ?? '0.00' }}</td>
                                                             <td>{{ $factura['NOMBRE_CLIENTE'] ?? 'Desconocido' }}</td>
                                                             <td>{{ $factura['DIREC_ENTREGA'] ?? 'Sin dirección'}}</td>
                                                             <td>

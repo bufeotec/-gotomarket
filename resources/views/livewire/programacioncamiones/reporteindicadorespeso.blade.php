@@ -3,22 +3,26 @@
         $general = new \App\Models\General();
     @endphp
     <div class="row align-items-center justify-content-between">
-        <div class="col-lg-7">
-            <div class="row align-items-center">
-                <div class="col-lg-4 col-md-4 col-sm-12 mb-2">
-                    <label class="form-label">F. Desde</label>
-                    <input type="date" wire:model="ydesde" class="form-control" min="2025-01-01">
-                </div>
-                <div class="col-lg-4 col-md-4 col-sm-12 mb-2">
-                    <label class="form-label">F. Hasta</label>
-                    <input type="date" wire:model="yhasta" class="form-control" min="2025-01-01">
-                </div>
-                <div class="col-lg-4 col-md-4 col-sm-12 mt-4 mb-2">
-                    <button class="btn btn-sm bg-primary text-white" wire:click="buscar_reporte_peso">
-                        <i class="fa fa-search"></i> BUSCAR
-                    </button>
-                </div>
-            </div>
+        <div class="col-lg-3 col-md-3 col-sm-12 mb-2">
+            <label for="tipo_reporte" class="form-label">Tipo de reporte</label>
+            <select name="tipo_reporte" id="tipo_reporte" wire:model="tipo_reporte" class="form-select">
+                <option value="">Seleccionar...</option>
+                <option value="1">F. Emisión</option>
+                <option value="2">F. Despacho</option>
+            </select>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-12 mb-2">
+            <label class="form-label">F. Desde</label>
+            <input type="date" wire:model="ydesde" class="form-control" min="2025-01-01">
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-12 mb-2">
+            <label class="form-label">F. Hasta</label>
+            <input type="date" wire:model="yhasta" class="form-control" min="2025-01-01">
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-12 mt-4 mb-2">
+            <button class="btn btn-sm bg-primary text-white" wire:click="buscar_reporte_peso">
+                <i class="fa fa-search"></i> BUSCAR
+            </button>
         </div>
         <div class="col-lg-2 col-md-2 col-sm-12 text-end">
             @if(count($filtrarData) > 0)

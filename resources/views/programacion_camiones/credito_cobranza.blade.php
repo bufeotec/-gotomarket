@@ -6,7 +6,7 @@
     <script src="{{asset('js/select2/dist/js/select2.min.js')}}"></script>
 
     <div class="page-heading">
-        <x-navegation-view text="Registro de las facturas pasadas a creditos y cobranzas." />
+        <x-navegation-view text="Registro de las guías pasadas a creditos y cobranzas." />
         @livewire('programacioncamiones.creditoscobranzas')
     </div>
 

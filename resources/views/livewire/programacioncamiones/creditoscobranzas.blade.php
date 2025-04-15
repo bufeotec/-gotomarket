@@ -97,7 +97,7 @@
             <div class="card">
                 <div class="card-body">
                     <div class="row mb-2">
-                        <h6>DOCUMENTO PENDIENTE POR APROBAR</h6>
+                        <h6>GUÍAS PENDIENTE POR APROBAR</h6>
                     </div>
                     <div class="row">
                         <div class="col-lg-4 col-md-6 col-sm-12 mb-2">
@@ -122,7 +122,9 @@
                                 <x-table-general>
                                     <x-slot name="thead">
                                         <tr>
-                                            <th style="font-size: 12px">Check</th>
+                                            <th>
+                                                <input type="checkbox" wire:model.live="select_guias_all" id="select_guias_all-all" class="form-check-input">
+                                            </th>
                                             <th style="font-size: 12px">Guía / Factura</th>
                                             <th style="font-size: 12px">Fecha Emisión</th>
                                             <th style="font-size: 12px">Importe sin IGV</th>

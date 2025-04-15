@@ -50,6 +50,7 @@ class HistorialProgramacion extends Component
     private $historialdespachoventa;
     private $serviciotransporte;
     private $guia;
+    public $tipo_reporte = '';
     public function __construct()
     {
         $this->logs = new Logs();
@@ -69,7 +70,7 @@ class HistorialProgramacion extends Component
 
     public function render(){
         // Lógica existente para obtener $resultado
-        $resultado = $this->programacion->listar_programaciones_historial_programacion($this->desde, $this->hasta, $this->serie_correlativo, $this->estadoPro);
+        $resultado = $this->programacion->listar_programaciones_historial_programacion($this->desde, $this->hasta, $this->tipo_reporte, $this->estadoPro);
 
         // Inicializar variables para las sumas
         $totalLocal = 0;
@@ -232,24 +233,6 @@ class HistorialProgramacion extends Component
             ]
         ];
 
-        // Resto de tu lógica existente...
-        $query = DB::table('servicios_transportes')
-            ->where('serv_transpt_estado', 1)
-            ->whereBetween('serv_transpt_fecha_creacion', [$this->desde, $this->hasta]);
-
-        if (empty($this->estadoPro)) {
-            $query->whereIn('serv_transpt_estado_aprobacion', [1, 2, 3]);
-        } else {
-            if (is_array($this->estadoPro)) {
-                $query->whereIn('serv_transpt_estado_aprobacion', $this->estadoPro);
-            } else {
-                $query->where('serv_transpt_estado_aprobacion', $this->estadoPro);
-            }
-        }
-
-        $this->serviciosTransportes = $query->orderBy('serv_transpt_fecha_creacion', 'desc')->get();
-        $roleId = auth()->user()->roles->first()->id ?? null;
-
         return view('livewire.programacioncamiones.historial-programacion', compact('resultado', 'roleId', 'zonaDespachoData'));
     }
     // Función para verificar si un despacho está aprobado
@@ -344,7 +327,7 @@ class HistorialProgramacion extends Component
                 session()->flash('error', 'No tiene permisos para generar el reporte en excel.');
                 return;
             }
-            $resultado = $this->programacion->listar_programaciones_historial_programacion_excel($this->desde,$this->hasta);
+            $resultado = $this->programacion->listar_programaciones_historial_programacion($this->desde, $this->hasta, $this->tipo_reporte, $this->estadoPro);
             $conteoDesp = 0;
             // Inicializar variables para las sumas (igual que en la vista)
             $totalLocal = 0;

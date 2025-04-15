@@ -450,15 +450,19 @@
 
     <div class="row align-items-center mt-2">
         <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-            <label for="serie_correlativo" class="form-label">Número de programación</label>
-            <input type="text" name="serie_correlativo" id="serie_correlativo" wire:model.live="serie_correlativo" placeholder="Ingrese la información" class="form-control">
+            <label for="tipo_reporte" class="form-label">Tipo de reporte</label>
+            <select name="tipo_reporte" id="tipo_reporte" wire:model.live="tipo_reporte" class="form-select">
+                <option value="">Seleccionar...</option>
+                <option value="1">F. Despacho</option>
+                <option value="2">F. Emisión</option>
+            </select>
         </div>
         <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-            <label for="estadoPro" class="form-label">Estado Despacho</label>
+            <label for="estadoPro" class="form-label">Estado Liquidación</label>
             <select name="estadoPro" id="estadoPro" wire:model.live="estadoPro" class="form-select">
                 <option value="">Seleccionar</option>
-                <option value="1">Aprobado</option>
-                <option value="4">Rechazado</option>
+                <option value="1">OS Aprobadas</option>
+                <option value="0">OS Pendiente</option>
             </select>
         </div>
         <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
@@ -469,16 +473,16 @@
             <label for="fecha_hasta" class="form-label">Hasta</label>
             <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model.live="hasta" class="form-control">
         </div>
+{{--        <div class="col-lg-2 col-md-3 col-sm-12 mb-2 mt-4 d-flex justify-content-center">--}}
+{{--            <button class="btn btn-sm bg-primary text-white" wire:click="buscar_comprobantes" >--}}
+{{--                <i class="fa fa-search"></i> BUSCAR--}}
+{{--            </button>--}}
+{{--        </div>--}}
         @if(count($resultado) > 0)
             <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
                 <button class="btn btn-success text-white mt-4" wire:click="generar_excel_historial_programacion" wire:loading.attr="disabled"><i class="fa-solid fa-file-excel"></i> Exportar Programación</button>
             </div>
         @endif
-{{--        @if(count($serviciosTransportes) > 0)--}}
-{{--            <div class="col-lg-2 col-md-2 col-sm-12 mb-2">--}}
-{{--                <button class="btn btn-success text-white mt-4" wire:click="generar_excel_servicio_transporte" wire:loading.attr="disabled"><i class="fa-solid fa-file-excel"></i> Exportar Servicios</button>--}}
-{{--            </div>--}}
-{{--        @endif--}}
         @if(count($selectedItems) > 0)
             <div class="col-lg-2 col-md-2 col-sm-12 mb-2 text-end">
                 <button class="btn text-white bg-warning mt-4" data-bs-toggle="modal" data-bs-target="#modalAprobarProgramacion">
