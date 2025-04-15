@@ -233,6 +233,24 @@ class HistorialProgramacion extends Component
             ]
         ];
 
+        // Resto de tu lógica existente...
+        $query = DB::table('servicios_transportes')
+            ->where('serv_transpt_estado', 1)
+            ->whereBetween('serv_transpt_fecha_creacion', [$this->desde, $this->hasta]);
+
+        if (empty($this->estadoPro)) {
+            $query->whereIn('serv_transpt_estado_aprobacion', [1, 2, 3]);
+        } else {
+            if (is_array($this->estadoPro)) {
+                $query->whereIn('serv_transpt_estado_aprobacion', $this->estadoPro);
+            } else {
+                $query->where('serv_transpt_estado_aprobacion', $this->estadoPro);
+            }
+        }
+
+        $this->serviciosTransportes = $query->orderBy('serv_transpt_fecha_creacion', 'desc')->get();
+        $roleId = auth()->user()->roles->first()->id ?? null;
+
         return view('livewire.programacioncamiones.historial-programacion', compact('resultado', 'roleId', 'zonaDespachoData'));
     }
     // Función para verificar si un despacho está aprobado
