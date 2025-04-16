@@ -327,7 +327,7 @@ class Liquidacion extends Model
                             ->join('despachos as d', 'd.id_despacho', '=', 'ld.id_despacho')
                             ->join('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
                             ->whereColumn('ld.id_liquidacion', 'li.id_liquidacion')
-                            ->whereBetween(DB::raw('DATE(p.programacion_fecha)'), [$desde, $hasta]);
+                            ->whereBetween(DB::raw('DATE(li.created_at)'), [$desde, $hasta]);
                     });
                 }
             } elseif ($tipo_reporte == 2) {

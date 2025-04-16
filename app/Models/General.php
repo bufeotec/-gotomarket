@@ -19,7 +19,7 @@ class General extends Model
         $departamentos = [
             ['CALLAO','LIMA'], // LOCAL
             ['ANCASH', 'AYACUCHO', 'HUANCAVELICA', 'HUANUCO', 'JUNIN', 'LA LIBERTAD', 'LAMBAYEQUE', 'PASCO', 'ICA'], // PROVINCIA 1
-            ['AMAZONAS','APURIMAC','AREQUIPA','CAJAMARCA','CUSCO','LORETO','MADRE DE DIOS','MOQUEGUA'] // PROVINCIA 2
+            ['AMAZONAS','APURIMAC','AREQUIPA','CAJAMARCA','CUSCO','LORETO','MADRE DE DIOS','MOQUEGUA', 'SAN MARTIN'] // PROVINCIA 2
         ];
         return $departamentos;
     }

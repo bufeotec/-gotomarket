@@ -144,7 +144,7 @@ class Creditoscobranzas extends Component
                         $historial->id_guia = $select;
                         $historial->guia_nro_doc = $facturaPreprogramada->guia_nro_doc;
                         $historial->historial_guia_estado_aprobacion = 5;
-                        $historial->historial_guia_fecha_hora = Carbon::now('America/Lima');
+                        $historial->historial_guia_fecha_hora = $this->fechaHoraManual3;
                         $historial->historial_guia_estado = 1;
                         $historial->save();
 

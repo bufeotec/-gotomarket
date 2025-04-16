@@ -490,6 +490,9 @@
                 </button>
             </div>
         @endif
+        <div class="col-lg-12 col-md-12 col-sm-12">
+            <div class="loader mt-2" wire:loading wire:target="buscar_comprobantes"></div>
+        </div>
     </div>
     @if (session()->has('success'))
         <div class="alert alert-success alert-dismissible show fade mt-2">
@@ -559,8 +562,6 @@
             </div>
         </div>
     @endif
-
-
 
     <div class="accordion mt-3" id="accordionExample">
         @if(count($resultado) > 0)

@@ -93,7 +93,7 @@
                                             {{ $estado[$me->guia_estado_aprobacion] ?? 'Desconocido' }}
                                         </td>
                                         <td>
-                                            <a href="{{ route('Programacioncamion.vistatracking', ['data' => base64_encode(json_encode(['id' => $me->id_guia, 'numdoc' => $me->guia_nro_doc]))]) }}"
+                                            <a href="{{ route('Programacioncamion.vistatracking', ['data' => base64_encode(json_encode(['id' => $me->id_guia, 'numdoc' => $me->guia_nro_doc, 'nombre' => $me->guia_nombre_cliente]))]) }}"
                                                target="_blank"
                                                class="btn text-primary">
                                                 <i class="fa-solid fa-eye"></i>

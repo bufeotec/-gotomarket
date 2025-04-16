@@ -7,7 +7,7 @@
     <div class="page-heading">
         <x-navegation-view text="" />
 
-        @livewire('gestionvendedor.vistatrackings', ['id' => $informacion_guia->id_guia, 'numdoc' => $num_doc])
+        @livewire('gestionvendedor.vistatrackings', ['id' => $informacion_guia->id_guia, 'numdoc' => $num_doc, 'nombre' => $nombre])
 
 
     </div>
