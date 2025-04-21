@@ -31,6 +31,7 @@ class Reporteindicadorespeso extends Component
     public $ydesde;
     public $yhasta;
     public $tipo_reporte = "";
+    public $totalPesoTrans = 0;
     public $filtrarData = [];
     public $summary = [];
     public $searchdatos = false;
@@ -123,6 +124,8 @@ class Reporteindicadorespeso extends Component
             $provincia1 = $this->guia->listar_informacion_reporte_indicador_de_peso($this->tipo_reporte, $this->ydesde, $this->yhasta, $this->departamentos, 2);
             $provincia2 = $this->guia->listar_informacion_reporte_indicador_de_peso($this->tipo_reporte, $this->ydesde, $this->yhasta, $this->departamentos, 3);
 
+            $this->totalPesoTrans = $this->guia->listar_informacion_reporte_total_de_peso_transportado($this->tipo_reporte,$this->ydesde,$this->yhasta,$this->departamentos,3);
+
             $this->filtrarData = array_merge($this->filtrarData, [$local, $provincia1, $provincia2]);
 
             $this->generarGraficoReportePeso(1);
@@ -146,7 +149,7 @@ class Reporteindicadorespeso extends Component
             $provinciaOne = [];
             $provinciaTwoe = [];
 
-            while ($fechaDesde->lessThanOrEqualTo($fechaHasta)) {
+                while ($fechaDesde->lessThanOrEqualTo($fechaHasta)) {
                 $meses[] = ucfirst($fechaDesde->locale('es')->isoFormat('MMMM')); // Nombre del mes en español y con mayúscula inicial
                 $fechaAnhoMes = $fechaDesde->format('Y-m');
 
@@ -210,20 +213,22 @@ class Reporteindicadorespeso extends Component
                 ->join('despacho_ventas as dv', 'd.id_despacho', '=', 'dv.id_despacho')
                 ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
                 ->leftJoin('servicios_transportes as st', 'dv.id_serv_transpt', '=', 'st.id_serv_transpt')
-                ->where('d.despacho_estado_aprobacion', '!=', 4);
+                ->where('d.despacho_estado_aprobacion', '=', 3)
+                ->where('d.despacho_liquidado', '=', 1)
+            ;
 
-                if ($tipo == 1){
-                    // F. Emisión
-                    $resultDetalles->whereDate('g.guia_fecha_emision', '>=', $desde)
-                        ->whereDate('g.guia_fecha_emision', '<=', $hasta);
+            if ($tipo == 1){
+                // F. Emisión
+                $resultDetalles->whereDate('g.guia_fecha_emision', '>=', $desde)
+                    ->whereDate('g.guia_fecha_emision', '<=', $hasta);
 
-                }else{
-                    // F. Programación
-                    $resultDetalles->whereDate('d.despacho_fecha_aprobacion', '>=', $desde)
-                        ->whereDate('d.despacho_fecha_aprobacion', '<=', $hasta);
-                }
+            }else{
+                // F. Programación
+                $resultDetalles->whereDate('d.despacho_fecha_aprobacion', '>=', $desde)
+                    ->whereDate('d.despacho_fecha_aprobacion', '<=', $hasta);
+            }
 
-                $resultDetallesExcel = $resultDetalles->orderBy('d.despacho_numero_correlativo','asc')->get();
+            $resultDetallesExcel = $resultDetalles->orderBy('d.despacho_numero_correlativo','asc')->get();
 
 
             foreach ($resultDetallesExcel as $deta){
@@ -240,94 +245,12 @@ class Reporteindicadorespeso extends Component
                     $pesoTotalKilos += $deta->serv_transpt_peso;
                 }
                 $deta->peso = $pesoTotalKilos;
+
+                $subTotal = $this->general->sacarMontoLiquidacion($deta->id_despacho);
+
+                $deta->despacho_costo_totalLi = $subTotal;
             }
 
-
-
-
-
-
-
-//            $reporteData = [];
-//            foreach ($despachos as $despacho) {
-//                $pesoTotalKilos = 0;
-//                $serviciosTransporte = [];
-//
-//                // Calcular peso total (guías + servicios de transporte)
-//                if (isset($detallesPorDespacho[$despacho->id_despacho])) {
-//                    foreach ($detallesPorDespacho[$despacho->id_despacho] as $item) {
-//                        // Sumar peso de guías
-//                        if ($item->id_guia) {
-//                            $detallesGuia = DB::table('guias_detalles')
-//                                ->where('id_guia', '=', $item->id_guia)
-//                                ->get();
-//
-//                            $pesoTotalGramos = $detallesGuia->sum(function ($detalle) {
-//                                return $detalle->guia_det_peso_gramo * $detalle->guia_det_cantidad;
-//                            });
-//                            $pesoTotalKilos += $pesoTotalGramos / 1000;
-//                        }
-//
-//                        // Sumar peso de servicios de transporte
-//                        if ($item->serv_transpt_peso) {
-//                            $pesoTotalKilos += $item->serv_transpt_peso;
-//                            $serviciosTransporte[] = $item->serv_transpt_peso;
-//                        }
-//                    }
-//                }
-//
-//                // Determinar si es mixto (usando la primera guía como referencia)
-//                $esMixto = false;
-//                if (isset($detallesPorDespacho[$despacho->id_despacho])) {
-//                    $primeraGuia = $detallesPorDespacho[$despacho->id_despacho]->first(function ($item) {
-//                        return $item->id_guia !== null;
-//                    });
-//
-//                    if ($primeraGuia) {
-//                        $validarMixto = DB::table('despacho_ventas as dv')
-//                            ->join('despachos as d', 'd.id_despacho', '=', 'dv.id_despacho')
-//                            ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
-//                            ->where('dv.id_guia', '=', $primeraGuia->id_guia)
-//                            ->where('dv.id_despacho', '<>', $despacho->id_despacho)
-//                            ->where('d.id_tipo_servicios', '=', 2)
-//                            ->first();
-//
-//                        $esMixto = $validarMixto !== null;
-//                    }
-//                }
-//
-//                $typeComprop = $esMixto ? 3 : $despacho->id_tipo_servicios;
-//
-//                $tipoOS = match ($typeComprop) {
-//                    1 => 'LOCAL',
-//                    2 => 'PROVINCIAL',
-//                    3 => 'MIXTO',
-//                    default => '',
-//                };
-//
-//                // Estado de OS
-//                $estadoOS = match($despacho->despacho_estado_aprobacion) {
-//                    0 => 'Pendiente',
-//                    1 => 'Aprobado',
-//                    2 => 'En camino',
-//                    3 => 'Culminado',
-//                    4 => 'Rechazado',
-//                    default => 'Desconocido'
-//                };
-//
-//                $reporteData[] = [
-//                    'fecha_os' => $despacho->despacho_fecha_aprobacion,
-//                    'fecha_guia' => $despacho->despacho_fecha_aprobacion,
-//                    'numero_os' => $despacho->despacho_numero_correlativo,
-//                    'peso' => $pesoTotalKilos,
-//                    'flete' => $despacho->despacho_costo_total,
-//                    'tipo_os' => $tipoOS,
-//                    'estado_os' => $estadoOS,
-//                    'departamento' => $despacho->guia_departamento ?? 'S/N',
-//                    'provincia' => $despacho->guia_provincia ?? 'S/N',
-//                    'zona_despacho' => $despacho->guia_direc_entrega ?? 'S/N'
-//                ];
-//            }
 
             $spreadsheet = new Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
@@ -419,7 +342,7 @@ class Reporteindicadorespeso extends Component
                 $sheet->setCellValue('B'.$row, date('d/m/Y', strtotime($item->guia_fecha_emision)));
                 $sheet->setCellValue('C'.$row, $item->despacho_numero_correlativo);
                 $sheet->setCellValue('D'.$row, $item->peso ?? 0);
-                $sheet->setCellValue('E'.$row, $item->despacho_costo_total ?? 0);
+                $sheet->setCellValue('E'.$row, $item->despacho_costo_totalLi ?? 0);
                 $sheet->setCellValue('F'.$row, $tipoOs);
                 $sheet->setCellValue('G'.$row, $estadoOS);
                 $sheet->setCellValue('H'.$row, $item->guia_departamento ?? 'S/N');
