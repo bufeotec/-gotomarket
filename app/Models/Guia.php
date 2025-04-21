@@ -110,14 +110,17 @@ class Guia extends Model
 
         return $result;
     }
-    public function listar_informacion_reporte_indicador_de_valor_transportado($tipo, $desde, $hasta,$arrayDe,$type,$typeGrafico = null,$mesGrafico = null){
+    public function listar_informacion_reporte_indicador_de_valor_transportado($tipo, $desde, $hasta,$arrayDe,$type,$typeGrafico = null,$mesGrafico = null,$geneType = null){
         try {
 
             $queryReporteTiemposAtencion = DB::table('despachos as d')
                 ->select('d.id_despacho')
                 ->join('despacho_ventas as dv', 'd.id_despacho', '=', 'dv.id_despacho')
                 ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
-                ->where('d.despacho_estado_aprobacion', '!=', 4);
+                ->leftJoin('departamentos as depar', 'depar.id_departamento', '=', 'd.id_departamento')
+                ->where('d.despacho_estado_aprobacion', '=', 3)
+                ->where('d.despacho_liquidado', '=', 1)
+            ;
 
 
             if ($typeGrafico){
@@ -125,60 +128,105 @@ class Guia extends Model
                 $anio = substr($mesGrafico, 0, 4);
                 $mes = substr($mesGrafico, 5, 2);
 
-                if ($tipo == 1){ // F. Emisión
-                    $queryReporteTiemposAtencion->whereYear('g.guia_fecha_emision', $anio)->whereMonth('g.guia_fecha_emision', $mes);
-                }else{ // F. Programación
-                    $queryReporteTiemposAtencion->whereYear('d.despacho_fecha_aprobacion', $anio)->whereMonth('d.despacho_fecha_aprobacion', $mes);
+
+                if ($tipo){
+
+                    if ($tipo == 1){
+                        // F. Emisión
+                        $queryReporteTiemposAtencion->whereYear('g.guia_fecha_emision', $anio)->whereMonth('g.guia_fecha_emision', $mes);
+
+                    }else{
+                        // F. Programación
+                        $queryReporteTiemposAtencion->whereYear('d.despacho_fecha_aprobacion', $anio)->whereMonth('d.despacho_fecha_aprobacion', $mes);
+                    }
                 }
+
 
                 if ($typeGrafico == 2){ // Grafico de flete lima o provincia
 
                     if ($type == 1){ // LOCAL
-                        $queryReporteTiemposAtencion->whereIn('g.guia_departamento',$arrayDe[0]);
-
+                        $queryReporteTiemposAtencion->whereNull('d.id_departamento'); // los locales no tienen id departamento
                     }elseif ($type == 2){ // PROVINCIAS
-                        $queryReporteTiemposAtencion->whereIn('g.guia_departamento', array_merge($arrayDe[1], $arrayDe[2]));
+                        $queryReporteTiemposAtencion->whereIn('depar.departamento_nombre', array_merge($arrayDe[1], $arrayDe[2]));
                     }
 
                 }
 
             }else{
-                if ($tipo == 1){
-                    // F. Emisión
-                    $queryReporteTiemposAtencion->whereDate('g.guia_fecha_emision', '>=', $desde)
-                        ->whereDate('g.guia_fecha_emision', '<=', $hasta);
+                if ($tipo){
+                    if ($tipo == 1){
+                        // F. Emisión
+                        $queryReporteTiemposAtencion->whereDate('g.guia_fecha_emision', '>=', $desde)
+                            ->whereDate('g.guia_fecha_emision', '<=', $hasta);
 
-                }else{
-                    // F. Programación
-                    $queryReporteTiemposAtencion->whereDate('d.despacho_fecha_aprobacion', '>=', $desde)
-                        ->whereDate('d.despacho_fecha_aprobacion', '<=', $hasta);
+                    }else{
+                        // F. Programación
+                        $queryReporteTiemposAtencion->whereDate('d.despacho_fecha_aprobacion', '>=', $desde)
+                            ->whereDate('d.despacho_fecha_aprobacion', '<=', $hasta);
+                    }
                 }
 
-                if ($type == 1){ // LOCAL
-                    $queryReporteTiemposAtencion->whereIn('g.guia_departamento',$arrayDe[0]);
-                }elseif ($type == 2){ // PROVINCIA 1
-                    $queryReporteTiemposAtencion->whereIn('g.guia_departamento',$arrayDe[1]);
-                }elseif ($type == 3){ // PROVINCIA 2
-                    $queryReporteTiemposAtencion->whereIn('g.guia_departamento',$arrayDe[2]);
+                if ($type == 1){
+                    $queryReporteTiemposAtencion->whereNull('d.id_departamento'); // los locales no tienen id departamento
+                }else{
+                    if ($type == 2){ // PROVINCIA 1
+                        $queryReporteTiemposAtencion->whereIn('depar.departamento_nombre',$arrayDe[1]);
+                    }elseif ($type == 3){ // PROVINCIA 2
+                        $queryReporteTiemposAtencion->whereIn('depar.departamento_nombre',$arrayDe[2]);
+                    }
                 }
             }
 
             $result = $queryReporteTiemposAtencion->distinct()->pluck('d.id_despacho');
 
-            // Sumar costos de despacho
-            $totalDespachos = DB::table('despachos')
-                ->whereIn('id_despacho', $result)
-                ->sum('despacho_costo_total');
+            // sacamos la liquidación
+            $totalDespachos = 0;
 
-            // Sumar detalles de guías asociadas
+            foreach( $result as $iRe) {
+
+                // CALCULAMOS VALOR DE FLETE
+                $liquidaDetalelle = DB::table('liquidacion_detalles as lq')
+                    ->join('liquidaciones as l', 'lq.id_liquidacion', '=', 'l.id_liquidacion')
+                    ->join('despachos as d', 'd.id_despacho', '=', 'lq.id_despacho')
+                    ->where([['l.liquidacion_estado','=',1],['l.liquidacion_estado_aprobacion','=',1],['lq.liquidacion_detalle_estado','=',1]])
+                    ->where('lq.id_despacho','=',$iRe)->first();
+                if ($liquidaDetalelle){
+                    $gastos = DB::table('liquidacion_gastos')->where('id_liquidacion_detalle','=',$liquidaDetalelle->id_liquidacion_detalle)->get();
+
+                    $costoTotal = $gastos[0]->liquidacion_gasto_monto;
+                    $manoObra = $gastos[1]->liquidacion_gasto_monto;
+                    $otrosGastos = $gastos[2]->liquidacion_gasto_monto;
+                    $pesoFinal = $gastos[3]->liquidacion_gasto_monto;
+
+                    if (!$liquidaDetalelle->id_departamento){ // local
+                        $subTotal = $costoTotal + $manoObra + $otrosGastos;
+                    }else{ // provincial
+                        $subTotal = ($costoTotal * $pesoFinal) + $manoObra + $otrosGastos;
+                    }
+                    $totalDespachos+= $subTotal;
+
+                }
+            }
+
+
+            /* -------Sumar detalles de guías asociadas-------*/
             $totalDetalles = DB::table('guias as g')
                 ->join('despacho_ventas as dv', 'g.id_guia', '=', 'dv.id_guia')
                 ->whereIn('dv.id_despacho', $result)
-                ->sum('g.guia_importe_total');
+                ->where('g.guia_estado_aprobacion','=',8)
+                ->sum('g.guia_importe_total_sin_igv');
 
             if ($typeGrafico){
 
-                $result = $totalDespachos;
+                if (!$geneType){
+                    $result = $totalDespachos;
+                }else{
+                    if ($geneType == 1){
+                        $result = $totalDespachos;
+                    }elseif ($geneType == 2){
+                        $result = $totalDetalles;
+                    }
+                }
 
             }else{
                 $result = [
@@ -188,6 +236,88 @@ class Guia extends Model
                 ];
                 $result = (object)$result;
             }
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = 0;
+        }
+
+        return $result;
+    }
+    public function listar_informacion_reporte_total_de_valor_transportado($tipo, $desde, $hasta,$arrayDe,$type,$typeGrafico = null,$mesGrafico = null){
+        try {
+
+            $queryReporteTiemposAtencion = DB::table('despachos as d')
+                ->select('d.id_despacho')
+                ->join('despacho_ventas as dv', 'd.id_despacho', '=', 'dv.id_despacho')
+                ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
+                ->leftJoin('departamentos as depar', 'depar.id_departamento', '=', 'd.id_departamento')
+                ->where('d.despacho_estado_aprobacion', '=', 3)
+                ->where('d.despacho_liquidado', '=', 1)
+            ;
+
+
+            if ($typeGrafico){
+
+                $anio = substr($mesGrafico, 0, 4);
+                $mes = substr($mesGrafico, 5, 2);
+
+                if ($tipo){
+                    if ($tipo == 1){ // F. Emisión
+                        $queryReporteTiemposAtencion->whereYear('g.guia_fecha_emision', $anio)->whereMonth('g.guia_fecha_emision', $mes);
+                    }else{ // F. Programación
+                        $queryReporteTiemposAtencion->whereYear('d.despacho_fecha_aprobacion', $anio)->whereMonth('d.despacho_fecha_aprobacion', $mes);
+                    }
+                }
+
+            }else{
+                if ($tipo){
+                    if ($tipo == 1){
+                        // F. Emisión
+                        $queryReporteTiemposAtencion->whereDate('g.guia_fecha_emision', '>=', $desde)
+                            ->whereDate('g.guia_fecha_emision', '<=', $hasta);
+
+                    }else{
+                        // F. Programación
+                        $queryReporteTiemposAtencion->whereDate('d.despacho_fecha_aprobacion', '>=', $desde)
+                            ->whereDate('d.despacho_fecha_aprobacion', '<=', $hasta);
+                    }
+                }
+            }
+            $result = $queryReporteTiemposAtencion->distinct()->pluck('d.id_despacho');
+
+            $totalDespachos = 0;
+            $idProgramacion = [];
+
+            foreach( $result as $iRe) {
+
+                $despa = DB::table('despachos')->where('id_despacho','=',$iRe)->first();
+                if ($despa) {
+                    // Validar que no esté ya en el array
+                    if (!in_array($despa->id_programacion, $idProgramacion)) {
+                        $idProgramacion[] = $despa->id_programacion;
+                    }
+                }
+            }
+            foreach ($idProgramacion as $idPro){
+                // sacamos el primer despacho
+                $despacho =  DB::table('despachos')->where('id_programacion','=',$idPro)
+                    ->where('despacho_estado_aprobacion', '=', 3)
+                    ->where('despacho_liquidado', '=', 1)
+                    ->orderBy('id_despacho','asc')->first();
+
+                if ($despacho){
+                    $totalDetalles = DB::table('guias as g')
+                        ->join('despacho_ventas as dv', 'g.id_guia', '=', 'dv.id_guia')
+                        ->where('dv.id_despacho', '=',$despacho->id_despacho)
+                        ->where('g.guia_estado_aprobacion','=',8)
+                        ->sum('g.guia_importe_total_sin_igv');
+
+                    $totalDespachos+= $totalDetalles;
+                }
+            }
+
+            $result = $totalDespachos;
+
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);
             $result = 0;
