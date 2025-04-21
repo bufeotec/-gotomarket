@@ -943,262 +943,492 @@
 
 
     <div class="row align-items-center mt-2">
-        <div class="col-lg-3 col-md-2 col-sm-12 mb-2">
-            <label for="buscar_search" class="form-label">Buscar</label>
-            <x-input-general  type="text" id="buscar_search" wire:model.live="search" />
+        <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
+            <label for="tipo_reporte" class="form-label">Tipo de filtro</label>
+            <select name="tipo_reporte" id="tipo_reporte" wire:model.live="tipo_reporte" class="form-select">
+                <option value="">Seleccionar...</option>
+                <option value="1">F. Programación</option>
+                <option value="2">F. Aprobación</option>
+            </select>
         </div>
         <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
             <label for="fecha_desde" class="form-label">Desde</label>
-            <x-input-general  type="date" id="fecha_desde" wire:model.live="desde" />
+            <x-input-general type="date" id="fecha_desde" wire:model.live="desde" />
         </div>
         <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
             <label for="fecha_hasta" class="form-label">Hasta</label>
-            <x-input-general  type="date" id="fecha_hasta" wire:model.live="hasta" />
+            <x-input-general type="date" id="fecha_hasta" wire:model.live="hasta" />
         </div>
-        @if(count($resultado) > 0)
+        <div class="col-lg-2 col-md-3 col-sm-12 mt-4">
+            <button class="btn btn-sm bg-primary text-white" wire:click="buscar_historial_liquidacion">
+                <i class="fa fa-search"></i> BUSCAR
+            </button>
+        </div>
+        @if(count($locales) > 0 || count($provinciales) > 0)
             <div class="col-lg-2 col-md-2 col-sm-12">
-                <button class="btn bg-success text-white mt-3" wire:click="generar_excel_historial_liquidacion"><i class="fa-solid fa-file-excel"></i> Generar Excel</button>
+                <button class="btn bg-success text-white mt-3" wire:click="generar_excel_historial_liquidacion">
+                    <i class="fa-solid fa-file-excel"></i> Generar Excel
+                </button>
             </div>
         @endif
-
+        <div class="col-lg-12 col-md-12 col-sm-12">
+            <div class="loader mt-2" wire:loading wire:target="buscar_historial_liquidacion"></div>
+        </div>
     </div>
 
-    @if(count($resultado) > 0)
+    @if(count($locales) > 0 || count($provinciales) > 0)
         <div class="row mt-4">
-            <div class="col-lg col-md-3 col-sm-3 mb-1">
-                <h6 class="m-0">FR : Fecha de Registro</h6>
-            </div>
-            <div class="col-lg col-md-3 col-sm-3 mb-1">
-                <h6 class="m-0">UR : Usuario de Registro</h6>
-            </div>
-            <div class="col-lg col-md-3 col-sm-3 mb-1">
-                <h6 class="m-0">TR : Transportista</h6>
-            </div>
-            <div class="col-lg col-md-3 col-sm-3 mb-1">
-                <h6 class="m-0">ES : Estado de liquidación</h6>
-            </div>
-            <div class="col-lg col-md-3 col-sm-3 mb-1">
-                <h6 class="m-0">SC : Serie y Correlativo</h6>
-            </div>
-
-
-        </div>
-    @endif
-
-    <div class="accordion mt-3" id="accordionExample" >
-        @if(count($resultado) > 0)
-            @php $conteoGeneral = 1; @endphp
-            @foreach($resultado as $index => $r)
-                <div class="accordion-item" >
-                    <h2 class="accordion-header">
-                        <button class="accordion-button {{$index == 0 ? '' : 'collapsed'}}" wire:ignore.self type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne_{{$index}}" aria-expanded="true" aria-controls="collapseOne_{{$index}}">
-                            #{{$conteoGeneral}} | FR : {{$r->creacion_liquidacion}} | UR : {{$r->name}} | TR : {{$r->transportista_nom_comercial}}  | ES : <b class="{{$r->liquidacion_estado_aprobacion == 1 ? 'text-success' : 'text-danger'}} ms-1 me-1"> {{$r->liquidacion_estado_aprobacion == 1 ? 'APROBADO' : 'RECHAZADO'}}</b> | SC : <b class="colorgotomarket ms-1" style="font-size: 20px"> {{$r->liquidacion_serie}} - {{$r->liquidacion_correlativo}}</b>
-                        </button>
-                    </h2>
-                    <div id="collapseOne_{{$index}}" class="accordion-collapse collapse {{$index == 0 ? 'show' : ''}}" data-bs-parent="#accordionExample" wire:ignore.self >
-                        <div class="accordion-body" >
-                            <div class="row">
-                                <div class="col-lg-12 col-md-12 col-sm-12 mb-3 text-end">
-                                    @if(file_exists($r->liquidacion_ruta_comprobante))
-                                        <a class="btn btn-sm text-white bg-secondary" href="{{asset($r->liquidacion_ruta_comprobante)}}" target="_blank"><i class="fa-solid fa-eye"></i> VER DOCUMENTO</a>
-                                    @else
-                                        <button class="btn btn-sm text-white bg-secondary" wire:click="agregar_comprobante({{$r->id_liquidacion}})" data-bs-toggle="modal" data-bs-target="#modalAgregarComprobante"><i class="fa-solid fa-file-circle-plus"></i> ADJUNTAR DOCUMENTO</button>
-                                    @endif
-                                </div>
-                                @if($r->liquidacion_observaciones)
-                                    <div class="col-lg-12 col-md-12 col-sm-12">
-                                        <label for="">Observaciones:</label>
-                                        <p>{{$r->liquidacion_observaciones}}</p>
-                                    </div>
-                                @endif
-                                <div class="col-lg-12 col-md-12 col-sm-12 table-responsive">
-                                    <table class="table table-bordered">
-                                        @php
-                                            //                                            $colorMontoProgramado = "background:  #A9A9A9;color: white ";
-                                            //                                            $colorMontoLiquidado = "background:  #32CD32;color: white ";
-                                            //                                            $colorMontoLiquidado = "background:  #62dc62;color: white ";
-                                                                                        $colorMontoProgramado = "";
-                                                                                        $colorMontoLiquidado = "";
-                                        @endphp
-                                        <thead>
-                                        {{--                                            <tr>--}}
-                                        {{--                                                <th colspan="6"></th>--}}
-                                        {{--                                                <th colspan="6" class="text-center text-white" style="{{$colorMontoProgramado}}">--}}
-                                        {{--                                                    Monto Programado--}}
-                                        {{--                                                </th>--}}
-                                        {{--                                                <th colspan="6" class="text-center text-white" style="{{$colorMontoLiquidado}}">Monto de Liquidación</th>--}}
-                                        {{--                                            </tr>--}}
+            <!-- TABLA LOCAL -->
+            <div class="col-lg-6 col-md-12 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="mb-3">DESPACHO LOCAL</h5>
+                        @if(count($locales) > 0)
+                            <div class="contenedor-comprobante" style="height: 700px; overflow: auto">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped table-hover">
+                                        <thead class="table-light">
                                         <tr>
-                                            <th>N°</th>
-                                            <th>N° OS</th>
-                                            <th>Proveedor</th>
-                                            <th>Servicio</th>
-                                            <th>Fecha de Despacho</th>
-                                            <th>Guías Asociadas</th>
-                                            <th>Total Venta Despachada</th>
-                                            <th>Peso Total</th>
-                                            <th>Importe Programado del Servicio</th>
-                                            <th>Cambio de Tarifa</th>
-                                            {{--                                                <th>N° OS</th>--}}
-                                            {{--                                                <th>Servicio</th>--}}
-                                            {{--                                                <th>T. Venta Despachada</th>--}}
-                                            {{--                                                <th>Peso Total</th>--}}
-                                            {{--                                                <th>Importe Total del Servicio</th>--}}
-
-                                            {{--                                                <th style="{{$colorMontoProgramado}}">Costo de Tarifa</th>--}}
-                                            {{--                                                <th style="{{$colorMontoProgramado}}">Mano de Obra</th>--}}
-                                            {{--                                                <th style="{{$colorMontoProgramado}}">Otros Gastos</th>--}}
-                                            {{--                                                <th style="{{$colorMontoProgramado}}">Total Despacho</th>--}}
-                                            {{--                                                <th style="{{$colorMontoProgramado}}">Flete / Venta</th>--}}
-                                            {{--                                                <th style="{{$colorMontoProgramado}}">Flete / Peso</th>--}}
-
-                                            {{--                                                <th style="{{$colorMontoLiquidado}}">Costo de Tarifa</th>--}}
-                                            {{--                                                <th style="{{$colorMontoLiquidado}}">Mano de Obra</th>--}}
-                                            {{--                                                <th style="{{$colorMontoLiquidado}}">Otros Gastos</th>--}}
-                                            <th style="{{$colorMontoLiquidado}}">Importe del Servicio</th>
-                                            <th style="{{$colorMontoLiquidado}}">Flete / Venta</th>
-                                            <th style="{{$colorMontoLiquidado}}">Flete / Peso</th>
-                                            <th >Acción</th>
-
+                                            <th style="background: #E2EFDB; color: black">FEC. DESPACHO</th>
+                                            <th style="background: #E2EFDB; color: black">FEC. APROB</th>
+                                            <th style="background: #E2EFDB; color: black">LOCAL</th>
+                                            <th style="background: #E2EFDB; color: black">PROVEEDOR</th>
+                                            <th style="background: #E2EFDB; color: black">FACT</th>
+                                            <th style="background: #E2EFDB; color: black">SIN IGV</th>
+                                            <th style="background: #E2EFDB; color: black">CON IGV</th>
+                                            <th style="background: #E2EFDB; color: black">TOTAL PROVEEDOR</th>
                                         </tr>
                                         </thead>
                                         <tbody>
                                         @php
-                                            $conteo = 1;
+                                            $totalLocalSinIGV = 0;
+                                            $totalLocalConIGV = 0;
+                                            $transportistaActual = null;
+                                            $sumaTransportistaConIGV = 0;
+                                            $mostrarTotalTransportista = false;
                                         @endphp
-                                        @foreach($r->detalles as $de)
-                                            <tr >
-                                                <th>{{$conteo}}</th>
-                                                <th>
-                                                    {{$de->despacho_numero_correlativo}}
-                                                    {{--                                                        <a class="text-primary cursoPointer" wire:click="listar_informacion_despacho({{ $de->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">--}}
-                                                    {{--                                                           --}}
-                                                    {{--                                                        </a>--}}
-                                                </th>
-                                                <td>{{ $r->transportista_razon_social }}</td>
-                                                <td>{{ $de->tipo_servicio_concepto }}</td>
-                                                <td>{{ date('d-m-Y',strtotime($de->programacion_fecha)) }}</td>
-                                                <td>
-                                                    @php
-                                                        $guiasComprobante = \Illuminate\Support\Facades\DB::table('despacho_ventas as dv')->join('guias as g','dv.id_guia','=','g.id_guia')->where('dv.id_despacho', '=', $de->id_despacho)->get();
-                                                        $totalGuias = count($guiasComprobante); // Contamos las guías
-                                                    @endphp
-                                                    @foreach($guiasComprobante as $indexGuias => $g)
-                                                        @if($indexGuias <= 2)
-                                                            <a wire:click="listar_guias_despachos({{ $de->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalDetalleGuias" class="cursoPointer text-primary">
-                                                                {{ $general->formatearCodigo($g->guia_nro_doc) }}
-                                                            </a>
-                                                            @if($indexGuias < 2 && $indexGuias < $totalGuias - 1)
-                                                                , <!-- Mostrar la coma solo si no es el último elemento que se va a mostrar -->
-                                                            @elseif($indexGuias == 2 && $totalGuias > 3)
-                                                                ... <!-- Mostrar "..." si hay más guías después de las tres primeras -->
-                                                            @endif
-                                                        @endif
-                                                    @endforeach
-                                                </td>
 
-                                                @php
-                                                    $totalVentaDespaDespacho = $de->totalVentaDespacho;
-                                                    if ($de->totalVentaNoEntregado){
-                                                        $totalVentaDespaDespacho = $de->totalVentaDespacho - $de->totalVentaNoEntregado;
-                                                    }
-                                                @endphp
-                                                <td>
-                                                    <span class="d-block">S/ {{ $general->formatoDecimal($de->totalVentaDespacho) }}</span>
-                                                    @if($de->totalVentaNoEntregado)
-                                                        <span class="d-block text-danger">S/ -{{ $general->formatoDecimal($de->totalVentaNoEntregado) }}</span>
-                                                        <b class="colorBlackComprobantes">S/ {{ $general->formatoDecimal($totalVentaDespaDespacho) }}</b>
-                                                    @endif
-                                                </td>
-                                                @php
-                                                    $totalPesoDespacho = $de->despacho_peso;
-                                                    if ($de->totalPesoNoEntregado){
-                                                        $totalPesoDespacho = $de->despacho_peso - $de->totalPesoNoEntregado;
-                                                    }
-                                                @endphp
-                                                <td>
-                                                    <span class="d-block">{{ $general->formatoDecimal($de->despacho_peso) }}</span>
-                                                    @if($de->totalPesoNoEntregado)
-                                                        <span class="d-block text-danger">-{{ $general->formatoDecimal($de->totalPesoNoEntregado) }}</span>
-                                                        <b class="colorBlackComprobantes">{{ $general->formatoDecimal($totalPesoDespacho) }} kg</b>
-                                                    @endif
-                                                </td>
-                                                @php
-                                                    $despachoGeneraLiquidacion = 0;
-                                                    if ($de->id_tipo_servicios == 1){
-                                                        $despachoGeneraLiquidacion = $de->despacho_costo_total;
-                                                    }else{
-                                                        $despachoGeneraLiquidacion = ($de->despacho_monto_modificado * $totalPesoDespacho) + $de->despacho_ayudante + $de->despacho_gasto_otros;
-                                                    }
-                                                @endphp
-                                                <td>S/ {{ $general->formatoDecimal($despachoGeneraLiquidacion) }}</td>
-                                                @php
-                                                    $styleColor = "text-danger";
-                                                    if ($de->despacho_estado_modificado == 1){
-                                                        $styleColor = "text-success";
-                                                    }
-                                                @endphp
-                                                <td><b class="{{$styleColor}}">{{$de->despacho_estado_modificado == 1 ? 'SI' : 'NO'}}</b></td>
-
-                                                {{--                                                    <td style="{{$colorMontoProgramado}}">{{$de->despacho_monto_modificado ? $general->formatoDecimal($de->despacho_monto_modificado): 0}}</td>--}}
-                                                {{--                                                    <td style="{{$colorMontoProgramado}}">{{$de->despacho_ayudante ? $general->formatoDecimal($de->despacho_ayudante): 0}}</td>--}}
-                                                {{--                                                    <td style="{{$colorMontoProgramado}}">{{$de->despacho_gasto_otros ? $general->formatoDecimal($de->despacho_gasto_otros) : 0}}</td>--}}
-                                                {{--                                                    <td style="{{$colorMontoProgramado}}">{{$de->despacho_costo_total ? $general->formatoDecimal($de->despacho_costo_total) : 0}}</td>--}}
-                                                {{--                                                    <td style="{{$colorMontoProgramado}}">{{ $general->formatoDecimal($despachoGeneraLiquidacion / $totalVentaDespaDespacho) }} % </td>--}}
-                                                {{--                                                    <td style="{{$colorMontoProgramado}}">{{ $general->formatoDecimal($despachoGeneraLiquidacion / $totalPesoDespacho) }} %</td>--}}
-
-                                                @php
-                                                    $gastosDespachos = \Illuminate\Support\Facades\DB::table('liquidacion_gastos')->where('id_liquidacion_detalle','=',$de->id_liquidacion_detalle)->get();
-                                                    $costoTarifa = 0;
-                                                    $costoMano = 0;
-                                                    $costoOtros = 0;
-                                                    $pesoFinalLiquidacion = 0;
-                                                    if (count($gastosDespachos) >= 3){
-                                                        $costoTarifa = $gastosDespachos[0]->liquidacion_gasto_monto;
-                                                        $costoMano = $gastosDespachos[1]->liquidacion_gasto_monto;
-                                                        $costoOtros = $gastosDespachos[2]->liquidacion_gasto_monto;
-                                                        $pesoFinalLiquidacion = $gastosDespachos[3]->liquidacion_gasto_monto;
-                                                    }
-                                                @endphp
-                                                {{--                                                    @foreach($gastosDespachos as $fa)--}}
-                                                {{--                                                        <td style="{{$colorMontoLiquidado}}">{{$fa->liquidacion_gasto_monto}}</td>--}}
-                                                {{--                                                    @endforeach--}}
-                                                @php
-                                                    $totalDespachoMontoLiquidado = 0;
-                                                    if ($de->id_tipo_servicios == 1){
-                                                        $totalDespachoMontoLiquidado = $costoTarifa + $costoMano + $costoOtros;
-                                                    }else{
-                                                        $totalDespachoMontoLiquidado = ($costoTarifa * $pesoFinalLiquidacion) + $costoMano + $costoOtros;
-                                                    }
-                                                @endphp
-                                                <td style="{{$colorMontoLiquidado}}">S/ {{ $general->formatoDecimal($totalDespachoMontoLiquidado) }}</td>
-                                                <td style="{{$colorMontoLiquidado}}">{{ $totalVentaDespaDespacho != 0 ? $general->formatoDecimal(($totalDespachoMontoLiquidado / $totalVentaDespaDespacho) * 100) : 0 }} % </td>
-                                                <td style="{{$colorMontoLiquidado}}">{{ $pesoFinalLiquidacion != 0 ? $general->formatoDecimal($totalDespachoMontoLiquidado / $pesoFinalLiquidacion) : 0 }} </td>
-                                                <td>
-                                                    <x-btn-accion class="btn btn-sm text-primary" wire:click="listar_informacion_despacho({{ $de->id_despacho }},{{ $de->id_liquidacion }})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">
-                                                        <x-slot name="message">
-                                                            <i class="fa-solid fa-eye"></i>
-                                                        </x-slot>
-                                                    </x-btn-accion>
-                                                </td>
-                                            </tr>
+                                        @foreach($locales as $index => $item)
                                             @php
-                                                $conteo++;
+                                                $detallesDespacho = DB::table('liquidacion_detalles as ld')
+                                                    ->join('despachos as d', 'd.id_despacho', '=', 'ld.id_despacho')
+                                                    ->leftJoin('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
+                                                    ->select('d.*', 'p.programacion_fecha')
+                                                    ->where('ld.id_liquidacion', '=', $item->id_liquidacion)
+                                                    ->first();
+
+                                                $programacionFecha = $detallesDespacho->programacion_fecha ?? null;
+                                                $aprobacionFecha = $detallesDespacho->despacho_fecha_aprobacion ?? null;
+
+                                                $totalSinIGV = $item->total_sin_igv ?? 0;
+                                                $totalConIGV = $totalSinIGV * 1.18;
+                                                $totalLocalSinIGV += $totalSinIGV;
+                                                $totalLocalConIGV += $totalConIGV;
                                             @endphp
+
+                                            @if($transportistaActual != $item->transportista_nom_comercial)
+                                                @if($transportistaActual !== null)
+                                                    <tr style="background-color: #e9ecef;">
+                                                        <td colspan="7" class="text-end"><strong>Total {{ $transportistaActual }}</strong></td>
+                                                        <td class="text-end"><strong>{{ $general->formatoDecimal($sumaTransportistaConIGV) }}</strong></td>
+                                                    </tr>
+                                                @endif
+                                                @php
+                                                    $transportistaActual = $item->transportista_nom_comercial;
+                                                    $sumaTransportistaConIGV = 0;
+                                                    $mostrarTotalTransportista = true;
+                                                @endphp
+                                            @endif
+
+                                            <tr>
+                                                <td>{{ $programacionFecha ? $general->obtenerNombreFecha($programacionFecha, 'DateTime', 'Date') : '-' }}</td>
+                                                <td>{{ $aprobacionFecha ? $general->obtenerNombreFecha($aprobacionFecha, 'DateTime', 'Date') : '-' }}</td>
+                                                <td>LIMA</td>
+                                                <td>{{ $item->transportista_nom_comercial }}</td>
+                                                <td>{{ $item->liquidacion_serie }}-{{ $item->liquidacion_correlativo }}</td>
+                                                <td class="text-end">{{ $general->formatoDecimal($totalSinIGV) }}</td>
+                                                <td class="text-end">{{ $general->formatoDecimal($totalConIGV) }}</td>
+                                                <td></td>
+                                            </tr>
+
+                                            @php
+                                                $sumaTransportistaConIGV += $totalConIGV;
+                                            @endphp
+
+                                            @if($loop->last && $mostrarTotalTransportista)
+                                                <tr style="background-color: #e9ecef;">
+                                                    <td colspan="7" class="text-end"><strong>Total {{ $transportistaActual }}</strong></td>
+                                                    <td class="text-end"><strong>{{ $general->formatoDecimal($sumaTransportistaConIGV) }}</strong></td>
+                                                </tr>
+                                            @endif
                                         @endforeach
+
+                                        <!-- Total Local -->
+                                        <tr class="table-secondary fw-bold">
+                                            <td colspan="5" class="text-center">TOTAL LOCAL</td>
+                                            <td class="text-end">{{ $general->formatoDecimal($totalLocalSinIGV) }}</td>
+                                            <td class="text-end">{{ $general->formatoDecimal($totalLocalConIGV) }}</td>
+                                            <td class="text-end">{{ $general->formatoDecimal($totalLocalConIGV) }}</td>
+                                        </tr>
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
-                        </div>
+                        @else
+                            <p>No hay datos de liquidaciones locales</p>
+                        @endif
                     </div>
                 </div>
-                @php $conteoGeneral++; @endphp
-            @endforeach
-        @else
-            <p class="text-center"> Registros Insuficientes</p>
-        @endif
-    </div>
+            </div>
+
+            <!-- TABLA PROVINCIAL -->
+            <div class="col-lg-6 col-md-12 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="mb-3">DESPACHO PROVINCIAL</h5>
+                        @if(count($provinciales) > 0)
+                            <div class="contenedor-comprobante" style="height: 700px; overflow: auto">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped table-hover">
+                                        <thead class="table-light">
+                                        <tr>
+                                            <th style="background: #E2EFDB; color: black">FEC. DESPACHO</th>
+                                            <th style="background: #E2EFDB; color: black">FEC. APROB</th>
+                                            <th style="background: #E2EFDB; color: black">TRANSPORTE</th>
+                                            <th style="background: #E2EFDB; color: black">DEPARTAMENTO - PROVINCIA</th>
+                                            <th style="background: #E2EFDB; color: black">FACT</th>
+                                            <th style="background: #E2EFDB; color: black">SIN IGV</th>
+                                            <th style="background: #E2EFDB; color: black">CON IGV</th>
+                                            <th style="background: #E2EFDB; color: black">TOTAL PROVEEDOR</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        @php
+                                            $totalProvincialSinIGV = 0;
+                                            $totalProvincialConIGV = 0;
+                                            $transportistaActual = null;
+                                            $sumaTransportistaConIGV = 0;
+                                            $mostrarTotalTransportista = false;
+                                        @endphp
+
+                                        @foreach($provinciales as $item)
+                                            @php
+                                                $detallesDespacho = DB::table('liquidacion_detalles as ld')
+                                                    ->join('despachos as d', 'd.id_despacho', '=', 'ld.id_despacho')
+                                                    ->leftJoin('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
+                                                    ->leftJoin('departamentos as dep', 'dep.id_departamento', '=', 'd.id_departamento')
+                                                    ->leftJoin('provincias as prov', 'prov.id_provincia', '=', 'd.id_provincia')
+                                                    ->select('d.*', 'p.programacion_fecha', 'dep.departamento_nombre', 'prov.provincia_nombre')
+                                                    ->where('ld.id_liquidacion', '=', $item->id_liquidacion)
+                                                    ->first();
+
+                                                $programacionFecha = $detallesDespacho->programacion_fecha ?? null;
+                                                $aprobacionFecha = $detallesDespacho->despacho_fecha_aprobacion ?? null;
+
+                                                $departamentoProvincia = '-';
+                                                if ($detallesDespacho->departamento_nombre ?? false && $detallesDespacho->provincia_nombre ?? false) {
+                                                    $departamentoProvincia = $detallesDespacho->departamento_nombre . ' - ' . $detallesDespacho->provincia_nombre;
+                                                }
+
+                                                $totalSinIGV = $item->total_sin_igv ?? 0;
+                                                $totalConIGV = $totalSinIGV * 1.18;
+                                                $totalProvincialSinIGV += $totalSinIGV;
+                                                $totalProvincialConIGV += $totalConIGV;
+                                            @endphp
+
+                                            @if($transportistaActual != $item->transportista_nom_comercial)
+                                                @if($transportistaActual !== null)
+                                                    <tr style="background-color: #e9ecef;">
+                                                        <td colspan="7" class="text-end"><strong>Total {{ $transportistaActual }}</strong></td>
+                                                        <td class="text-end"><strong>{{ $general->formatoDecimal($sumaTransportistaConIGV) }}</strong></td>
+                                                    </tr>
+                                                @endif
+                                                @php
+                                                    $transportistaActual = $item->transportista_nom_comercial;
+                                                    $sumaTransportistaConIGV = 0;
+                                                    $mostrarTotalTransportista = true;
+                                                @endphp
+                                            @endif
+
+                                            <tr>
+                                                <td>{{ $programacionFecha ? $general->obtenerNombreFecha($programacionFecha, 'DateTime', 'Date') : '-' }}</td>
+                                                <td>{{ $aprobacionFecha ? $general->obtenerNombreFecha($aprobacionFecha, 'DateTime', 'Date') : '-' }}</td>
+                                                <td>{{ $item->transportista_nom_comercial }}</td>
+                                                <td>{{ $departamentoProvincia }}</td>
+                                                <td>{{ $item->liquidacion_serie }}-{{ $item->liquidacion_correlativo }}</td>
+                                                <td class="text-end">{{ $general->formatoDecimal($totalSinIGV) }}</td>
+                                                <td class="text-end">{{ $general->formatoDecimal($totalConIGV) }}</td>
+                                                <td></td>
+                                            </tr>
+
+                                            @php
+                                                $sumaTransportistaConIGV += $totalConIGV;
+                                            @endphp
+
+                                            @if($loop->last && $mostrarTotalTransportista)
+                                                <tr style="background-color: #e9ecef;">
+                                                    <td colspan="7" class="text-end"><strong>Total {{ $transportistaActual }}</strong></td>
+                                                    <td class="text-end"><strong>{{ $general->formatoDecimal($sumaTransportistaConIGV) }}</strong></td>
+                                                </tr>
+                                            @endif
+                                        @endforeach
+
+                                        <!-- Total Provincial -->
+                                        <tr class="table-secondary fw-bold">
+                                            <td colspan="5" class="text-center">TOTAL PROVINCIAL</td>
+                                            <td class="text-end">{{ $general->formatoDecimal($totalProvincialSinIGV) }}</td>
+                                            <td class="text-end">{{ $general->formatoDecimal($totalProvincialConIGV) }}</td>
+                                            <td class="text-end">{{ $general->formatoDecimal($totalProvincialConIGV) }}</td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        @else
+                            <p>No hay datos de liquidaciones provinciales</p>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+{{--    @if(count($resultado) > 0)--}}
+{{--        <div class="row mt-4">--}}
+{{--            <div class="col-lg col-md-3 col-sm-3 mb-1">--}}
+{{--                <h6 class="m-0">FR : Fecha de Registro</h6>--}}
+{{--            </div>--}}
+{{--            <div class="col-lg col-md-3 col-sm-3 mb-1">--}}
+{{--                <h6 class="m-0">UR : Usuario de Registro</h6>--}}
+{{--            </div>--}}
+{{--            <div class="col-lg col-md-3 col-sm-3 mb-1">--}}
+{{--                <h6 class="m-0">TR : Transportista</h6>--}}
+{{--            </div>--}}
+{{--            <div class="col-lg col-md-3 col-sm-3 mb-1">--}}
+{{--                <h6 class="m-0">ES : Estado de liquidación</h6>--}}
+{{--            </div>--}}
+{{--            <div class="col-lg col-md-3 col-sm-3 mb-1">--}}
+{{--                <h6 class="m-0">SC : Serie y Correlativo</h6>--}}
+{{--            </div>--}}
+
+
+{{--        </div>--}}
+{{--    @endif--}}
+
+{{--    <div class="accordion mt-3" id="accordionExample" >--}}
+{{--        @if(count($resultado) > 0)--}}
+{{--            @php $conteoGeneral = 1; @endphp--}}
+{{--            @foreach($resultado as $index => $r)--}}
+{{--                <div class="accordion-item" >--}}
+{{--                    <h2 class="accordion-header">--}}
+{{--                        <button class="accordion-button {{$index == 0 ? '' : 'collapsed'}}" wire:ignore.self type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne_{{$index}}" aria-expanded="true" aria-controls="collapseOne_{{$index}}">--}}
+{{--                            #{{$conteoGeneral}} | FR : {{$r->creacion_liquidacion}} | UR : {{$r->name}} | TR : {{$r->transportista_nom_comercial}}  | ES : <b class="{{$r->liquidacion_estado_aprobacion == 1 ? 'text-success' : 'text-danger'}} ms-1 me-1"> {{$r->liquidacion_estado_aprobacion == 1 ? 'APROBADO' : 'RECHAZADO'}}</b> | SC : <b class="colorgotomarket ms-1" style="font-size: 20px"> {{$r->liquidacion_serie}} - {{$r->liquidacion_correlativo}}</b>--}}
+{{--                        </button>--}}
+{{--                    </h2>--}}
+{{--                    <div id="collapseOne_{{$index}}" class="accordion-collapse collapse {{$index == 0 ? 'show' : ''}}" data-bs-parent="#accordionExample" wire:ignore.self >--}}
+{{--                        <div class="accordion-body" >--}}
+{{--                            <div class="row">--}}
+{{--                                <div class="col-lg-12 col-md-12 col-sm-12 mb-3 text-end">--}}
+{{--                                    @if(file_exists($r->liquidacion_ruta_comprobante))--}}
+{{--                                        <a class="btn btn-sm text-white bg-secondary" href="{{asset($r->liquidacion_ruta_comprobante)}}" target="_blank"><i class="fa-solid fa-eye"></i> VER DOCUMENTO</a>--}}
+{{--                                    @else--}}
+{{--                                        <button class="btn btn-sm text-white bg-secondary" wire:click="agregar_comprobante({{$r->id_liquidacion}})" data-bs-toggle="modal" data-bs-target="#modalAgregarComprobante"><i class="fa-solid fa-file-circle-plus"></i> ADJUNTAR DOCUMENTO</button>--}}
+{{--                                    @endif--}}
+{{--                                </div>--}}
+{{--                                @if($r->liquidacion_observaciones)--}}
+{{--                                    <div class="col-lg-12 col-md-12 col-sm-12">--}}
+{{--                                        <label for="">Observaciones:</label>--}}
+{{--                                        <p>{{$r->liquidacion_observaciones}}</p>--}}
+{{--                                    </div>--}}
+{{--                                @endif--}}
+{{--                                <div class="col-lg-12 col-md-12 col-sm-12 table-responsive">--}}
+{{--                                    <table class="table table-bordered">--}}
+{{--                                        @php--}}
+{{--                                            //                                            $colorMontoProgramado = "background:  #A9A9A9;color: white ";--}}
+{{--                                            //                                            $colorMontoLiquidado = "background:  #32CD32;color: white ";--}}
+{{--                                            //                                            $colorMontoLiquidado = "background:  #62dc62;color: white ";--}}
+{{--                                                                                        $colorMontoProgramado = "";--}}
+{{--                                                                                        $colorMontoLiquidado = "";--}}
+{{--                                        @endphp--}}
+{{--                                        <thead>--}}
+{{--                                        --}}{{--                                            <tr>--}}
+{{--                                        --}}{{--                                                <th colspan="6"></th>--}}
+{{--                                        --}}{{--                                                <th colspan="6" class="text-center text-white" style="{{$colorMontoProgramado}}">--}}
+{{--                                        --}}{{--                                                    Monto Programado--}}
+{{--                                        --}}{{--                                                </th>--}}
+{{--                                        --}}{{--                                                <th colspan="6" class="text-center text-white" style="{{$colorMontoLiquidado}}">Monto de Liquidación</th>--}}
+{{--                                        --}}{{--                                            </tr>--}}
+{{--                                        <tr>--}}
+{{--                                            <th>N°</th>--}}
+{{--                                            <th>N° OS</th>--}}
+{{--                                            <th>Proveedor</th>--}}
+{{--                                            <th>Servicio</th>--}}
+{{--                                            <th>Fecha de Despacho</th>--}}
+{{--                                            <th>Guías Asociadas</th>--}}
+{{--                                            <th>Total Venta Despachada</th>--}}
+{{--                                            <th>Peso Total</th>--}}
+{{--                                            <th>Importe Programado del Servicio</th>--}}
+{{--                                            <th>Cambio de Tarifa</th>--}}
+{{--                                            --}}{{--                                                <th>N° OS</th>--}}
+{{--                                            --}}{{--                                                <th>Servicio</th>--}}
+{{--                                            --}}{{--                                                <th>T. Venta Despachada</th>--}}
+{{--                                            --}}{{--                                                <th>Peso Total</th>--}}
+{{--                                            --}}{{--                                                <th>Importe Total del Servicio</th>--}}
+
+{{--                                            --}}{{--                                                <th style="{{$colorMontoProgramado}}">Costo de Tarifa</th>--}}
+{{--                                            --}}{{--                                                <th style="{{$colorMontoProgramado}}">Mano de Obra</th>--}}
+{{--                                            --}}{{--                                                <th style="{{$colorMontoProgramado}}">Otros Gastos</th>--}}
+{{--                                            --}}{{--                                                <th style="{{$colorMontoProgramado}}">Total Despacho</th>--}}
+{{--                                            --}}{{--                                                <th style="{{$colorMontoProgramado}}">Flete / Venta</th>--}}
+{{--                                            --}}{{--                                                <th style="{{$colorMontoProgramado}}">Flete / Peso</th>--}}
+
+{{--                                            --}}{{--                                                <th style="{{$colorMontoLiquidado}}">Costo de Tarifa</th>--}}
+{{--                                            --}}{{--                                                <th style="{{$colorMontoLiquidado}}">Mano de Obra</th>--}}
+{{--                                            --}}{{--                                                <th style="{{$colorMontoLiquidado}}">Otros Gastos</th>--}}
+{{--                                            <th style="{{$colorMontoLiquidado}}">Importe del Servicio</th>--}}
+{{--                                            <th style="{{$colorMontoLiquidado}}">Flete / Venta</th>--}}
+{{--                                            <th style="{{$colorMontoLiquidado}}">Flete / Peso</th>--}}
+{{--                                            <th >Acción</th>--}}
+
+{{--                                        </tr>--}}
+{{--                                        </thead>--}}
+{{--                                        <tbody>--}}
+{{--                                        @php--}}
+{{--                                            $conteo = 1;--}}
+{{--                                        @endphp--}}
+{{--                                        @foreach($r->detalles as $de)--}}
+{{--                                            <tr >--}}
+{{--                                                <th>{{$conteo}}</th>--}}
+{{--                                                <th>--}}
+{{--                                                    {{$de->despacho_numero_correlativo}}--}}
+{{--                                                    --}}{{--                                                        <a class="text-primary cursoPointer" wire:click="listar_informacion_despacho({{ $de->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">--}}
+{{--                                                    --}}{{--                                                           --}}
+{{--                                                    --}}{{--                                                        </a>--}}
+{{--                                                </th>--}}
+{{--                                                <td>{{ $r->transportista_razon_social }}</td>--}}
+{{--                                                <td>{{ $de->tipo_servicio_concepto }}</td>--}}
+{{--                                                <td>{{ date('d-m-Y',strtotime($de->programacion_fecha)) }}</td>--}}
+{{--                                                <td>--}}
+{{--                                                    @php--}}
+{{--                                                        $guiasComprobante = \Illuminate\Support\Facades\DB::table('despacho_ventas as dv')->join('guias as g','dv.id_guia','=','g.id_guia')->where('dv.id_despacho', '=', $de->id_despacho)->get();--}}
+{{--                                                        $totalGuias = count($guiasComprobante); // Contamos las guías--}}
+{{--                                                    @endphp--}}
+{{--                                                    @foreach($guiasComprobante as $indexGuias => $g)--}}
+{{--                                                        @if($indexGuias <= 2)--}}
+{{--                                                            <a wire:click="listar_guias_despachos({{ $de->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalDetalleGuias" class="cursoPointer text-primary">--}}
+{{--                                                                {{ $general->formatearCodigo($g->guia_nro_doc) }}--}}
+{{--                                                            </a>--}}
+{{--                                                            @if($indexGuias < 2 && $indexGuias < $totalGuias - 1)--}}
+{{--                                                                , <!-- Mostrar la coma solo si no es el último elemento que se va a mostrar -->--}}
+{{--                                                            @elseif($indexGuias == 2 && $totalGuias > 3)--}}
+{{--                                                                ... <!-- Mostrar "..." si hay más guías después de las tres primeras -->--}}
+{{--                                                            @endif--}}
+{{--                                                        @endif--}}
+{{--                                                    @endforeach--}}
+{{--                                                </td>--}}
+
+{{--                                                @php--}}
+{{--                                                    $totalVentaDespaDespacho = $de->totalVentaDespacho;--}}
+{{--                                                    if ($de->totalVentaNoEntregado){--}}
+{{--                                                        $totalVentaDespaDespacho = $de->totalVentaDespacho - $de->totalVentaNoEntregado;--}}
+{{--                                                    }--}}
+{{--                                                @endphp--}}
+{{--                                                <td>--}}
+{{--                                                    <span class="d-block">S/ {{ $general->formatoDecimal($de->totalVentaDespacho) }}</span>--}}
+{{--                                                    @if($de->totalVentaNoEntregado)--}}
+{{--                                                        <span class="d-block text-danger">S/ -{{ $general->formatoDecimal($de->totalVentaNoEntregado) }}</span>--}}
+{{--                                                        <b class="colorBlackComprobantes">S/ {{ $general->formatoDecimal($totalVentaDespaDespacho) }}</b>--}}
+{{--                                                    @endif--}}
+{{--                                                </td>--}}
+{{--                                                @php--}}
+{{--                                                    $totalPesoDespacho = $de->despacho_peso;--}}
+{{--                                                    if ($de->totalPesoNoEntregado){--}}
+{{--                                                        $totalPesoDespacho = $de->despacho_peso - $de->totalPesoNoEntregado;--}}
+{{--                                                    }--}}
+{{--                                                @endphp--}}
+{{--                                                <td>--}}
+{{--                                                    <span class="d-block">{{ $general->formatoDecimal($de->despacho_peso) }}</span>--}}
+{{--                                                    @if($de->totalPesoNoEntregado)--}}
+{{--                                                        <span class="d-block text-danger">-{{ $general->formatoDecimal($de->totalPesoNoEntregado) }}</span>--}}
+{{--                                                        <b class="colorBlackComprobantes">{{ $general->formatoDecimal($totalPesoDespacho) }} kg</b>--}}
+{{--                                                    @endif--}}
+{{--                                                </td>--}}
+{{--                                                @php--}}
+{{--                                                    $despachoGeneraLiquidacion = 0;--}}
+{{--                                                    if ($de->id_tipo_servicios == 1){--}}
+{{--                                                        $despachoGeneraLiquidacion = $de->despacho_costo_total;--}}
+{{--                                                    }else{--}}
+{{--                                                        $despachoGeneraLiquidacion = ($de->despacho_monto_modificado * $totalPesoDespacho) + $de->despacho_ayudante + $de->despacho_gasto_otros;--}}
+{{--                                                    }--}}
+{{--                                                @endphp--}}
+{{--                                                <td>S/ {{ $general->formatoDecimal($despachoGeneraLiquidacion) }}</td>--}}
+{{--                                                @php--}}
+{{--                                                    $styleColor = "text-danger";--}}
+{{--                                                    if ($de->despacho_estado_modificado == 1){--}}
+{{--                                                        $styleColor = "text-success";--}}
+{{--                                                    }--}}
+{{--                                                @endphp--}}
+{{--                                                <td><b class="{{$styleColor}}">{{$de->despacho_estado_modificado == 1 ? 'SI' : 'NO'}}</b></td>--}}
+
+{{--                                                --}}{{--                                                    <td style="{{$colorMontoProgramado}}">{{$de->despacho_monto_modificado ? $general->formatoDecimal($de->despacho_monto_modificado): 0}}</td>--}}
+{{--                                                --}}{{--                                                    <td style="{{$colorMontoProgramado}}">{{$de->despacho_ayudante ? $general->formatoDecimal($de->despacho_ayudante): 0}}</td>--}}
+{{--                                                --}}{{--                                                    <td style="{{$colorMontoProgramado}}">{{$de->despacho_gasto_otros ? $general->formatoDecimal($de->despacho_gasto_otros) : 0}}</td>--}}
+{{--                                                --}}{{--                                                    <td style="{{$colorMontoProgramado}}">{{$de->despacho_costo_total ? $general->formatoDecimal($de->despacho_costo_total) : 0}}</td>--}}
+{{--                                                --}}{{--                                                    <td style="{{$colorMontoProgramado}}">{{ $general->formatoDecimal($despachoGeneraLiquidacion / $totalVentaDespaDespacho) }} % </td>--}}
+{{--                                                --}}{{--                                                    <td style="{{$colorMontoProgramado}}">{{ $general->formatoDecimal($despachoGeneraLiquidacion / $totalPesoDespacho) }} %</td>--}}
+
+{{--                                                @php--}}
+{{--                                                    $gastosDespachos = \Illuminate\Support\Facades\DB::table('liquidacion_gastos')->where('id_liquidacion_detalle','=',$de->id_liquidacion_detalle)->get();--}}
+{{--                                                    $costoTarifa = 0;--}}
+{{--                                                    $costoMano = 0;--}}
+{{--                                                    $costoOtros = 0;--}}
+{{--                                                    $pesoFinalLiquidacion = 0;--}}
+{{--                                                    if (count($gastosDespachos) >= 3){--}}
+{{--                                                        $costoTarifa = $gastosDespachos[0]->liquidacion_gasto_monto;--}}
+{{--                                                        $costoMano = $gastosDespachos[1]->liquidacion_gasto_monto;--}}
+{{--                                                        $costoOtros = $gastosDespachos[2]->liquidacion_gasto_monto;--}}
+{{--                                                        $pesoFinalLiquidacion = $gastosDespachos[3]->liquidacion_gasto_monto;--}}
+{{--                                                    }--}}
+{{--                                                @endphp--}}
+{{--                                                --}}{{--                                                    @foreach($gastosDespachos as $fa)--}}
+{{--                                                --}}{{--                                                        <td style="{{$colorMontoLiquidado}}">{{$fa->liquidacion_gasto_monto}}</td>--}}
+{{--                                                --}}{{--                                                    @endforeach--}}
+{{--                                                @php--}}
+{{--                                                    $totalDespachoMontoLiquidado = 0;--}}
+{{--                                                    if ($de->id_tipo_servicios == 1){--}}
+{{--                                                        $totalDespachoMontoLiquidado = $costoTarifa + $costoMano + $costoOtros;--}}
+{{--                                                    }else{--}}
+{{--                                                        $totalDespachoMontoLiquidado = ($costoTarifa * $pesoFinalLiquidacion) + $costoMano + $costoOtros;--}}
+{{--                                                    }--}}
+{{--                                                @endphp--}}
+{{--                                                <td style="{{$colorMontoLiquidado}}">S/ {{ $general->formatoDecimal($totalDespachoMontoLiquidado) }}</td>--}}
+{{--                                                <td style="{{$colorMontoLiquidado}}">{{ $totalVentaDespaDespacho != 0 ? $general->formatoDecimal(($totalDespachoMontoLiquidado / $totalVentaDespaDespacho) * 100) : 0 }} % </td>--}}
+{{--                                                <td style="{{$colorMontoLiquidado}}">{{ $pesoFinalLiquidacion != 0 ? $general->formatoDecimal($totalDespachoMontoLiquidado / $pesoFinalLiquidacion) : 0 }} </td>--}}
+{{--                                                <td>--}}
+{{--                                                    <x-btn-accion class="btn btn-sm text-primary" wire:click="listar_informacion_despacho({{ $de->id_despacho }},{{ $de->id_liquidacion }})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">--}}
+{{--                                                        <x-slot name="message">--}}
+{{--                                                            <i class="fa-solid fa-eye"></i>--}}
+{{--                                                        </x-slot>--}}
+{{--                                                    </x-btn-accion>--}}
+{{--                                                </td>--}}
+{{--                                            </tr>--}}
+{{--                                            @php--}}
+{{--                                                $conteo++;--}}
+{{--                                            @endphp--}}
+{{--                                        @endforeach--}}
+{{--                                        </tbody>--}}
+{{--                                    </table>--}}
+{{--                                </div>--}}
+{{--                            </div>--}}
+{{--                        </div>--}}
+{{--                    </div>--}}
+{{--                </div>--}}
+{{--                @php $conteoGeneral++; @endphp--}}
+{{--            @endforeach--}}
+{{--        @else--}}
+{{--            <p class="text-center"> Registros Insuficientes</p>--}}
+{{--        @endif--}}
+{{--    </div>--}}
 
 </div>
 

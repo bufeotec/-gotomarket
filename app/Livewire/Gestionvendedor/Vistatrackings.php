@@ -41,10 +41,12 @@ class Vistatrackings extends Component
     }
     public $id_guia = "";
     public $guia_nro_doc = "";
+    public $guia_nombre_cliente = "";
 
-    public function mount($id, $numdoc){
+    public function mount($id, $numdoc, $nombre){
         $this->id_guia = $id;
         $this->guia_nro_doc = $numdoc;
+        $this->guia_nombre_cliente = $nombre;
         $this->buscar();
     }
     public $search_compro;
@@ -73,7 +75,8 @@ class Vistatrackings extends Component
     public $guia_detalle = [];
 
     public function render(){
-        return view('livewire.gestionvendedor.vistatrackings');
+        $nombre = $this->guia_nombre_cliente;
+        return view('livewire.gestionvendedor.vistatrackings', compact('nombre'));
     }
 
     public function modal_guia_info($id_guia) {

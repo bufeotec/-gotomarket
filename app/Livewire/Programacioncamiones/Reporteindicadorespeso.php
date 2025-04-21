@@ -30,6 +30,7 @@ class Reporteindicadorespeso extends Component
     }
     public $ydesde;
     public $yhasta;
+    public $tipo_reporte = "";
     public $filtrarData = [];
     public $summary = [];
     public $searchdatos = false;
@@ -118,9 +119,9 @@ class Reporteindicadorespeso extends Component
             $this->filtrarData = [];
 
             // 1. Obtenemos los despachos únicos con sus fletes
-            $local = $this->guia->listar_informacion_reporte_indicador_de_peso($this->ydesde, $this->yhasta, $this->departamentos, 1);
-            $provincia1 = $this->guia->listar_informacion_reporte_indicador_de_peso($this->ydesde, $this->yhasta, $this->departamentos, 2);
-            $provincia2 = $this->guia->listar_informacion_reporte_indicador_de_peso($this->ydesde, $this->yhasta, $this->departamentos, 3);
+            $local = $this->guia->listar_informacion_reporte_indicador_de_peso($this->tipo_reporte, $this->ydesde, $this->yhasta, $this->departamentos, 1);
+            $provincia1 = $this->guia->listar_informacion_reporte_indicador_de_peso($this->tipo_reporte, $this->ydesde, $this->yhasta, $this->departamentos, 2);
+            $provincia2 = $this->guia->listar_informacion_reporte_indicador_de_peso($this->tipo_reporte, $this->ydesde, $this->yhasta, $this->departamentos, 3);
 
             $this->filtrarData = array_merge($this->filtrarData, [$local, $provincia1, $provincia2]);
 
@@ -149,10 +150,10 @@ class Reporteindicadorespeso extends Component
                 $meses[] = ucfirst($fechaDesde->locale('es')->isoFormat('MMMM')); // Nombre del mes en español y con mayúscula inicial
                 $fechaAnhoMes = $fechaDesde->format('Y-m');
 
-                $lima[] = $this->guia->listar_informacion_reporte_indicador_de_peso($this->ydesde, $this->yhasta, $this->departamentos, 1,$ty,$fechaAnhoMes);
-                $provinciaOne[] = $this->guia->listar_informacion_reporte_indicador_de_peso($this->ydesde, $this->yhasta, $this->departamentos, 2,$ty,$fechaAnhoMes);
+                $lima[] = $this->guia->listar_informacion_reporte_indicador_de_peso($this->tipo_reporte, $this->ydesde, $this->yhasta, $this->departamentos, 1,$ty,$fechaAnhoMes);
+                $provinciaOne[] = $this->guia->listar_informacion_reporte_indicador_de_peso($this->tipo_reporte, $this->ydesde, $this->yhasta, $this->departamentos, 2,$ty,$fechaAnhoMes);
                 if ($ty == 1){
-                    $provinciaTwoe[] = $this->guia->listar_informacion_reporte_indicador_de_peso($this->ydesde, $this->yhasta, $this->departamentos, 3,$ty,$fechaAnhoMes);
+                    $provinciaTwoe[] = $this->guia->listar_informacion_reporte_indicador_de_peso($this->tipo_reporte, $this->ydesde, $this->yhasta, $this->departamentos, 3,$ty,$fechaAnhoMes);
                 }
 
                 $fechaDesde->addMonth();
@@ -203,18 +204,29 @@ class Reporteindicadorespeso extends Component
 
             $desde = $this->ydesde;
             $hasta = $this->yhasta;
+            $tipo = $this->tipo_reporte;
 
             $resultDetalles = DB::table('despachos as d')
                 ->join('despacho_ventas as dv', 'd.id_despacho', '=', 'dv.id_despacho')
                 ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
                 ->leftJoin('servicios_transportes as st', 'dv.id_serv_transpt', '=', 'st.id_serv_transpt')
-                ->where('d.despacho_estado_aprobacion', '!=', 4)
-                ->whereDate('d.despacho_fecha_aprobacion', '>=', $desde)
-                ->whereDate('d.despacho_fecha_aprobacion', '<=', $hasta)
-                ->get();
+                ->where('d.despacho_estado_aprobacion', '!=', 4);
+
+                if ($tipo == 1){
+                    // F. Emisión
+                    $resultDetalles->whereDate('g.guia_fecha_emision', '>=', $desde)
+                        ->whereDate('g.guia_fecha_emision', '<=', $hasta);
+
+                }else{
+                    // F. Programación
+                    $resultDetalles->whereDate('d.despacho_fecha_aprobacion', '>=', $desde)
+                        ->whereDate('d.despacho_fecha_aprobacion', '<=', $hasta);
+                }
+
+                $resultDetallesExcel = $resultDetalles->orderBy('d.despacho_numero_correlativo','asc')->get();
 
 
-            foreach ($resultDetalles as $deta){
+            foreach ($resultDetallesExcel as $deta){
                 $pesoTotalKilos = 0;
 
                 $detallesGuia = DB::table('guias_detalles')
@@ -355,7 +367,7 @@ class Reporteindicadorespeso extends Component
             // ========== LLENAR DATOS ==========
             $departemento = $this->departamentos;
             $row = 4;
-            foreach ($resultDetalles as $item) {
+            foreach ($resultDetallesExcel as $item) {
                 $validarTipoOs = DB::table('programaciones as p')
                     ->join('despachos as d','d.id_programacion','=','p.id_programacion')
                     ->join('despacho_ventas as dv','dv.id_despacho','=','d.id_despacho')

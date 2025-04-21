@@ -6,296 +6,173 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use App\Models\Logs;
+use App\Models\Guia;
 use Illuminate\Support\Facades\DB;
+use Livewire\WithoutUrlPagination;
+use Livewire\WithPagination;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 class Efectividadentregapedidos extends Component
 {
+    use WithPagination, WithoutUrlPagination;
+
     private $logs;
-    public function __construct(){
+    private $guia;
+
+    public function __construct()
+    {
         $this->logs = new Logs();
+        $this->guia = new Guia();
     }
+
+    // Propiedades públicas
     public $desde;
     public $hasta;
-    public $tipo_reporte = 'emision'; // Valor por defecto
+    public $tipo_reporte = '';
+    public $searchExecuted = false;
+
+    // Datos para reportes
     public $reporteData = [];
     public $reporteValoresData = [];
-    public $mostrarResultados = false;
+
+    // Datos para gráficos
     public $datosMensualesGrafico = [];
     public $datosMensualesValorGrafico = [];
+
+    // Meses en español para gráficos
+    public $mesesEspanol = [
+        1 => 'ENE', 2 => 'FEB', 3 => 'MAR', 4 => 'ABR',
+        5 => 'MAY', 6 => 'JUN', 7 => 'JUL', 8 => 'AGO',
+        9 => 'SEP', 10 => 'OCT', 11 => 'NOV', 12 => 'DIC'
+    ];
 
     public function mount(){
         $this->desde = date('Y-01-01');
         $this->hasta = date('Y-m-d');
-
-        $this->datosMensualesGrafico = [
-            'meses' => [],
-            'total_despachados' => [],
-            'envios_sin_devolucion' => [],
-            'porcentaje_efectividad' => []
-        ];
-
-        $this->datosMensualesValorGrafico = [
-            'meses' => [],
-            'monto_total_despachados' => [],
-            'monto_sin_devolucion' => [],
-            'porcentaje_efectividad_valor' => []
-        ];
     }
 
     public function buscar_entrega_pedido(){
-        // Base query para despachos
-        $despachosQuery = DB::table('despachos as d')
-            ->join('despacho_ventas as dv', 'dv.id_despacho', '=', 'd.id_despacho')
-            ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
-            ->whereNotNull('d.despacho_numero_correlativo');
+        try {
+            $this->validate([
+                'desde' => 'required|date',
+                'hasta' => 'required|date|after_or_equal:desde',
+            ], [
+                'desde.required' => 'La fecha de inicio es obligatoria.',
+                'hasta.required' => 'La fecha de fin es obligatoria.',
+                'hasta.after_or_equal' => 'La fecha de fin debe ser igual o posterior a la fecha de inicio.',
+            ]);
 
-        // Base query para valores monetarios
-        $valoresQuery = DB::table('despachos as d')
-            ->join('guias as g', function($join) {
-                $join->on('g.id_guia', '=', DB::raw('(SELECT dv.id_guia FROM despacho_ventas dv WHERE dv.id_despacho = d.id_despacho LIMIT 1)'));
-            })
-            ->whereNotNull('d.despacho_numero_correlativo');
+            $this->searchExecuted = true;
+            // Obtener datos principales
+            $this->obtenerDatosReporte();
+            // Obtener datos para gráficos
+            $this->obtenerDatosGraficos();
 
-        // Aplicar filtro por tipo de fecha
-        if ($this->tipo_reporte == 'programacion') {
-            // Filtrar por fecha de programación
-            $despachosQuery->join('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
-                ->whereBetween('p.programacion_fecha', [$this->desde, $this->hasta]);
+            // Disparar eventos para actualizar gráficos
+            $this->dispatch('datosActualizados');
+            $this->dispatch('actualizarGraficoDespachos', $this->datosMensualesGrafico);
+            $this->dispatch('actualizarGraficoValor', $this->datosMensualesValorGrafico);
 
-            $valoresQuery->join('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
-                ->whereBetween('p.programacion_fecha', [$this->desde, $this->hasta]);
-        } else {
-            // Filtrar por fecha de emisión (default)
-            $despachosQuery->whereBetween('g.guia_fecha_emision', [$this->desde, $this->hasta]);
-            $valoresQuery->whereBetween('g.guia_fecha_emision', [$this->desde, $this->hasta]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->setErrorBag($e->validator->errors());
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error. Por favor, inténtelo nuevamente.');
         }
+    }
 
-        // Total de pedidos despachados
-        $totalDespachados = (clone $despachosQuery)
-            ->distinct('d.id_despacho')
-            ->count('d.id_despacho');
+    public function obtenerDatosReporte(){
+        // Obtener datos de cantidad
+        $datosCantidad = $this->guia->obtener_datos_efectividad_pedidos($this->tipo_reporte, $this->desde, $this->hasta, 'cantidad');
 
-        // Despachos con devolución
-        $despachosConDevolucion = (clone $despachosQuery)
-            ->join('notas_creditos as nc', 'nc.not_cred_nro_doc_ref', '=', 'g.guia_nro_doc_ref')
-            ->where('nc.not_cred_motivo', '1') // 1 = devolución
-            ->distinct('d.id_despacho')
-            ->count('d.id_despacho');
+        // Obtener datos de valor
+        $datosValor = $this->guia->obtener_datos_efectividad_pedidos($this->tipo_reporte, $this->desde, $this->hasta, 'valor');
 
-        $enviosSinDevolucion = $totalDespachados - $despachosConDevolucion;
-        $indicadorEfectividad = ($totalDespachados > 0) ? round(($enviosSinDevolucion / $totalDespachados) * 100, 2) : 0;
-
-        // Cálculo de valores monetarios - MODIFICADO para usar guia_importe_total
-        $montoTotalDespachados = DB::table('despachos as d')
-            ->join('despacho_ventas as dv', 'dv.id_despacho', '=', 'd.id_despacho')
-            ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
-            ->whereNotNull('d.despacho_numero_correlativo')
-            ->when($this->tipo_reporte == 'programacion', function($query) {
-                $query->join('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
-                    ->whereBetween('p.programacion_fecha', [$this->desde, $this->hasta]);
-            }, function($query) {
-                $query->whereBetween('g.guia_fecha_emision', [$this->desde, $this->hasta]);
-            })
-            ->sum(DB::raw('g.guia_importe_total / 1.18'));
-
-        $montoConDevolucion = DB::table('despachos as d')
-            ->join('despacho_ventas as dv', 'dv.id_despacho', '=', 'd.id_despacho')
-            ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
-            ->join('notas_creditos as nc', 'nc.not_cred_nro_doc_ref', '=', 'g.guia_nro_doc_ref')
-            ->where('nc.not_cred_motivo', '1') // 1 = devolución
-            ->whereNotNull('d.despacho_numero_correlativo')
-            ->when($this->tipo_reporte == 'programacion', function($query) {
-                $query->join('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
-                    ->whereBetween('p.programacion_fecha', [$this->desde, $this->hasta]);
-            }, function($query) {
-                $query->whereBetween('g.guia_fecha_emision', [$this->desde, $this->hasta]);
-            })
-            ->sum(DB::raw('g.guia_importe_total / 1.18'));
-
-        $montoSinDevolucion = $montoTotalDespachados - $montoConDevolucion;
-        $indicadorEfectividadValor = ($montoTotalDespachados > 0) ? round(($montoSinDevolucion / $montoTotalDespachados) * 100, 2) : 0;
-
-        // Datos mensuales para gráficos
-        $mesesEspanol = [
-            1 => 'ENE', 2 => 'FEB', 3 => 'MAR', 4 => 'ABR',
-            5 => 'MAY', 6 => 'JUN', 7 => 'JUL', 8 => 'AGO',
-            9 => 'SEP', 10 => 'OCT', 11 => 'NOV', 12 => 'DIC'
-        ];
-
-        $datosMensualesQuery = DB::table('despachos as d')
-            ->join('despacho_ventas as dv', 'dv.id_despacho', '=', 'd.id_despacho')
-            ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
-            ->select(
-                DB::raw('MONTH(g.guia_fecha_emision) as mes'),
-                DB::raw('YEAR(g.guia_fecha_emision) as anio'),
-                DB::raw('COUNT(DISTINCT d.id_despacho) as total_despachados'),
-                DB::raw('SUM(CASE WHEN EXISTS (
-                    SELECT 1 FROM notas_creditos nc
-                    WHERE nc.not_cred_nro_doc_ref = g.guia_nro_doc_ref
-                    AND nc.not_cred_motivo = 1
-                ) THEN 1 ELSE 0 END) as despachos_con_devolucion')
-            )
-            ->whereNotNull('d.despacho_numero_correlativo');
-
-        if ($this->tipo_reporte == 'programacion') {
-            $datosMensualesQuery->select(
-                DB::raw('MONTH(p.programacion_fecha) as mes'),
-                DB::raw('YEAR(p.programacion_fecha) as anio'),
-                DB::raw('COUNT(DISTINCT d.id_despacho) as total_despachados'),
-                DB::raw('SUM(CASE WHEN EXISTS (
-            SELECT 1 FROM notas_creditos nc
-            WHERE nc.not_cred_nro_doc_ref = g.guia_nro_doc_ref
-            AND nc.not_cred_motivo = 1
-        ) THEN 1 ELSE 0 END) as despachos_con_devolucion')
-            )
-                ->join('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
-                ->whereBetween('p.programacion_fecha', [$this->desde, $this->hasta])
-                ->groupBy(DB::raw('YEAR(p.programacion_fecha)'), DB::raw('MONTH(p.programacion_fecha)'))
-                ->orderBy(DB::raw('YEAR(p.programacion_fecha)'), 'asc')
-                ->orderBy(DB::raw('MONTH(p.programacion_fecha)'), 'asc');
-        } else {
-            $datosMensualesQuery->select(
-                DB::raw('MONTH(g.guia_fecha_emision) as mes'),
-                DB::raw('YEAR(g.guia_fecha_emision) as anio'),
-                DB::raw('COUNT(DISTINCT d.id_despacho) as total_despachados'),
-                DB::raw('SUM(CASE WHEN EXISTS (
-            SELECT 1 FROM notas_creditos nc
-            WHERE nc.not_cred_nro_doc_ref = g.guia_nro_doc_ref
-            AND nc.not_cred_motivo = 1
-        ) THEN 1 ELSE 0 END) as despachos_con_devolucion')
-            )
-                ->whereBetween('g.guia_fecha_emision', [$this->desde, $this->hasta])
-                ->groupBy(DB::raw('YEAR(g.guia_fecha_emision)'), DB::raw('MONTH(g.guia_fecha_emision)'))
-                ->orderBy(DB::raw('YEAR(g.guia_fecha_emision)'), 'asc')
-                ->orderBy(DB::raw('MONTH(g.guia_fecha_emision)'), 'asc');
-        }
-
-        $datosMensuales = $datosMensualesQuery->get();
-
-        // Procesar datos mensuales
-        $meses = [];
-        $totalDespachadosMensual = [];
-        $enviosSinDevolucionMensual = [];
-        $porcentajeEfectividadMensual = [];
-
-        foreach ($datosMensuales as $dato) {
-            $meses[] = $mesesEspanol[$dato->mes] . ' ' . $dato->anio;
-            $totalDespachadosMensual[] = $dato->total_despachados;
-
-            $sinDevolucion = $dato->total_despachados - $dato->despachos_con_devolucion;
-            $enviosSinDevolucionMensual[] = $sinDevolucion;
-
-            $porcentaje = ($dato->total_despachados > 0) ? round(($sinDevolucion / $dato->total_despachados) * 100, 2) : 0;
-            $porcentajeEfectividadMensual[] = $porcentaje;
-        }
-
-        // Datos mensuales para valores
-        $datosMensualesValoresQuery = DB::table('despachos as d')
-            ->select(
-                DB::raw('MONTH(MIN(g.guia_fecha_emision)) as mes'),
-                DB::raw('YEAR(MIN(g.guia_fecha_emision)) as anio'),
-                DB::raw('SUM(g.guia_importe_total / 1.18) as monto_total'),
-                DB::raw('SUM(CASE WHEN EXISTS (
-                    SELECT 1 FROM notas_creditos nc
-                    WHERE nc.not_cred_nro_doc_ref = g.guia_nro_doc_ref
-                    AND nc.not_cred_motivo = 1
-                ) THEN g.guia_importe_total / 1.18 ELSE 0 END) as monto_con_devolucion')
-            )
-            ->join('despacho_ventas as dv', 'dv.id_despacho', '=', 'd.id_despacho')
-            ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
-            ->whereNotNull('d.despacho_numero_correlativo');
-
-        if ($this->tipo_reporte == 'programacion') {
-            $datosMensualesValoresQuery->join('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
-                ->whereBetween('p.programacion_fecha', [$this->desde, $this->hasta]);
-        } else {
-            $datosMensualesValoresQuery->whereBetween('g.guia_fecha_emision', [$this->desde, $this->hasta]);
-        }
-
-        $datosMensualesValores = $datosMensualesValoresQuery
-            ->groupBy('d.id_despacho')
-            ->orderBy('anio', 'asc')
-            ->orderBy('mes', 'asc')
-            ->get();
-
-        // Agrupar por mes y año
-        $datosAgrupadosPorMes = [];
-        foreach ($datosMensualesValores as $dato) {
-            $mesAnio = $dato->anio . '-' . str_pad($dato->mes, 2, '0', STR_PAD_LEFT);
-
-            if (!isset($datosAgrupadosPorMes[$mesAnio])) {
-                $datosAgrupadosPorMes[$mesAnio] = [
-                    'monto_total' => 0,
-                    'monto_con_devolucion' => 0
-                ];
-            }
-
-            $datosAgrupadosPorMes[$mesAnio]['monto_total'] += $dato->monto_total;
-            $datosAgrupadosPorMes[$mesAnio]['monto_con_devolucion'] += $dato->monto_con_devolucion;
-        }
-
-        // Procesar para el gráfico de valores
-        $mesesValores = [];
-        $montoTotalMensual = [];
-        $montoSinDevolucionMensual = [];
-        $porcentajeEfectividadValorMensual = [];
-
-        foreach ($datosAgrupadosPorMes as $mesAnio => $datos) {
-            list($anio, $mes) = explode('-', $mesAnio);
-            $mesesValores[] = $mesesEspanol[(int)$mes] . ' ' . $anio;
-            $montoTotalMensual[] = $datos['monto_total'];
-
-            $sinDevolucion = $datos['monto_total'] - $datos['monto_con_devolucion'];
-            $montoSinDevolucionMensual[] = $sinDevolucion;
-
-            $porcentaje = ($datos['monto_total'] > 0) ? round(($sinDevolucion / $datos['monto_total']) * 100, 2) : 0;
-            $porcentajeEfectividadValorMensual[] = $porcentaje;
-        }
-
-        // Asignar resultados
         $this->reporteData = [
-            'total_despachados' => $totalDespachados,
-            'despachos_con_devolucion' => $despachosConDevolucion,
-            'envios_sin_devolucion' => $enviosSinDevolucion,
-            'indicador_efectividad' => $indicadorEfectividad
+            'total_despachados' => $datosCantidad['total'] ?? 0,
+            'despachos_con_devolucion' => $datosCantidad['con_devolucion'] ?? 0,
+            'envios_sin_devolucion' => $datosCantidad['sin_devolucion'] ?? 0,
+            'indicador_efectividad' => $datosCantidad['porcentaje_efectividad'] ?? 0
         ];
 
         $this->reporteValoresData = [
-            'monto_total_despachados' => $montoTotalDespachados,
-            'monto_con_devolucion' => $montoConDevolucion,
-            'monto_sin_devolucion' => $montoSinDevolucion,
-            'indicador_efectividad_valor' => $indicadorEfectividadValor
+            'monto_total_despachados' => $datosValor['total'] ?? 0,
+            'monto_con_devolucion' => $datosValor['con_devolucion'] ?? 0,
+            'monto_sin_devolucion' => $datosValor['sin_devolucion'] ?? 0,
+            'indicador_efectividad_valor' => $datosValor['porcentaje_efectividad'] ?? 0
         ];
+    }
 
-        $this->datosMensualesGrafico = [
-            'meses' => $meses,
-            'total_despachados' => $totalDespachadosMensual,
-            'envios_sin_devolucion' => $enviosSinDevolucionMensual,
-            'porcentaje_efectividad' => $porcentajeEfectividadMensual
-        ];
+    public function obtenerDatosGraficos(){
+        // Obtener datos mensuales para cantidad
+        $datosMensuales = $this->guia->obtener_datos_mensuales_efectividad_pedidos($this->tipo_reporte, $this->desde, $this->hasta, 1);
+        $this->procesarDatosGrafico($datosMensuales, 1);
 
-        $this->datosMensualesValorGrafico = [
-            'meses' => $mesesValores,
-            'monto_total_despachados' => $montoTotalMensual,
-            'monto_sin_devolucion' => $montoSinDevolucionMensual,
-            'porcentaje_efectividad_valor' => $porcentajeEfectividadValorMensual
-        ];
+        // Obtener datos mensuales para valor
+        $datosMensualesValor = $this->guia->obtener_datos_mensuales_efectividad_pedidos($this->tipo_reporte, $this->desde, $this->hasta, 2);
+        $this->procesarDatosGrafico($datosMensualesValor, 2);
+    }
 
-        $this->mostrarResultados = true;
+    public function procesarDatosGrafico($datos, $tipo){
+        // Obtener el mes y año actual
+        $mesActual = (int)date('n');
+        $anioActual = date('Y');
 
-        $this->dispatch('datosActualizados');
-        $this->dispatch('actualizarGraficoDespachos', $this->datosMensualesGrafico);
-        $this->dispatch('actualizarGraficoValor', $this->datosMensualesValorGrafico);
+        // Crear un array con todos los meses
+        $todosMeses = [];
+        for ($i = 1; $i <= $mesActual; $i++) {
+            $todosMeses[$i] = [
+                'mes' => $i,
+                'anio' => $anioActual,
+                'total' => 0,
+                'con_devolucion' => 0
+            ];
+        }
+        // Combinar con los datos reales
+        foreach ($datos as $dato) {
+            $todosMeses[$dato->mes] = [
+                'mes' => $dato->mes,
+                'anio' => $dato->anio,
+                'total' => $dato->total,
+                'con_devolucion' => $dato->con_devolucion
+            ];
+        }
+        $meses = [];
+        $totales = [];
+        $sinDevolucion = [];
+        $porcentajes = [];
+
+        foreach ($todosMeses as $mesData) {
+            $meses[] = $this->mesesEspanol[$mesData['mes']] . ' ' . $mesData['anio'];
+            $totales[] = $mesData['total'];
+            $sinDevolucion[] = $mesData['total'] - $mesData['con_devolucion'];
+
+            $porcentaje = ($mesData['total'] > 0)
+                ? round(($mesData['total'] - $mesData['con_devolucion']) / $mesData['total'] * 100, 2)
+                : 0;
+            $porcentajes[] = $porcentaje;
+        }
+
+        if ($tipo === 1) {
+            $this->datosMensualesGrafico = [
+                'meses' => $meses,
+                'total_despachados' => $totales,
+                'envios_sin_devolucion' => $sinDevolucion,
+                'porcentaje_efectividad' => $porcentajes
+            ];
+        } else {
+            $this->datosMensualesValorGrafico = [
+                'meses' => $meses,
+                'monto_total_despachados' => $totales,
+                'monto_sin_devolucion' => $sinDevolucion,
+                'porcentaje_efectividad_valor' => $porcentajes
+            ];
+        }
     }
 
     public function render(){
-        return view('livewire.programacioncamiones.efectividadentregapedidos', [
-            'reporte' => $this->reporteData,
-            'reporteValores' => $this->reporteValoresData,
-            'mostrarResultados' => $this->mostrarResultados
-        ]);
+        return view('livewire.programacioncamiones.efectividadentregapedidos');
     }
 
     public function generar_excel_entrega_pedidos(){
@@ -305,19 +182,23 @@ class Efectividadentregapedidos extends Component
                 return;
             }
 
-            // Consulta para obtener las guías con todos los datos requeridos
+            // Consulta optimizada para evitar duplicados
             $query = DB::table('guias as g')
                 ->join('despacho_ventas as dv', 'dv.id_guia', '=', 'g.id_guia')
                 ->join('despachos as d', 'd.id_despacho', '=', 'dv.id_despacho')
                 ->leftJoin('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
-                ->leftJoin('historial_guias as hg', function($join) {
-                    $join->on('hg.id_guia', '=', 'g.id_guia')
-                        ->where('hg.historial_guia_estado_aprobacion', '=', 8);
-                })
-                ->leftJoin('notas_creditos as nc', function($join) {
-                    $join->on('nc.not_cred_nro_doc_ref', '=', 'g.guia_nro_doc_ref')
-                        ->where('nc.not_cred_motivo', '=', 1);
-                })
+                ->leftJoin(DB::raw('(SELECT id_guia, MAX(historial_guia_fecha_hora) as fecha_entrega
+                               FROM historial_guias
+                               WHERE historial_guia_estado_aprobacion = 8
+                               GROUP BY id_guia) as hg'),
+                    'hg.id_guia', '=', 'g.id_guia')
+                ->leftJoin(DB::raw('(SELECT not_cred_nro_doc_ref,
+                               COUNT(id_not_cred) as count_nc,
+                               SUM(not_cred_importe_total) as monto_nc
+                               FROM notas_creditos
+                               WHERE not_cred_motivo = 1
+                               GROUP BY not_cred_nro_doc_ref) as nc'),
+                    'nc.not_cred_nro_doc_ref', '=', 'g.guia_nro_doc_ref')
                 ->whereNotNull('d.despacho_numero_correlativo')
                 ->select(
                     'g.guia_fecha_emision',
@@ -328,16 +209,33 @@ class Efectividadentregapedidos extends Component
                     'd.despacho_numero_correlativo',
                     'd.despacho_estado_aprobacion',
                     'p.programacion_fecha as fecha_despacho',
-                    'hg.historial_guia_fecha_hora as fecha_entrega',
+                    'hg.fecha_entrega',
                     'g.guia_departamento',
                     'g.guia_provincia',
                     'g.guia_direc_entrega',
-                    DB::raw('CASE WHEN nc.id_not_cred IS NOT NULL THEN 1 ELSE 0 END as tiene_nc'),
-                    DB::raw('CASE WHEN nc.id_not_cred IS NOT NULL THEN g.guia_importe_total ELSE 0 END as monto_nc')
+                    DB::raw('COALESCE(nc.count_nc, 0) as tiene_nc'),
+                    DB::raw('COALESCE(nc.monto_nc, 0) as monto_nc')
+                )
+                ->groupBy(
+                    'g.id_guia',
+                    'g.guia_fecha_emision',
+                    'g.guia_nro_doc',
+                    'g.guia_nombre_cliente',
+                    'g.guia_nro_doc_ref',
+                    'g.guia_importe_total',
+                    'd.despacho_numero_correlativo',
+                    'd.despacho_estado_aprobacion',
+                    'p.programacion_fecha',
+                    'hg.fecha_entrega',
+                    'g.guia_departamento',
+                    'g.guia_provincia',
+                    'g.guia_direc_entrega',
+                    'nc.count_nc',
+                    'nc.monto_nc'
                 );
 
             // Aplicar filtro por tipo de fecha
-            if ($this->tipo_reporte == 'programacion') {
+            if ($this->tipo_reporte == '2') {
                 $query->whereBetween('p.programacion_fecha', [$this->desde, $this->hasta]);
             } else {
                 $query->whereBetween('g.guia_fecha_emision', [$this->desde, $this->hasta]);

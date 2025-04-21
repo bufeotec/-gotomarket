@@ -50,7 +50,7 @@ class Facturaspreprogramaciones extends Component
     public $detallesGuia = [];
     public $isSaving = false;
     public function mount(){
-        $this->desde = date('Y-01-01');
+        $this->desde = date('Y-m-d');
         $this->hasta = date('Y-m-d');
         $this->selectedGuias = [];
     }

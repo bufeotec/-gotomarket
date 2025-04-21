@@ -252,7 +252,7 @@
         <div class="col-lg-12">
             <div class="card">
                 <div class="card-body table-responsive">
-                    <div class="row mb-2">
+                    <div class="row align-items-center mb-2">
                         <div class="col-lg-6">
                             <h6>Recibidos por validar</h6>
                         </div>
@@ -260,7 +260,7 @@
                             @if(count($selectedGuiaIds) > 0)
                                 <div class="col-lg-12 col-md-12 col-sm-12 mb-2 text-end">
                                     <button
-                                        class="btn text-white bg-warning mt-4"
+                                        class="btn text-white bg-warning"
                                         data-bs-toggle="modal"
                                         data-bs-target="#modalPrePro"
                                         wire:click="cambio_estado()"
@@ -277,7 +277,14 @@
                                 <x-table-general id="facturasPreProgTable">
                                     <x-slot name="thead">
                                         <tr>
-                                            <th>Check</th>
+                                            <th>
+                                                <input
+                                                    type="checkbox"
+                                                    wire:model.live="select_guias_all"
+                                                    id="select_guias_all"
+                                                    class="form-check-input"
+                                                >
+                                            </th>
                                             <th>Guía</th>
                                             <th>F. Emisión</th>
                                             <th>Factura</th>

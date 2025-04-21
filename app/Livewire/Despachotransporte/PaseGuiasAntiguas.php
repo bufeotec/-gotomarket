@@ -125,6 +125,8 @@ class PaseGuiasAntiguas extends Component
         }
         $total = $contador_guias_ingresadas;
         $total_detalles = $contador_detalles_ingresados;
+        $guias_antiguas = $this->despachoventas->actualizarGuiasAntiguas();
+
         return view('livewire.despachotransporte.pase-guias-antiguas');
     }
 }

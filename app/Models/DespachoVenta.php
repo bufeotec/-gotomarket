@@ -123,4 +123,48 @@ class DespachoVenta extends Model
         return $result;
     }
 
+    public function actualizarGuiasAntiguas()
+    {
+        try {
+            // Obtener despachos con id_guia null
+            $despachos = DB::table('despacho_ventas')
+                ->select('id_despacho_venta', 'despacho_venta_guia')
+                ->whereNull('id_guia')
+                ->groupBy('id_despacho_venta', 'despacho_venta_guia')
+                ->get();
+
+            $actualizados = 0;
+
+            foreach ($despachos as $despacho) {
+                // Buscar guía correspondiente
+                $guia = DB::table('guias')
+                    ->select('id_guia')
+                    ->where('guia_nro_doc', $despacho->despacho_venta_guia)
+                    ->first();
+
+                if ($guia) {
+                    // Actualizar el despacho con el id_guia encontrado
+                    DB::table('despacho_ventas')
+                        ->where('id_despacho_venta', $despacho->id_despacho_venta)
+                        ->update(['id_guia' => $guia->id_guia]);
+
+                    $actualizados++;
+                }
+            }
+
+            return [
+                'total_despachos' => count($despachos),
+                'actualizados' => $actualizados,
+                'message' => 'Proceso completado correctamente'
+            ];
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            return [
+                'error' => true,
+                'message' => 'Error al actualizar guías: ' . $e->getMessage()
+            ];
+        }
+    }
+
 }

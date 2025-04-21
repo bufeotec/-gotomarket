@@ -91,55 +91,166 @@ class Programacion extends Model
         }
         return $result;
     }
-    public function listar_programaciones_historial_programacion($desde,$hasta,$serie = null,$tipo = null){
+    public function listar_programaciones_historial_programacion($desde, $hasta, $tipo_reporte = null, $tipo = null) {
         try {
-            $result = DB::table('programaciones as p');
-            if ($tipo){
-                $result->select('p.id_programacion','p.id_users','p.id_users_programacion','p.programacion_fecha','p.programacion_estado_aprobacion','p.programacion_numero_correlativo','p.programacion_fecha_aprobacion','p.programacion_estado','p.created_at')
-                    ->join('despachos as d','d.id_programacion','=','p.id_programacion');
-                if ($tipo == 1){
-                    $result->whereIn('d.despacho_estado_aprobacion',[1,2,3]);
-                } else {
-                    $result->where('d.despacho_estado_aprobacion', '=', $tipo);
+            // Primero obtener solo las programaciones sin JOIN con despachos
+            $result = DB::table('programaciones as p')
+                ->select(
+                    'p.id_programacion',
+                    'p.id_users',
+                    'p.id_users_programacion',
+                    'p.programacion_fecha',
+                    'p.programacion_estado_aprobacion',
+                    'p.programacion_numero_correlativo',
+                    'p.programacion_fecha_aprobacion',
+                    'p.programacion_estado',
+                    'p.created_at'
+                );
+
+            // Aplicar filtros de fecha directamente a programaciones
+            if ($desde && $hasta) {
+                $result->whereBetween('p.programacion_fecha', [$desde, $hasta]);
+            }
+
+            // Filtro por estado de liquidación (usando subconsultas)
+            if ($tipo !== null && $tipo !== '') {
+                if ($tipo == 1) { // OS Aprobadas
+                    $result->whereExists(function ($query) {
+                        $query->select(DB::raw(1))
+                            ->from('despachos as d')
+                            ->join('liquidacion_detalles as ld', 'ld.id_despacho', '=', 'd.id_despacho')
+                            ->join('liquidaciones as l', 'l.id_liquidacion', '=', 'ld.id_liquidacion')
+                            ->whereColumn('d.id_programacion', 'p.id_programacion')
+                            ->where('l.liquidacion_estado_aprobacion', 1);
+                    });
+                } elseif ($tipo == 0) { // OS Pendientes
+                    $result->where(function($query) {
+                        $query->whereNotExists(function ($subQuery) {
+                            $subQuery->select(DB::raw(1))
+                                ->from('despachos as d')
+                                ->join('liquidacion_detalles as ld', 'ld.id_despacho', '=', 'd.id_despacho')
+                                ->whereColumn('d.id_programacion', 'p.id_programacion');
+                        })
+                            ->orWhereExists(function ($subQuery) {
+                                $subQuery->select(DB::raw(1))
+                                    ->from('despachos as d')
+                                    ->join('liquidacion_detalles as ld', 'ld.id_despacho', '=', 'd.id_despacho')
+                                    ->join('liquidaciones as l', 'l.id_liquidacion', '=', 'ld.id_liquidacion')
+                                    ->whereColumn('d.id_programacion', 'p.id_programacion')
+                                    ->where('l.liquidacion_estado_aprobacion', 0);
+                            });
+                    });
                 }
-            }else{
-                $result->select('p.*');
-            }
-            if ($desde  && $hasta){
-                $result->whereBetween('p.programacion_fecha',[$desde,$hasta]);
-            }
-            if ($serie){
-                $result->where('p.programacion_numero_correlativo','like',"%$serie%");
             }
 
-            if ($tipo){
-                $result->groupBy('p.id_programacion','p.id_users','p.id_users_programacion','p.programacion_fecha','p.programacion_estado_aprobacion','p.programacion_numero_correlativo','p.programacion_fecha_aprobacion','p.programacion_estado','p.created_at');
+            // Filtro por tipo de reporte
+            if ($tipo_reporte == 1 && $desde && $hasta) { // Fecha de Despacho
+                $result->whereExists(function ($query) use ($desde, $hasta) {
+                    $query->select(DB::raw(1))
+                        ->from('despachos as d')
+                        ->whereColumn('d.id_programacion', 'p.id_programacion')
+                        ->whereBetween('d.despacho_fecha_aprobacion', [$desde, $hasta]);
+                });
+            } elseif ($tipo_reporte == 2 && $desde && $hasta) { // Fecha de Emisión
+                $result->whereExists(function ($query) use ($desde, $hasta) {
+                    $query->select(DB::raw(1))
+                        ->from('despachos as d')
+                        ->join('despacho_ventas as dv', 'dv.id_despacho', '=', 'd.id_despacho')
+                        ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
+                        ->whereColumn('d.id_programacion', 'p.id_programacion')
+                        ->whereBetween('g.guia_fecha_emision', [$desde, $hasta]);
+                });
             }
 
-            $result = $result->where('p.programacion_estado_aprobacion','<>',0)
-                ->orderBy('p.programacion_fecha', 'desc')->paginate(20);
+            $result->where('p.programacion_estado_aprobacion', '<>', 0)
+                ->orderBy('p.programacion_fecha');
 
-        }catch (\Exception $e){
+            return $result->paginate(200);
+
+        } catch (\Exception $e) {
             $this->logs->insertarLog($e);
-            $result = [];
+            return new \Illuminate\Pagination\LengthAwarePaginator([], 0, 200);
         }
-        return $result;
     }
-    public function listar_programaciones_historial_programacion_excel($desde,$hasta){
+    public function listar_programaciones_historial_programacion_excel($desde, $hasta, $tipo_reporte = null, $tipo = null) {
         try {
-            $result = DB::table('programaciones as p');
+            // Primero obtener solo las programaciones sin JOIN con despachos
+            $result = DB::table('programaciones as p')
+                ->select(
+                    'p.id_programacion',
+                    'p.id_users',
+                    'p.id_users_programacion',
+                    'p.programacion_fecha',
+                    'p.programacion_estado_aprobacion',
+                    'p.programacion_numero_correlativo',
+                    'p.programacion_fecha_aprobacion',
+                    'p.programacion_estado',
+                    'p.created_at'
+                );
 
-            if ($desde  && $hasta){
-                $result->whereBetween('p.programacion_fecha',[$desde,$hasta]);
+            // Aplicar filtros de fecha directamente a programaciones
+            if ($desde && $hasta) {
+                $result->whereBetween('p.programacion_fecha', [$desde, $hasta]);
             }
 
-            $result = $result->where('p.programacion_estado_aprobacion','=',1)
-                ->orderBy('p.programacion_fecha', 'desc')->get();
+            // Filtro por estado de liquidación (usando subconsultas)
+            if ($tipo !== null && $tipo !== '') {
+                if ($tipo == 1) { // OS Aprobadas
+                    $result->whereExists(function ($query) {
+                        $query->select(DB::raw(1))
+                            ->from('despachos as d')
+                            ->join('liquidacion_detalles as ld', 'ld.id_despacho', '=', 'd.id_despacho')
+                            ->join('liquidaciones as l', 'l.id_liquidacion', '=', 'ld.id_liquidacion')
+                            ->whereColumn('d.id_programacion', 'p.id_programacion')
+                            ->where('l.liquidacion_estado_aprobacion', 1);
+                    });
+                } elseif ($tipo == 0) { // OS Pendientes
+                    $result->where(function($query) {
+                        $query->whereNotExists(function ($subQuery) {
+                            $subQuery->select(DB::raw(1))
+                                ->from('despachos as d')
+                                ->join('liquidacion_detalles as ld', 'ld.id_despacho', '=', 'd.id_despacho')
+                                ->whereColumn('d.id_programacion', 'p.id_programacion');
+                        })
+                            ->orWhereExists(function ($subQuery) {
+                                $subQuery->select(DB::raw(1))
+                                    ->from('despachos as d')
+                                    ->join('liquidacion_detalles as ld', 'ld.id_despacho', '=', 'd.id_despacho')
+                                    ->join('liquidaciones as l', 'l.id_liquidacion', '=', 'ld.id_liquidacion')
+                                    ->whereColumn('d.id_programacion', 'p.id_programacion')
+                                    ->where('l.liquidacion_estado_aprobacion', 0);
+                            });
+                    });
+                }
+            }
 
-        }catch (\Exception $e){
+            // Filtro por tipo de reporte
+            if ($tipo_reporte == 1 && $desde && $hasta) { // Fecha de Despacho
+                $result->whereExists(function ($query) use ($desde, $hasta) {
+                    $query->select(DB::raw(1))
+                        ->from('despachos as d')
+                        ->whereColumn('d.id_programacion', 'p.id_programacion')
+                        ->whereBetween('d.despacho_fecha_aprobacion', [$desde, $hasta]);
+                });
+            } elseif ($tipo_reporte == 2 && $desde && $hasta) { // Fecha de Emisión
+                $result->whereExists(function ($query) use ($desde, $hasta) {
+                    $query->select(DB::raw(1))
+                        ->from('despachos as d')
+                        ->join('despacho_ventas as dv', 'dv.id_despacho', '=', 'd.id_despacho')
+                        ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
+                        ->whereColumn('d.id_programacion', 'p.id_programacion')
+                        ->whereBetween('g.guia_fecha_emision', [$desde, $hasta]);
+                });
+            }
+
+            $result->where('p.programacion_estado_aprobacion', '<>', 0)
+                ->orderBy('p.programacion_fecha');
+
+            return $result->get();
+
+        } catch (\Exception $e) {
             $this->logs->insertarLog($e);
-            $result = [];
+            return [];
         }
-        return $result;
     }
 }

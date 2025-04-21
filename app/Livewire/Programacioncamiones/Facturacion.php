@@ -41,15 +41,79 @@ class Facturacion extends Component
     public $fac_pre_prog_estado_aprobacion = "";
     public $fac_mov_area_motivo_rechazo = "";
     public $messageRecFactApro;
+    public $listar_comprobantes = [];
 
     public function mount(){
         $this->fecha_desde = date('Y-01-01');
         $this->fecha_hasta = date('Y-m-d');
     }
     public function render(){
-        $facturas_pre_prog_estadox = $this->guia->listar_facturas_pre_programacion_estadox($this->nombre_cliente, $this->fecha_desde, $this->fecha_hasta);
-        return view('livewire.programacioncamiones.facturacion', compact('facturas_pre_prog_estadox'));
+//        $facturas_pre_prog_estadox = $this->guia->listar_facturas_pre_programacion_estadox($this->nombre_cliente, $this->fecha_desde, $this->fecha_hasta);
+        return view('livewire.programacioncamiones.facturacion');
     }
+
+    public function buscar_comprobantes(){
+
+        $query = DB::table('guias as g')
+            ->leftJoin('guias_detalles as gd', 'g.id_guia', '=', 'gd.id_guia')
+            ->where('g.guia_estado_registro', '=', 1);
+
+        // Aplicar filtro por nombre de cliente si existe
+        if (!empty($this->nombre_cliente)) {
+            $query->where('g.guia_nombre_cliente', 'like', '%' . $this->nombre_cliente . '%');
+        }
+
+        // Aplicar filtro por rango de fechas si existen
+        if (!empty($this->fecha_desde)) {
+            $query->whereDate('g.guia_fecha_emision', '>=', $this->fecha_desde);
+        }
+
+        if (!empty($this->fecha_hasta)) {
+            $query->whereDate('g.guia_fecha_emision', '<=', $this->fecha_hasta);
+        }
+
+        $result = $query->select(
+            'g.*',
+            DB::raw('SUM(gd.guia_det_cantidad * gd.guia_det_peso_gramo) as total_peso'),
+            DB::raw('SUM(gd.guia_det_cantidad * gd.guia_det_volumen) as total_volumen')
+        )
+            ->groupBy(
+                'g.id_users',
+                'g.id_guia',
+                'g.guia_almacen_origen',
+                'g.guia_tipo_doc',
+                'g.guia_nro_doc',
+                'g.guia_fecha_emision',
+                'g.guia_tipo_movimiento',
+                'g.guia_tipo_doc_ref',
+                'g.guia_nro_doc_ref',
+                'g.guia_glosa',
+                'g.guia_fecha_proceso',
+                'g.guia_hora_proceso',
+                'g.guia_usuario',
+                'g.guia_cod_cliente',
+                'g.guia_ruc_cliente',
+                'g.guia_nombre_cliente',
+                'g.guia_forma_pago',
+                'g.guia_vendedor',
+                'g.guia_moneda',
+                'g.guia_tipo_cambio',
+                'g.guia_estado',
+                'g.guia_direc_entrega',
+                'g.guia_nro_pedido',
+                'g.guia_importe_total',
+                'g.guia_departamento',
+                'g.guia_provincia',
+                'g.guia_destrito',
+                'g.guia_estado_aprobacion',
+                'g.guia_estado_registro',
+                'g.guia_fecha',
+                'g.created_at',
+                'g.updated_at'
+            );
+            $this->listar_comprobantes = $result->get();
+    }
+
     public function cambio_estado($id_guia, $estado_aprobacion){
         $this->fechaHoraManual = '';
         $this->id_guia = base64_decode($id_guia);

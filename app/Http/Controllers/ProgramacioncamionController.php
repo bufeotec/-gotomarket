@@ -213,10 +213,11 @@ class ProgramacioncamionController extends Controller
             if ($data && isset($data['id'])) {
                 $id_guia = $data['id'];
                 $num_doc = $data['numdoc'];
+                $nombre = $data['nombre'];
 
                 $informacion_guia = $this->guia->listar_guia_x_id($id_guia);
 
-                return view('gestionvendedor.vistatracking', compact('informacion_guia', 'num_doc'));
+                return view('gestionvendedor.vistatracking', compact('informacion_guia', 'num_doc', 'nombre'));
             }
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);

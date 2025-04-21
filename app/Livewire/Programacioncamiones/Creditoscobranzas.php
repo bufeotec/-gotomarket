@@ -46,6 +46,7 @@ class Creditoscobranzas extends Component
     public $selectedItems = [];
     public $selectedGuiaAcp = [];
     public $selectAll = false;
+    public $select_guias_all = false;
     public $estadoGuia = "";
 
     public function mount(){
@@ -77,6 +78,28 @@ class Creditoscobranzas extends Component
         // Obtener los resultados de la consulta
         $this->filteredFacturas = $query->get();
     }
+
+
+    public function updatedSelectGuiasAll(){
+        if ($this->select_guias_all) {
+            // Si selectAll está marcado, seleccionar todas las guías filtradas
+            $this->selectedGuiaIds = $this->filteredFacturas->pluck('id_guia')->toArray();
+        } else {
+            // Si selectAll está desmarcado, deseleccionar todas
+            $this->selectedGuiaIds = [];
+        }
+    }
+
+    public function updatedSelectedGuiaIds(){
+        // Verificar si todas las guías están seleccionadas
+        if (!empty($this->filteredFacturas)) {
+            $allGuiaIds = $this->filteredFacturas->pluck('id_guia')->toArray();
+            $this->select_guias_all = count(array_diff($allGuiaIds, $this->selectedGuiaIds)) === 0;
+        } else {
+            $this->select_guias_all = false;
+        }
+    }
+
     public function pre_mot_cre($id_fac = null){
         $this->fechaHoraManual3 = '';
 
@@ -121,7 +144,7 @@ class Creditoscobranzas extends Component
                         $historial->id_guia = $select;
                         $historial->guia_nro_doc = $facturaPreprogramada->guia_nro_doc;
                         $historial->historial_guia_estado_aprobacion = 5;
-                        $historial->historial_guia_fecha_hora = Carbon::now('America/Lima');
+                        $historial->historial_guia_fecha_hora = $this->fechaHoraManual3;
                         $historial->historial_guia_estado = 1;
                         $historial->save();
 
@@ -150,6 +173,7 @@ class Creditoscobranzas extends Component
                 }
                 DB::commit();
                 $this->selectedGuiaIds = [];
+                $this->select_guias_all = false;
                 $this->dispatch('hidemodalMotCre');
                 session()->flash('success', 'Guías aprobadas correctamente.');
                 $this->buscar_comprobantes();

@@ -38,6 +38,9 @@ class HistorialLiquidacion extends Component
     public $listar_detalle_despacho = [];
     public $id_liquidacion = '';
     public $liquidacion_ruta_comprobante = '';
+    public $tipo_reporte = '';
+    public $locales = [];
+    public $provinciales = [];
 
     public function mount()
     {
@@ -45,14 +48,51 @@ class HistorialLiquidacion extends Component
         $this->hasta = date('Y-m-d');
     }
 
-    public function render()
-    {
-        $resultado = $this->liquidacion->listar_liquidacion_aprobadas_new($this->search, $this->desde, $this->hasta);
-        return view('livewire.liquidacion.historial-liquidacion', compact('resultado'));
+    public function render(){
+        return view('livewire.liquidacion.historial-liquidacion', [
+            'locales' => $this->locales ?? [],
+            'provinciales' => $this->provinciales ?? []
+        ]);
     }
 
-    public function listar_informacion_liquidacion($id)
-    {
+    public function buscar_historial_liquidacion(){
+        $resultado = $this->liquidacion->listar_liquidacion_aprobadas_new($this->search, $this->desde, $this->hasta, $this->tipo_reporte);
+
+        // Separar y ordenar resultados por transportista
+        $locales = collect();
+        $provinciales = collect();
+
+        foreach ($resultado as $item) {
+            $detalles = DB::table('liquidacion_detalles as ld')
+                ->join('despachos as d', 'd.id_despacho', '=', 'ld.id_despacho')
+                ->where('ld.id_liquidacion', '=', $item->id_liquidacion)
+                ->get();
+
+            $esLocal = false;
+            $esProvincial = false;
+
+            foreach ($detalles as $detalle) {
+                if ($detalle->id_tipo_servicios == 1) {
+                    $esLocal = true;
+                } else if ($detalle->id_tipo_servicios == 2) {
+                    $esProvincial = true;
+                }
+            }
+
+            if ($esLocal) {
+                $locales->push($item);
+            }
+            if ($esProvincial) {
+                $provinciales->push($item);
+            }
+        }
+
+        // Ordenar por transportista
+        $this->locales = $locales->sortBy('transportista_nom_comercial')->values()->all();
+        $this->provinciales = $provinciales->sortBy('transportista_nom_comercial')->values()->all();
+    }
+
+    public function listar_informacion_liquidacion($id){
         try {
             $this->listar_detalle_liquidacion = DB::table('liquidaciones as l')
                 ->join('users as u', 'l.id_users', '=', 'u.id_users')
@@ -288,7 +328,15 @@ class HistorialLiquidacion extends Component
                 session()->flash('error', 'No tiene permisos para generar el reporte en excel.');
                 return;
             }
-            $resultado = $this->liquidacion->listar_liquidacion_aprobadas_excel($this->search,$this->desde, $this->hasta);
+            $resultado = $this->liquidacion->listar_liquidacion_aprobadas_excel(
+                $this->search,
+                $this->desde,
+                $this->hasta,
+                $this->tipo_reporte
+            );
+
+            // Ordenar por nombre comercial de transportista
+            $resultado = collect($resultado)->sortBy('transportista_nom_comercial')->values()->all();
 
             $spreadsheet = new Spreadsheet();
             $sheet1 = $spreadsheet->getActiveSheet();
@@ -368,76 +416,94 @@ class HistorialLiquidacion extends Component
             $rowStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
 
             $row = 6;
-            $totalGeneralComprobantes = 0;
-            $primeraFilaIngresadaTra = null;
-            $ultimoTransportista = null;
-            $sumaPorTransportista = 0;
+            $transportistaGroups = [];
+            $totalGeneralSinIGV = 0;
+            $totalGeneralConIGV = 0;
 
-            foreach ($locales as $index => $re) {
-                // Obtener los datos de programación y despacho
-                $detallesDespacho = DB::table('liquidacion_detalles as ld')
-                    ->join('despachos as d', 'd.id_despacho', '=', 'ld.id_despacho')
-                    ->leftJoin('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
-                    ->select('d.*', 'p.programacion_fecha')
-                    ->where('ld.id_liquidacion', '=', $re->id_liquidacion)
-                    ->first();
+            // Agrupar locales por nombre comercial de transportista
+            foreach ($locales as $re) {
+                $transportistaNombre = $re->transportista_nom_comercial ?? 'SIN TRANSPORTISTA';
 
-                $programacionFecha = isset($detallesDespacho->programacion_fecha) ? date('d/m/Y', strtotime($detallesDespacho->programacion_fecha)) : '-';
-                $despachoFechaAprobacion = isset($detallesDespacho->despacho_fecha_aprobacion) ? date('d/m/Y', strtotime($detallesDespacho->despacho_fecha_aprobacion)) : '-';
-
-                $totalSinIGVExcel = $re->total_sin_igv;
-                $totalConIVCExcel = $totalSinIGVExcel * 1.18;
-
-                $totalSinIGVExcelFormatted = $this->general->formatoDecimal($totalSinIGVExcel);
-                $totalConIVCExcelFormatted = $this->general->formatoDecimal($totalConIVCExcel);
-
-                if ($ultimoTransportista !== null && $ultimoTransportista !== $re->id_transportistas) {
-                    $Filahasta = $row - 1;
-                    $sheet1->mergeCells('H'.$primeraFilaIngresadaTra.':H'.$Filahasta);
-                    $sheet1->setCellValue('H'.$primeraFilaIngresadaTra, $this->general->formatoDecimal($sumaPorTransportista));
-                    $sumaPorTransportista = 0;
-                    $primeraFilaIngresadaTra = $row;
+                if (!isset($transportistaGroups[$transportistaNombre])) {
+                    $transportistaGroups[$transportistaNombre] = [
+                        'registros' => [],
+                        'total_con_igv' => 0,
+                        'total_sin_igv' => 0
+                    ];
                 }
 
-                $sumaPorTransportista += $totalConIVCExcel;
+                $conIGV = $re->total_sin_igv * 1.18;
 
-                $sheet1->setCellValue('A'.$row, $programacionFecha);
-                $sheet1->setCellValue('B'.$row, $despachoFechaAprobacion);
-                $sheet1->setCellValue('C'.$row, 'LIMA');
-                $sheet1->setCellValue('D'.$row, $re->transportista_nom_comercial);
-                $sheet1->setCellValue('E'.$row, $re->liquidacion_serie.'-'.$re->liquidacion_correlativo);
-                $sheet1->setCellValue('F'.$row, $totalSinIGVExcelFormatted);
-                $sheet1->setCellValue('G'.$row, $totalConIVCExcelFormatted);
+                $transportistaGroups[$transportistaNombre]['registros'][] = [
+                    'data' => $re,
+                    'con_igv' => $conIGV,
+                    'sin_igv' => $re->total_sin_igv
+                ];
 
-                $cellRange = 'A'.$row.':H'.$row;
-                $rowStyle = $sheet1->getStyle($cellRange);
-                $rowStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-                $rowStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-                $rowStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                $transportistaGroups[$transportistaNombre]['total_con_igv'] += $conIGV;
+                $transportistaGroups[$transportistaNombre]['total_sin_igv'] += $re->total_sin_igv;
 
-                if ($ultimoTransportista === null || $ultimoTransportista !== $re->id_transportistas) {
-                    $ultimoTransportista = $re->id_transportistas;
-                    $primeraFilaIngresadaTra = $row;
-                }
-
-                if ($index == count($locales) - 1) {
-                    $Filahasta = $row;
-                    $sheet1->mergeCells('H'.$primeraFilaIngresadaTra.':H'.$Filahasta);
-                    $sheet1->setCellValue('H'.$primeraFilaIngresadaTra, $this->general->formatoDecimal($sumaPorTransportista));
-                }
-
-                $row++;
-                $totalGeneralComprobantes += $re->total_sin_igv;
+                // Sumar a totales generales
+                $totalGeneralSinIGV += $re->total_sin_igv;
+                $totalGeneralConIGV += $conIGV;
             }
 
-            // Totales LOCAL
-            $sheet1->setCellValue('A'.$row, 'TOTAL LOCAL');
+            // Procesar cada grupo de transportista para locales
+            foreach ($transportistaGroups as $transportistaNombre => $group) {
+                $isFirstRow = true;
+
+                foreach ($group['registros'] as $registro) {
+                    $re = $registro['data'];
+                    $conIGV = $registro['con_igv'];
+
+                    $detallesDespacho = DB::table('liquidacion_detalles as ld')
+                        ->join('despachos as d', 'd.id_despacho', '=', 'ld.id_despacho')
+                        ->leftJoin('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
+                        ->select('d.*', 'p.programacion_fecha')
+                        ->where('ld.id_liquidacion', '=', $re->id_liquidacion)
+                        ->first();
+
+                    $programacionFecha = isset($detallesDespacho->programacion_fecha) ? date('d/m/Y', strtotime($detallesDespacho->programacion_fecha)) : '-';
+                    $despachoFechaAprobacion = isset($detallesDespacho->despacho_fecha_aprobacion) ? date('d/m/Y', strtotime($detallesDespacho->despacho_fecha_aprobacion)) : '-';
+
+                    $totalSinIGVExcel = $re->total_sin_igv;
+
+                    $totalSinIGVExcelFormatted = $this->general->formatoDecimal($totalSinIGVExcel);
+                    $totalConIVCExcelFormatted = $this->general->formatoDecimal($conIGV);
+
+                    $sheet1->setCellValue('A'.$row, $programacionFecha);
+                    $sheet1->setCellValue('B'.$row, $despachoFechaAprobacion);
+                    $sheet1->setCellValue('C'.$row, 'LIMA');
+                    $sheet1->setCellValue('D'.$row, $transportistaNombre);
+                    $sheet1->setCellValue('E'.$row, $re->liquidacion_serie.'-'.$re->liquidacion_correlativo);
+                    $sheet1->setCellValue('F'.$row, 'S/ '. $totalSinIGVExcelFormatted);
+                    $sheet1->setCellValue('G'.$row, 'S/ '. $totalConIVCExcelFormatted);
+
+                    // Mostrar el total CON IGV solo en la primera fila del transportista
+                    if ($isFirstRow) {
+                        $sheet1->setCellValue('H'.$row, 'S/ '. $this->general->formatoDecimal($group['total_con_igv']));
+                        $isFirstRow = false;
+                    } else {
+                        $sheet1->setCellValue('H'.$row, '');
+                    }
+
+                    $cellRange = 'A'.$row.':H'.$row;
+                    $rowStyle = $sheet1->getStyle($cellRange);
+                    $rowStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                    $rowStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                    $rowStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+
+                    $row++;
+                }
+                // No agregamos espacio entre transportistas
+            }
+
+            // Agregar total general LOCAL
+            $sheet1->setCellValue('A'.$row, 'TOTAL GENERAL LOCAL');
             $sheet1->mergeCells('A'.$row.':E'.$row);
-            $toSinIGV = $this->general->formatoDecimal($totalGeneralComprobantes);
-            $sheet1->setCellValue('F'.$row, $toSinIGV);
-            $toConIGV = $this->general->formatoDecimal($totalGeneralComprobantes * 1.18);
-            $sheet1->setCellValue('G'.$row, $toConIGV);
-            $sheet1->setCellValue('H'.$row, $toConIGV);
+            $sheet1->setCellValue('F'.$row, $this->general->formatoDecimal($totalGeneralSinIGV));
+            $sheet1->setCellValue('G'.$row, $this->general->formatoDecimal($totalGeneralConIGV));
+            $sheet1->setCellValue('H'.$row, $this->general->formatoDecimal($totalGeneralConIGV));
 
             $cellRange = 'A'.$row.':H'.$row;
             $rowStyle = $sheet1->getStyle($cellRange);
@@ -448,7 +514,7 @@ class HistorialLiquidacion extends Component
             $rowStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
             $rowStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
 
-            $nextRow = $row + 2; // Dejar un espacio entre tablas
+            $row += 2; // Espacio antes de la tabla provincial
 
             // Generar tabla PROVINCIAL (columna J-Q)
             $sheet1->setCellValue('J4', 'PROVINCIAL');
@@ -481,86 +547,102 @@ class HistorialLiquidacion extends Component
             $rowStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
             $rowStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
 
-            $row = 6;
-            $totalGeneralProvincial = 0;
-            $primeraFilaIngresadaTraProv = null;
-            $ultimoTransportistaProv = null;
-            $sumaPorTransportistaProv = 0;
+            $provincialRow = 6;
+            $transportistaGroupsProv = [];
+            $totalGeneralProvSinIGV = 0;
+            $totalGeneralProvConIGV = 0;
 
-            foreach ($provinciales as $index => $re) {
-                // Obtener los datos de programación, despacho, departamento y provincia
-                $detallesDespacho = DB::table('liquidacion_detalles as ld')
-                    ->join('despachos as d', 'd.id_despacho', '=', 'ld.id_despacho')
-                    ->leftJoin('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
-                    ->leftJoin('departamentos as dep', 'dep.id_departamento', '=', 'd.id_departamento')
-                    ->leftJoin('provincias as prov', 'prov.id_provincia', '=', 'd.id_provincia')
-                    ->select('d.*', 'p.programacion_fecha', 'dep.departamento_nombre', 'prov.provincia_nombre')
-                    ->where('ld.id_liquidacion', '=', $re->id_liquidacion)
-                    ->first();
+            // Agrupar provinciales por nombre comercial de transportista
+            foreach ($provinciales as $re) {
+                $transportistaNombre = $re->transportista_nom_comercial ?? 'SIN TRANSPORTISTA';
 
-                $programacionFecha = isset($detallesDespacho->programacion_fecha) ? date('d/m/Y', strtotime($detallesDespacho->programacion_fecha)) : '-';
-                $despachoFechaAprobacion = isset($detallesDespacho->despacho_fecha_aprobacion) ? date('d/m/Y', strtotime($detallesDespacho->despacho_fecha_aprobacion)) : '-';
-
-                $departamentoProvincia = '-';
-                if (isset($detallesDespacho->departamento_nombre) && isset($detallesDespacho->provincia_nombre)) {
-                    $departamentoProvincia = $detallesDespacho->departamento_nombre . ' - ' . $detallesDespacho->provincia_nombre;
+                if (!isset($transportistaGroupsProv[$transportistaNombre])) {
+                    $transportistaGroupsProv[$transportistaNombre] = [
+                        'registros' => [],
+                        'total_con_igv' => 0,
+                        'total_sin_igv' => 0
+                    ];
                 }
+                $totalConIGV = $re->total_sin_igv * 1.18;
+                $transportistaGroupsProv[$transportistaNombre]['registros'][] = [
+                    'data' => $re,
+                    'con_igv' => $totalConIGV,
+                    'sin_igv' => $re->total_sin_igv
+                ];
+                $transportistaGroupsProv[$transportistaNombre]['total_con_igv'] += $totalConIGV;
+                $transportistaGroupsProv[$transportistaNombre]['total_sin_igv'] += $re->total_sin_igv;
 
-                $totalSinIGVExcel = $re->total_sin_igv;
-                $totalConIVCExcel = $totalSinIGVExcel * 1.18;
-
-                $totalSinIGVExcelFormatted = $this->general->formatoDecimal($totalSinIGVExcel);
-                $totalConIVCExcelFormatted = $this->general->formatoDecimal($totalConIVCExcel);
-
-                if ($ultimoTransportistaProv !== null && $ultimoTransportistaProv !== $re->id_transportistas) {
-                    $Filahasta = $row - 1;
-                    $sheet1->mergeCells('Q'.$primeraFilaIngresadaTraProv.':Q'.$Filahasta);
-                    $sheet1->setCellValue('Q'.$primeraFilaIngresadaTraProv, $this->general->formatoDecimal($sumaPorTransportistaProv));
-                    $sumaPorTransportistaProv = 0;
-                    $primeraFilaIngresadaTraProv = $row;
-                }
-
-                $sumaPorTransportistaProv += $totalConIVCExcel;
-
-                $sheet1->setCellValue('J'.$row, $programacionFecha);
-                $sheet1->setCellValue('K'.$row, $despachoFechaAprobacion);
-                $sheet1->setCellValue('L'.$row, $re->transportista_nom_comercial);
-                $sheet1->setCellValue('M'.$row, $departamentoProvincia);
-                $sheet1->setCellValue('N'.$row, $re->liquidacion_serie.'-'.$re->liquidacion_correlativo);
-                $sheet1->setCellValue('O'.$row, $totalSinIGVExcelFormatted);
-                $sheet1->setCellValue('P'.$row, $totalConIVCExcelFormatted);
-
-                $cellRange = 'J'.$row.':Q'.$row;
-                $rowStyle = $sheet1->getStyle($cellRange);
-                $rowStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-                $rowStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-                $rowStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
-
-                if ($ultimoTransportistaProv === null || $ultimoTransportistaProv !== $re->id_transportistas) {
-                    $ultimoTransportistaProv = $re->id_transportistas;
-                    $primeraFilaIngresadaTraProv = $row;
-                }
-
-                if ($index == count($provinciales) - 1) {
-                    $Filahasta = $row;
-                    $sheet1->mergeCells('Q'.$primeraFilaIngresadaTraProv.':Q'.$Filahasta);
-                    $sheet1->setCellValue('Q'.$primeraFilaIngresadaTraProv, $this->general->formatoDecimal($sumaPorTransportistaProv));
-                }
-
-                $row++;
-                $totalGeneralProvincial += $re->total_sin_igv;
+                // Sumar a totales generales provinciales
+                $totalGeneralProvSinIGV += $re->total_sin_igv;
+                $totalGeneralProvConIGV += $totalConIGV;
             }
 
-            // Totales PROVINCIAL
-            $sheet1->setCellValue('J'.$row, 'TOTAL PROVINCIAL');
-            $sheet1->mergeCells('J'.$row.':N'.$row);
-            $toSinIGV = $this->general->formatoDecimal($totalGeneralProvincial);
-            $sheet1->setCellValue('O'.$row, $toSinIGV);
-            $toConIGV = $this->general->formatoDecimal($totalGeneralProvincial * 1.18);
-            $sheet1->setCellValue('P'.$row, $toConIGV);
-            $sheet1->setCellValue('Q'.$row, $toConIGV);
+            // Procesar cada grupo de transportista para provinciales
+            foreach ($transportistaGroupsProv as $transportistaNombre => $group) {
+                $isFirstRow = true;
 
-            $cellRange = 'J'.$row.':Q'.$row;
+                foreach ($group['registros'] as $registro) {
+                    $re = $registro['data'];
+                    $conIGV = $registro['con_igv'];
+
+                    $detallesDespacho = DB::table('liquidacion_detalles as ld')
+                        ->join('despachos as d', 'd.id_despacho', '=', 'ld.id_despacho')
+                        ->leftJoin('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
+                        ->leftJoin('departamentos as dep', 'dep.id_departamento', '=', 'd.id_departamento')
+                        ->leftJoin('provincias as prov', 'prov.id_provincia', '=', 'd.id_provincia')
+                        ->select('d.*', 'p.programacion_fecha', 'dep.departamento_nombre', 'prov.provincia_nombre')
+                        ->where('ld.id_liquidacion', '=', $re->id_liquidacion)
+                        ->first();
+
+                    $programacionFecha = isset($detallesDespacho->programacion_fecha) ? date('d/m/Y', strtotime($detallesDespacho->programacion_fecha)) : '-';
+                    $despachoFechaAprobacion = isset($detallesDespacho->despacho_fecha_aprobacion) ? date('d/m/Y', strtotime($detallesDespacho->despacho_fecha_aprobacion)) : '-';
+
+                    $departamentoProvincia = '-';
+                    if (isset($detallesDespacho->departamento_nombre) && isset($detallesDespacho->provincia_nombre)) {
+                        $departamentoProvincia = $detallesDespacho->departamento_nombre . ' - ' . $detallesDespacho->provincia_nombre;
+                    }
+
+                    $totalSinIGVExcel = $re->total_sin_igv;
+                    $totalConIVCExcel = $totalSinIGVExcel * 1.18;
+
+                    $totalSinIGVExcelFormatted = $this->general->formatoDecimal($totalSinIGVExcel);
+                    $totalConIVCExcelFormatted = $this->general->formatoDecimal($totalConIVCExcel);
+
+                    $sheet1->setCellValue('J'.$provincialRow, $programacionFecha);
+                    $sheet1->setCellValue('K'.$provincialRow, $despachoFechaAprobacion);
+                    $sheet1->setCellValue('L'.$provincialRow, $transportistaNombre);
+                    $sheet1->setCellValue('M'.$provincialRow, $departamentoProvincia);
+                    $sheet1->setCellValue('N'.$provincialRow, $re->liquidacion_serie.'-'.$re->liquidacion_correlativo);
+                    $sheet1->setCellValue('O'.$provincialRow, 'S/ ' . $totalSinIGVExcelFormatted);
+                    $sheet1->setCellValue('P'.$provincialRow, 'S/ ' . $totalConIVCExcelFormatted);
+
+                    // Mostrar el total CON IGV solo en la primera fila del transportista
+                    if ($isFirstRow) {
+                        $sheet1->setCellValue('Q'.$provincialRow, 'S/ ' . $this->general->formatoDecimal($group['total_con_igv']));
+                        $isFirstRow = false;
+                    } else {
+                        $sheet1->setCellValue('Q'.$provincialRow, '');
+                    }
+
+                    $cellRange = 'J'.$provincialRow.':Q'.$provincialRow;
+                    $rowStyle = $sheet1->getStyle($cellRange);
+                    $rowStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                    $rowStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                    $rowStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+
+                    $provincialRow++;
+                }
+                // No agregamos espacio entre transportistas
+            }
+
+            // Agregar total general PROVINCIAL
+            $sheet1->setCellValue('J'.$provincialRow, 'TOTAL GENERAL PROVINCIAL');
+            $sheet1->mergeCells('J'.$provincialRow.':N'.$provincialRow);
+            $sheet1->setCellValue('O'.$provincialRow, $this->general->formatoDecimal($totalGeneralProvSinIGV));
+            $sheet1->setCellValue('P'.$provincialRow, $this->general->formatoDecimal($totalGeneralProvConIGV));
+            $sheet1->setCellValue('Q'.$provincialRow, $this->general->formatoDecimal($totalGeneralProvConIGV));
+
+            $cellRange = 'J'.$provincialRow.':Q'.$provincialRow;
             $rowStyle = $sheet1->getStyle($cellRange);
             $rowStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
             $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('ececec');
@@ -570,9 +652,23 @@ class HistorialLiquidacion extends Component
             $rowStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
 
             // Ajustar anchos de columnas
-            for ($col = 'A'; $col <= 'Q'; $col++) {
-                $sheet1->getColumnDimension($col)->setWidth(15);
-            }
+            $sheet1->getColumnDimension('A')->setWidth(15);
+            $sheet1->getColumnDimension('B')->setWidth(15);
+            $sheet1->getColumnDimension('C')->setWidth(15);
+            $sheet1->getColumnDimension('D')->setWidth(40);
+            $sheet1->getColumnDimension('E')->setWidth(15);
+            $sheet1->getColumnDimension('F')->setWidth(15);
+            $sheet1->getColumnDimension('G')->setWidth(15);
+            $sheet1->getColumnDimension('H')->setWidth(15);
+
+            $sheet1->getColumnDimension('J')->setWidth(15);
+            $sheet1->getColumnDimension('K')->setWidth(15);
+            $sheet1->getColumnDimension('L')->setWidth(40);
+            $sheet1->getColumnDimension('M')->setWidth(30);
+            $sheet1->getColumnDimension('N')->setWidth(15);
+            $sheet1->getColumnDimension('O')->setWidth(15);
+            $sheet1->getColumnDimension('P')->setWidth(15);
+            $sheet1->getColumnDimension('Q')->setWidth(15);
 
             $nombre_excel = "historial_de_liquidación" . date('d-m-Y') . '.xlsx';
             $response = response()->stream(

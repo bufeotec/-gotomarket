@@ -40,10 +40,34 @@ class Validaredes extends Component
     public $guiainfo = [];
     public $guia_detalle = [];
     public $selectedGuiaIds = [];
+    public $select_guias_all = false;
 
     public function render(){
         $facturas_pre_prog_estado_dos = $this->guia->listar_facturas_pre_programacion_estado_dos();
         return view('livewire.programacioncamiones.validaredes', compact('facturas_pre_prog_estado_dos'));
+    }
+
+    public function updatedSelectGuiasAll($value){
+        if ($value) {
+            // Seleccionar todas las guías visibles en la tabla
+            $this->selectedGuiaIds = $this->guia->listar_facturas_pre_programacion_estado_dos()
+                ->pluck('id_guia')
+                ->toArray();
+        } else {
+            // Deseleccionar todas
+            $this->selectedGuiaIds = [];
+        }
+    }
+
+    // Método para cuando cambian los checkboxes individuales
+    public function updatedSelectedGuiaIds(){
+        $allGuiaIds = $this->guia->listar_facturas_pre_programacion_estado_dos()
+            ->pluck('id_guia')
+            ->toArray();
+
+        // Verificar si todos están seleccionados
+        $this->select_guias_all = count($this->selectedGuiaIds) > 0 &&
+            count(array_diff($allGuiaIds, $this->selectedGuiaIds)) === 0;
     }
 
     public function cambio_estado($id_factura = null, $estado = null){
@@ -139,6 +163,7 @@ class Validaredes extends Component
                 }
                 DB::commit();
                 $this->selectedGuiaIds = [];
+                $this->select_guias_all = [];
                 $this->dispatch('hidemodalPrePro');
                 session()->flash('success', 'Guías aprobadas correctamente.');
             } else {

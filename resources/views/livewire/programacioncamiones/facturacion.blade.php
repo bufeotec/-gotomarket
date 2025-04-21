@@ -162,18 +162,25 @@
         @endif
 
             <div class="col-lg-12">
-                <div class="row">
+                <div class="row align-items-center">
                     <div class="col-lg-3 col-md-2 col-sm-12 mb-2">
                         <label for="nombre_cliente" class="form-label">Nombre del cliente</label>
                         <input type="text" name="nombre_cliente" id="nombre_cliente" wire:model.live="nombre_cliente" class="form-control">
                     </div>
                     <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-                        <label for="fecha_desde" class="form-label">Desde</label>
+                        <label for="fecha_desde" class="form-label">Desde (Fecha emisión)</label>
                         <input type="date" name="fecha_desde" id="fecha_desde" wire:model.live="fecha_desde" class="form-control">
                     </div>
                     <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-                        <label for="fecha_hasta" class="form-label">Hasta</label>
+                        <label for="fecha_hasta" class="form-label">Hasta (Fecha emisión)</label>
                         <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model.live="fecha_hasta" class="form-control">
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-sm-12 mb-2 mt-4">
+                        <button class="btn btn-sm bg-primary text-white w-75" wire:click="buscar_comprobantes" wire:loading.attr="disabled">
+                            <i class="fa fa-search"></i>
+                            <spanc class="ms-1" wire:loading.remove wire:target="buscar_comprobantes">BUSCAR</spanc>
+                            <spanc class="ms-1" wire:loading wire:target="buscar_comprobantes">BUSCANDO...</spanc>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -188,7 +195,7 @@
                     </div>
                     <div class="row">
                         <div class="col-lg-12">
-                            @if(count($facturas_pre_prog_estadox) > 0)
+                            @if(count($listar_comprobantes) > 0)
                                 <x-table-general id="facturasPreProgTable">
                                     <x-slot name="thead">
                                         <tr>
@@ -205,7 +212,7 @@
                                         </tr>
                                     </x-slot>
                                     <x-slot name="tbody">
-                                        @foreach($facturas_pre_prog_estadox as $factura)
+                                        @foreach($listar_comprobantes as $factura)
                                             <tr>
                                                 <td>
                                                     <span class="d-block tamanhoTablaComprobantes">
@@ -311,8 +318,6 @@
                                         @endforeach
                                     </x-slot>
                                 </x-table-general>
-                            @else
-                                <p>No hay facturas pre programación disponibles.</p>
                             @endif
                         </div>
                     </div>

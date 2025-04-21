@@ -47,38 +47,81 @@
         @endif
 
         <div class="col-lg-2 col-md-3 col-sm-12 mt-4">
-            <button class="btn btn-sm bg-primary text-white" wire:click="buscar_estado_documento">
+            <button class="btn btn-sm bg-primary text-white" wire:click="buscar_estado_documento" wire:loading.attr="disabled">
                 <i class="fa fa-search"></i> BUSCAR
             </button>
         </div>
 
-        @if($resultados)
+        @if(count($resultados) > 0)
             <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-                <button class="btn btn-success btn-sm text-white mt-4" wire:click="generar_excel_estado_documentos" wire:loading.attr="disabled"><i class="fa-solid fa-file-excel"></i> Exportar</button>
+                <button class="btn btn-success btn-sm text-white mt-4" wire:click="generar_excel_estado_documentos" wire:loading.attr="disabled">
+                    <i class="fa-solid fa-file-excel"></i> Exportar
+                </button>
             </div>
         @endif
+
         <div class="col-lg-12 col-md-12 col-sm-12">
-            <div class="loader mt-2" wire:loading wire:target="buscar_estado_documento"></div>
+            <div class="loader mt-2" wire:loading wire:target="buscar_estado_documento, generar_excel_estado_documentos"></div>
         </div>
     </div>
 
     @if(count($resultados) > 0)
-        <div class="accordion mt-3" id="accordionEstados">
-            @php $conteoGeneral = 1; @endphp
-            @foreach($resultados as $index => $resultado)
-                <div class="accordion-item">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button {{ $index == 0 ? '' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ $index }}" aria-expanded="{{ $index == 0 ? 'true' : 'false' }}" aria-controls="collapse{{ $index }}">
-                            #{{ $conteoGeneral }} | Zona: {{ $resultado['zona'] }} | Promedio: {{ $resultado['promedio'] }} días | Cantidad de guías: {{ $resultado['cantidad'] }}
-                        </button>
-                    </h2>
-                    <div id="collapse{{ $index }}" class="accordion-collapse collapse {{ $index == 0 ? 'show' : '' }}" data-bs-parent="#accordionEstados">
-                        <div class="accordion-body">
+        <div class="col-lg-12 col-md-12 col-sm-12">
+            <div class="card">
+                <div class="card-body">
+                    <table class="table table-responsive table-hover table-bordered">
+                        <thead class="thead-light">
+                        <tr>
+                            <th style="background: #BDD7EE; color: black">Zona</th>
+                            <th style="background: #BDD7EE; color: black">Promedio de días</th>
+                            <th style="background: #E2EFDB; color: black">Cant. Guías</th>
+                            @if($tipo_reporte == 1)
+                                <th style="background: #E2EFDB; color: black">Acciones</th>
+                            @endif
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach($resultados as $resultado)
+                            <tr>
+                                <td>{{ $resultado->zona }}</td>
+                                <td>{{ $resultado->promedio }} días</td>
+                                <td>{{ $resultado->cantidad }}</td>
+                                @if($tipo_reporte == 1)
+                                    <td>
+                                        <button wire:click="cargar_detalles('{{ $resultado->estado_id }}', '{{ $resultado->zona }}')"
+                                                class="btn btn-sm btn-primary"
+                                                data-bs-toggle="collapse"
+                                                data-bs-target="#detalle-{{ $resultado->estado_id }}"
+                                                wire:loading.attr="disabled">
+                                            Ver Detalle
+                                        </button>
+                                    </td>
+                                @endif
+                            </tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        @if($detallesZona)
+            <div id="detalle-{{ $detallesZona[0]->guia_estado_aprobacion ?? '' }}" class="collapse mt-3 show">
+                <div class="card">
+                    <div class="card-body">
+                        <h6>Zona: {{ $zonaSeleccionada }}</h6>
+                        @if($cargandoDetalles)
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                            </div>
+                        @else
                             <div class="table-responsive">
                                 <x-table-general id="facturasPreProgTable">
                                     <x-slot name="thead">
                                         <tr>
-                                            <th></th>
+                                            <th>#</th>
                                             <th>Guía</th>
                                             <th>Fecha Emisión</th>
                                             <th>Tipo de Movimiento</th>
@@ -95,36 +138,33 @@
                                         </tr>
                                     </x-slot>
                                     <x-slot name="tbody">
-                                        @php $conteoGeneral2 = 1; @endphp
-                                        @foreach($resultado['guias'] as $guia)
+                                        @foreach($detallesZona as $index => $guia)
                                             <tr>
-                                                <td>{{$conteoGeneral2}}</td>
+                                                <td>{{ $index + 1 }}</td>
                                                 <td>{{ $guia->guia_nro_doc ?? '-' }}</td>
-                                                <td>{{ $guia->guia_fecha_emision ? $general->obtenerNombreFecha($guia->guia_fecha_emision, 'DateTime', 'DateTime') : '-' }}</td>
+                                                <td>{{ $guia->guia_fecha_emision ? \Carbon\Carbon::parse($guia->guia_fecha_emision)->format('d/m/Y H:i:s') : '-' }}</td>
                                                 <td>{{ $guia->guia_tipo_movimiento ?? '-' }}</td>
                                                 <td>{{ $guia->guia_tipo_doc_ref ?? '-' }}</td>
                                                 <td>{{ $guia->guia_nro_doc_ref ?? '-' }}</td>
                                                 <td>{{ $guia->guia_glosa ?? '-' }}</td>
-                                                <td>{{ $guia->guia_estado ?? '-' }}</td>
-                                                <td>{{ $general->formatoDecimal($guia->guia_importe_total ?? 0) }}</td>
+                                                <td>{{ $zonas[$guia->guia_estado_aprobacion]['nombre'] ?? '-' }}</td>
+                                                <td>{{ number_format($guia->guia_importe_total ?? 0, 2) }}</td>
                                                 <td>{{ $guia->guia_moneda ?? '-' }}</td>
                                                 <td>{{ $guia->guia_direc_entrega ?? '-' }}</td>
                                                 <td>{{ $guia->guia_departamento ?? '-' }}</td>
                                                 <td>{{ $guia->guia_provincia ?? '-' }}</td>
                                                 <td>{{ $guia->guia_distrito ?? '-' }}</td>
                                             </tr>
-                                            @php $conteoGeneral2++; @endphp
                                         @endforeach
                                     </x-slot>
                                 </x-table-general>
                             </div>
-                        </div>
+                        @endif
                     </div>
                 </div>
-                @php $conteoGeneral++; @endphp
-            @endforeach
-        </div>
-    @elseif($tipo_reporte)
+            </div>
+        @endif
+    @elseif($tipo_reporte && !$cargandoDetalles)
         <div class="alert alert-danger alert-dismissible show fade mt-2">
             No se encontraron guías que excedan el tiempo de atención.
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
