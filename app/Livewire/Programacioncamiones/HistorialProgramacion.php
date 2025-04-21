@@ -87,7 +87,7 @@ class HistorialProgramacion extends Component
         $fletePenalProv2 = 0;
 
         // Definir el mapeo de departamentos a provincias
-        $departamentosProvincia1 = ['ANCASH', 'AYACUCHO', 'HUANCAVELICA', 'HUANUCO', 'ICA', 'JUNIN', 'LA LIBERTAD', 'LAMBAYEQUE', 'PASCO'];
+        $departamentosProvincia1 = ['ANCASH', 'AYACUCHO', 'HUANCAVELICA', 'HUANUCO', 'ICA', 'JUNIN', 'LA LIBERTAD', 'LAMBAYEQUE', 'PASCO', 'LIMA'];
         $departamentosProvincia2 = ['AMAZONAS', 'APURIMAC', 'AREQUIPA', 'CAJAMARCA', 'CUSCO', 'LORETO', 'MADRE DE DIOS', 'MOQUEGUA', 'PIURA', 'PUNO', 'SAN MARTIN', 'TACNA', 'TUMBES', 'UCAYALI'];
         $departamentosLocal = ['CALLAO', 'LIMA'];
 
@@ -259,7 +259,7 @@ class HistorialProgramacion extends Component
     }
 
     // Función para verificar si un despacho está aprobado
-    private function verificarAprobacion($idDespacho){
+     function verificarAprobacion($idDespacho){
         $liquidacionDetalle = DB::table('liquidacion_detalles')
             ->where('id_despacho', $idDespacho)
             ->first();

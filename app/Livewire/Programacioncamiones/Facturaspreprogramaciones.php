@@ -44,7 +44,7 @@ class Facturaspreprogramaciones extends Component
     public $desde;
     public $hasta;
     public $detalleFactura;
-    public $estado_envio = 1;
+    public $estado_envio = "";
     public $errorMessage;
     public $guiaSeleccionada = null;
     public $detallesGuia = [];
@@ -426,6 +426,7 @@ class Facturaspreprogramaciones extends Component
             }
             DB::commit();
             $this->selectedGuias = [];
+            $this->estado_envio = "";
             session()->flash('success', 'Guías enviadas correctamente.');
         } catch (\Exception $e) {
             DB::rollBack();

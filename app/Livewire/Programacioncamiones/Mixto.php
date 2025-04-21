@@ -418,7 +418,7 @@ class Mixto extends Component
         $this->imporTotalPro = 0;
         $this->toVol = 0;
         if ($datosCliente['ubiDepar']){
-            $deparCl = DB::table('departamentos')->where('departamento_nombre','like','%'.$datosCliente['ubiDepar'].'%')->first();
+            $deparCl = DB::table('departamentos')->where('departamento_nombre','like',$datosCliente['ubiDepar'].'%')->first();
             if ($deparCl){
                 $this->depar = $deparCl->id_departamento;
                 $this->clientes_provinciales[$index]['departamento'] = $deparCl->id_departamento;

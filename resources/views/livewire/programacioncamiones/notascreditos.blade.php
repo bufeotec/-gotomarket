@@ -257,7 +257,7 @@
                                             @else
                                                 <tr>
                                                     <td colspan="3" class="text-center">
-                                                        <p class="mb-0" style="font-size: 12px">No se encontraron guias.</p>
+                                                        <p class="mb-0" style="font-size: 12px">No se encontraron resultados.</p>
                                                     </td>
                                                 </tr>
                                             @endif
