@@ -232,13 +232,8 @@ class Reportetiempos extends Component
                     $zona = "";
                 }
 
-                if ($tipo == 1){
-                    // F. Emisión
-                    $fechaInicio = $item->guia_fecha_emision;
-                }else{
-                    // F. Programación
-                    $fechaInicio = $item->programacion_fecha;
-                }
+                $fechaInicio = $item->guia_fecha_emision;
+
                 $fechaFin = $item->fecha_entrega;
                 // Asegúrate de que ambas fechas estén en formato DateTime
                 $inicio = new \DateTime($fechaInicio);
@@ -251,7 +246,7 @@ class Reportetiempos extends Component
                 $sheet->setCellValue('C'.$row, $item->guia_nombre_cliente.'|'.$item->guia_ruc_cliente);
                 $sheet->setCellValue('D'.$row, $item->programacion_fecha ? date('d/m/Y', strtotime($item->programacion_fecha)) : '');
                 $sheet->setCellValue('E'.$row, $item->fecha_entrega ? date('d/m/Y H:i:s', strtotime($item->fecha_entrega)) : '');
-                $sheet->setCellValue('F'.$row, round($diferencia) . ' días');
+                $sheet->setCellValue('F'.$row, round($diferencia));
                 $sheet->setCellValue('G'.$row, 'ENTREGADO');
                 $sheet->setCellValue('H'.$row, $item->guia_departamento ?? 'S/N');
                 $sheet->setCellValue('I'.$row, $item->guia_provincia ?? 'S/N');
