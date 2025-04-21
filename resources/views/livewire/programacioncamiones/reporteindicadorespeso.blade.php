@@ -57,18 +57,16 @@
                             <x-slot name="tbody">
                                 @php
                                     $totalGeneralFlete = 0;
-                                    $pesoTranspo = 0;
                                     foreach($filtrarData as  $zon1){
                                         $totalGeneralFlete+= $zon1->costoTotal;
-                                        $pesoTranspo += $zon1->pesoKilos;
                                     }
-                                    $por = $pesoTranspo != 0 ? round($totalGeneralFlete / $pesoTranspo, 3) : 0
+                                    $por = $totalPesoTrans != 0 ? round($totalGeneralFlete / $totalPesoTrans, 3) : 0
                                 @endphp
                                 <tr>
                                     <td>TOTAL</td>
-                                    <td class="text-center">{{ $general->formatoDecimal($totalGeneralFlete ?? 0)}}</td>
-                                    <td class="text-center">{{ $general->formatoDecimal($pesoTranspo ?? 0)}}</td>
-                                    <td class="text-center">{{ $general->formatoDecimal($por ?? 0) }}%</td>
+                                    <td class="text-center">S/ {{ $general->formatoDecimal($totalGeneralFlete ?? 0)}}</td>
+                                    <td class="text-center">{{ $general->formatoDecimal($totalPesoTrans ?? 0)}}</td>
+                                    <td class="text-center">{{ $general->formatoDecimal($por ?? 0) }}</td>
                                     <td class="text-center">0.35</td>
                                 </tr>
                                 @foreach($filtrarData as $indexZona => $zon)
@@ -90,9 +88,9 @@
                                     @endphp
                                     <tr>
                                         <td>{{ $zonaText }}</td>
-                                        <td class="text-center"> {{ $general->formatoDecimal($zon->costoTotal ?? 0)}}</td>
+                                        <td class="text-center"> S/ {{ $general->formatoDecimal($zon->costoTotal ?? 0)}}</td>
                                         <td class="text-center"> {{ $general->formatoDecimal($zon->pesoKilos ?? 0)}}</td>
-                                        <td class="text-center">{{ $general->formatoDecimal($zon->porcentaje ?? 0) }}%</td>
+                                        <td class="text-center">{{ $general->formatoDecimal($zon->porcentaje ?? 0) }}</td>
                                         <td class="text-center">{{ $zonaOb ?? 0 }}</td>
                                     </tr>
                                 @endforeach

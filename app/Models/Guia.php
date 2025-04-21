@@ -13,9 +13,11 @@ class Guia extends Model
     protected $primaryKey = "id_guia";
 
     private $logs;
+    private $general;
     public function __construct(){
         parent::__construct();
         $this->logs = new Logs();
+        $this->general = new General();
     }
 
     public function listar_comprobantes($search, $pagination, $order = 'desc'){
@@ -184,28 +186,10 @@ class Guia extends Model
 
             foreach( $result as $iRe) {
 
-                // CALCULAMOS VALOR DE FLETE
-                $liquidaDetalelle = DB::table('liquidacion_detalles as lq')
-                    ->join('liquidaciones as l', 'lq.id_liquidacion', '=', 'l.id_liquidacion')
-                    ->join('despachos as d', 'd.id_despacho', '=', 'lq.id_despacho')
-                    ->where([['l.liquidacion_estado','=',1],['l.liquidacion_estado_aprobacion','=',1],['lq.liquidacion_detalle_estado','=',1]])
-                    ->where('lq.id_despacho','=',$iRe)->first();
-                if ($liquidaDetalelle){
-                    $gastos = DB::table('liquidacion_gastos')->where('id_liquidacion_detalle','=',$liquidaDetalelle->id_liquidacion_detalle)->get();
+                $subTotal = $this->general->sacarMontoLiquidacion($iRe);
 
-                    $costoTotal = $gastos[0]->liquidacion_gasto_monto;
-                    $manoObra = $gastos[1]->liquidacion_gasto_monto;
-                    $otrosGastos = $gastos[2]->liquidacion_gasto_monto;
-                    $pesoFinal = $gastos[3]->liquidacion_gasto_monto;
+                $totalDespachos+= $subTotal;
 
-                    if (!$liquidaDetalelle->id_departamento){ // local
-                        $subTotal = $costoTotal + $manoObra + $otrosGastos;
-                    }else{ // provincial
-                        $subTotal = ($costoTotal * $pesoFinal) + $manoObra + $otrosGastos;
-                    }
-                    $totalDespachos+= $subTotal;
-
-                }
             }
 
 
@@ -325,55 +309,166 @@ class Guia extends Model
 
         return $result;
     }
-    public function listar_informacion_reporte_indicador_de_peso($desde, $hasta,$arrayDe,$type,$typeGrafico = null,$mesGrafico = null){
+    public function listar_informacion_reporte_total_de_peso_transportado($tipo, $desde, $hasta,$arrayDe,$type,$typeGrafico = null,$mesGrafico = null){
+        try {
+
+            $queryReporteTiemposAtencion = DB::table('despachos as d')
+                ->select('d.id_despacho')
+                ->join('despacho_ventas as dv', 'd.id_despacho', '=', 'dv.id_despacho')
+                ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
+                ->leftJoin('departamentos as depar', 'depar.id_departamento', '=', 'd.id_departamento')
+                ->where('d.despacho_estado_aprobacion', '=', 3)
+                ->where('d.despacho_liquidado', '=', 1)
+            ;
+
+
+            if ($typeGrafico){
+
+                $anio = substr($mesGrafico, 0, 4);
+                $mes = substr($mesGrafico, 5, 2);
+
+                if ($tipo){
+                    if ($tipo == 1){ // F. Emisión
+                        $queryReporteTiemposAtencion->whereYear('g.guia_fecha_emision', $anio)->whereMonth('g.guia_fecha_emision', $mes);
+                    }else{ // F. Programación
+                        $queryReporteTiemposAtencion->whereYear('d.despacho_fecha_aprobacion', $anio)->whereMonth('d.despacho_fecha_aprobacion', $mes);
+                    }
+                }
+
+            }else{
+                if ($tipo){
+                    if ($tipo == 1){
+                        // F. Emisión
+                        $queryReporteTiemposAtencion->whereDate('g.guia_fecha_emision', '>=', $desde)
+                            ->whereDate('g.guia_fecha_emision', '<=', $hasta);
+
+                    }else{
+                        // F. Programación
+                        $queryReporteTiemposAtencion->whereDate('d.despacho_fecha_aprobacion', '>=', $desde)
+                            ->whereDate('d.despacho_fecha_aprobacion', '<=', $hasta);
+                    }
+                }
+            }
+            $result = $queryReporteTiemposAtencion->distinct()->pluck('d.id_despacho');
+
+            $idProgramacion = [];
+            foreach( $result as $iRe) {
+
+                $despa = DB::table('despachos')->where('id_despacho','=',$iRe)->first();
+                if ($despa) {
+                    // Validar que no esté ya en el array
+                    if (!in_array($despa->id_programacion, $idProgramacion)) {
+                        $idProgramacion[] = $despa->id_programacion;
+                    }
+                }
+            }
+            $pesoTotalKilos = 0;
+            foreach ($idProgramacion as $idPro){
+                // sacamos el primer despacho
+                $despacho =  DB::table('despachos')->where('id_programacion','=',$idPro)
+                    ->where('despacho_estado_aprobacion', '=', 3)
+                    ->where('despacho_liquidado', '=', 1)
+                    ->orderBy('id_despacho','asc')->first();
+
+                if ($despacho){
+                    $detalleDesp = DB::table('despacho_ventas as dv')
+                        ->select('dv.id_despacho', 'g.id_guia', 'st.serv_transpt_peso')
+                        ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
+                        ->leftJoin('servicios_transportes as st', 'dv.id_serv_transpt', '=', 'st.id_serv_transpt')
+                        ->where('dv.id_despacho', '=', $despacho->id_despacho)->get();
+
+                    foreach ($detalleDesp as $deta){
+
+                        if ($deta->id_guia) {
+                            $detallesGuia = DB::table('guias_detalles')->where('id_guia', '=', $deta->id_guia)->get();
+                            $pesoTotalGramos = $detallesGuia->sum(function ($detalle) {
+                                return $detalle->guia_det_peso_gramo * $detalle->guia_det_cantidad;
+                            });
+                            $pesoTotalKilos += $pesoTotalGramos / 1000;
+                        }
+                        // Sumar peso de servicio de transporte (si existe)
+                        if ($deta->serv_transpt_peso) {
+                            $pesoTotalKilos += $deta->serv_transpt_peso;
+                        }
+                    }
+                }
+            }
+
+            $result = $pesoTotalKilos;
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = 0;
+        }
+
+        return $result;
+    }
+    public function listar_informacion_reporte_indicador_de_peso($tipo,$desde, $hasta,$arrayDe,$type,$typeGrafico = null,$mesGrafico = null){
         try {
 
             $resultDespachos = DB::table('despachos as d')
-                ->select('d.id_despacho',)
+                ->select('d.id_despacho')
                 ->join('despacho_ventas as dv', 'd.id_despacho', '=', 'dv.id_despacho')
                 ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
-                ->where('d.despacho_estado_aprobacion', '!=', 4);
+                ->leftJoin('departamentos as depar', 'depar.id_departamento', '=', 'd.id_departamento')
+                ->where('d.despacho_estado_aprobacion', '=', 3)
+                ->where('d.despacho_liquidado', '=', 1)
+            ;
 
             if ($typeGrafico){
                 $anio = substr($mesGrafico, 0, 4);
                 $mes = substr($mesGrafico, 5, 2);
 
-                $resultDespachos->whereYear('d.despacho_fecha_aprobacion', $anio)->whereMonth('d.despacho_fecha_aprobacion', $mes);
+                if ($tipo){
+                    if ($tipo == 1){
+                        // F. Emisión
+                        $resultDespachos->whereYear('g.guia_fecha_emision', $anio)->whereMonth('g.guia_fecha_emision', $mes);
+                    }else{
+                        // F. Programación
+                        $resultDespachos->whereYear('d.despacho_fecha_aprobacion', $anio)->whereMonth('d.despacho_fecha_aprobacion', $mes);
+                    }
+                }
 
-            }else{
-                $resultDespachos->whereDate('d.despacho_fecha_aprobacion', '>=', $desde)->whereDate('d.despacho_fecha_aprobacion', '<=', $hasta);
-            }
-            if ($typeGrafico){
-                if ($typeGrafico == 2){
-
+                if ($typeGrafico == 2){ // Grafico de flete lima o provincia
                     if ($type == 1){ // LOCAL
-                        $resultDespachos->whereIn('g.guia_departamento',$arrayDe[0]);
-
+                        $resultDespachos->whereNull('d.id_departamento'); // los locales no tienen id departamento
                     }elseif ($type == 2){ // PROVINCIAS
-
-                        $resultDespachos->whereIn('g.guia_departamento', array_merge($arrayDe[1], $arrayDe[2]));
+                        $resultDespachos->whereIn('depar.departamento_nombre', array_merge($arrayDe[1], $arrayDe[2]));
                     }
-                }else{
+                }elseif ($typeGrafico == 1){
                     if ($type == 1){ // LOCAL
-                        $resultDespachos->whereIn('g.guia_departamento',$arrayDe[0]);
-                    }elseif ($type == 2){ // PROVINCIA 1
-                        $resultDespachos->whereIn('g.guia_departamento',$arrayDe[1]);
-                    }elseif ($type == 3){ // PROVINCIA 2
-                        $resultDespachos->whereIn('g.guia_departamento',$arrayDe[2]);
+                        $resultDespachos->whereNull('d.id_departamento');
+                    }else{
+                        if ($type == 2){ // PROVINCIA 1
+                            $resultDespachos->whereIn('depar.departamento_nombre',$arrayDe[1]);
+                        }elseif ($type == 3){ // PROVINCIA 2
+                            $resultDespachos->whereIn('depar.departamento_nombre',$arrayDe[2]);
+                        }
                     }
                 }
             }else{
+                if ($tipo){
+                    if ($tipo == 1){
+                        // F. Emisión
+                        $resultDespachos->whereDate('g.guia_fecha_emision', '>=', $desde)->whereDate('g.guia_fecha_emision', '<=', $hasta);
+                    }else{
+                        // F. Programación
+                        $resultDespachos->whereDate('d.despacho_fecha_aprobacion', '>=', $desde)->whereDate('d.despacho_fecha_aprobacion', '<=', $hasta);
+                    }
+                }
                 if ($type == 1){ // LOCAL
-                    $resultDespachos->whereIn('g.guia_departamento',$arrayDe[0]);
-                }elseif ($type == 2){ // PROVINCIA 1
-                    $resultDespachos->whereIn('g.guia_departamento',$arrayDe[1]);
-                }elseif ($type == 3){ // PROVINCIA 2
-                    $resultDespachos->whereIn('g.guia_departamento',$arrayDe[2]);
+                    $resultDespachos->whereNull('d.id_departamento');
+                }else{
+                    if ($type == 2){ // PROVINCIA 1
+                        $resultDespachos->whereIn('depar.departamento_nombre',$arrayDe[1]);
+                    }elseif ($type == 3){ // PROVINCIA 2
+                        $resultDespachos->whereIn('depar.departamento_nombre',$arrayDe[2]);
+                    }
                 }
             }
-
             $resultDespachos = $resultDespachos->distinct()->get();
 
+            $totalDespachos = 0;
             foreach ($resultDespachos as $re){
 
                 $re->detalle = DB::table('despacho_ventas as dv')
@@ -382,22 +477,15 @@ class Guia extends Model
                     ->leftJoin('servicios_transportes as st', 'dv.id_serv_transpt', '=', 'st.id_serv_transpt')
                     ->where('dv.id_despacho', '=', $re->id_despacho)->get();
 
+                $subTotal = $this->general->sacarMontoLiquidacion($re->id_despacho);
+                $totalDespachos+= $subTotal;
             }
-            $totalFlete = 0;
+
             $pesoTotalKilos = 0;
-            // 3. Calculamos el peso para cada despacho
             foreach ($resultDespachos as $ite) {
-
-                $despa = DB::table('despachos')->where('id_despacho','=',$ite->id_despacho)->first();
-
                 foreach ($ite->detalle as $deta){
-
                     if ($deta->id_guia) {
-
-                        $detallesGuia = DB::table('guias_detalles')
-                            ->where('id_guia', '=', $deta->id_guia)
-                            ->get();
-
+                        $detallesGuia = DB::table('guias_detalles')->where('id_guia', '=', $deta->id_guia)->get();
                         $pesoTotalGramos = $detallesGuia->sum(function ($detalle) {
                             return $detalle->guia_det_peso_gramo * $detalle->guia_det_cantidad;
                         });
@@ -408,11 +496,7 @@ class Guia extends Model
                         $pesoTotalKilos += $deta->serv_transpt_peso;
                     }
                 }
-                if ($despa){
-                    $totalFlete += $despa->despacho_costo_total;
-                }
             }
-
             if ($typeGrafico){
 
                 if ($typeGrafico == 1){
@@ -421,13 +505,13 @@ class Guia extends Model
 
                 }else{
 
-                    $result = $pesoTotalKilos > 0 ? round($totalFlete / $pesoTotalKilos, 2) : 0;
+                    $result = $pesoTotalKilos > 0 ? round($totalDespachos / $pesoTotalKilos, 2) : 0;
                 }
             }else{
                 $result = [
-                    'costoTotal' => $totalFlete,
+                    'costoTotal' => $totalDespachos,
                     'pesoKilos' => $pesoTotalKilos,
-                    'porcentaje' => $pesoTotalKilos > 0 ? round($totalFlete / $pesoTotalKilos, 3) : 0
+                    'porcentaje' => $pesoTotalKilos > 0 ? round($totalDespachos / $pesoTotalKilos, 3) : 0
                 ];
                 $result = (object)$result;
             }

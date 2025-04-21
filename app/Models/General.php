@@ -5,6 +5,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 class General extends Model
 {
@@ -167,6 +168,37 @@ class General extends Model
             $message = "Ocurrió un error al consulta del numero de documento. Por favor, inténtelo nuevamente.";
         }
         return array("result" => array("name" => $name,'direccion'=>$direccion,'estado'=>$estado,'mensaje'=>$mensaje,'tipo'=>$tipo_mensaje));
+    }
+    public function sacarMontoLiquidacion($id){
+        try {
+
+            $subTotal = 0;
+            $liquidaDetalelle = DB::table('liquidacion_detalles as lq')
+                ->join('liquidaciones as l', 'lq.id_liquidacion', '=', 'l.id_liquidacion')
+                ->join('despachos as d', 'd.id_despacho', '=', 'lq.id_despacho')
+                ->where([['l.liquidacion_estado','=',1],['l.liquidacion_estado_aprobacion','=',1],['lq.liquidacion_detalle_estado','=',1]])
+                ->where('lq.id_despacho','=',$id)->first();
+
+            if ($liquidaDetalelle){
+
+                $gastos = DB::table('liquidacion_gastos')->where('id_liquidacion_detalle','=',$liquidaDetalelle->id_liquidacion_detalle)->get();
+
+                $costoTotal = $gastos[0]->liquidacion_gasto_monto;
+                $manoObra = $gastos[1]->liquidacion_gasto_monto;
+                $otrosGastos = $gastos[2]->liquidacion_gasto_monto;
+                $pesoFinal = $gastos[3]->liquidacion_gasto_monto;
+
+                if (!$liquidaDetalelle->id_departamento){ // local
+                    $subTotal = $costoTotal + $manoObra + $otrosGastos;
+                }else{ // provincial
+                    $subTotal = ($costoTotal * $pesoFinal) + $manoObra + $otrosGastos;
+                }
+            }
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $subTotal = 0;
+        }
+        return $subTotal;
     }
     public function save_files($archivo, $rutaImg)
     {

@@ -189,6 +189,7 @@ class Reporteindicadoresvalor extends Component
 
     public function exportarReporteValorExcel(){
         try {
+            $this->buscar_reporte_valor();
             $this->validate([
                 'xdesde' => 'required|date',
                 'xhasta' => 'required|date|after_or_equal:xdesde',
@@ -214,7 +215,8 @@ class Reporteindicadoresvalor extends Component
             $despachos = DB::table('despachos as d')
                 ->join('despacho_ventas as dv', 'd.id_despacho', '=', 'dv.id_despacho')
                 ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
-                ->where('d.despacho_estado_aprobacion', '!=', 4);
+                ->where('d.despacho_estado_aprobacion', '=', 3)
+                ->where('d.despacho_liquidado', '=', 1);
 
             if ($tipo == 1){
                 // F. Emisión
@@ -272,6 +274,8 @@ class Reporteindicadoresvalor extends Component
             // ========== LLENAR DATOS ==========
             $row = 4;
             foreach ($despachos as $desp) {
+                $subTotal = $this->general->sacarMontoLiquidacion($desp->id_despacho);
+
                 /*  SE VA SABER SI ESA GUIA ES MIXTA O NO */
                 $validarTipoOs = DB::table('programaciones as p')
                     ->join('despachos as d','d.id_programacion','=','p.id_programacion')
@@ -297,8 +301,8 @@ class Reporteindicadoresvalor extends Component
                 $sheet->setCellValue('A'.$row, date('d/m/Y', strtotime($desp->despacho_fecha_aprobacion)));
                 $sheet->setCellValue('B'.$row, $desp->guia_fecha_emision ? date('d/m/Y', strtotime($desp->guia_fecha_emision)) : '');
                 $sheet->setCellValue('C'.$row, $desp->despacho_numero_correlativo);
-                $sheet->setCellValue('D'.$row, $desp->guia_importe_total ?? 0);
-                $sheet->setCellValue('E'.$row, $desp->despacho_costo_total);
+                $sheet->setCellValue('D'.$row, $desp->guia_importe_total_sin_igv ?? 0);
+                $sheet->setCellValue('E'.$row, $subTotal);
                 $sheet->setCellValue('F'.$row, $tipoOs);
 
                 // Estado de OS
