@@ -72,8 +72,8 @@
                                         <td>{{$me->guia_nro_doc}}</td>
                                         <td>{{$me->guia_nro_doc_ref}}</td>
                                         <td>{{ $general->obtenerNombreFecha($me->guia_fecha_emision,'DateTime','Date') }}</td>
-                                        <td>S/ {{$general->formatoDecimal($me->guia_importe_total / 1.18) ?? 0 }}</td>
-                                        <td>S/ {{ $general->formatoDecimal($me->guia_importe_total) }}</td>
+                                        <td>S/ {{$general->formatoDecimal($me->guia_importe_total_sin_igv) ?? 0 }}</td>
+                                        <td>S/ {{ $general->formatoDecimal($me->guia_importe_total_sin_igv * 1.18) ?? 0 }}</td>
                                         <td>
                                             @php
                                                 $estado = [

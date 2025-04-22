@@ -93,8 +93,7 @@ class Programacion extends Model
     }
     public function listar_programaciones_historial_programacion($desde, $hasta, $tipo_reporte = null, $tipo = null) {
         try {
-            // Primero obtener solo las programaciones sin JOIN con despachos
-            $result = DB::table('programaciones as p')
+            $query = DB::table('programaciones as p')
                 ->select(
                     'p.id_programacion',
                     'p.id_users',
@@ -105,18 +104,19 @@ class Programacion extends Model
                     'p.programacion_fecha_aprobacion',
                     'p.programacion_estado',
                     'p.created_at'
-                );
+                )
+                ->where('p.programacion_estado_aprobacion', '<>', 0);
 
-            // Aplicar filtros de fecha directamente a programaciones
+            // Filtro por fechas
             if ($desde && $hasta) {
-                $result->whereBetween('p.programacion_fecha', [$desde, $hasta]);
+                $query->whereBetween('p.programacion_fecha', [$desde, $hasta]);
             }
 
-            // Filtro por estado de liquidación (usando subconsultas)
+            // Filtro por estado de liquidación
             if ($tipo !== null && $tipo !== '') {
                 if ($tipo == 1) { // OS Aprobadas
-                    $result->whereExists(function ($query) {
-                        $query->select(DB::raw(1))
+                    $query->whereExists(function ($subQuery) {
+                        $subQuery->select(DB::raw(1))
                             ->from('despachos as d')
                             ->join('liquidacion_detalles as ld', 'ld.id_despacho', '=', 'd.id_despacho')
                             ->join('liquidaciones as l', 'l.id_liquidacion', '=', 'ld.id_liquidacion')
@@ -124,11 +124,11 @@ class Programacion extends Model
                             ->where('l.liquidacion_estado_aprobacion', 1);
                     });
                 } elseif ($tipo == 0) { // OS Pendientes
-                    $result->where(function($query) {
-                        $query->whereNotExists(function ($subQuery) {
+                    $query->where(function($q) {
+                        $q->whereNotExists(function ($subQuery) {
                             $subQuery->select(DB::raw(1))
-                                ->from('despachos as d')
-                                ->join('liquidacion_detalles as ld', 'ld.id_despacho', '=', 'd.id_despacho')
+                                ->from('liquidacion_detalles as ld')
+                                ->join('despachos as d', 'd.id_despacho', '=', 'ld.id_despacho')
                                 ->whereColumn('d.id_programacion', 'p.id_programacion');
                         })
                             ->orWhereExists(function ($subQuery) {
@@ -144,16 +144,16 @@ class Programacion extends Model
             }
 
             // Filtro por tipo de reporte
-            if ($tipo_reporte == 1 && $desde && $hasta) { // Fecha de Despacho
-                $result->whereExists(function ($query) use ($desde, $hasta) {
-                    $query->select(DB::raw(1))
+            if ($tipo_reporte == 1 && $desde && $hasta) {
+                $query->whereExists(function ($subQuery) use ($desde, $hasta) {
+                    $subQuery->select(DB::raw(1))
                         ->from('despachos as d')
                         ->whereColumn('d.id_programacion', 'p.id_programacion')
                         ->whereBetween('d.despacho_fecha_aprobacion', [$desde, $hasta]);
                 });
-            } elseif ($tipo_reporte == 2 && $desde && $hasta) { // Fecha de Emisión
-                $result->whereExists(function ($query) use ($desde, $hasta) {
-                    $query->select(DB::raw(1))
+            } elseif ($tipo_reporte == 2 && $desde && $hasta) {
+                $query->whereExists(function ($subQuery) use ($desde, $hasta) {
+                    $subQuery->select(DB::raw(1))
                         ->from('despachos as d')
                         ->join('despacho_ventas as dv', 'dv.id_despacho', '=', 'd.id_despacho')
                         ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
@@ -162,10 +162,7 @@ class Programacion extends Model
                 });
             }
 
-            $result->where('p.programacion_estado_aprobacion', '<>', 0)
-                ->orderBy('p.programacion_fecha');
-
-            return $result->paginate(200);
+            return $query->orderBy('p.programacion_fecha')->paginate(200);
 
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);

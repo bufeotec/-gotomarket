@@ -240,6 +240,7 @@ class Local extends Component
                         'guia_direc_entrega' => $guia->guia_direc_entrega,
                         'guia_nro_pedido' => $guia->guia_nro_pedido,
                         'guia_importe_total' => $guia->guia_importe_total,
+                        'guia_importe_total_sin_igv' => $guia->guia_importe_total_sin_igv,
                         'guia_departamento' => $guia->guia_departamento,
                         'guia_provincia' => $guia->guia_provincia,
                         'guia_destrito' => $guia->guia_destrito,
@@ -253,7 +254,7 @@ class Local extends Component
                     $this->volumenTotal += $volumenTotal;
 
                     // Sumar al importe total
-                    $importe = floatval($guia->guia_importe_total);
+                    $importe = floatval($guia->guia_importe_total_sin_igv);
                     $this->importeTotalVenta += $importe;
                 }
             }
@@ -424,6 +425,7 @@ class Local extends Component
             'guia_direc_entrega' => $factura->guia_direc_entrega,
             'guia_nro_pedido' => $factura->guia_nro_pedido,
             'guia_importe_total' => $factura->guia_importe_total,
+            'guia_importe_total_sin_igv' => $factura->guia_importe_total_sin_igv,
             'guia_departamento' => $factura->guia_departamento,
             'guia_provincia' => $factura->guia_provincia,
             'guia_destrito' => $factura->guia_destrito,
@@ -435,7 +437,7 @@ class Local extends Component
         $this->pesoTotal += $pesoTotalKilos;
         $this->volumenTotal += $volumenTotal;
 
-        $importes = $factura->guia_importe_total;
+        $importes = $factura->guia_importe_total_sin_igv;
         $importe = floatval($importes);
         $this->importeTotalVenta += $importe;
 
@@ -443,112 +445,6 @@ class Local extends Component
         $this->listar_vehiculos_lo();
         $this->validarVehiculoSeleccionado();
     }
-
-
-//    public function duplicar_comprobante($CFTD, $CFNUMSER, $CFNUMDOC){
-//        // Buscar la factura en la tabla Local
-//        $factura = collect($this->selectedFacturasLocal)->first(function ($f) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
-//            return $f['CFTD'] === $CFTD &&
-//                $f['CFNUMSER'] === $CFNUMSER &&
-//                $f['CFNUMDOC'] === $CFNUMDOC;
-//        });
-//        if (!$factura) {
-//            session()->flash('error', 'Comprobante no encontrado en la tabla Local.');
-//            return;
-//        }
-//        $codiCli = $factura['CCODCLI'];
-//        $nombCli = $factura['CNOMCLI'];
-//        $DEPARTAMENTO = $factura['DEPARTAMENTO'];
-//        $PROVINCIA = $factura['PROVINCIA'];
-//        $DISTRITO = $factura['DISTRITO'];
-//        $direccionLlegada = $factura['LLEGADADIRECCION'];
-//
-//        $validarExisteCliente =  collect($this->clientes_provinciales)->first(function ($cliente) use ($codiCli,$nombCli,$DEPARTAMENTO,$PROVINCIA,$DISTRITO,$direccionLlegada) {
-//            return $cliente['codigoCliente'] === $codiCli
-//                && $cliente['nombreCliente'] === $nombCli
-//                && $cliente['ubiDepar'] == $DEPARTAMENTO
-//                && $cliente['ubiPro'] == $PROVINCIA
-//                && $cliente['ubiDis'] == $DISTRITO
-//                && $cliente['ubiDirc'] == $direccionLlegada;
-//        });
-//        if ($validarExisteCliente){ // si existe el cliente
-//            // Verificar si el comprobante ya existe en los comprobantes del cliente
-//            $existeComprobante = collect($validarExisteCliente['comprobantes'] ?? [])->contains(function ($comprobante) use ($factura) {
-//                return $comprobante['CFTD'] === $factura['CFTD'] &&
-//                    $comprobante['CFNUMSER'] === $factura['CFNUMSER'] &&
-//                    $comprobante['CFNUMDOC'] === $factura['CFNUMDOC'];
-//            });
-//            if ($existeComprobante) {
-//                session()->flash('error', 'El comprobante ya está duplicado para este cliente.');
-//                return;
-//            }
-//            // Agregar el comprobante al cliente existente
-//            foreach ($this->clientes_provinciales as &$cliente) {
-//                if ($cliente['codigoCliente'] == $codiCli && $cliente['nombreCliente'] == $nombCli && $cliente['ubiDepar'] == $DEPARTAMENTO && $cliente['ubiPro'] == $PROVINCIA && $cliente['ubiDis'] == $DISTRITO && $cliente['ubiDirc'] == $direccionLlegada) {
-//                    $cliente['comprobantes'][] = [
-//                        'CFTD' => $factura['CFTD'],
-//                        'CFNUMSER' => $factura['CFNUMSER'],
-//                        'CFNUMDOC' => $factura['CFNUMDOC'],
-//                        'total_kg' => $factura['total_kg'],
-//                        'total_volumen' => $factura['total_volumen'],
-//                        'CFIMPORTE' => $factura['CFIMPORTE'],
-////                        'CFCODMON' => $factura['CFCODMON'],
-//                        'guia' => $factura['guia'], // guia
-//                        'GREFECEMISION' => $factura['GREFECEMISION'], // fecha de emision de la guía
-//                        'LLEGADADIRECCION' => $factura['LLEGADADIRECCION'],// Dirección de destino
-//                        'LLEGADAUBIGEO' => $factura['LLEGADAUBIGEO'],// Código del ubigeo
-//                        'DEPARTAMENTO' => $factura['DEPARTAMENTO'],// Departamento
-//                        'PROVINCIA' => $factura['PROVINCIA'],// Provincia
-//                        'DISTRITO' => $factura['DISTRITO'],// Distrito
-//                    ];
-//                    break;
-//                }
-//            }
-//        }else{ // ingresar cliente nuevo
-//            $this->clientes_provinciales[] = [
-//                'codigoCliente' =>  $factura['CCODCLI'],
-//                'nombreCliente' =>  $factura['CNOMCLI'],
-//                'total_kg' =>  0,
-//                'total_volumen' =>  0,
-//                'id_transportista' =>  null,
-//                'id_tarifario' =>  null,
-//                'montoOriginal' =>  null, // guardar el monto original de la tarifa.
-//                'montoSeleccionado' =>  null, // guardar el monto que se puede modificar.
-//                'montoSeleccionadoDescripcion' =>  null, // descripción al modificar el precio.
-//                'otros' =>  null,
-//                'otrosDescripcion' =>  null, // descripción al añadir el precio en el campo otros.
-//                'mano_obra' =>  0,
-//                'departamento' =>  null,
-//                'provincia' =>  null,
-//                'distrito' =>  null,
-//                'listo' =>  null,
-//                'ubiDepar' =>  $DEPARTAMENTO,
-//                'ubiPro' =>  $PROVINCIA,
-//                'ubiDis' =>  $DISTRITO,
-//                'ubiDirc' =>  $direccionLlegada,
-//                'comprobantes' => [
-//                    [
-//                        'CFTD' => $factura['CFTD'],
-//                        'CFNUMSER' => $factura['CFNUMSER'],
-//                        'CFNUMDOC' => $factura['CFNUMDOC'],
-//                        'total_kg' => $factura['total_kg'],
-//                        'total_volumen' => $factura['total_volumen'],
-//                        'CFIMPORTE' => $factura['CFIMPORTE'],
-////                        'CFCODMON' => $factura['CFCODMON'],
-//                        'guia' => $factura['guia'],
-//                        'GREFECEMISION' => $factura['GREFECEMISION'],
-//                        'LLEGADADIRECCION' => $factura['LLEGADADIRECCION'],
-//                        'LLEGADAUBIGEO' => $factura['LLEGADAUBIGEO'],
-//                        'DEPARTAMENTO' => $factura['DEPARTAMENTO'],
-//                        'PROVINCIA' => $factura['PROVINCIA'],
-//                        'DISTRITO' => $factura['DISTRITO'],
-//                    ]
-//                ]
-//            ];
-//        }
-//    }
-
-
 
     public function seleccionarServTrns($id_ser_t){
         // Buscar la factura por su ID
@@ -600,154 +496,6 @@ class Local extends Component
         $this->validarVehiculoSeleccionado();
     }
 
-
-//    public function duplicar_comprobante($id_guia){
-//        $id_guia = (int)$id_guia;
-//        // Buscar la factura en la tabla Local
-//        $factura = collect($this->selectedFacturasLocal)->first(function ($f) use ($id_guia) {
-//            return $f['id_guia'] === $id_guia;
-//        });
-//        if (!$factura) {
-//            session()->flash('error', 'Comprobante no encontrado en la tabla Local.');
-//            return;
-//        }
-//        $guia_ruc_cliente = $factura['guia_ruc_cliente'];
-//        $guia_nombre_cliente = $factura['guia_nombre_cliente'];
-//        $guia_departamento = $factura['guia_departamento'];
-//        $guia_provincia = $factura['guia_provincia'];
-//        $guia_destrito = $factura['guia_destrito'];
-//        $guia_direc_entrega = $factura['guia_direc_entrega'];
-//
-//        $validarExisteCliente =  collect($this->clientes_provinciales)->first(function ($cliente) use ($guia_ruc_cliente,$guia_nombre_cliente,$guia_departamento,$guia_provincia,$guia_destrito,$guia_direc_entrega) {
-//            return $cliente['guia_ruc_cliente'] === $guia_ruc_cliente
-//                && $cliente['guia_nombre_cliente'] === $guia_nombre_cliente
-//                && $cliente['guia_departamento'] == $guia_departamento
-//                && $cliente['guia_provincia'] == $guia_provincia
-//                && $cliente['guia_destrito'] == $guia_destrito
-//                && $cliente['guia_direc_entrega'] == $guia_direc_entrega;
-//        });
-//        if ($validarExisteCliente){ // si existe el cliente
-//            // Verificar si el comprobante ya existe en los comprobantes del cliente
-//            $existeComprobante = collect($validarExisteCliente['comprobantes'] ?? [])->contains(function ($comprobante) use ($factura) {
-//                return $comprobante['id_guia'] === $factura['id_guia'];
-//            });
-//            if ($existeComprobante) {
-//                session()->flash('error', 'El comprobante ya está duplicado para este cliente.');
-//                return;
-//            }
-//            // Agregar el comprobante al cliente existente
-//            foreach ($this->clientes_provinciales as &$cliente) {
-//                // Calcular el peso y volumen total para la guía seleccionada
-//                $detalles = DB::table('guias_detalles')
-//                    ->where('id_guia', $id_guia)
-//                    ->get();
-//
-//                // Calcular el peso total en kilogramos
-//                $pesoTotalGramos = $detalles->sum(function ($detalle) {
-//                    return $detalle->guia_det_peso_gramo * $detalle->guia_det_cantidad;
-//                });
-//
-//                // Convertir el peso total a kilogramos
-//                $pesoTotalKilos = $pesoTotalGramos / 1000;
-//
-//                $volumenTotal = $detalles->sum(function ($detalle) {
-//                    return $detalle->guia_det_volumen * $detalle->guia_det_cantidad;
-//                });
-//                if ($cliente['guia_ruc_cliente'] == $guia_ruc_cliente && $cliente['guia_nombre_cliente'] == $guia_nombre_cliente && $cliente['guia_departamento'] == $guia_departamento && $cliente['guia_provincia'] == $guia_provincia && $cliente['guia_destrito'] == $guia_destrito && $cliente['guia_direc_entrega'] == $guia_direc_entrega) {
-//                    $cliente['comprobantes'][] = [
-//                        'id_guia' => $id_guia,
-//                        'guia_almacen_origen' => $factura['guia_almacen_origen'],
-//                        'guia_tipo_doc' => $factura['guia_tipo_doc'],
-//                        'guia_nro_doc' => $factura['guia_nro_doc'],
-//                        'guia_fecha_emision' => $factura['guia_fecha_emision'],
-//                        'guia_tipo_movimiento' => $factura['guia_tipo_movimiento'],
-//                        'guia_tipo_doc_ref' => $factura['guia_tipo_doc_ref'],
-//                        'guia_nro_doc_ref' => $factura['guia_nro_doc_ref'],
-//                        'guia_glosa' => $factura['guia_glosa'],
-//                        'guia_fecha_proceso' => $factura['guia_fecha_proceso'],
-//                        'guia_hora_proceso' => $factura['guia_hora_proceso'],
-//                        'guia_usuario' => $factura['guia_usuario'],
-//                        'guia_cod_cliente' => $factura['guia_cod_cliente'],
-//                        'guia_ruc_cliente' => $factura['guia_ruc_cliente'],
-//                        'guia_nombre_cliente' => $factura['guia_nombre_cliente'],
-//                        'guia_forma_pago' => $factura['guia_forma_pago'],
-//                        'guia_vendedor' => $factura['guia_vendedor'],
-//                        'guia_moneda' => $factura['guia_moneda'],
-//                        'guia_tipo_cambio' => $factura['guia_tipo_cambio'],
-//                        'guia_estado' => $factura['guia_estado'],
-//                        'guia_direc_entrega' => $factura['guia_direc_entrega'],
-//                        'guia_nro_pedido' => $factura['guia_nro_pedido'],
-//                        'guia_importe_total' => $factura['guia_importe_total'],
-//                        'guia_departamento' => $factura['guia_departamento'],
-//                        'guia_provincia' => $factura['guia_provincia'],
-//                        'guia_destrito' => $factura['guia_destrito'],
-//                        'peso_total' => $pesoTotalKilos,
-//                        'volumen_total' => $volumenTotal,
-//                    ];
-//                    break;
-//                }
-//            }
-//        }else{ // ingresar cliente nuevo
-//            $this->clientes_provinciales[] = [
-//                'guia_ruc_cliente' =>  $factura['guia_ruc_cliente'],
-//                'guia_nombre_cliente' =>  $factura['guia_nombre_cliente'],
-//                'peso_total' =>  0,
-//                'total_volumen' =>  0,
-//                'id_transportista' =>  null,
-//                'id_tarifario' =>  null,
-//                'montoOriginal' =>  null, // guardar el monto original de la tarifa.
-//                'montoSeleccionado' =>  null, // guardar el monto que se puede modificar.
-//                'montoSeleccionadoDescripcion' =>  null, // descripción al modificar el precio.
-//                'otros' =>  null,
-//                'otrosDescripcion' =>  null, // descripción al añadir el precio en el campo otros.
-//                'mano_obra' =>  0,
-//                'departamento' =>  null,
-//                'provincia' =>  null,
-//                'distrito' =>  null,
-//                'listo' =>  null,
-//                'guia_departamento' =>  $guia_departamento,
-//                'guia_provincia' =>  $guia_provincia,
-//                'guia_destrito' =>  $guia_destrito,
-//                'guia_direc_entrega' =>  $guia_direc_entrega,
-//                'comprobantes' => [
-//                    [
-//                        'id_guia' => $factura['id_guia'],
-//                        'guia_almacen_origen' => $factura['guia_almacen_origen'],
-//                        'guia_tipo_doc' => $factura['guia_tipo_doc'],
-//                        'guia_nro_doc' => $factura['guia_nro_doc'],
-//                        'guia_fecha_emision' => $factura['guia_fecha_emision'],
-//                        'guia_tipo_movimiento' => $factura['guia_tipo_movimiento'],
-//                        'guia_tipo_doc_ref' => $factura['guia_tipo_doc_ref'],
-//                        'guia_nro_doc_ref' => $factura['guia_nro_doc_ref'],
-//                        'guia_glosa' => $factura['guia_glosa'],
-//                        'guia_fecha_proceso' => $factura['guia_fecha_proceso'],
-//                        'guia_hora_proceso' => $factura['guia_hora_proceso'],
-//                        'guia_usuario' => $factura['guia_usuario'],
-//                        'guia_cod_cliente' => $factura['guia_cod_cliente'],
-//                        'guia_ruc_cliente' => $factura['guia_ruc_cliente'],
-//                        'guia_nombre_cliente' => $factura['guia_nombre_cliente'],
-//                        'guia_forma_pago' => $factura['guia_forma_pago'],
-//                        'guia_vendedor' => $factura['guia_vendedor'],
-//                        'guia_moneda' => $factura['guia_moneda'],
-//                        'guia_tipo_cambio' => $factura['guia_tipo_cambio'],
-//                        'guia_estado' => $factura['guia_estado'],
-//                        'guia_direc_entrega' => $factura['guia_direc_entrega'],
-//                        'guia_nro_pedido' => $factura['guia_nro_pedido'],
-//                        'guia_importe_total' => $factura['guia_importe_total'],
-//                        'guia_departamento' => $factura['guia_departamento'],
-//                        'guia_provincia' => $factura['guia_provincia'],
-//                        'guia_destrito' => $factura['guia_destrito'],
-//                        'peso_total' => $factura['peso_total'],
-//                        'volumen_total' => $factura['volumen_total'],
-//                    ]
-//                ]
-//            ];
-//        }
-//    }
-
-
-
-
     public function eliminarFacturaSeleccionada($id_guia) {
         // Convertir id_guia a string para evitar problemas con bigint
         $id_guia = (string)$id_guia;
@@ -769,7 +517,7 @@ class Local extends Component
             // Actualiza los totales
             $this->pesoTotal -= $factura['peso_total'];
             $this->volumenTotal -= $factura['volumen_total'];
-            $this->importeTotalVenta -= floatval($factura['guia_importe_total']);
+            $this->importeTotalVenta -= floatval($factura['guia_importe_total_sin_igv']);
 
             // Verifica si no quedan facturas ni servicios de transporte seleccionados
             if (empty($this->selectedFacturas) && empty($this->selectedServTrns)) {

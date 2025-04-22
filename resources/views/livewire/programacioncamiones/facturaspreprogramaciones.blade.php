@@ -64,7 +64,7 @@
 
                                 <div class="col-lg-3">
                                     <strong style="color: #8c1017">Importe Total:</strong>
-                                    <p>{{ $me->formatoDecimal($guiaSeleccionada['IMPORTE_TOTAL'] ?? 0)}}</p>
+                                    <p>{{ $me->formatoDecimal($guiaSeleccionada['IMPORTE_TOTAL_SIN_IGV'] ?? 0)}}</p>
                                 </div>
 
                                 <div class="col-lg-3">
@@ -287,7 +287,6 @@
                                             <tr>
                                                 <th style="font-size: 12px">N° Documento</th>
                                                 <th style="font-size: 12px">Nombre del Cliente</th>
-{{--                                                <th style="font-size: 12px">Peso y Volumen</th>--}}
                                             </tr>
                                         </x-slot>
 
@@ -330,7 +329,6 @@
                                                                                     Sin Factura Asociada
                                                                                 </span>
                                                                             @endisset
-
                                                                         </td>
                                                                         <td style="width: 37%">
                                                                             <span class="d-block tamanhoTablaComprobantes">
@@ -350,7 +348,7 @@
                                                                             </span>
                                                                         </td>
                                                                     </tr>
-                                                                    @if(isset($filtereddetGuias[$NRO_DOC])) <!-- Muestra detalles si existen -->
+                                                                    @if(isset($filtereddetGuias[$NRO_DOC]))
                                                                     <tr>
                                                                         <td colspan="3">
                                                                             <table class="table table-bordered mt-2">
@@ -424,13 +422,10 @@
                                                     </select>
                                                 </div>
                                                 <div class="col-lg-2 mt-1">
-                                                    <button href="#" class="btn bg-info text-white d-flex align-items-center" wire:click.prevent="guardarGuias" wire:loading.attr="disabled">
-                                                        <span wire:loading.remove>
+                                                    <button href="#" class="btn bg-info text-white d-flex align-items-center" wire:click.prevent="guardarGuias">
+                                                        <span>
                                                             Enviar
                                                             <i class="fa-solid fa-right-to-bracket ms-1"></i>
-                                                        </span>
-                                                        <span wire:loading>
-                                                            <span class="spinner-border spinner-border-sm text-light" role="status" aria-hidden="true"></span>
                                                         </span>
                                                     </button>
                                                 </div>
@@ -455,7 +450,7 @@
                                                         <tr>
                                                             <td>{{ $factura['NRO_DOC'] ?? 'No disponible' }}</td>
                                                             <td>{{ $me->obtenerNombreFecha($factura['FECHA_EMISION'], 'DateTime', 'Date') ?? 'Sin fecha' }}</td>
-                                                            <td>S/ {{ $me->formatoDecimal(($factura['IMPORTE_TOTAL'] ?? 0) / 1.18) ?? '0.00' }}</td>
+                                                            <td>S/ {{ $me->formatoDecimal(($factura['IMPORTE_TOTAL_SIN_IGV'] ?? 0)) }}</td>
                                                             <td>{{ $factura['NOMBRE_CLIENTE'] ?? 'Desconocido' }}</td>
                                                             <td>{{ $factura['DIREC_ENTREGA'] ?? 'Sin dirección'}}</td>
                                                             <td>
@@ -477,6 +472,16 @@
                                         @else
                                             <p>No hay documentos seleccionados.</p>
                                         @endif
+                                    </div>
+                                    <div wire:loading wire:target="guardarGuias" class="overlay__eliminar">
+                                        <div class="spinner__container__eliminar">
+                                            <div class="spinner__eliminar"></div>
+                                        </div>
+                                    </div>
+                                    <div wire:loading wire:target="eliminarFacturaSeleccionada" class="overlay__eliminar">
+                                        <div class="spinner__container__eliminar">
+                                            <div class="spinner__eliminar"></div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

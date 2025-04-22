@@ -70,8 +70,8 @@
                                 </div>
 
                                 <div class="col-lg-2">
-                                    <strong style="color: #8c1017">Importe Total:</strong>
-                                    <p>{{ $me->formatoDecimal($guiainfo->guia_importe_total ?? 0)}}</p>
+                                    <strong style="color: #8c1017">Importe Total sin IGV:</strong>
+                                    <p>{{ $me->formatoDecimal($guiainfo->guia_importe_total_sin_igv ?? 0)}}</p>
                                 </div>
 
                                 <div class="col-lg-2">
@@ -182,7 +182,7 @@
         </x-slot>
     </x-modal-general>
     {{--    MODAL FIN DETALLE GUIA--}}
-
+t
         <div class="card">
             <div class="card-body">
                 <div class="row">
@@ -345,7 +345,7 @@
                                                             </x-slot>
                                                         </x-btn-accion>
                                                     </td>
-                                                    <td>{{ $me->formatoDecimal($f['guia_importe_total']) }}</td>
+                                                    <td>S/ {{ $me->formatoDecimal($f['guia_importe_total_sin_igv']) }}</td>
                                                     <td>
                                                         {{ $me->formatoDecimal($f['peso_total_kilogramos']) }} kg /<br>
                                                         {{ $me->formatoDecimal($f['volumen_total']) }} cm³
@@ -397,7 +397,7 @@
                                                                 </x-slot>
                                                             </x-btn-accion>
                                                         </td>
-                                                        <td>{{ $me->formatoDecimal($fr->guia_importe_total) }}</td>
+                                                        <td>S/ {{ $me->formatoDecimal($fr->guia_importe_total_sin_igv) }}</td>
                                                         <td>
                                                             {{ $me->formatoDecimal($fr->peso_total_kilogramos ?? 0) }} kg /<br>
                                                             {{ $me->formatoDecimal($fr->volumen_total ?? 0) }} cm³

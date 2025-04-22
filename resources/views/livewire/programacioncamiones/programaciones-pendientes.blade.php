@@ -116,7 +116,7 @@
                                                 <th>Tipo de Movimiento</th>
                                                 <th>Documento Referencial</th>
                                                 <th>Glosa</th>
-                                                <th>Importe Total</th>
+                                                <th>Importe Total sin IGV</th>
                                                 <th>Dirección de Entrega</th>
                                                 <th>UBIGEO</th>
                                             </tr>
@@ -135,7 +135,7 @@
                                                         <td>{{ $ta->guia_tipo_movimiento }}</td>
                                                         <td>{{ $ta->guia_nro_doc_ref }}</td>
                                                         <td>{{ $ta->guia_glosa }}</td>
-                                                        <td>{{ $general->formatoDecimal($ta->guia_importe_total ?? 0) }}</td>
+                                                        <td>S/ {{ $general->formatoDecimal($ta->guia_importe_total_sin_igv ?? 0) }}</td>
                                                         <td>{{ $ta->guia_direc_entrega }}</td>
                                                         <td>{{ $ta->guia_departamento }} - {{ $ta->guia_provincia }} - {{ $ta->guia_destrito }}</td>
                                                     </tr>

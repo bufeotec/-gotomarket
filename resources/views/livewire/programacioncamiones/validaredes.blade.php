@@ -88,8 +88,8 @@
                                 </div>
 
                                 <div class="col-lg-2">
-                                    <strong style="color: #8c1017">Importe Total:</strong>
-                                    <p>{{ $me->formatoDecimal($guiainfo->guia_importe_total ?? 0)}}</p>
+                                    <strong style="color: #8c1017">Importe Total sin IGV:</strong>
+                                    <p>{{ $me->formatoDecimal($guiainfo->guia_importe_total_sin_igv ?? 0)}}</p>
                                 </div>
 
                                 <div class="col-lg-2">
@@ -282,7 +282,7 @@
                                                     type="checkbox"
                                                     wire:model.live="select_guias_all"
                                                     id="select_guias_all"
-                                                    class="form-check-input"
+                                                    class="form-check-input cursoPointer"
                                                 >
                                             </th>
                                             <th>Guía</th>
@@ -300,7 +300,7 @@
                                         @foreach($facturas_pre_prog_estado_dos as $factura)
                                             <tr>
                                                 <td>
-                                                    <input type="checkbox" wire:model.live="selectedGuiaIds" value="{{ $factura->id_guia }}" id="checkbox-{{ $factura->id_guia }}" class="form-check-input">
+                                                    <input type="checkbox" wire:model.live="selectedGuiaIds" value="{{ $factura->id_guia }}" id="checkbox-{{ $factura->id_guia }}" class="form-check-input cursoPointer">
                                                 </td>
                                                 <td>
                                                     <span class="d-block tamanhoTablaComprobantes">
@@ -318,12 +318,9 @@
                                         </span>
                                                 </td>
                                                 <td>
-                                                    @php
-                                                        $importe = number_format($factura->guia_importe_total, 2, '.', ',');
-                                                    @endphp
                                                     <span class="d-block tamanhoTablaComprobantes">
-                                            <b class="colorBlackComprobantes">{{ $importe }}</b>
-                                        </span>
+                                                        <b class="colorBlackComprobantes">{{ $me->formatoDecimal(($factura->guia_importe_total_sin_igv ?? 0)) }}</b>
+                                                    </span>
                                                 </td>
                                                 <td>
                                         <span class="d-block tamanhoTablaComprobantes">
@@ -336,9 +333,9 @@
                                         </span>
                                                 </td>
                                                 <td>
-                                                    {{ $factura->total_peso }} g
+                                                    {{ $factura->total_peso ?? 0 }} g
                                                     <br>
-                                                    {{ $factura->total_volumen }} cm³
+                                                    {{ $factura->total_volumen ?? 0 }} cm³
                                                 </td>
                                                 <td>
                                                     <span class="d-block tamanhoTablaComprobantes">
@@ -349,7 +346,7 @@
                                                     <x-btn-accion class="btn bg-success btn-sm text-white" wire:click="cambio_estado('{{ base64_encode($factura->id_guia) }}', 3)" data-bs-toggle="modal" data-bs-target="#modalPrePro">
                                                         <x-slot name="message">
                                                             <i class="fa-solid fa-check"></i>
-                                                        </x-slot>
+                                                        </x-slot>x
                                                     </x-btn-accion>
                                                     <x-btn-accion class="btn btn-primary btn-sm text-white" wire:click.prevent="modal_guia_info('{{ $factura->id_guia}}')" data-bs-toggle="modal" data-bs-target="#modalInformacionGuia">
                                                         <x-slot name="message">

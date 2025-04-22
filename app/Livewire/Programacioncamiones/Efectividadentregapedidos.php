@@ -58,11 +58,7 @@ class Efectividadentregapedidos extends Component
             'hasta.after_or_equal' => 'La fecha de fin debe ser igual o posterior a la fecha de inicio.',
         ]);
 
-        $this->reporteData = $this->guia->obtener_datos_total_efectividad(
-            $this->tipo_reporte,
-            $this->desde,
-            $this->hasta
-        );
+        $this->reporteData = $this->guia->obtener_datos_total_efectividad($this->tipo_reporte, $this->desde, $this->hasta);
 
         // Verificación más completa de la estructura de datos
         if (!empty($this->reporteData) &&

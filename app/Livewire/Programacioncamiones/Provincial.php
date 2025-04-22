@@ -237,6 +237,7 @@ class Provincial extends Component
                         'guia_direc_entrega' => $guia->guia_direc_entrega,
                         'guia_nro_pedido' => $guia->guia_nro_pedido,
                         'guia_importe_total' => $guia->guia_importe_total,
+                        'guia_importe_total_sin_igv' => $guia->guia_importe_total_sin_igv,
                         'guia_departamento' => $guia->guia_departamento,
                         'guia_provincia' => $guia->guia_provincia,
                         'guia_destrito' => $guia->guia_destrito,
@@ -250,7 +251,7 @@ class Provincial extends Component
                     $this->volumenTotal += $volumenTotal;
 
                     // Sumar al importe total
-                    $importe = floatval($guia->guia_importe_total);
+                    $importe = floatval($guia->guia_importe_total_sin_igv);
                     $this->importeTotalVenta += $importe;
                 }
             }
@@ -516,6 +517,7 @@ class Provincial extends Component
             'guia_direc_entrega' => $factura->guia_direc_entrega,
             'guia_nro_pedido' => $factura->guia_nro_pedido,
             'guia_importe_total' => $factura->guia_importe_total,
+            'guia_importe_total_sin_igv' => $factura->guia_importe_total_sin_igv,
             'guia_departamento' => $factura->guia_departamento,
             'guia_provincia' => $factura->guia_provincia,
             'guia_destrito' => $factura->guia_destrito,
@@ -527,7 +529,7 @@ class Provincial extends Component
         $this->pesoTotal += $pesoTotalKilos;
         $this->volumenTotal += $volumenTotal;
 
-        $importes = $factura->guia_importe_total;
+        $importes = $factura->guia_importe_total_sin_igv;
         $importe = floatval($importes);
         $this->importeTotalVenta += $importe;
 
@@ -611,7 +613,7 @@ class Provincial extends Component
             // Actualiza los totales
             $this->pesoTotal -= $factura['peso_total'];
             $this->volumenTotal -= $factura['volumen_total'];
-            $this->importeTotalVenta -= floatval($factura['guia_importe_total']);
+            $this->importeTotalVenta -= floatval($factura['guia_importe_total_sin_igv']);
 
             // Verifica si no quedan facturas ni servicios de transporte seleccionados
             if (empty($this->selectedFacturas) && empty($this->selectedServTrns)) {
@@ -783,7 +785,6 @@ class Provincial extends Component
             if (empty($this->selectedServTrns) && empty($this->selectedFacturas)) {
                 $this->pesoTotal = 0;
                 $this->volumenTotal = 0;
-                $this->importeTotalVenta = 0;
             }
 
             // Actualizar lista de vehículos sugeridos
@@ -793,144 +794,6 @@ class Provincial extends Component
             \Log::warning("No se encontró el servicio transporte con id_serv_transpt: $id_ser_t");
         }
     }
-
-//    public function seleccionar_factura_cliente($CFTD, $CFNUMSER, $CFNUMDOC){
-//        // Validar que la factura no exista en el array selectedFacturas
-//        $comprobanteExiste = collect($this->selectedFacturas)->first(function ($factura) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
-//            return $factura['CFTD'] === $CFTD
-//                && $factura['CFNUMSER'] === $CFNUMSER
-//                && $factura['CFNUMDOC'] === $CFNUMDOC;
-//        });
-//
-//        if ($comprobanteExiste) {
-//            // Mostrar un mensaje de error si la factura ya fue agregada
-//            session()->flash('error', 'Este comprobante ya fue agregado.');
-//            return;
-//        }
-//
-//        // Buscar la factura en el array filteredFacturas
-//        $factura = $this->filteredComprobantes->first(function ($f) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
-//            return $f->CFTD === $CFTD
-//                && $f->CFNUMSER === $CFNUMSER
-//                && $f->CFNUMDOC === $CFNUMDOC;
-//        });
-//
-//        if ($factura->total_kg <= 0 || $factura->total_volumen <= 0){
-//            session()->flash('error', 'El peso o el volumen deben ser mayores a 0.');
-//            return;
-//        }
-//        if (count($this->selectedFacturas) > 0){
-//            // Obtiene el primer comprobante seleccionado
-//            $primerComprobante = $this->selectedFacturas[0];
-//
-//            $esUbigeo = $primerComprobante['DEPARTAMENTO'] == $factura->DEPARTAMENTO && $primerComprobante['PROVINCIA'] == $factura->PROVINCIA && $primerComprobante['DISTRITO'] == $factura->DISTRITO;
-//            if ($esUbigeo){
-//                if (
-//                    $factura->DEPARTAMENTO != $primerComprobante['DEPARTAMENTO'] ||
-//                    $factura->PROVINCIA != $primerComprobante['PROVINCIA'] ||
-//                    $factura->DISTRITO != $primerComprobante['DISTRITO']
-//                ) {
-//                    $tex = $primerComprobante['DEPARTAMENTO'].' - '.$primerComprobante['PROVINCIA'].' - '.$primerComprobante['DISTRITO'];
-//                    session()->flash('error', "No puedes agregar un comprobante con un ubigeo diferente a $tex.");
-//                    return;
-//                }
-//            }else{
-//                if (
-//                    $primerComprobante['DEPARTAMENTO'] !== $factura->DEPARTAMENTO ||
-//                    $primerComprobante['PROVINCIA'] !== $factura->PROVINCIA ||
-//                    $primerComprobante['DISTRITO'] !== $factura->DISTRITO
-//                ) {
-//                    session()->flash('error', 'No puedes agregar un comprobante con un ubigeo diferente al del primer comprobante seleccionado.');
-//                    return;
-//                }
-//            }
-//        }
-//        // Agregar la factura seleccionada y actualizar el peso y volumen total
-//        $this->selectedFacturas[] = [
-//            'CFTD' => $CFTD,
-//            'CFNUMSER' => $CFNUMSER,
-//            'CFNUMDOC' => $CFNUMDOC,
-//            'total_kg' => $factura->total_kg,
-//            'total_volumen' => $factura->total_volumen,
-//            'guia' => $factura->CFTEXGUIA,
-//            'GREFECEMISION' => $factura->GREFECEMISION, // fecha de emision de la guía
-//            'LLEGADADIRECCION' => $factura->LLEGADADIRECCION,// Dirección de destino
-//            'LLEGADAUBIGEO' => $factura->LLEGADAUBIGEO,// Código del ubigeo
-//            'DEPARTAMENTO' => $factura->DEPARTAMENTO,// Departamento
-//            'PROVINCIA' => $factura->PROVINCIA,// Provincia
-//            'DISTRITO' => $factura->DISTRITO,// Distrito
-//            'CFIMPORTE' => $factura->CFIMPORTE,
-//        ];
-//        $this->pesoTotal += $factura->total_kg;
-//        $this->volumenTotal += $factura->total_volumen;
-////        $importe = $this->general->formatoDecimal($factura->CFIMPORTE);
-//        $importe = $factura->CFIMPORTE;
-//        $importe = floatval($importe);
-//        $this->importeTotalVenta += $importe;
-//
-//        // Eliminar la factura de la lista de facturas filtradas
-//        $this->filteredComprobantes = $this->filteredComprobantes->filter(function ($f) use ($CFNUMDOC) {
-//            return $f->CFNUMDOC !== $CFNUMDOC;
-//        });
-//        if (count($this->selectedFacturas) == 1){
-//            // para el primer comprobante agregado se debe listar Departamento (*) , Provincia (*) y Distrito
-//            // esto funciona bien
-//            $primerRegistroComprobante = $this->selectedFacturas[0];
-//            // Eliminar espacios al principio y al final del texto
-//            $departamento = trim($primerRegistroComprobante['DEPARTAMENTO']);
-//            $provincia = trim($primerRegistroComprobante['PROVINCIA']);
-//            $distrito = trim($primerRegistroComprobante['DISTRITO']);
-//
-//            $departame = DB::table('departamentos')->where('departamento_nombre','like','%'.$departamento.'%')->first();
-//            if ($departame){
-//                $this->id_departamento = $departame->id_departamento;
-//                $this->listar_provincias();
-//                $provinDepa = DB::table('provincias')->where('id_departamento','=',$this->id_departamento)
-//                    ->where('provincia_nombre','LIKE','%'.$provincia.'%')->first();
-//                if ($provinDepa){
-//                    $this->id_provincia = $provinDepa->id_provincia;
-//                    $this->listar_distritos();
-//                    $distri = DB::table('distritos')->where('id_provincia','=',$provinDepa->id_provincia)
-//                        ->where('distrito_nombre','like','%'.$distrito.'%')->first();
-//                    if ($distri){
-//                        $this->id_distrito = $distri->id_distrito;
-//                    }
-//                }
-//            }
-//        }
-//        // Actualizar lista de vehículos sugeridos
-//        $this->listar_tarifarios_su();
-//        $this->validarTarifaSeleccionada();
-//    }
-
-//    public function eliminarFacturaSeleccionada($CFTD, $CFNUMSER, $CFNUMDOC){
-//        // Encuentra la factura en las seleccionadas
-//        $factura = collect($this->selectedFacturas)->first(function ($f) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
-//            return $f['CFTD'] === $CFTD && $f['CFNUMSER'] === $CFNUMSER && $f['CFNUMDOC'] === $CFNUMDOC;
-//        });
-//        if ($factura) {
-//            // Elimina la factura de la lista seleccionada
-//            $this->selectedFacturas = collect($this->selectedFacturas)
-//                ->reject(function ($f) use ($CFTD, $CFNUMSER, $CFNUMDOC) {
-//                    return $f['CFTD'] === $CFTD && $f['CFNUMSER'] === $CFNUMSER && $f['CFNUMDOC'] === $CFNUMDOC;
-//                })
-//                ->values()
-//                ->toArray();
-//            // Actualiza los totales
-//            $this->pesoTotal -= $factura['total_kg'];
-//            $this->volumenTotal -= $factura['total_volumen'];
-//            $this->importeTotalVenta =  $this->importeTotalVenta - $factura['CFIMPORTE'];
-//
-//            // Verifica si no quedan facturas seleccionadas
-//            if (empty($this->selectedFacturas)) {
-//                $this->pesoTotal = 0;
-//                $this->volumenTotal = 0;
-//            }
-//
-//            $this->listar_tarifarios_su();
-//            $this->validarTarifaSeleccionada();
-//        }
-//    }
 
     public function validarTarifaSeleccionada() {
         if ($this->selectedTarifario) {

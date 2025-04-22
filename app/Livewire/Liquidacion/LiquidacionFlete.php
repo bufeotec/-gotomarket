@@ -180,7 +180,7 @@ class LiquidacionFlete extends Component
                     $totalVentaRestar = 0;
                     $totalPesoRestar = 0;
                     foreach ($des->comprobantes as $com) {
-                        $precio = floatval($com->guia_importe_total);
+                        $precio = floatval($com->guia_importe_total_sin_igv);
                         $pesoMenos = $com->despacho_venta_total_kg;
                         $totalVenta += $precio;
                         if ($com->despacho_detalle_estado_entrega == 3){
@@ -302,21 +302,48 @@ class LiquidacionFlete extends Component
     public function listar_informacion_despacho($id){
         try {
             $this->listar_detalle_despacho = DB::table('despachos as d')
-                ->join('programaciones as p','p.id_programacion','=','d.id_programacion')
-                ->join('users as u','u.id_users','=','d.id_users')
-                ->where('d.id_despacho','=',$id)->first();
-            if ($this->listar_detalle_despacho){
-                $this->listar_detalle_despacho->comprobantes = DB::table('despacho_ventas')
-                    ->where('id_despacho','=',$id)->get();
+                ->join('programaciones as p', 'p.id_programacion', '=', 'd.id_programacion')
+                ->join('users as u', 'u.id_users', '=', 'd.id_users')
+                ->where('d.id_despacho', '=', $id)
+                ->first();
+
+            if ($this->listar_detalle_despacho) {
+                // Obtener las guías asociadas al despacho con sus datos completos
+                $this->listar_detalle_despacho->comprobantes = DB::table('despacho_ventas as dv')
+                    ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
+                    ->where('dv.id_despacho', '=', $id)
+                    ->select(
+                        'dv.*',
+                        'g.guia_nro_doc',
+                        'g.guia_fecha_emision',
+                        'g.guia_nombre_cliente',
+                        'g.guia_nro_doc_ref',
+                        'g.guia_importe_total_sin_igv',
+                        'g.guia_estado_aprobacion'
+                    )
+                    ->get();
 
                 $totalVenta = 0;
                 foreach ($this->listar_detalle_despacho->comprobantes as $com) {
-                    $precio = floatval($com->despacho_venta_cfimporte);
-                    $totalVenta += $precio;
+                    // Calcular el peso total para cada guía
+                    $detalles = DB::table('guias_detalles')
+                        ->where('id_guia', $com->id_guia)
+                        ->get();
+
+                    // Calcular el peso total en kilogramos
+                    $pesoTotalGramos = $detalles->sum(function ($detalle) {
+                        return $detalle->guia_det_peso_gramo * $detalle->guia_det_cantidad;
+                    });
+
+                    // Convertir a kilos y agregar al objeto
+                    $com->peso_total_kilos = $pesoTotalGramos / 1000;
+
+                    // Sumar al total de venta usando guia_importe_total_sin_igv
+                    $totalVenta += floatval($com->guia_importe_total_sin_igv);
                 }
                 $this->listar_detalle_despacho->totalVentaDespacho = $totalVenta;
             }
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             $this->logs->insertarLog($e);
         }
     }

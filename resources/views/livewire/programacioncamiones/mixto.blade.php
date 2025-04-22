@@ -145,7 +145,7 @@
                                                                     </td>
                                                                     <td style="width: 32.2%">
                                                                         <span class="d-block tamanhoTablaComprobantes">
-                                                                            <b class="colorBlackComprobantes">{{ $me->formatoDecimal($com['guia_importe_total'])  }}</b>
+                                                                            <b class="colorBlackComprobantes">{{ $me->formatoDecimal($com['guia_importe_total_sin_igv'])  }}</b>
                                                                         </span>
                                                                     </td>
                                                                     <td>
@@ -587,8 +587,8 @@
                                 </div>
 
                                 <div class="col-lg-2">
-                                    <strong style="color: #8c1017">Importe Total:</strong>
-                                    <p>{{ $me->formatoDecimal($guiainfo->guia_importe_total ?? 0)}}</p>
+                                    <strong style="color: #8c1017">Importe Total sin IGV:</strong>
+                                    <p>{{ $me->formatoDecimal($guiainfo->guia_importe_total_sin_igv ?? 0)}}</p>
                                 </div>
 
                                 <div class="col-lg-2">

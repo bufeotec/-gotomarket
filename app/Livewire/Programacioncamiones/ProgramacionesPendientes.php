@@ -76,13 +76,13 @@ class ProgramacionesPendientes extends Component
                 $des->comprobantes = DB::table('despacho_ventas as dv')
                     ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
                     ->where('dv.id_despacho', '=', $des->id_despacho)
-                    ->select('dv.*', 'g.guia_importe_total')
+                    ->select('dv.*', 'g.guia_importe_total_sin_igv')
                     ->get();
 
                 foreach ($des->comprobantes as $com) {
                     // Verificar si el id_guia ya fue procesado
                     if (!in_array($com->id_guia, $guiasProcesadas)) {
-                        $precio = floatval($com->guia_importe_total);  // Usar guia_importe_total
+                        $precio = floatval($com->guia_importe_total_sin_igv);
                         $totalVenta += round($precio, 2);
                         $guiasProcesadas[] = $com->id_guia; // Marcar el id_guia como procesado
                     }

@@ -462,7 +462,7 @@
                                         <td>{{$lnc->not_cred_forma_pago}}</td>
                                         <td>{{$lnc->not_cred_moneda}}</td>
                                         <td>{{$general->formatoDecimal($lnc->not_cred_tipo_cambio)}}</td>
-                                        <td>{{$general->formatoDecimal($lnc->not_cred_importe_total)}}</td>
+                                        <td>S/ {{$general->formatoDecimal($lnc->not_cred_importe_total)}}</td>
                                         <td>{{$lnc->not_cred_estado}}</td>
                                         <td>
                                             <a href="#" class="btn-ver m-3" data-bs-toggle="modal" data-bs-target="#modalDetalleNotaCredito" wire:click="modal_nota_credito_detalle({{ $lnc->id_not_cred }})">

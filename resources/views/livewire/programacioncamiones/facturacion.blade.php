@@ -182,6 +182,9 @@
                             <spanc class="ms-1" wire:loading wire:target="buscar_comprobantes">BUSCANDO...</spanc>
                         </button>
                     </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        <div class="loader mt-2" wire:loading wire:target="buscar_comprobantes"></div>
+                    </div>
                 </div>
             </div>
 
@@ -230,11 +233,8 @@
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    @php
-                                                        $importe = number_format($factura->guia_importe_total, 2, '.', ',');
-                                                    @endphp
                                                     <span class="d-block tamanhoTablaComprobantes">
-                                                        <b class="colorBlackComprobantes">{{ $importe }}</b>
+                                                        <b class="colorBlackComprobantes">S/ {{ $me->formatoDecimal(($factura->guia_importe_total_sin_igv ?? 0)) }}</b>
                                                     </span>
                                                 </td>
                                                 <td>

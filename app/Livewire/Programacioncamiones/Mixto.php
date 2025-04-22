@@ -287,6 +287,7 @@ class Mixto extends Component
                         'guia_nro_pedido' => $guia->guia_nro_pedido,
                         'isChecked' => $validarcheckComprobante,
                         'guia_importe_total' => $guia->guia_importe_total,
+                        'guia_importe_total_sin_igv' => $guia->guia_importe_total_sin_igv,
                         'guia_departamento' => $guia->guia_departamento,
                         'guia_provincia' => $guia->guia_provincia,
                         'guia_destrito' => $guia->guia_destrito,
@@ -295,7 +296,7 @@ class Mixto extends Component
                     $guiasAgregadas[] = $c->id_guia;
                     $this->pesoTotal += $pesoTotalKilos;
                     $this->volumenTotal += $volumenTotal;
-                    $importe = $guia->guia_importe_total;
+                    $importe = $guia->guia_importe_total_sin_igv;
                     $importe = floatval($importe);
                     $this->importeTotalVenta += $importe;
                 }
@@ -360,6 +361,7 @@ class Mixto extends Component
                             'peso_total' => $pesoKilos,
                             'volumen_total' => $volumen,
                             'guia_importe_total' => $factura->guia_importe_total,
+                            'guia_importe_total_sin_igv' => $factura->guia_importe_total_sin_igv,
                             'guia_fecha_emision' => $factura->guia_fecha_emision,
                             'guia_nro_doc' => $factura->guia_nro_doc,
                             'guia_nro_doc_ref' => $factura->guia_nro_doc_ref,
@@ -475,7 +477,7 @@ class Mixto extends Component
         foreach ($this->comprobantesSeleccionados as $com){
             $this->clientes_provinciales[$index]['peso_total'] += $com['peso_total'];
             $this->clientes_provinciales[$index]['volumen_total'] += $com['volumen_total'];
-            $this->imporTotalPro += round($com['guia_importe_total'] ?? 0, 2);
+            $this->imporTotalPro += round($com['guia_importe_total_sin_igv'] ?? 0, 2);
             $this->toKg += $com['peso_total'];
             $this->toVol += $com['volumen_total'];
         }
@@ -556,7 +558,6 @@ class Mixto extends Component
             $this->showBotonListo = false;
         }
     }
-
 
     public function seleccionarTarifario($id){
         $tarifario = collect($this->tarifariosSugeridos)->first(function ($tarifario) use ($id){
@@ -710,6 +711,7 @@ class Mixto extends Component
             'guia_direc_entrega' => $factura->guia_direc_entrega,
             'guia_nro_pedido' => $factura->guia_nro_pedido,
             'guia_importe_total' => $factura->guia_importe_total,
+            'guia_importe_total_sin_igv' => $factura->guia_importe_total_sin_igv,
             'guia_departamento' => $factura->guia_departamento,
             'guia_provincia' => $factura->guia_provincia,
             'guia_destrito' => $factura->guia_destrito,
@@ -719,7 +721,7 @@ class Mixto extends Component
         $this->pesoTotal += $pesoTotalKilos;
         $this->volumenTotal += $volumenTotal;
 
-        $importes = $factura->guia_importe_total;
+        $importes = $factura->guia_importe_total_sin_igv;
         $importe = floatval($importes);
         $this->importeTotalVenta += $importe;
 
@@ -743,7 +745,6 @@ class Mixto extends Component
             }
         }
     }
-
 
     public function actualizarFactura($id_guia, $isChecked){
         if ($isChecked) {
@@ -795,7 +796,7 @@ class Mixto extends Component
                         'id_guia' => $factura['id_guia'],
                         'peso_total' => $factura['peso_total'],
                         'volumen_total' => $factura['volumen_total'],
-                        'guia_importe_total' => $factura['guia_importe_total'],
+                        'guia_importe_total_sin_igv' => $factura['guia_importe_total_sin_igv'],
                         'guia_direc_entrega' => $factura['guia_direc_entrega'],
                         'guia_departamento' => $factura['guia_departamento'],
                         'guia_provincia' => $factura['guia_provincia'],
@@ -835,7 +836,7 @@ class Mixto extends Component
                         'id_guia' => $factura['id_guia'],
                         'peso_total' => $factura['peso_total'],
                         'volumen_total' => $factura['volumen_total'],
-                        'guia_importe_total' => $factura['guia_importe_total'],
+                        'guia_importe_total_sin_igv' => $factura['guia_importe_total_sin_igv'],
                         'guia_fecha_emision' => $factura['guia_fecha_emision'],
                         'guia_nro_doc' => $factura['guia_nro_doc'],
                         'guia_nro_doc_ref' => $factura['guia_nro_doc_ref'],
@@ -902,7 +903,7 @@ class Mixto extends Component
             // Actualiza los totales
             $this->pesoTotal -= $factura['peso_total'];
             $this->volumenTotal -= $factura['volumen_total'];
-            $this->importeTotalVenta -= floatval($factura['guia_importe_total']);
+            $this->importeTotalVenta -= floatval($factura['guia_importe_total_sin_igv']);
 
             // Verifica si no quedan facturas ni servicios de transporte seleccionados
             if (empty($this->selectedFacturasLocal) && empty($this->selectedServTrns)) {

@@ -122,9 +122,11 @@
                                 <x-table-general>
                                     <x-slot name="thead">
                                         <tr>
-                                            <th>
-                                                <input type="checkbox" wire:model.live="select_guias_all" id="select_guias_all-all" class="form-check-input">
-                                            </th>
+                                            @if(count($filteredFacturas) > 0)
+                                                <th>
+                                                    <input type="checkbox" wire:model.live="select_guias_all" id="select_guias_all-all" class="form-check-input cursoPointer">
+                                                </th>
+                                            @endif
                                             <th style="font-size: 12px">Guía / Factura</th>
                                             <th style="font-size: 12px">Fecha Emisión</th>
                                             <th style="font-size: 12px">Importe sin IGV</th>
@@ -136,13 +138,13 @@
                                     <x-slot name="tbody">
                                         @if(!empty($filteredFacturas))
                                             @foreach($filteredFacturas as $guia)
-                                                <tr style="cursor: pointer">
+                                                <tr>
                                                     <td colspan="6" style="padding: 0px">
                                                         <table class="table">
                                                             <tbody>
                                                             <tr>
                                                                 <td>
-                                                                    <input type="checkbox" wire:model.live="selectedGuiaIds" value="{{ $guia->id_guia }}" id="checkbox-{{ $guia->id_guia }}" class="form-check-input">
+                                                                    <input type="checkbox" wire:model.live="selectedGuiaIds" value="{{ $guia->id_guia }}" id="checkbox-{{ $guia->id_guia }}" class="form-check-input cursoPointer">
                                                                 </td>
                                                                 <td style="width: 39.6%">
                                                                     <span class="d-block tamanhoTablaComprobantes">
@@ -156,7 +158,7 @@
                                                                 </td>
                                                                 <td style="width: 32.2%">
                                                                     <span class="d-block tamanhoTablaComprobantes">
-                                                                        {{ $me->formatoDecimal(($guia->guia_importe_total ?? 0) / 1.18) }}
+                                                                        {{ $me->formatoDecimal(($guia->guia_importe_total_sin_igv ?? 0)) }}
                                                                     </span>
                                                                 </td>
                                                                 <td style="width: 32.2%">
@@ -242,7 +244,7 @@
                                                 <x-slot name="thead">
                                                     <tr>
                                                         <th class="">
-                                                            <input class="form-check-input" type="checkbox" wire:model="selectAll" id="selectAll" onchange="toggleAllCheckboxes(this)">
+                                                            <input class="form-check-input cursoPointer" type="checkbox" wire:model="selectAll" id="selectAll" onchange="toggleAllCheckboxes(this)">
                                                         </th>
                                                         <th class="">Guía / Factura</th>
                                                         <th class="">F. Emisión</th>
@@ -256,7 +258,7 @@
                                                     @foreach($facturasCreditoAprobadas as $factura)
                                                         <tr>
                                                             <td>
-                                                                <input class="form-check-input" type="checkbox" wire:model="selectedItems" value="{{ (string) $factura->id_guia }}" onchange="toggleButton()">
+                                                                <input class="form-check-input cursoPointer" type="checkbox" wire:model="selectedItems" value="{{ (string) $factura->id_guia }}" onchange="toggleButton()">
                                                             </td>
                                                             <td>
                                                                 <span class="d-block tamanhoTablaComprobantes">
@@ -271,10 +273,7 @@
                                                             <td>
                                                                 <span class="d-block tamanhoTablaComprobantes">
                                                                     <b class="colorBlackComprobantes">
-                                                                        @php
-                                                                            $importe = floatval($factura->guia_importe_total ?? 0); // Forzar conversión a número
-                                                                            echo $me->formatoDecimal($importe / 1.18);
-                                                                        @endphp
+                                                                        {{ $me->formatoDecimal($factura->guia_importe_total_sin_igv ?? 0) }}
                                                                     </b>
                                                                 </span>
                                                             </td>

@@ -160,16 +160,15 @@
                                                 @foreach($listar_detalle_despacho->comprobantes as $ta)
                                                     <tr>
                                                         <td>{{$conteo}}</td>
-                                                        <td>{{$general->formatearCodigo($ta->despacho_venta_guia)}}</td>
-                                                        <td>{{date('d-m-Y',strtotime($ta->despacho_venta_grefecemision))}}</td>
-                                                        <td>{{$ta->despacho_venta_cnomcli}}</td>
-                                                        <td>{{$ta->despacho_venta_factura}}</td>
-                                                        <td>S/ {{$general->formatoDecimal($ta->despacho_venta_cfimporte)}}</td>
+                                                        <td>{{$general->formatearCodigo($ta->guia_nro_doc)}}</td>
+                                                        <td>{{date('d-m-Y',strtotime($ta->guia_fecha_emision))}}</td>
+                                                        <td>{{$ta->guia_nombre_cliente}}</td>
+                                                        <td>{{$ta->guia_nro_doc_ref}}</td>
+                                                        <td>S/ {{$general->formatoDecimal($ta->guia_importe_total_sin_igv)}}</td>
                                                         <td>{{date('d-m-Y',strtotime($listar_detalle_despacho->programacion_fecha))}}</td>
-                                                        <td>{{$general->formatoDecimal($ta->despacho_venta_total_kg)}} Kg</td>
-                                                        <td>
-                                                            <span class="font-bold badge  {{$ta->despacho_detalle_estado_entrega == 2 ? 'bg-label-success' : 'bg-label-danger'}}">
-                                                                {{$ta->despacho_detalle_estado_entrega == 2 ? 'ENTREGADO ' : 'NO ENTREGADO'}}
+                                                        <td>{{$general->formatoDecimal($ta->peso_total_kilos)}} Kg</td>                                                        <td>
+                                                            <span class="font-bold badge  {{$ta->guia_estado_aprobacion == 8 ? 'bg-label-success' : 'bg-label-danger'}}">
+                                                                {{$ta->guia_estado_aprobacion == 8 ? 'ENTREGADO ' : 'NO ENTREGADO'}}
                                                             </span>
                                                         </td>
                                                     </tr>
@@ -227,7 +226,7 @@
                                                 </td>
                                                 <td>{{$ta->guia_nombre_cliente}}</td>
                                                 <td>{{$ta->guia_nro_doc_ref}}</td>
-                                                <td>S/ {{$general->formatoDecimal($ta->guia_importe_total)}}</td>
+                                                <td>S/ {{$general->formatoDecimal($ta->guia_importe_total_sin_igv)}}</td>
                                                 <td>{{ date('d-m-Y',strtotime($ta->programacion_fecha)) }}</td>
                                                 <td>{{$general->formatoDecimal($ta->peso_total)}} Kg</td>
                                             </tr>

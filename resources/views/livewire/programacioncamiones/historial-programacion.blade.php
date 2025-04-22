@@ -147,7 +147,7 @@
                                                     <th>Tipo de Movimiento</th>
                                                     <th>Documento Referencial</th>
                                                     <th>Glosa</th>
-                                                    <th>Importe Total</th>
+                                                    <th>Importe Total sin IGV</th>
                                                     <th>Dirección de Entrega</th>
                                                     <th>UBIGEO</th>
                                                     @if($listar_detalle_despacho->despacho_estado_aprobacion == 2 || $listar_detalle_despacho->despacho_estado_aprobacion == 3)
@@ -173,7 +173,7 @@
                                                             <td>{{ $ta->guia_tipo_movimiento }}</td>
                                                             <td>{{ $ta->guia_nro_doc_ref }}</td>
                                                             <td>{{ $ta->guia_glosa }}</td>
-                                                            <td>{{ $general->formatoDecimal($ta->guia_importe_total ?? 0) }}</td>
+                                                            <td>{{ $general->formatoDecimal($ta->guia_importe_total_sin_igv ?? 0) }}</td>
                                                             <td>{{ $ta->guia_direc_entrega }}</td>
                                                             <td>{{ $ta->guia_departamento }} - {{ $ta->guia_provincia }} - {{ $ta->guia_destrito }}</td>
                                                             @if($listar_detalle_despacho->despacho_estado_aprobacion == 2 || $listar_detalle_despacho->despacho_estado_aprobacion == 3)
@@ -401,7 +401,7 @@
                                 <th>Precio Unit Antes Descuento Inc IGV</th>
                                 <th>Descuento Total Sin IGV</th>
                                 <th>IGV Total</th>
-                                <th>Importe Total Inc IGV</th>
+                                <th>Importe Total sin IGV</th>
                                 <th>Moneda</th>
                                 <th>Tipo Cambio</th>
                                 <th>Peso Gramos</th>
@@ -473,11 +473,6 @@
             <label for="fecha_hasta" class="form-label">Hasta</label>
             <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model.live="hasta" class="form-control">
         </div>
-{{--        <div class="col-lg-2 col-md-3 col-sm-12 mb-2 mt-4 d-flex justify-content-center">--}}
-{{--            <button class="btn btn-sm bg-primary text-white" wire:click="buscar_comprobantes" >--}}
-{{--                <i class="fa fa-search"></i> BUSCAR--}}
-{{--            </button>--}}
-{{--        </div>--}}
         @if(count($resultado) > 0)
             <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
                 <button class="btn btn-success text-white mt-4" wire:click="generar_excel_historial_programacion" wire:loading.attr="disabled"><i class="fa-solid fa-file-excel"></i> Exportar Programación</button>
@@ -616,58 +611,76 @@
                     $fe = $general->obtenerNombreFecha($r->programacion_fecha, 'Date', 'Date');
                     $fc = $general->obtenerNombreFecha($r->created_at, 'DateTime', 'DateTime');
                     $fa = $general->obtenerNombreFecha($r->programacion_fecha_aprobacion, 'DateTime', 'DateTime');
-                @endphp
-                <div class="accordion-item">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button {{ $index == 0 ? '' : 'collapsed' }}" wire:ignore.self type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne_{{ $index }}" aria-expanded="true" aria-controls="collapseOne_{{ $index }}">
-                            #{{ $conteoGeneral }} | FD: {{ $fe }} | UR: {{ $usuarios }} | FC: {{ $fc }} | FA: {{ $fa }} | N° C: {{ $r->programacion_numero_correlativo }}
-                        </button>
-                    </h2>
-                    <div id="collapseOne_{{ $index }}" class="accordion-collapse collapse {{ $index == 0 ? 'show' : '' }}" data-bs-parent="#accordionExample" wire:ignore.self>
-                        <div class="accordion-body">
-                            <div class="row">
-                                @if($roleId == 1 || $roleId == 2)
-                                    @php
-                                        $conteoRetornar = 0;
-                                        foreach ($r->despacho as $des) {
-                                            if ($des->despacho_estado_aprobacion != 1) {
-                                                $conteoRetornar++;
-                                            }
-                                        }
-                                    @endphp
-                                    @if($conteoRetornar == 0)
-                                        <div class="col-lg-12 col-md-12 col-sm-12 text-end mb-4">
-                                            <button class="btn btn-secondary text-white btn-sm" wire:click="retornarProgamacionApro({{ $r->id_programacion }})" data-bs-toggle="modal" data-bs-target="#modalRetornarPendiente">
-                                                <i class="fa-solid fa-arrow-left"></i> Retornar a Programaciones Pendientes
-                                            </button>
-                                        </div>
-                                    @endif
-                                @endif
 
-                                <div class="col-lg-12 col-md-12 col-sm-12 table-responsive">
-                                    <table class="table">
-                                        <thead>
-                                        <tr style="background: #f5f5f9">
-                                            <th></th>
-                                            <th>N°</th>
-                                            <th>Servicio</th>
-                                            <th>Orden Servicio</th>
-                                            <th>Proveedor</th>
-                                            <th>Importe Total</th>
-                                            <th>Peso</th>
-                                            <th>Llenado en Peso</th>
-                                            <th>Cambio de Tarifa</th>
-                                            <th>Costo Flete</th>
-                                            <th>Flete / Venta</th>
-                                            <th>Flete / Peso</th>
-                                            <th>Estado Despacho</th>
-                                            <th>Acciones</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                        @if(count($r->despacho) > 0)
+                    // Filtrar despachos según estadoPro
+                    $despachosFiltrados = collect($r->despacho)->filter(function($des) use ($estadoPro) {
+                        if ($estadoPro === null || $estadoPro === '') {
+                            return true;
+                        }
+
+                        $aprobado = $this->verificarAprobacion($des->id_despacho);
+
+                        if ($estadoPro == 1) {
+                            return $aprobado;
+                        } elseif ($estadoPro == 0) {
+                            return !$aprobado;
+                        }
+
+                        return true;
+                    });
+                @endphp
+
+                @if($despachosFiltrados->count() > 0)
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button {{ $index == 0 ? '' : 'collapsed' }}" wire:ignore.self type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne_{{ $index }}" aria-expanded="true" aria-controls="collapseOne_{{ $index }}">
+                                #{{ $conteoGeneral }} | FD: {{ $fe }} | UR: {{ $usuarios }} | FC: {{ $fc }} | FA: {{ $fa }} | N° C: {{ $r->programacion_numero_correlativo }}
+                            </button>
+                        </h2>
+                        <div id="collapseOne_{{ $index }}" class="accordion-collapse collapse {{ $index == 0 ? 'show' : '' }}" data-bs-parent="#accordionExample" wire:ignore.self>
+                            <div class="accordion-body">
+                                <div class="row">
+                                    @if($roleId == 1 || $roleId == 2)
+                                        @php
+                                            $conteoRetornar = 0;
+                                            foreach ($despachosFiltrados as $des) {
+                                                if ($des->despacho_estado_aprobacion != 1) {
+                                                    $conteoRetornar++;
+                                                }
+                                            }
+                                        @endphp
+                                        @if($conteoRetornar == 0)
+                                            <div class="col-lg-12 col-md-12 col-sm-12 text-end mb-4">
+                                                <button class="btn btn-secondary text-white btn-sm" wire:click="retornarProgamacionApro({{ $r->id_programacion }})" data-bs-toggle="modal" data-bs-target="#modalRetornarPendiente">
+                                                    <i class="fa-solid fa-arrow-left"></i> Retornar a Programaciones Pendientes
+                                                </button>
+                                            </div>
+                                        @endif
+                                    @endif
+
+                                    <div class="col-lg-12 col-md-12 col-sm-12 table-responsive">
+                                        <table class="table">
+                                            <thead>
+                                            <tr style="background: #f5f5f9">
+                                                <th></th>
+                                                <th>N°</th>
+                                                <th>Servicio</th>
+                                                <th>Orden Servicio</th>
+                                                <th>Proveedor</th>
+                                                <th>Importe Total sin IGV</th>
+                                                <th>Peso</th>
+                                                <th>Llenado en Peso</th>
+                                                <th>Cambio de Tarifa</th>
+                                                <th>Costo Flete</th>
+                                                <th>Flete / Venta</th>
+                                                <th>Flete / Peso</th>
+                                                <th>Estado Despacho</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
                                             @php $conteoGeneral2 = 1; @endphp
-                                            @foreach($r->despacho as $des)
+                                            @foreach($despachosFiltrados as $des)
                                                 <tr>
                                                     <td>
                                                         @if($des->despacho_estado_aprobacion == 1)
@@ -734,11 +747,11 @@
                                                             }
                                                         @endphp
                                                         <span class="font-bold badge {{ $colorBadge }}">
-                                                            {{ $des->despacho_estado_aprobacion == 1 ? 'APROBADO ' : '' }}
+                                                        {{ $des->despacho_estado_aprobacion == 1 ? 'APROBADO ' : '' }}
                                                             {{ $des->despacho_estado_aprobacion == 2 ? 'EN CAMINO ' : '' }}
                                                             {{ $des->despacho_estado_aprobacion == 3 ? 'CULMINADO' : '' }}
                                                             {{ $des->despacho_estado_aprobacion == 4 ? 'RECHAZADO' : '' }}
-                                                        </span>
+                                                    </span>
                                                     </td>
                                                     <td>
                                                         @if($des->despacho_estado_aprobacion == 1)
@@ -749,35 +762,24 @@
                                                         <button class="btn btn-primary btn-sm text-white mb-2" wire:click="listar_informacion_despacho({{ $des->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">
                                                             <i class="fa-solid fa-eye"></i> Despacho
                                                         </button>
-
-{{--                                                        <button class="btn btn-warning btn-sm text-white mb-2" wire:click="listar_detalle_guia({{$des->id_despacho}})" data-bs-toggle="modal" data-bs-target="#modalDetalleGuia">--}}
-{{--                                                            <i class="fa-solid fa-eye"></i> Facturas--}}
-{{--                                                        </button>--}}
                                                     </td>
                                                 </tr>
                                                 @php $conteoGeneral2++; @endphp
                                             @endforeach
-                                        @else
-                                            <tr class="odd">
-                                                <td valign="top" colspan="11" class="dataTables_empty text-center">
-                                                    No se han encontrado resultados.
-                                                </td>
-                                            </tr>
-                                        @endif
-                                        </tbody>
-                                    </table>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                @php $conteoGeneral++; @endphp
+                    @php $conteoGeneral++; @endphp
+                @endif
             @endforeach
         @else
             <p class="text-center">Registros Insuficientes</p>
         @endif
     </div>
-
 
     {{-- Mostrar enlaces de paginación --}}
     {{ $resultado->links(data: ['scrollTo' => false]) }}

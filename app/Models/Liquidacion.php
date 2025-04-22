@@ -64,7 +64,7 @@ class Liquidacion extends Model
                         $totalVentaRestar = 0;
                         $totalPesoRestar = 0;
                         foreach ($des->comprobantes as $com) {
-                            $precio = floatval($com->guia_importe_total);
+                            $precio = floatval($com->guia_importe_total_sin_igv);
                             $pesoMenos = $com->despacho_venta_total_kg;
                             $totalVenta += $precio;
                             if ($com->despacho_detalle_estado_entrega == 3){
@@ -376,7 +376,7 @@ class Liquidacion extends Model
                     $totalPesoRestar = 0;
 
                     foreach ($des->comprobantes as $com) {
-                        $precio = floatval($com->guia_importe_total);
+                        $precio = floatval($com->guia_importe_total_sin_igv);
                         $pesoMenos = $com->despacho_venta_total_kg;
                         $totalVenta += $precio;
                         if ($com->despacho_detalle_estado_entrega == 3) {
