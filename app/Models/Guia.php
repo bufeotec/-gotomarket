@@ -690,4 +690,208 @@ class Guia extends Model
             return [];
         }
     }
+
+    public function obtener_datos_total_efectividad($tipo_reporte, $desde, $hasta){
+        try {
+            // Primero obtenemos el rango de meses para los gráficos
+            $fechaDesde = \Carbon\Carbon::parse($desde);
+            $fechaHasta = \Carbon\Carbon::parse($hasta);
+
+            $meses = [];
+            $datosMensuales = [];
+
+            while ($fechaDesde <= $fechaHasta) {
+                $mesKey = $fechaDesde->format('Y-m');
+                $mesNombre = ucfirst($fechaDesde->locale('es')->isoFormat('MMMM'));
+
+                $meses[] = $mesNombre;
+
+                // Inicializar datos mensuales
+                $datosMensuales[$mesKey] = [
+                    'total_pedidos' => 0,
+                    'pedidos_con_devolucion' => 0,
+                    'monto_total' => 0,
+                    'monto_con_devolucion' => 0,
+                    'clientes_unicos' => [],
+                    'programaciones_procesadas' => []
+                ];
+
+                $fechaDesde->addMonth();
+            }
+
+            // Reiniciamos la fecha para la consulta principal
+            $fechaDesde = \Carbon\Carbon::parse($desde);
+
+            // Consulta principal para obtener todos los datos
+            $query = DB::table('programaciones as p')
+                ->join('despachos as d', 'd.id_programacion', '=', 'p.id_programacion')
+                ->join('despacho_ventas as dv', 'dv.id_despacho', '=', 'd.id_despacho')
+                ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
+                ->where('d.despacho_estado_aprobacion', '!=', 4)
+                ->where('g.guia_estado_aprobacion', '=', 8);
+
+            // Aplicar filtro de fecha según tipo de reporte
+            if ($tipo_reporte == 1) { // F. Emisión
+                $query->whereBetween('g.guia_fecha_emision', [$desde, $hasta]);
+            } elseif ($tipo_reporte == 2) { // F. Programación
+                $query->whereBetween('p.programacion_fecha', [$desde, $hasta]);
+            }
+
+            // Obtener todas las guías que cumplen con los filtros
+            $guias = $query->select(
+                'g.*',
+                'd.id_tipo_servicios',
+                'p.id_programacion as id_programacion',
+                DB::raw('DATE_FORMAT('.($tipo_reporte == 1 ? 'g.guia_fecha_emision' : 'p.programacion_fecha').', "%Y-%m") as mes')
+            )
+                ->get();
+
+            // Variables para el total general
+            $totalGeneral = [
+                'total_pedidos' => 0,
+                'pedidos_con_devolucion' => 0,
+                'monto_total' => 0,
+                'monto_con_devolucion' => 0,
+                'clientes_unicos' => [],
+                'programaciones_procesadas' => []
+            ];
+
+            foreach ($guias as $guia) {
+                $mesKey = $guia->mes;
+                $idProgramacion = $guia->id_programacion;
+
+                // Verificar si la guía tiene devolución
+                $tieneDevolucion = DB::table('notas_creditos')
+                    ->where('not_cred_nro_doc_ref', $guia->guia_nro_doc_ref)
+                    ->where('not_cred_motivo', '=', '1')
+                    ->exists();
+
+                // Procesar datos mensuales
+                if (isset($datosMensuales[$mesKey])) {
+                    // Sumar al monto total (todas las guías)
+                    $datosMensuales[$mesKey]['monto_total'] += $guia->guia_importe_total;
+                    $totalGeneral['monto_total'] += $guia->guia_importe_total;
+
+                    if ($tieneDevolucion) {
+                        $datosMensuales[$mesKey]['monto_con_devolucion'] += $guia->guia_importe_total;
+                        $totalGeneral['monto_con_devolucion'] += $guia->guia_importe_total;
+                    }
+
+                    // Para despachos locales (tipo 1), contamos por cliente único
+                    if ($guia->id_tipo_servicios == 1) {
+                        if (!isset($datosMensuales[$mesKey]['clientes_unicos'][$idProgramacion])) {
+                            $datosMensuales[$mesKey]['clientes_unicos'][$idProgramacion] = [];
+                        }
+
+                        if (!in_array($guia->guia_nombre_cliente, $datosMensuales[$mesKey]['clientes_unicos'][$idProgramacion])) {
+                            $datosMensuales[$mesKey]['clientes_unicos'][$idProgramacion][] = $guia->guia_nombre_cliente;
+                            $datosMensuales[$mesKey]['total_pedidos']++;
+                            $totalGeneral['total_pedidos']++;
+
+                            if ($tieneDevolucion) {
+                                $datosMensuales[$mesKey]['pedidos_con_devolucion']++;
+                                $totalGeneral['pedidos_con_devolucion']++;
+                            }
+                        }
+                    }
+                    // Para despachos provinciales (tipo 2), cada programación cuenta como 1
+                    elseif ($guia->id_tipo_servicios == 2 &&
+                        !in_array($idProgramacion, $datosMensuales[$mesKey]['programaciones_procesadas'])) {
+                        $datosMensuales[$mesKey]['programaciones_procesadas'][] = $idProgramacion;
+                        $datosMensuales[$mesKey]['total_pedidos']++;
+                        $totalGeneral['total_pedidos']++;
+
+                        if ($tieneDevolucion) {
+                            $datosMensuales[$mesKey]['pedidos_con_devolucion']++;
+                            $totalGeneral['pedidos_con_devolucion']++;
+                        }
+                    }
+                }
+            }
+
+            // Preparar datos para los gráficos
+            $graficoDespachos = [
+                'pedidos_entregados' => [],
+                'entregados_sin_devolucion' => [],
+                'efectividad' => []
+            ];
+
+            $graficoValores = [
+                'soles_entregados' => [],
+                'soles_sin_devolucion' => [],
+                'efectividad_valor' => []
+            ];
+
+            foreach ($meses as $mesNombre) {
+                foreach ($datosMensuales as $mesKey => $datos) {
+                    if (str_contains($mesKey, $fechaDesde->format('Y-m'))) {
+                        $graficoDespachos['pedidos_entregados'][] = $datos['total_pedidos'];
+                        $graficoDespachos['entregados_sin_devolucion'][] = $datos['total_pedidos'] - $datos['pedidos_con_devolucion'];
+                        $efectividad = $datos['total_pedidos'] > 0 ?
+                            (($datos['total_pedidos'] - $datos['pedidos_con_devolucion']) / $datos['total_pedidos']) * 100 : 0;
+                        $graficoDespachos['efectividad'][] = round($efectividad, 2);
+
+                        $graficoValores['soles_entregados'][] = $datos['monto_total']; // En miles
+                        $graficoValores['soles_sin_devolucion'][] = ($datos['monto_total'] - $datos['monto_con_devolucion']);
+                        $efectividadValor = $datos['monto_total'] > 0 ?
+                            (($datos['monto_total'] - $datos['monto_con_devolucion']) / $datos['monto_total']) * 100 : 0;
+                        $graficoValores['efectividad_valor'][] = round($efectividadValor, 2);
+
+                        $fechaDesde->addMonth();
+                        break;
+                    }
+                }
+            }
+
+            // Calcular totales generales
+            $enviosSinDevolucion = $totalGeneral['total_pedidos'] - $totalGeneral['pedidos_con_devolucion'];
+            $efectividadCantidad = $totalGeneral['total_pedidos'] > 0 ?
+                ($enviosSinDevolucion / $totalGeneral['total_pedidos']) * 100 : 0;
+
+            $montoSinDevolucion = $totalGeneral['monto_total'] - $totalGeneral['monto_con_devolucion'];
+            $efectividadValor = $totalGeneral['monto_total'] > 0 ?
+                ($montoSinDevolucion / $totalGeneral['monto_total']) * 100 : 0;
+
+            return [
+                // Datos para tablas
+                'total_pedidos_despachados' => $totalGeneral['total_pedidos'],
+                'despacho_con_devoluciones' => $totalGeneral['pedidos_con_devolucion'],
+                'envios_sin_devoluciones' => $enviosSinDevolucion,
+                'indicador_efectividad' => round($efectividadCantidad, 2),
+                'monto_total_despachado' => round($totalGeneral['monto_total'], 2),
+                'monto_con_devolucion' => round($totalGeneral['monto_con_devolucion'], 2),
+                'monto_sin_devolucion' => round($montoSinDevolucion, 2),
+                'efectividad_valor' => round($efectividadValor, 2),
+
+                // Datos para gráficos
+                'grafico_meses' => $meses,
+                'grafico_despachos' => $graficoDespachos,
+                'grafico_valores' => $graficoValores
+            ];
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            return [
+                'total_pedidos_despachados' => 0,
+                'despacho_con_devoluciones' => 0,
+                'envios_sin_devoluciones' => 0,
+                'indicador_efectividad' => 0,
+                'monto_total_despachado' => 0,
+                'monto_con_devolucion' => 0,
+                'monto_sin_devolucion' => 0,
+                'efectividad_valor' => 0,
+                'grafico_meses' => [],
+                'grafico_despachos' => [
+                    'pedidos_entregados' => [],
+                    'entregados_sin_devolucion' => [],
+                    'efectividad' => []
+                ],
+                'grafico_valores' => [
+                    'soles_entregados' => [],
+                    'soles_sin_devolucion' => [],
+                    'efectividad_valor' => []
+                ]
+            ];
+        }
+    }
 }
