@@ -46,6 +46,7 @@ class Guia extends Model
                 ->join('despacho_ventas as dv', 'g.id_guia', '=', 'dv.id_guia')
                 ->join('despachos as d', 'dv.id_despacho', '=', 'd.id_despacho')
                 ->join('programaciones as p', 'd.id_programacion', '=', 'p.id_programacion')
+                ->leftJoin('departamentos as depar', 'depar.id_departamento', '=', 'd.id_departamento')
                 ->where('g.guia_estado_aprobacion', 8);
 
             if ($typeGrafico){
@@ -60,10 +61,9 @@ class Guia extends Model
                 }
 
                 if ($type == 1){ // LOCAL
-                    $queryReporteTiemposAtencion->whereIn('g.guia_departamento',$arrayDe[0]);
-
+                    $queryReporteTiemposAtencion->whereNull('d.id_departamento'); // los locales no tienen id departamento
                 }elseif ($type == 2){ // PROVINCIAS
-                    $queryReporteTiemposAtencion->whereIn('g.guia_departamento', array_merge($arrayDe[1], $arrayDe[2]));
+                    $queryReporteTiemposAtencion->whereIn('depar.departamento_nombre', array_merge($arrayDe[1], $arrayDe[2]));
                 }
             }else{
 
@@ -73,29 +73,37 @@ class Guia extends Model
                     $queryReporteTiemposAtencion->whereDate('p.programacion_fecha', '>=', $desde)->whereDate('p.programacion_fecha', '<=', $hasta);
                 }
 
-                if ($type == 1){ // LOCAL
-                    $queryReporteTiemposAtencion->whereIn('g.guia_departamento',$arrayDe[0]);
-                }elseif ($type == 2){ // PROVINCIA 1
-                    $queryReporteTiemposAtencion->whereIn('g.guia_departamento',$arrayDe[1]);
-                }elseif ($type == 3){ // PROVINCIA 2
-                    $queryReporteTiemposAtencion->whereIn('g.guia_departamento',$arrayDe[2]);
+                if ($type){
+                    if ($type == 1){
+                        $queryReporteTiemposAtencion->whereNull('d.id_departamento'); // los locales no tienen id departamento
+                    }else{
+                        if ($type == 2){ // PROVINCIA 1
+                            $queryReporteTiemposAtencion->whereIn('depar.departamento_nombre',$arrayDe[1]);
+                        }elseif ($type == 3){ // PROVINCIA 2
+                            $queryReporteTiemposAtencion->whereIn('depar.departamento_nombre',$arrayDe[2]);
+                        }
+                    }
                 }
             }
 
             // Obtener la suma total de las diferencias entre las fechas y la cantidad de registros
-            if ($tipo == 1){
-                // F. Emisión
-                $queryReporteTiemposAtencion->selectRaw('
+//            if ($tipo == 1){
+//                // F. Emisión
+//                $queryReporteTiemposAtencion->selectRaw('
+//                    SUM(DATEDIFF(g.updated_at, g.guia_fecha_emision)) as suma_tiempos_entrega,
+//                    COUNT(*) as cantidad_registros
+//                ');
+//            }else{
+//                // F. Programación
+//                $queryReporteTiemposAtencion->selectRaw('
+//                    SUM(DATEDIFF(g.updated_at, p.programacion_fecha)) as suma_tiempos_entrega,
+//                    COUNT(*) as cantidad_registros
+//                ');
+//            }
+            $queryReporteTiemposAtencion->selectRaw('
                     SUM(DATEDIFF(g.updated_at, g.guia_fecha_emision)) as suma_tiempos_entrega,
                     COUNT(*) as cantidad_registros
-                ');
-            }else{
-                // F. Programación
-                $queryReporteTiemposAtencion->selectRaw('
-                    SUM(DATEDIFF(g.updated_at, p.programacion_fecha)) as suma_tiempos_entrega,
-                    COUNT(*) as cantidad_registros
-                ');
-            }
+            ');
 
 
             $resultConsulta = $queryReporteTiemposAtencion->first();

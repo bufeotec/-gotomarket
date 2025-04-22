@@ -82,7 +82,7 @@
                                         <td class="text-center">3</td>
                                     </tr>
                                     <tr>
-                                        <td class="text-center">Provincia 1</td>4
+                                        <td class="text-center">Provincia 1</td>
                                         <td class="text-center">{{ $filteredData[1] }}</td>
                                         <td class="text-center">6</td>
                                     </tr>
