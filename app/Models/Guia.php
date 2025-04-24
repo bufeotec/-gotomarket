@@ -160,6 +160,14 @@ class Guia extends Model
                         $queryReporteTiemposAtencion->whereIn('depar.departamento_nombre', array_merge($arrayDe[1], $arrayDe[2]));
                     }
 
+                } elseif ($typeGrafico == 3){
+                    if ($type == 1){ // LOCAL
+                        $queryReporteTiemposAtencion->whereNull('d.id_departamento'); // los locales no tienen id departamento
+                    }elseif ($type == 2){ // PROVINCIAS 1
+                        $queryReporteTiemposAtencion->whereIn('depar.departamento_nombre', array_merge($arrayDe[1]));
+                    }elseif ($type == 3){ // PROVINCIAS 2
+                        $queryReporteTiemposAtencion->whereIn('depar.departamento_nombre', array_merge($arrayDe[2]));
+                    }
                 }
 
             }else{
@@ -594,6 +602,7 @@ class Guia extends Model
                     'guias.guia_direc_entrega',
                     'guias.guia_nro_pedido',
                     'guias.guia_importe_total',
+                    'guias.guia_importe_total_sin_igv',
                     'guias.guia_departamento',
                     'guias.guia_provincia',
                     'guias.guia_destrito',
