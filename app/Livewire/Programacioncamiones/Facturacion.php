@@ -102,6 +102,7 @@ class Facturacion extends Component
                 'g.guia_direc_entrega',
                 'g.guia_nro_pedido',
                 'g.guia_importe_total',
+                'g.guia_importe_total_sin_igv',
                 'g.guia_departamento',
                 'g.guia_provincia',
                 'g.guia_destrito',
