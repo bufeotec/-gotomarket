@@ -346,7 +346,7 @@
                                                     <x-btn-accion class="btn bg-success btn-sm text-white" wire:click="cambio_estado('{{ base64_encode($factura->id_guia) }}', 3)" data-bs-toggle="modal" data-bs-target="#modalPrePro">
                                                         <x-slot name="message">
                                                             <i class="fa-solid fa-check"></i>
-                                                        </x-slot>x
+                                                        </x-slot>
                                                     </x-btn-accion>
                                                     <x-btn-accion class="btn btn-primary btn-sm text-white" wire:click.prevent="modal_guia_info('{{ $factura->id_guia}}')" data-bs-toggle="modal" data-bs-target="#modalInformacionGuia">
                                                         <x-slot name="message">
