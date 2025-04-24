@@ -34,7 +34,7 @@ class Reporteindicadoresvalor extends Component
     public $totalValorTrans = 0;
     public $xdesde;
     public $xhasta;
-    public $tipo_reporte = 'emision'; // Valor por defecto
+    public $tipo_reporte = ''; // Valor por defecto
     public $filteredData = [];
     public $summary = [];
     public $searchdatos = false;
@@ -52,6 +52,8 @@ class Reporteindicadoresvalor extends Component
 
     public $departamentos = [];
     public function mount(){
+        $this->xdesde = date('Y-01-01');
+        $this->xhasta = date('Y-m-d');
         $this->departamentos = $this->general->listar_departamento_zona();
     }
 
@@ -86,9 +88,13 @@ class Reporteindicadoresvalor extends Component
             $this->searchdatos = true;
 
             $this->validate([
+                'tipo_reporte' => 'required|in:1,2',
                 'xdesde' => 'required|date',
                 'xhasta' => 'required|date|after_or_equal:xdesde',
             ], [
+                'tipo_reporte.required' => 'El tipo de reporte es obligatorio.',
+                'tipo_reporte.in' => 'El tipo de reporte seleccionado no es válido.',
+
                 'xdesde.required' => 'La fecha de inicio es obligatoria.',
                 'xdesde.date' => 'La fecha de inicio no es válida.',
 
@@ -135,7 +141,7 @@ class Reporteindicadoresvalor extends Component
                 $totalLima = $this->guia->listar_informacion_reporte_indicador_de_valor_transportado($this->tipo_reporte,$this->xdesde,$this->xhasta,$this->departamentos,1,2,$fechaAnhoMes);
                 $totalProvincial = $this->guia->listar_informacion_reporte_indicador_de_valor_transportado($this->tipo_reporte,$this->xdesde,$this->xhasta,$this->departamentos,2,2,$fechaAnhoMes);
                 $por = $totalValorTrans != 0 ? (($totalLima+$totalProvincial) / $totalValorTrans) * 100 : 0;
-                $totalMes[] = $totalValorTrans;
+                $totalMes[] = $totalLima + $totalProvincial;
                 $totalMesPorcen[] = $por;
                 $fechaDesde->addMonth();
             }
@@ -154,36 +160,51 @@ class Reporteindicadoresvalor extends Component
             $fechaDesde = Carbon::parse($this->xdesde);
             $fechaHasta = Carbon::parse($this->xhasta);
             $meses = [];
-            $totalLima = [];
-            $totalProvincial = [];
-            $totalLimaPorce = [];
-            $totalProvincialPorce = [];
-            while ($fechaDesde->lessThanOrEqualTo($fechaHasta)) {
-                $meses[] = ucfirst($fechaDesde->locale('es')->isoFormat('MMMM')); // Nombre del mes en español y con mayúscula inicial
-                $fechaAnhoMes = $fechaDesde->format('Y-m');
-                $totalLimaFlete = $this->guia->listar_informacion_reporte_indicador_de_valor_transportado($this->tipo_reporte,$this->xdesde,$this->xhasta,$this->departamentos,1,2,$fechaAnhoMes,1);
-                $totalLimaTrans = $this->guia->listar_informacion_reporte_indicador_de_valor_transportado($this->tipo_reporte,$this->xdesde,$this->xhasta,$this->departamentos,1,2,$fechaAnhoMes,2);
-                $totalProvincialFlete = $this->guia->listar_informacion_reporte_indicador_de_valor_transportado($this->tipo_reporte,$this->xdesde,$this->xhasta,$this->departamentos,2,2,$fechaAnhoMes,1);
-                $totalProvincialValor = $this->guia->listar_informacion_reporte_indicador_de_valor_transportado($this->tipo_reporte,$this->xdesde,$this->xhasta,$this->departamentos,2,2,$fechaAnhoMes,2);
+            $totalLocal = [];
+            $totalProvincia1 = [];
+            $totalProvincia2 = [];
+            $totalLocalPorce = [];
+            $totalProvincia1Porce = [];
+            $totalProvincia2Porce = [];
 
-                $totalLima[] = $totalLimaFlete;
-                $totalProvincial[] =$totalProvincialFlete;
-                $totalLimaPorce[] = $totalLimaTrans != 0 ? ($totalLimaFlete / $totalLimaTrans) * 100 : 0;
-                $totalProvincialPorce[] = $totalProvincialValor != 0 ? ($totalProvincialFlete / $totalProvincialValor) * 100 : 0;
+            while ($fechaDesde->lessThanOrEqualTo($fechaHasta)) {
+                $meses[] = ucfirst($fechaDesde->locale('es')->isoFormat('MMMM'));
+                $fechaAnhoMes = $fechaDesde->format('Y-m');
+
+                // Obtener datos para Local
+                $localFlete = $this->guia->listar_informacion_reporte_indicador_de_valor_transportado($this->tipo_reporte, $this->xdesde, $this->xhasta, $this->departamentos, 1, 2, $fechaAnhoMes, 1);
+                $localTrans = $this->guia->listar_informacion_reporte_indicador_de_valor_transportado($this->tipo_reporte, $this->xdesde, $this->xhasta, $this->departamentos, 1, 2, $fechaAnhoMes, 2);
+
+                // Obtener datos para Provincia 1
+                $provincia1Flete = $this->guia->listar_informacion_reporte_indicador_de_valor_transportado($this->tipo_reporte, $this->xdesde, $this->xhasta, $this->departamentos, 2, 3, $fechaAnhoMes, 1);
+                $provincia1Trans = $this->guia->listar_informacion_reporte_indicador_de_valor_transportado($this->tipo_reporte, $this->xdesde, $this->xhasta, $this->departamentos, 2, 3, $fechaAnhoMes, 2);
+
+                // Obtener datos para Provincia 2
+                $provincia2Flete = $this->guia->listar_informacion_reporte_indicador_de_valor_transportado($this->tipo_reporte, $this->xdesde, $this->xhasta, $this->departamentos, 3, 3, $fechaAnhoMes, 1);
+                $provincia2Trans = $this->guia->listar_informacion_reporte_indicador_de_valor_transportado($this->tipo_reporte, $this->xdesde, $this->xhasta, $this->departamentos, 3, 3, $fechaAnhoMes, 2);
+
+                $totalLocal[] = $localFlete;
+                $totalProvincia1[] = $provincia1Flete;
+                $totalProvincia2[] = $provincia2Flete;
+
+                $totalLocalPorce[] = $localTrans != 0 ? ($localFlete / $localTrans) * 100 : 0;
+                $totalProvincia1Porce[] = $provincia1Trans != 0 ? ($provincia1Flete / $provincia1Trans) * 100 : 0;
+                $totalProvincia2Porce[] = $provincia2Trans != 0 ? ($provincia2Flete / $provincia2Trans) * 100 : 0;
 
                 $fechaDesde->addMonth();
             }
+
             $this->dispatch('actualizarGraficoFleteMes', [
                 $meses,
-                $totalLima,
-                $totalProvincial,
-
-                $totalLimaPorce,
-                $totalProvincialPorce
+                $totalLocal,
+                $totalProvincia1,
+                $totalProvincia2,
+                $totalLocalPorce,
+                $totalProvincia1Porce,
+                $totalProvincia2Porce
             ]);
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             $this->logs->insertarLog($e);
-            $result = [];
         }
     }
 

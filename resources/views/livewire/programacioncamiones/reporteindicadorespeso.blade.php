@@ -10,14 +10,23 @@
                 <option value="1">F. Emisión</option>
                 <option value="2">F. Despacho</option>
             </select>
+            @error('tipo_reporte')
+            <span class="message-error">{{ $message }}</span>
+            @enderror
         </div>
         <div class="col-lg-2 col-md-4 col-sm-12 mb-2">
             <label class="form-label">F. Desde</label>
             <input type="date" wire:model="ydesde" class="form-control" min="2025-01-01">
+            @error('ydesde')
+            <span class="message-error">{{ $message }}</span>
+            @enderror
         </div>
         <div class="col-lg-2 col-md-4 col-sm-12 mb-2">
             <label class="form-label">F. Hasta</label>
             <input type="date" wire:model="yhasta" class="form-control" min="2025-01-01">
+            @error('yhasta')
+            <span class="message-error">{{ $message }}</span>
+            @enderror
         </div>
         <div class="col-lg-2 col-md-4 col-sm-12 mt-4 mb-2">
             <button class="btn btn-sm bg-primary text-white" wire:click="buscar_reporte_peso">
@@ -103,7 +112,7 @@
 
         <div class="row mt-3">
             <!-- GRAFICO PESO TOTAL DESPACHADO - TONELADAS -->
-            <div class="col-lg-6 col-md-6 col-sm-12">
+            <div class="col-lg-12 col-md-12 col-sm-12">
                 <div class="card">
                     <div class="card-header">
                         <h5 class="card-title mb-0">PESO TOTAL DESPACHADO - TONELADAS</h5>
@@ -115,7 +124,7 @@
             </div>
 
             <!-- GRAFICO DE FLETE SOLES X KILOS -->
-            <div class="col-lg-6 col-md-6 col-sm-12">
+            <div class="col-lg-12 col-md-12 col-sm-12">
                 <div class="card">
                     <div class="card-header">
                         <h5 class="card-title mb-0">FLETE SOLES X KILOS</h5>
@@ -125,11 +134,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-    @elseif($searchdatos)
-        <div class="alert alert-info text-center">
-            No se encontraron resultados
         </div>
     @endif
 
@@ -141,7 +145,7 @@
         let graficoFleteSolesKilo = null;
 
         // Función para inicializar o actualizar el gráfico de peso
-        function actualizarGraficoPeso(meses,Lima,ProvinciaOne,provinciaTwoe) {
+        function actualizarGraficoPeso(meses, Lima, ProvinciaOne, provinciaTwoe) {
             const canvas = document.getElementById('graficoPesoTonelada');
             if (!canvas) return;
 
@@ -152,6 +156,11 @@
                 graficoPesoTonelada.destroy();
             }
 
+            // Redondear los valores a números enteros
+            const limaEnteros = Lima.map(valor => Math.round(valor));
+            const provinciaOneEnteros = ProvinciaOne.map(valor => Math.round(valor));
+            const provinciaTwoeEnteros = provinciaTwoe ? provinciaTwoe.map(valor => Math.round(valor)) : [];
+
             // Crear nuevo gráfico
             graficoPesoTonelada = new Chart(ctx, {
                 type: 'line',
@@ -160,21 +169,21 @@
                     datasets: [
                         {
                             label: 'Peso Lima (Ton)',
-                            data: Lima,
+                            data: limaEnteros,
                             backgroundColor: 'rgba(54, 162, 235, 0.7)',
                             borderColor: 'rgba(54, 162, 235, 1)',
                             borderWidth: 1
                         },
                         {
                             label: 'Peso Provincia 1 (Ton)',
-                            data: ProvinciaOne,
+                            data: provinciaOneEnteros,
                             backgroundColor: 'rgba(255, 159, 64, 0.7)',
                             borderColor: 'rgba(255, 159, 64, 1)',
                             borderWidth: 1
                         },
                         {
                             label: 'Peso Provincia 2 (Ton)',
-                            data: provinciaTwoe,
+                            data: provinciaTwoeEnteros,
                             backgroundColor: 'rgba(169,169,169,0.27)',
                             borderColor: 'rgba(169, 169, 169, 1)',
                             borderWidth: 1
@@ -190,6 +199,12 @@
                             title: {
                                 display: true,
                                 text: 'Toneladas'
+                            },
+                            ticks: {
+                                // Mostrar valores enteros en el eje Y
+                                callback: function(value) {
+                                    return value.toFixed(0);
+                                }
                             }
                         },
                         x: {
@@ -206,7 +221,8 @@
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return context.dataset.label + ': ' + context.raw.toFixed(2) + ' Ton';
+                                    // Mostrar valores enteros en el tooltip
+                                    return context.dataset.label + ': ' + context.raw.toFixed(0) + ' Ton';
                                 }
                             }
                         }
@@ -241,31 +257,19 @@
                             data: Lima,
                             borderColor: 'rgba(54, 162, 235, 1)',
                             backgroundColor: 'rgba(54, 162, 235, 0.1)',
-                            borderWidth: 2,
-                            tension: 0.1,
-                            fill: true
+                            borderWidth: 2
                         },
                         {
                             label: 'Soles x Kilo Prov.',
                             data: ProvinciaOne,
                             backgroundColor: 'rgba(255, 159, 64, 0.7)',
                             borderColor: 'rgba(255, 159, 64, 1)',
-                            borderWidth: 2,
-                            tension: 0.1,
-                            fill: true
+                            borderWidth: 2
                         },
                         {
                             label: 'Obj. Lima',
                             data: Array(meses.length).fill(0.12),
                             borderColor: 'rgba(54, 162, 235, 1)',
-                            borderWidth: 1,
-                            borderDash: [5, 5],
-                            pointRadius: 0
-                        },
-                        {
-                            label: 'Obj. Prov.',
-                            data: Array(meses.length).fill(0.55),
-                            borderColor: 'rgba(255, 159, 64, 1)',
                             borderWidth: 1,
                             borderDash: [5, 5],
                             pointRadius: 0

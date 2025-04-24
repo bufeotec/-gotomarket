@@ -71,6 +71,8 @@ class Reporteindicadorespeso extends Component
 
     public $departamentos = [];
     public function mount(){
+        $this->ydesde = date('Y-01-01');
+        $this->yhasta = date('Y-m-d');
         $this->departamentos = $this->general->listar_departamento_zona();
     }
     public function render() {
@@ -106,9 +108,13 @@ class Reporteindicadorespeso extends Component
             $this->searchdatos = true;
 
             $this->validate([
+                'tipo_reporte' => 'required|in:1,2',
                 'ydesde' => 'required|date',
                 'yhasta' => 'required|date|after_or_equal:ydesde',
             ], [
+                'tipo_reporte.required' => 'El tipo de reporte es obligatorio.',
+                'tipo_reporte.in' => 'El tipo de reporte seleccionado no es válido.',
+
                 'ydesde.required' => 'La fecha de inicio es obligatoria.',
                 'ydesde.date' => 'La fecha de inicio no es válida.',
 
@@ -186,7 +192,6 @@ class Reporteindicadorespeso extends Component
     }
     public function exportarReportePesoExcel() {
         try {
-
             if (!Gate::allows('exportar_reporte_peso_excel')) {
                 session()->flash('error', 'No tiene permisos para generar este reporte.');
                 return;
@@ -214,24 +219,21 @@ class Reporteindicadorespeso extends Component
                 ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
                 ->leftJoin('servicios_transportes as st', 'dv.id_serv_transpt', '=', 'st.id_serv_transpt')
                 ->where('d.despacho_estado_aprobacion', '=', 3)
-                ->where('d.despacho_liquidado', '=', 1)
-            ;
+                ->where('d.despacho_liquidado', '=', 1);
 
             if ($tipo == 1){
-                // F. Emisión
                 $resultDetalles->whereDate('g.guia_fecha_emision', '>=', $desde)
                     ->whereDate('g.guia_fecha_emision', '<=', $hasta);
-
-            }else{
-                // F. Programación
+            } else {
                 $resultDetalles->whereDate('d.despacho_fecha_aprobacion', '>=', $desde)
                     ->whereDate('d.despacho_fecha_aprobacion', '<=', $hasta);
             }
 
             $resultDetallesExcel = $resultDetalles->orderBy('d.despacho_numero_correlativo','asc')->get();
 
-
-            foreach ($resultDetallesExcel as $deta){
+            // Procesar datos para calcular pesos y costos
+            $groupedData = [];
+            foreach ($resultDetallesExcel as $deta) {
                 $pesoTotalKilos = 0;
 
                 $detallesGuia = DB::table('guias_detalles')
@@ -247,10 +249,15 @@ class Reporteindicadorespeso extends Component
                 $deta->peso = $pesoTotalKilos;
 
                 $subTotal = $this->general->sacarMontoLiquidacion($deta->id_despacho);
-
                 $deta->despacho_costo_totalLi = $subTotal;
-            }
 
+                // Agrupar por número de OS
+                $osNumber = $deta->despacho_numero_correlativo;
+                if (!isset($groupedData[$osNumber])) {
+                    $groupedData[$osNumber] = [];
+                }
+                $groupedData[$osNumber][] = $deta;
+            }
 
             $spreadsheet = new Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
@@ -258,7 +265,7 @@ class Reporteindicadorespeso extends Component
 
             // ========== CABECERA PRINCIPAL ==========
             $sheet->setCellValue('A1', 'REPORTE FLETE: INDICADOR DE PESO DESPACHADO');
-            $sheet->mergeCells('A1:J1');
+            $sheet->mergeCells('A1:K1');
             $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
             $sheet->getStyle('A1')->getAlignment()->setHorizontal('center');
             $sheet->getStyle('A1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('A8D08D');
@@ -266,14 +273,15 @@ class Reporteindicadorespeso extends Component
             // ========== RANGO DE FECHAS ==========
             $rangoFechas = 'Del ' . date('d/m/Y', strtotime($this->ydesde)) . ' al ' . date('d/m/Y', strtotime($this->yhasta));
             $sheet->setCellValue('A2', $rangoFechas);
-            $sheet->mergeCells('A2:J2');
+            $sheet->mergeCells('A2:K2');
             $sheet->getStyle('A2')->getAlignment()->setHorizontal('center');
 
             // ========== ENCABEZADOS ==========
             $headers = [
                 'Fecha de OS',
-                'Fecha de Guía y/o SS',
+                'Fecha de Guía',
                 'N° de OS',
+                'N° de Guía',
                 'Peso Despachado - Kg',
                 'Flete / Monto de OS',
                 'Tipo de OS(Local, Mixto o Provincia)',
@@ -283,94 +291,118 @@ class Reporteindicadorespeso extends Component
                 'Zona de Despacho Asignada'
             ];
             $sheet->fromArray($headers, null, 'A3');
-            $sheet->getStyle('A3:J3')->getFont()->setBold(true);
-            $sheet->getStyle('A3:J3')->getAlignment()->setHorizontal('center');
-            $sheet->getStyle('A3:J3')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('D9E1F2');
+            $sheet->getStyle('A3:K3')->getFont()->setBold(true);
+            $sheet->getStyle('A3:K3')->getAlignment()->setHorizontal('center');
+            $sheet->getStyle('A3:K3')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('D9E1F2');
 
             // ========== LLENAR DATOS ==========
             $departemento = $this->departamentos;
             $row = 4;
-            foreach ($resultDetallesExcel as $item) {
-                $validarTipoOs = DB::table('programaciones as p')
-                    ->join('despachos as d','d.id_programacion','=','p.id_programacion')
-                    ->join('despacho_ventas as dv','dv.id_despacho','=','d.id_despacho')
-                    ->join('guias as g','g.id_guia','=','dv.id_guia')
-                    ->where('g.id_guia','=',$item->id_guia)
-                    ->where('d.id_despacho','<>',$item->id_despacho)
-                    ->where('d.id_programacion','=',$item->id_programacion)
-                    ->first();
+            foreach ($groupedData as $osNumber => $items) {
+                $firstRow = $row;
+                $lastRow = $row + count($items) - 1;
 
-                $tipoOs = "";
-                if ($validarTipoOs){
-                    $tipoOs = "MIXTO";
-                }else{
-                    if ($item->id_tipo_servicios == 1){
-                        $tipoOs = "LOCAL";
-                    }elseif ($item->id_tipo_servicios == 2){
-                        $tipoOs = "PROVINCIAL";
+                foreach ($items as $item) {
+                    $validarTipoOs = DB::table('programaciones as p')
+                        ->join('despachos as d','d.id_programacion','=','p.id_programacion')
+                        ->join('despacho_ventas as dv','dv.id_despacho','=','d.id_despacho')
+                        ->join('guias as g','g.id_guia','=','dv.id_guia')
+                        ->where('g.id_guia','=',$item->id_guia)
+                        ->where('d.id_despacho','<>',$item->id_despacho)
+                        ->where('d.id_programacion','=',$item->id_programacion)
+                        ->first();
+
+                    $tipoOs = "";
+                    if ($validarTipoOs){
+                        $tipoOs = "MIXTO";
+                    } else {
+                        if ($item->id_tipo_servicios == 1){
+                            $tipoOs = "LOCAL";
+                        } elseif ($item->id_tipo_servicios == 2){
+                            $tipoOs = "PROVINCIAL";
+                        }
                     }
-                }
-                $estadoOS = match($item->despacho_estado_aprobacion) {
-                    0 => 'Pendiente',
-                    1 => 'Aprobado',
-                    2 => 'En camino',
-                    3 => 'Culminado',
-                    4 => 'Rechazado',
-                    default => 'Desconocido'
-                };
+                    $estadoOS = match($item->despacho_estado_aprobacion) {
+                        0 => 'Pendiente',
+                        1 => 'Aprobado',
+                        2 => 'En camino',
+                        3 => 'Culminado',
+                        4 => 'Rechazado',
+                        default => 'Desconocido'
+                    };
 
-                $departamento = strtoupper(trim($item->guia_departamento)); // Aseguramos formato
+                    $departamento = strtoupper(trim($item->guia_departamento));
 
-                $zonaEncontrada = null;
-                foreach ($departemento as $indice => $zona) {
-                    if (in_array($departamento, $zona)) {
-                        $zonaEncontrada = $indice;
-                        break;
+                    $zonaEncontrada = null;
+                    foreach ($departemento as $indice => $zona) {
+                        if (in_array($departamento, $zona)) {
+                            $zonaEncontrada = $indice;
+                            break;
+                        }
                     }
+                    if ($zonaEncontrada === 0) {
+                        $zona = "LOCAL";
+                    } elseif ($zonaEncontrada === 1) {
+                        $zona = "PROVINCIA 1";
+                    } elseif ($zonaEncontrada === 2) {
+                        $zona = "PROVINCIA 2";
+                    } else {
+                        $zona = "";
+                    }
+
+                    $sheet->setCellValue('A'.$row, date('d/m/Y', strtotime($item->despacho_fecha_aprobacion)));
+                    $sheet->setCellValue('B'.$row, date('d/m/Y', strtotime($item->guia_fecha_emision)));
+                    $sheet->setCellValue('D'.$row, $item->guia_nro_doc);
+                    $sheet->setCellValue('E'.$row, $item->peso ?? 0);
+                    $sheet->setCellValue('G'.$row, $tipoOs);
+                    $sheet->setCellValue('H'.$row, $estadoOS);
+                    $sheet->setCellValue('I'.$row, $item->guia_departamento ?? 'S/N');
+                    $sheet->setCellValue('J'.$row, $item->guia_provincia ?? 'S/N');
+                    $sheet->setCellValue('K'.$row, $zona);
+
+                    $sheet->getStyle('A'.$row.':K'.$row)->getAlignment()->setHorizontal('center');
+                    $row++;
                 }
-                if ($zonaEncontrada === 0) {
-                    $zona = "LOCAL";
-                } elseif ($zonaEncontrada === 1) {
-                    $zona = "PROVINCIA 1";
-                } elseif ($zonaEncontrada === 2) {
-                    $zona = "PROVINCIA 2";
+
+                // Fusionar celdas para el número de OS solo si hay más de un item
+                if (count($items) > 1) {
+                    $sheet->setCellValue('C'.$firstRow, $osNumber);
+                    $sheet->mergeCells('C'.$firstRow.':C'.$lastRow);
+                    $sheet->getStyle('C'.$firstRow)->getAlignment()
+                        ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+                        ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+
+                    // Fusionar celdas para el monto de OS
+                    $sheet->setCellValue('F'.$firstRow, $items[0]->despacho_costo_totalLi ?? 0);
+                    $sheet->mergeCells('F'.$firstRow.':F'.$lastRow);
+                    $sheet->getStyle('F'.$firstRow)->getAlignment()
+                        ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+                        ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
                 } else {
-                    $zona = "";
+                    $sheet->setCellValue('C'.$firstRow, $osNumber);
+                    $sheet->setCellValue('F'.$firstRow, $items[0]->despacho_costo_totalLi ?? 0);
                 }
-
-                $sheet->setCellValue('A'.$row, date('d/m/Y', strtotime($item->despacho_fecha_aprobacion)));
-                $sheet->setCellValue('B'.$row, date('d/m/Y', strtotime($item->guia_fecha_emision)));
-                $sheet->setCellValue('C'.$row, $item->despacho_numero_correlativo);
-                $sheet->setCellValue('D'.$row, $item->peso ?? 0);
-                $sheet->setCellValue('E'.$row, $item->despacho_costo_totalLi ?? 0);
-                $sheet->setCellValue('F'.$row, $tipoOs);
-                $sheet->setCellValue('G'.$row, $estadoOS);
-                $sheet->setCellValue('H'.$row, $item->guia_departamento ?? 'S/N');
-                $sheet->setCellValue('I'.$row, $item->guia_provincia ?? 'S/N');
-                $sheet->setCellValue('J'.$row, $zona);
-
-                $sheet->getStyle('A'.$row.':J'.$row)->getAlignment()->setHorizontal('center');
-                $row++;
             }
 
             // ========== FORMATO NUMÉRICO ==========
-            $sheet->getStyle('D4:D'.($row-1))->getNumberFormat()->setFormatCode('#,##0.00');
             $sheet->getStyle('E4:E'.($row-1))->getNumberFormat()->setFormatCode('#,##0.00');
+            $sheet->getStyle('F4:F'.($row-1))->getNumberFormat()->setFormatCode('#,##0.00');
 
             // ========== ANCHO DE COLUMNA ==========
             $sheet->getColumnDimension('A')->setWidth(15);
             $sheet->getColumnDimension('B')->setWidth(18);
             $sheet->getColumnDimension('C')->setWidth(12);
-            $sheet->getColumnDimension('D')->setWidth(20);
-            $sheet->getColumnDimension('E')->setWidth(22);
-            $sheet->getColumnDimension('F')->setWidth(35);
-            $sheet->getColumnDimension('G')->setWidth(12);
-            $sheet->getColumnDimension('H')->setWidth(15);
+            $sheet->getColumnDimension('D')->setWidth(15);
+            $sheet->getColumnDimension('E')->setWidth(20);
+            $sheet->getColumnDimension('F')->setWidth(22);
+            $sheet->getColumnDimension('G')->setWidth(35);
+            $sheet->getColumnDimension('H')->setWidth(12);
             $sheet->getColumnDimension('I')->setWidth(15);
-            $sheet->getColumnDimension('J')->setWidth(35);
+            $sheet->getColumnDimension('J')->setWidth(15);
+            $sheet->getColumnDimension('K')->setWidth(35);
 
             // ========== BORDES ==========
-            $sheet->getStyle('A3:J'.($row-1))->applyFromArray([
+            $sheet->getStyle('A3:K'.($row-1))->applyFromArray([
                 'borders' => [
                     'allBorders' => [
                         'borderStyle' => Border::BORDER_THIN,
@@ -380,7 +412,7 @@ class Reporteindicadorespeso extends Component
             ]);
 
             // ========== GENERAR ARCHIVO ==========
-            $nombreArchivo = "reporte_peso_flete_" . date('Ymd_His') . ".xlsx";
+            $nombreArchivo = "reporte_peso_flete_de_" . date('d-m-Y', strtotime($this->ydesde)) . "_a_" . date('d-m-Y', strtotime($this->yhasta)) . ".xlsx";
             $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
             $temp_file = tempnam(sys_get_temp_dir(), $nombreArchivo);
             $writer->save($temp_file);

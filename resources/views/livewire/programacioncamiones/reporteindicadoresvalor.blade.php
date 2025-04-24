@@ -13,6 +13,9 @@
                         <option value="1">F. Emisión</option>
                         <option value="2">F. Despacho</option>
                     </select>
+                    @error('tipo_reporte')
+                    <span class="message-error">{{ $message }}</span>
+                    @enderror
                 </div>
                 <div class="col-lg-3 col-md-3 col-sm-12 mb-2">
                     <label class="form-label">Desde</label>
@@ -143,20 +146,16 @@
             </div>
 
             <!-- GRAFICO DE FLETE LIMA Y PROVINCIA -->
-            <div class="col-lg-6 col-md-6 col-sm-12">
+            <div class="col-lg-12 col-md-12 col-sm-12">
                 <div class="card">
                     <div class="card-header">
                         <h5 class="card-title mb-0">FLETE LIMA Y PROVINCIA</h5>
                     </div>
                     <div class="card-body">
-                        <canvas id="graficoFleteLimaProvincia" height="300"></canvas>
+                        <canvas id="graficoFleteLimaProvincia" height="400"></canvas>
                     </div>
                 </div>
             </div>
-        </div>
-    @else
-        <div class="alert alert-info text-center">
-            No se encontraron resultados con los filtros aplicados
         </div>
     @endif
 
@@ -284,7 +283,7 @@
         }
 
         // Función para inicializar o actualizar el gráfico de Flete Lima y Provincia
-        function actualizarGraficoFleteLimaProvincia(meses, lima, provincia, limaPorcen, provinciaPorcen) {
+        function actualizarGraficoFleteLimaProvincia(meses, local, provincia1, provincia2, localPorcen, provincia1Porcen, provincia2Porcen) {
             const canvas = document.getElementById('graficoFleteLimaProvincia');
             if (!canvas) return;
 
@@ -295,12 +294,14 @@
                 graficoFleteLimaProvincia.destroy();
             }
 
-            // Calcular el objetivo en porcentaje, no en soles
-            const objetivoLima = 2.0; // 2.0% como objetivo
-            const objetivoPorcentajeLima = Array(meses.length).fill(objetivoLima); // Crear un array con el 2.0% en cada mes
+            // Objetivos en porcentaje
+            const objetivoLocal = 1.9;
+            const objetivoProvincia1 = 5.5;
+            const objetivoProvincia2 = 9.5;
 
-            const objetivoProvincia = 5.9; // 5.9% como objetivo
-            const objetivoPorcentajeProvincia = Array(meses.length).fill(objetivoProvincia); // Crear un array con el 5.9% en cada mes
+            const objetivoPorcentajeLocal = Array(meses.length).fill(objetivoLocal);
+            const objetivoPorcentajeProvincia1 = Array(meses.length).fill(objetivoProvincia1);
+            const objetivoPorcentajeProvincia2 = Array(meses.length).fill(objetivoProvincia2);
 
             // Crear nuevo gráfico
             graficoFleteLimaProvincia = new Chart(ctx, {
@@ -309,64 +310,91 @@
                     labels: meses,
                     datasets: [
                         {
-                            label: 'Flete Lima',
-                            data: lima,
+                            label: 'Flete Local',
+                            data: local,
                             backgroundColor: 'rgba(54, 162, 235, 0.7)', // Azul
                             borderColor: 'rgba(54, 162, 235, 1)',
                             borderWidth: 1
                         },
                         {
-                            label: '% Flete Lima',
-                            data: limaPorcen, // Ejemplo: [3.9, 4.1, ...]
-                            borderColor: '#a7abc0', // Azul
+                            label: '% Flete Local',
+                            data: localPorcen,
+                            borderColor: '#132f8b', // Azul oscuro
                             backgroundColor: 'transparent',
                             type: 'line',
                             borderWidth: 2,
                             pointStyle: 'circle',
-                            pointRadius: 6, // Aumentamos el tamaño del punto para que esté más visible
+                            pointRadius: 6,
                             fill: false,
-                            yAxisID: 'y2', // Eje derecho para porcentaje
-                            pointHoverRadius: 8 // Aumentamos el tamaño cuando pasa el mouse
+                            yAxisID: 'y2'
                         },
                         {
-                            label: 'Flete Provincia',
-                            data: provincia,
+                            label: 'Flete Provincia 1',
+                            data: provincia1,
+                            backgroundColor: 'rgba(75, 192, 192, 0.7)', // Verde
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: '% Flete Provincia 1',
+                            data: provincia1Porcen,
+                            borderColor: '#2e856e', // Verde oscuro
+                            backgroundColor: 'transparent',
+                            type: 'line',
+                            borderWidth: 2,
+                            pointStyle: 'circle',
+                            pointRadius: 6,
+                            fill: false,
+                            yAxisID: 'y2'
+                        },
+                        {
+                            label: 'Flete Provincia 2',
+                            data: provincia2,
                             backgroundColor: 'rgba(255, 159, 64, 0.7)', // Naranja
                             borderColor: 'rgba(255, 159, 64, 1)',
                             borderWidth: 1
                         },
                         {
-                            label: '% Flete Provincia',
-                            data: provinciaPorcen, // Ejemplo: [3.9, 4.1, ...]
-                            borderColor: '#132f8b', // Azul
+                            label: '% Flete Provincia 2',
+                            data: provincia2Porcen,
+                            borderColor: '#cc5500', // Naranja oscuro
                             backgroundColor: 'transparent',
                             type: 'line',
                             borderWidth: 2,
                             pointStyle: 'circle',
-                            pointRadius: 6, // Aumentamos el tamaño del punto
+                            pointRadius: 6,
                             fill: false,
-                            yAxisID: 'y2', // Eje derecho para porcentaje
-                            pointHoverRadius: 8 // Aumentamos el tamaño cuando pasa el mouse
+                            yAxisID: 'y2'
                         },
                         {
-                            label: 'Obj. Lima',
-                            data: objetivoPorcentajeLima, // Objetivo del 2.0%
-                            borderColor: 'rgba(54, 162, 235, 1)', // Azul
+                            label: 'Obj. Local (2.0%)',
+                            data: objetivoPorcentajeLocal,
+                            borderColor: 'rgba(54, 162, 235, 1)',
                             borderWidth: 2,
                             borderDash: [5, 5],
                             type: 'line',
                             pointRadius: 0,
-                            yAxisID: 'y2' // Eje derecho para objetivo Lima
+                            yAxisID: 'y2'
                         },
                         {
-                            label: 'Obj. Provincia',
-                            data: objetivoPorcentajeProvincia, // Objetivo del 5.9%
-                            borderColor: 'rgba(255, 159, 64, 1)', // Naranja
+                            label: 'Obj. Prov.1 (4.5%)',
+                            data: objetivoPorcentajeProvincia1,
+                            borderColor: 'rgba(75, 192, 192, 1)',
                             borderWidth: 2,
                             borderDash: [5, 5],
                             type: 'line',
                             pointRadius: 0,
-                            yAxisID: 'y2' // Eje derecho para objetivo Provincia
+                            yAxisID: 'y2'
+                        },
+                        {
+                            label: 'Obj. Prov.2 (7.0%)',
+                            data: objetivoPorcentajeProvincia2,
+                            borderColor: 'rgba(255, 159, 64, 1)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            type: 'line',
+                            pointRadius: 0,
+                            yAxisID: 'y2'
                         }
                     ]
                 },
@@ -391,14 +419,14 @@
                             position: 'right',
                             ticks: {
                                 min: 0,
-                                max: 6, // Ajusta el máximo si es necesario
+                                max: 8, // Ajustar según necesidad
                                 callback: function(value) {
                                     return value + '%';
                                 }
                             },
                             title: {
                                 display: true,
-                                text: '% Flete Total'
+                                text: '% Flete'
                             }
                         },
                         x: {
@@ -410,7 +438,13 @@
                     },
                     plugins: {
                         legend: {
-                            position: 'bottom'
+                            position: 'bottom',
+                            labels: {
+                                filter: function(item) {
+                                    // Mostrar solo las leyendas principales
+                                    return !item.text.includes('Obj.');
+                                }
+                            }
                         },
                         tooltip: {
                             callbacks: {
@@ -420,8 +454,11 @@
                                         label += ': ';
                                     }
                                     if (context.parsed.y !== null) {
-                                        if (context.dataset.label === '% Flete Lima' || context.dataset.label === '% Flete Provincia' || context.dataset.label === 'Obj. Lima' || context.dataset.label === 'Obj. Provincia') {
-                                            label += context.parsed.y.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '%';
+                                        if (label.includes('%') || label.includes('Obj.')) {
+                                            label += context.parsed.y.toLocaleString('es-PE', {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2
+                                            }) + '%';
                                         } else {
                                             label += 'S/ ' + context.parsed.y.toLocaleString('es-PE');
                                         }
@@ -452,7 +489,15 @@
                 Livewire.on('actualizarGraficoFleteMes', function(data) {
                     setTimeout(() => {
                         try {
-                            actualizarGraficoFleteLimaProvincia(data[0][0], data[0][1], data[0][2], data[0][3], data[0][4]);
+                            actualizarGraficoFleteLimaProvincia(
+                                data[0][0], // meses
+                                data[0][1], // local
+                                data[0][2], // provincia1
+                                data[0][3], // provincia2
+                                data[0][4], // localPorce
+                                data[0][5], // provincia1Porce
+                                data[0][6]  // provincia2Porce
+                            );
                         } catch (error) {
                             console.error('Error al actualizar gráfico de flete lima/provincia:', error);
                         }
