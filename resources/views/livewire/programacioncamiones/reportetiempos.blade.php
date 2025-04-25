@@ -13,6 +13,9 @@
                         <option value="1">F. Emisión</option>
                         <option value="2">F. Programación</option>
                     </select>
+                    @error('tipo_reporte')
+                    <span class="message-error">{{ $message }}</span>
+                    @enderror
                 </div>
                 <div class="col-lg-3 col-md-3 col-sm-12 mb-2">
                     <label class="form-label">F. Desde</label>
@@ -120,7 +123,7 @@
 
 <script>
     let miGrafico = null;
-    function generarG(meses,lima,provincia) {
+    function generarG(meses, lima, provincia) {
         const canvas = document.getElementById('graficoTiempoEntrega');
         if (!canvas) {
             console.warn("Canvas 'graficoTiempoEntrega' no encontrado.");
@@ -133,6 +136,10 @@
             miGrafico.destroy();
         }
 
+        // Redondear los datos de entrada
+        const limaRedondeado = lima.map(valor => Math.round(valor));
+        const provinciaRedondeado = provincia.map(valor => Math.round(valor));
+
         miGrafico = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -140,22 +147,22 @@
                 datasets: [
                     {
                         label: 'Tiempo Lima (Local)',
-                        data: lima,
-                        backgroundColor: 'rgba(54, 162, 235, 0.7)', // Azul
+                        data: limaRedondeado,
+                        backgroundColor: 'rgba(54, 162, 235, 0.7)',
                         borderColor: 'rgba(54, 162, 235, 1)',
                         borderWidth: 1
                     },
                     {
                         label: 'Tiempo Provincia',
-                        data: provincia,
-                        backgroundColor: 'rgba(255, 159, 64, 0.7)', // Naranja
+                        data: provinciaRedondeado,
+                        backgroundColor: 'rgba(255, 159, 64, 0.7)',
                         borderColor: 'rgba(255, 159, 64, 1)',
                         borderWidth: 1
                     },
                     {
                         label: 'Obj. Lima',
-                        data: Array(meses.length).fill(3), // Objetivo de 3 días
-                        borderColor: 'rgba(255, 206, 86, 1)', // Amarillo
+                        data: Array(meses.length).fill(3),
+                        borderColor: 'rgba(255, 206, 86, 1)',
                         borderWidth: 2,
                         borderDash: [5, 5],
                         type: 'line',
@@ -163,8 +170,8 @@
                     },
                     {
                         label: 'Obj. Provincia',
-                        data: Array(meses.length).fill(7), // Objetivo promedio de 7 días (entre Prov 1 y 2)
-                        borderColor: 'rgba(255, 99, 132, 1)', // Rojo
+                        data: Array(meses.length).fill(7),
+                        borderColor: 'rgba(255, 99, 132, 1)',
                         borderWidth: 2,
                         borderDash: [5, 5],
                         type: 'line',
@@ -183,7 +190,12 @@
                             text: 'Días'
                         },
                         ticks: {
-                            precision: 0
+                            precision: 0, // Esto fuerza a mostrar números enteros en el eje Y
+                            callback: function(value) {
+                                if (Number.isInteger(value)) {
+                                    return value;
+                                }
+                            }
                         }
                     },
                     x: {
@@ -205,7 +217,8 @@
                                     label += ': ';
                                 }
                                 if (context.parsed.y !== null) {
-                                    label += context.parsed.y + ' días';
+                                    // Redondear el valor mostrado en el tooltip
+                                    label += Math.round(context.parsed.y) + ' días';
                                 }
                                 return label;
                             }
@@ -219,9 +232,8 @@
         Livewire.on('actualizarGraficoTiempoEntrega', (meses) => {
             setTimeout(() => {
                 generarG(meses[0][0], meses[0][1], meses[0][2]);
-            }, 200); // Espera 200ms, puedes ajustar si hace falta
+            }, 200);
         });
     });
-
 </script>
 

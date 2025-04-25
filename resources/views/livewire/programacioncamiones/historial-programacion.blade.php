@@ -447,12 +447,11 @@
     </x-modal-general>
     {{--    MODAL FIN DETALLE GUIA--}}
 
-
     <div class="row align-items-center mt-2">
         <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
             <label for="tipo_reporte" class="form-label">Tipo de reporte</label>
             <select name="tipo_reporte" id="tipo_reporte" wire:model.live="tipo_reporte" class="form-select">
-                <option value="">Seleccionar...</option>
+                <option value="">Todos</option>
                 <option value="1">F. Despacho</option>
                 <option value="2">F. Emisión</option>
             </select>
@@ -460,7 +459,7 @@
         <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
             <label for="estadoPro" class="form-label">Estado Liquidación</label>
             <select name="estadoPro" id="estadoPro" wire:model.live="estadoPro" class="form-select">
-                <option value="">Seleccionar</option>
+                <option value="">Todos</option>
                 <option value="1">OS Aprobadas</option>
                 <option value="0">OS Pendiente</option>
             </select>

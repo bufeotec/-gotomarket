@@ -903,4 +903,67 @@ class Guia extends Model
             ];
         }
     }
+
+    public function obtenerReporteEstadoDocumentos($estado = null, $tipoReporte, $desde = null, $hasta = null, $diasLimite){
+        try {
+            $result = DB::table('guias')
+                ->select(
+                    'guia_estado_aprobacion as estado_id',
+                    DB::raw('CASE guia_estado_aprobacion
+                WHEN 1 THEN "Créditos"
+                WHEN 3 THEN "Pendiente de Programación"
+                WHEN 4 THEN "Programado"
+                WHEN 7 THEN "En camino"
+                ELSE "Desconocido" END as zona'),
+                    DB::raw('ROUND(AVG(DATEDIFF(NOW(), updated_at)), 2) as promedio'),
+                    DB::raw('COUNT(*) as cantidad')
+                )
+                ->whereIn('guia_estado_aprobacion', [1, 3, 4, 7]);
+
+            // Filtro por estado específico
+            if ($estado) {
+                $result->where('guia_estado_aprobacion', $estado);
+            }
+
+            // Filtro por fechas para historial
+            if ($tipoReporte == 2) {
+                $result->whereBetween('guia_fecha_emision', [$desde, $hasta]);
+            }
+
+            // Filtro por días excedidos según el estado
+            $result->where(function($q) use ($diasLimite) {
+                foreach ($diasLimite as $estadoId => $dias) {
+                    $q->orWhere(function($sub) use ($estadoId, $dias) {
+                        $sub->where('guia_estado_aprobacion', $estadoId)
+                            ->whereRaw('DATEDIFF(NOW(), updated_at) > ?', [$dias]);
+                    });
+                }
+            });
+
+            return $result->groupBy('guia_estado_aprobacion', 'zona')->get();
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = 0;
+        }
+
+        return $result;
+    }
+    public function obtenerDetallesZona($estado, $tipoReporte, $desde, $hasta, $diasAlerta){
+        try {
+            $result = DB::table('guias')
+                ->where('guia_estado_aprobacion', $estado)
+                ->whereRaw("DATEDIFF(NOW(), updated_at) > ?", [$diasAlerta]);
+
+            if ($tipoReporte == 2) {
+                $result->whereBetween('guia_fecha_emision', [$desde, $hasta]);
+            }
+
+            return $result->get();
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = 0;
+        }
+
+        return $result;
+    }
 }

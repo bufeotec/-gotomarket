@@ -149,7 +149,7 @@ class Programacion extends Model
                     $subQuery->select(DB::raw(1))
                         ->from('despachos as d')
                         ->whereColumn('d.id_programacion', 'p.id_programacion')
-                        ->whereBetween('d.despacho_fecha_aprobacion', [$desde, $hasta]);
+                        ->whereBetween('p.programacion_fecha', [$desde, $hasta]);
                 });
             } elseif ($tipo_reporte == 2 && $desde && $hasta) {
                 $query->whereExists(function ($subQuery) use ($desde, $hasta) {
@@ -227,7 +227,7 @@ class Programacion extends Model
                     $query->select(DB::raw(1))
                         ->from('despachos as d')
                         ->whereColumn('d.id_programacion', 'p.id_programacion')
-                        ->whereBetween('d.despacho_fecha_aprobacion', [$desde, $hasta]);
+                        ->whereBetween('p.programacion_fecha', [$desde, $hasta]);
                 });
             } elseif ($tipo_reporte == 2 && $desde && $hasta) { // Fecha de Emisión
                 $result->whereExists(function ($query) use ($desde, $hasta) {

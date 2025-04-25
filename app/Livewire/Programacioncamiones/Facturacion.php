@@ -343,6 +343,7 @@ class Facturacion extends Component
                 $this->dispatch('modalEditCambioEstado');
                 session()->flash('success', 'La guía cambio de estado.');
                 $this->guia_estado_aprobacion = "";
+                $this->buscar_comprobantes();
             } else {
                 DB::rollBack();
                 session()->flash('error-edit-guia', 'No se pudo cambiar el estado de la guía.');

@@ -195,7 +195,7 @@ class Efectividadentregapedidos extends Component
 
             // Formatear el nombre del archivo Excel
             $nombre_excel = sprintf(
-                "reporte_por_guias_%s_a_%s.xlsx",
+                "efectividad_despacho_%s_a_%s.xlsx",
                 date('d-m-Y', strtotime($this->desde)),
                 date('d-m-Y', strtotime($this->hasta))
             );

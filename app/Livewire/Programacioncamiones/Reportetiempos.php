@@ -53,6 +53,8 @@ class Reportetiempos extends Component
     public $departamentos = [];
 
     public function mount(){
+        $this->desde = date('Y-01-01');
+        $this->hasta = date('Y-m-d');
         $this->departamentos = $this->general->listar_departamento_zona();
     }
     public function render(){
@@ -62,9 +64,13 @@ class Reportetiempos extends Component
         try {
 
             $this->validate([
+                'tipo_reporte' => 'required|in:1,2',
                 'desde' => 'required|date',
                 'hasta' => 'required|date|after_or_equal:desde',
             ], [
+                'tipo_reporte.required' => 'El tipo de reporte es obligatorio.',
+                'tipo_reporte.in' => 'El tipo de reporte seleccionado no es válido.',
+
                 'desde.required' => 'La fecha de inicio es obligatoria.',
                 'desde.date' => 'La fecha de inicio no es válida.',
 
@@ -241,11 +247,11 @@ class Reportetiempos extends Component
                 // Calculamos diferencia en días
                 $diferencia = $inicio->diff($fin)->days;
 
-                $sheet->setCellValue('A'.$row, $item->guia_fecha_emision ? date('d/m/Y H:i:s', strtotime($item->guia_fecha_emision)) : '');
+                $sheet->setCellValue('A'.$row, date('d-m-Y', strtotime($item->guia_fecha_emision)) ? date('d-m-Y', strtotime($item->guia_fecha_emision)) : '');
                 $sheet->setCellValue('B'.$row, $item->guia_nro_doc);
                 $sheet->setCellValue('C'.$row, $item->guia_nombre_cliente.'|'.$item->guia_ruc_cliente);
-                $sheet->setCellValue('D'.$row, $item->programacion_fecha ? date('d/m/Y', strtotime($item->programacion_fecha)) : '');
-                $sheet->setCellValue('E'.$row, $item->fecha_entrega ? date('d/m/Y H:i:s', strtotime($item->fecha_entrega)) : '');
+                $sheet->setCellValue('D'.$row, date('d/m/Y', strtotime($item->programacion_fecha)) ? date('d/m/Y', strtotime($item->programacion_fecha)) : '');
+                $sheet->setCellValue('E'.$row, date('d/m/Y', strtotime($item->fecha_entrega)) ? date('d/m/Y', strtotime($item->fecha_entrega)) : '');
                 $sheet->setCellValue('F'.$row, round($diferencia));
                 $sheet->setCellValue('G'.$row, 'ENTREGADO');
                 $sheet->setCellValue('H'.$row, $item->guia_departamento ?? 'S/N');
@@ -279,7 +285,7 @@ class Reportetiempos extends Component
             ]);
 
             // ========== GENERAR ARCHIVO ==========
-            $nombreArchivo = "reporte_tiempos_entrega_" . date('Ymd_His') . ".xlsx";
+            $nombreArchivo = "tiempos_entrega_" . date('Ymd_His') . ".xlsx";
             $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
             $temp_file = tempnam(sys_get_temp_dir(), $nombreArchivo);
             $writer->save($temp_file);

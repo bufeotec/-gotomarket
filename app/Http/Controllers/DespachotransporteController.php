@@ -179,4 +179,13 @@ class DespachotransporteController extends Controller
             return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
         }
     }
+
+    public function reporte_despacho_transporte(){
+        try {
+            return view('despachotransporte.reporte_control_documentario');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
 }
