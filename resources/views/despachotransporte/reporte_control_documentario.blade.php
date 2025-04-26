@@ -1,13 +1,13 @@
 
 @extends('layouts.dashboard_template')
-@section('title','Reportes de Control Documentario')
+@section('title','Reportes despacho transporte')
 @section('content')
 
     <link rel="stylesheet" href="{{asset('js/select2/dist/css/select2.min.css')}}">
     <script src="{{asset('js/select2/dist/js/select2.min.js')}}"></script>
 
     <div class="page-heading">
-        <x-navegation-view text="Reporte de Control Documentario" />
+        <x-navegation-view text="Reporte de Despacho y Transporte" />
     </div>
 
     <div class="row">
