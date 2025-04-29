@@ -233,7 +233,7 @@
                                 <small class="textTotalComprobantesSeleccionados me-2">
                                     @php
                                     // SOLO IMPORTE DE VENTA SE DIVIDE ENTRE 1.18 (SIN IGV)
-                                    $importeTotalVentaSinIgv = $imporTotalPro / 1.18;
+                                    $importeTotalVentaSinIgv = $imporTotalPro;
                                     $divisor = $importeTotalVentaSinIgv != 0 ? $importeTotalVentaSinIgv : 1;
                                     $toVenta = (($precioTotal + $otros_gastos) / $divisor) * 100;
                                     $toVenta = number_format($toVenta, 2, '.', ''); // Formatea con 2 decimales
@@ -1135,7 +1135,7 @@
                                                     <small class="textTotalComprobantesSeleccionados me-2">
                                                         @php
                                                             // Solo el importe de venta se divide entre 1.18 (sin IGV)
-                                                        $importeTotalVentaSinIgv = $importeTotalVenta / 1.18;
+                                                        $importeTotalVentaSinIgv = $importeTotalVenta;
 
                                                         // El costo total se mantiene con IGV (no se divide)
                                                         $divisor2 = $importeTotalVentaSinIgv != 0 ? $importeTotalVentaSinIgv : 1;
