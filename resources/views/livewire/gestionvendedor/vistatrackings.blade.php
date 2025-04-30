@@ -182,7 +182,7 @@
         </x-slot>
     </x-modal-general>
     {{--    MODAL FIN DETALLE GUIA--}}
-t
+
         <div class="card">
             <div class="card-body">
                 <div class="row">

@@ -77,12 +77,11 @@ class Vehiculos extends Component
         $listar_vehiculos = $this->vehiculo->listar_vehiculos_por_transportistas($this->search_vehiculos, $this->pagination_vehiculos);
         return view('livewire.gestiontransporte.vehiculos', compact('listar_vehiculos', 'listar_transportistas'));
     }
-    public function listar_tarifarios()
-    {
-        $valor = $this->id_tipo_vehiculo;
+    public function listar_tarifarios(){
+        $valor = $this->id_transportistas;
         if ($valor) {
             $this->listar_tarifario = DB::table('tarifarios')
-                ->where('id_tipo_vehiculo', '=', $valor)
+                ->where('id_transportistas', '=', $valor)
                 ->get();
         } else {
             $this->listar_tarifario = [];
@@ -275,13 +274,12 @@ class Vehiculos extends Component
                         // Si ya existe una tarifa, solo actualiza la tarifa
                         DB::table('tarifas_movil')
                             ->where('id_vehiculo', $this->id_vehiculo)
-                            ->update(['id_tarifario' => $this->id_tarifario, 'observaciones' => $this->observaciones]); // Actualiza la tarifa
+                            ->update(['id_tarifario' => $this->id_tarifario]);
                     } else {
                         // Si no existe, crea una nueva entrada
                         DB::table('tarifas_movil')->insert([
                             'id_vehiculo' => $this->id_vehiculo,
                             'id_tarifario' => $this->id_tarifario,
-                            'observaciones' => $this->observaciones,
                             'created_at' => now(),
                             'id_users' => Auth::id(),
                         ]);

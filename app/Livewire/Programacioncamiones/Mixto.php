@@ -682,10 +682,10 @@ class Mixto extends Component
         });
 
         // Validar que el peso y volumen sean mayores a 0
-        if ($pesoTotalKilos <= 0 || $volumenTotal <= 0) {
-            session()->flash('error', 'El peso o el volumen deben ser mayores a 0. Verifique los detalles de la guía.');
-            return;
-        }
+//        if ($pesoTotalKilos <= 0 || $volumenTotal <= 0) {
+//            session()->flash('error', 'El peso o el volumen deben ser mayores a 0. Verifique los detalles de la guía.');
+//            return;
+//        }
         // Agregar la factura seleccionada y actualizar el peso y volumen total
         $this->selectedFacturasLocal[] = [
             'id_guia' => $factura->id_guia,

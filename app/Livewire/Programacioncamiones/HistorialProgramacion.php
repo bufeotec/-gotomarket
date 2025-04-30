@@ -184,15 +184,15 @@ class HistorialProgramacion extends Component
                 $des->comprobantes = DB::table('despacho_ventas as dv')
                     ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
                     ->where('dv.id_despacho', '=', $des->id_despacho)
-                    ->where('g.guia_estado_aprobacion', '=', 8)
-                    ->select('dv.*', 'g.guia_importe_total_sin_igv')
+                    ->select('dv.*', 'g.guia_importe_total_sin_igv', 'g.guia_estado_aprobacion')
                     ->get();
 
                 foreach ($des->comprobantes as $com) {
                     if (!in_array($com->id_guia, $guiasProcesadas)) {
-                        // Usar directamente guia_importe_total_sin_igv sin validar los 3 campos
-                        $precio = floatval($com->guia_importe_total_sin_igv);
-                        $totalVenta += round($precio, 2);
+                        if ($com->guia_estado_aprobacion != 11) {
+                            $precio = floatval($com->guia_importe_total_sin_igv);
+                            $totalVenta += round($precio, 2);
+                        }
                         $guiasProcesadas[] = $com->id_guia;
                     }
                 }
@@ -371,241 +371,6 @@ class HistorialProgramacion extends Component
         return view('livewire.programacioncamiones.historial-programacion', compact('resultado', 'roleId', 'zonaDespachoData'));
     }
 
-//    public function render(){
-//        // Obtener programaciones filtradas
-//        $resultado = $this->programacion->listar_programaciones_historial_programacion($this->desde, $this->hasta, $this->tipo_reporte, $this->estadoPro);
-//
-//        // Inicializar variables para las sumas
-//        $totalLocal = 0;
-//        $totalProvincia1 = 0;
-//        $totalProvincia2 = 0;
-//        $totalGeneral = 0; // Nueva variable para el total general
-//
-//        // Variables para fletes
-//        $fleteAprobadoLocal = 0;
-//        $fletePenalLocal = 0;
-//        $fleteAprobadoProv1 = 0;
-//        $fletePenalProv1 = 0;
-//        $fleteAprobadoProv2 = 0;
-//        $fletePenalProv2 = 0;
-//
-//        // Definir el mapeo de departamentos a provincias
-//        $departamentosProvincia1 = ['ANCASH', 'AYACUCHO', 'HUANCAVELICA', 'HUANUCO', 'ICA', 'JUNIN', 'LA LIBERTAD', 'LAMBAYEQUE', 'PASCO', 'LIMA'];
-//        $departamentosProvincia2 = ['AMAZONAS', 'APURIMAC', 'AREQUIPA', 'CAJAMARCA', 'CUSCO', 'LORETO', 'MADRE DE DIOS', 'MOQUEGUA', 'PIURA', 'PUNO', 'SAN MARTIN', 'TACNA', 'TUMBES', 'UCAYALI'];
-//        $departamentosLocal = ['CALLAO', 'LIMA'];
-//
-//        // Rastrear programaciones para determinar si son mixtas
-//        $programacionesContador = [];
-//
-//        // Arrays para llevar el seguimiento de despachos procesados
-//        $despachosProcesadosLocal = [];
-//        $despachosProcesadosProv1 = [];
-//        $despachosProcesadosProv2 = [];
-//        $guiasProcesadasTotal = []; // Para evitar duplicados en el total general
-//
-//        // Primera pasada para contar cuántas veces aparece cada programación
-//        foreach ($resultado as $rehs) {
-//            if (!isset($programacionesContador[$rehs->id_programacion])) {
-//                $programacionesContador[$rehs->id_programacion] = 0;
-//            }
-//
-//            $rehs->despacho = DB::table('despachos as d')
-//                ->join('transportistas as t', 't.id_transportistas', '=', 'd.id_transportistas')
-//                ->join('tipo_servicios as ts', 'ts.id_tipo_servicios', '=', 'd.id_tipo_servicios')
-//                ->leftJoin('departamentos as dep', 'dep.id_departamento', '=', 'd.id_departamento')
-//                ->where('d.id_programacion', '=', $rehs->id_programacion)
-//                ->select('d.*', 't.*', 'ts.*', 'dep.departamento_nombre')
-//                ->get();
-//
-//            $programacionesContador[$rehs->id_programacion] += count($rehs->despacho);
-//        }
-//
-//        // Procesar cada programación y sus despachos
-//        foreach ($resultado as $rehs) {
-//            $rehs->despacho = DB::table('despachos as d')
-//                ->join('transportistas as t', 't.id_transportistas', '=', 'd.id_transportistas')
-//                ->join('tipo_servicios as ts', 'ts.id_tipo_servicios', '=', 'd.id_tipo_servicios')
-//                ->leftJoin('departamentos as dep', 'dep.id_departamento', '=', 'd.id_departamento')
-//                ->where('d.id_programacion', '=', $rehs->id_programacion)
-//                ->select('d.*', 't.*', 'ts.*', 'dep.departamento_nombre')
-//                ->get();
-//
-//            $esMixto = $programacionesContador[$rehs->id_programacion] > 1;
-//
-//            foreach ($rehs->despacho as $des) {
-//                // Calcular totalVentaDespacho para TODOS los despachos
-//                $totalVenta = 0;
-//
-//                $des->comprobantes = DB::table('despacho_ventas as dv')
-//                    ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
-//                    ->where('dv.id_despacho', '=', $des->id_despacho)
-//                    ->where('g.guia_estado_aprobacion', '=', 8)
-//                    ->select('dv.*', 'g.guia_importe_total_sin_igv')
-//                    ->get();
-//
-//                // Calcular valor transportado (suma de guias sin IGV)
-//                $valorTransportado = $des->comprobantes->sum('guia_importe_total_sin_igv');
-//                $des->totalVentaDespacho = $valorTransportado;
-//
-//                // Solo hacer cálculos para el resumen si NO es RECHAZADO (estado != 4)
-//                if ($des->despacho_estado_aprobacion != 4) {
-//                    // Verificar estado de liquidación
-//                    $aprobado = $this->verificarAprobacion($des->id_despacho);
-//
-//                    // Obtener valores liquidados si existe liquidación
-//                    $valoresLiquidados = $this->obtenerValoresLiquidados($des->id_despacho);
-//
-//                    // Si hay filtro por estado de liquidación, validar coincidencia
-//                    $mostrarDespacho = true;
-//                    if ($this->estadoPro !== null && $this->estadoPro !== '') {
-//                        if (($this->estadoPro == 1 && !$aprobado) || ($this->estadoPro == 0 && $aprobado)) {
-//                            $mostrarDespacho = false;
-//                        }
-//                    }
-//
-//                    if ($mostrarDespacho) {
-//                        // Obtener departamento desde despacho_venta_departamento si está disponible
-//                        $departamentoNombre = '';
-//                        if (isset($des->comprobantes[0]->despacho_venta_departamento) && !empty($des->comprobantes[0]->despacho_venta_departamento)) {
-//                            $departamentoNombre = strtoupper(trim($des->comprobantes[0]->despacho_venta_departamento));
-//                        } else {
-//                            $departamentoNombre = strtoupper(trim($des->departamento_nombre ?? ''));
-//                        }
-//
-//                        // Determinar a qué categoría pertenece este despacho
-//                        if ($des->id_tipo_servicios == 1) { // Local
-//                            // Solo sumar si no hemos procesado este despacho antes
-//                            if (!in_array($des->id_despacho, $despachosProcesadosLocal)) {
-//                                $totalLocal += $valorTransportado;
-//                                $despachosProcesadosLocal[] = $des->id_despacho;
-//                            }
-//
-//                            // Sumar al total general (local directo o local en mixto)
-//                            foreach ($des->comprobantes as $com) {
-//                                if (!in_array($com->id_guia, $guiasProcesadasTotal)) {
-//                                    $totalGeneral += floatval($com->guia_importe_total_sin_igv);
-//                                    $guiasProcesadasTotal[] = $com->id_guia;
-//                                }
-//                            }
-//
-//                            // Calcular fletes para Local - usar valores liquidados si existen
-//                            $costoTarifa = $valoresLiquidados['costo_flete'] ??
-//                                (($des->despacho_estado_modificado == 1) ? $des->despacho_monto_modificado : $des->despacho_flete);
-//                            $costoMano = $valoresLiquidados['mano_obra'] ?? $des->despacho_ayudante ?? 0;
-//                            $costoOtros = $valoresLiquidados['otros_gasto'] ?? $des->despacho_gasto_otros ?? 0;
-//                            $totalFlete = ($costoTarifa + $costoMano + $costoOtros);
-//
-//                            if ($aprobado) {
-//                                $fleteAprobadoLocal += $totalFlete;
-//                            } else {
-//                                $fletePenalLocal += $totalFlete;
-//                            }
-//
-//                        } elseif ($des->id_tipo_servicios == 2) { // Provincial
-//                            // Sumar al total general solo si no es mixto (provincial directo)
-//                            if (!$esMixto) {
-//                                foreach ($des->comprobantes as $com) {
-//                                    if (!in_array($com->id_guia, $guiasProcesadasTotal)) {
-//                                        $totalGeneral += floatval($com->guia_importe_total_sin_igv);
-//                                        $guiasProcesadasTotal[] = $com->id_guia;
-//                                    }
-//                                }
-//                            }
-//
-//                            // Calcular fletes para Provincial - usar valores liquidados si existen
-//                            $costoTarifa = $valoresLiquidados['costo_flete'] ??
-//                                (($des->despacho_estado_modificado == 1) ? $des->despacho_monto_modificado : $des->despacho_flete);
-//                            $costoOtros = $valoresLiquidados['otros_gasto'] ?? $des->despacho_gasto_otros ?? 0;
-//                            $peso = $valoresLiquidados['peso_final_kilos'] ?? $des->despacho_peso ?? 1;
-//                            $totalFlete = (($costoTarifa * $peso) + $costoOtros);
-//
-//                            // Calcular el valor para cada zona de provincia
-//                            if (in_array($departamentoNombre, $departamentosProvincia1)) {
-//                                // Solo sumar si no hemos procesado este despacho antes
-//                                if (!in_array($des->id_despacho, $despachosProcesadosProv1)) {
-//                                    $totalProvincia1 += $valorTransportado;
-//                                    $despachosProcesadosProv1[] = $des->id_despacho;
-//                                }
-//
-//                                if ($aprobado) {
-//                                    $fleteAprobadoProv1 += $totalFlete;
-//                                } else {
-//                                    $fletePenalProv1 += $totalFlete;
-//                                }
-//                            } elseif (in_array($departamentoNombre, $departamentosProvincia2)) {
-//                                // Solo sumar si no hemos procesado este despacho antes
-//                                if (!in_array($des->id_despacho, $despachosProcesadosProv2)) {
-//                                    $totalProvincia2 += $valorTransportado;
-//                                    $despachosProcesadosProv2[] = $des->id_despacho;
-//                                }
-//
-//                                if ($aprobado) {
-//                                    $fleteAprobadoProv2 += $totalFlete;
-//                                } else {
-//                                    $fletePenalProv2 += $totalFlete;
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//
-//        // Calcular los totales provinciales
-//        $totalProvincial = $totalProvincia1 + $totalProvincia2;
-//
-//        // Totales de fletes
-//        $totalFleteAprobado = $fleteAprobadoLocal + $fleteAprobadoProv1 + $fleteAprobadoProv2;
-//        $totalFletePenal = $fletePenalLocal + $fletePenalProv1 + $fletePenalProv2;
-//        $totalFleteGeneral = $totalFleteAprobado + $totalFletePenal;
-//
-//        $totalFleteAprobadoProv = $fleteAprobadoProv1 + $fleteAprobadoProv2;
-//        $totalFletePenalProv = $fletePenalProv1 + $fletePenalProv2;
-//        $totalFleteProv = $totalFleteAprobadoProv + $totalFletePenalProv;
-//
-//        // Preparar los datos para la vista
-//        $zonaDespachoData = [
-//            [
-//                'zona' => 'Total',
-//                'valor_transportado' => number_format($totalGeneral, 2),
-//                'flete_aprobado' => number_format($totalFleteAprobado, 2),
-//                'flete_penal' => number_format($totalFletePenal, 2),
-//                'total_flete' => number_format($totalFleteGeneral, 2)
-//            ],
-//            [
-//                'zona' => 'Local',
-//                'valor_transportado' => number_format($totalLocal, 2),
-//                'flete_aprobado' => number_format($fleteAprobadoLocal, 2),
-//                'flete_penal' => number_format($fletePenalLocal, 2),
-//                'total_flete' => number_format(($fleteAprobadoLocal + $fletePenalLocal), 2)
-//            ],
-//            [
-//                'zona' => 'Provincia 1',
-//                'valor_transportado' => number_format($totalProvincia1, 2),
-//                'flete_aprobado' => number_format($fleteAprobadoProv1, 2),
-//                'flete_penal' => number_format($fletePenalProv1, 2),
-//                'total_flete' => number_format(($fleteAprobadoProv1 + $fletePenalProv1), 2)
-//            ],
-//            [
-//                'zona' => 'Provincia 2',
-//                'valor_transportado' => number_format($totalProvincia2, 2),
-//                'flete_aprobado' => number_format($fleteAprobadoProv2, 2),
-//                'flete_penal' => number_format($fletePenalProv2, 2),
-//                'total_flete' => number_format(($fleteAprobadoProv2 + $fletePenalProv2), 2)
-//            ],
-//            [
-//                'zona' => 'Total Provincia',
-//                'valor_transportado' => number_format($totalProvincial, 2),
-//                'flete_aprobado' => number_format($totalFleteAprobadoProv, 2),
-//                'flete_penal' => number_format($totalFletePenalProv, 2),
-//                'total_flete' => number_format($totalFleteProv, 2)
-//            ]
-//        ];
-//
-//        $roleId = auth()->user()->roles->first()->id ?? null;
-//
-//        return view('livewire.programacioncamiones.historial-programacion', compact('resultado', 'roleId', 'zonaDespachoData'));
-//    }
 
     // Nueva función para obtener valores liquidados
     public function obtenerValoresLiquidados($idDespacho){
@@ -2130,7 +1895,7 @@ class HistorialProgramacion extends Component
         }
     }
 
-    public function cambiarEstadoComprobante() {
+    public function cambiarEstadoComprobante(){
         try {
             if (!Gate::allows('cambiar_estado_comprobante')) {
                 session()->flash('errorComprobante', 'No tiene permisos para poder cambiar el estado del comprobante.');
@@ -2140,11 +1905,22 @@ class HistorialProgramacion extends Component
             DB::beginTransaction();
             $id_despacho = $this->currentDespachoId;
 
-            // 1. Actualizar estados de guías (comprobantes)
+            // Obtener información del despacho actual
+            $despachoActual = DB::table('despachos')
+                ->where('id_despacho', $id_despacho)
+                ->first();
+
+            if (!$despachoActual) {
+                DB::rollBack();
+                session()->flash('errorComprobante', 'Despacho no encontrado.');
+                return;
+            }
+
+            // 1. Actualizar estados de guías (comprobantes) y recolectar guías afectadas
+            $guiasActualizadas = [];
             foreach ($this->estadoComprobante as $key => $estado) {
-                // Extraer el id_despacho_venta del key
                 $parts = explode('_', $key);
-                if ($parts[0] != $id_despacho) continue; // Solo procesar los del despacho actual
+                if ($parts[0] != $id_despacho) continue;
 
                 $id_despacho_venta = $parts[1];
                 $es = (int)$estado;
@@ -2168,7 +1944,11 @@ class HistorialProgramacion extends Component
                 // Actualizar estado en guías
                 DB::table('guias')
                     ->where('id_guia', $despachoVenta->id_guia)
-                    ->update(['guia_estado_aprobacion' => $es, 'updated_at' => now('America/Lima')]);
+                    ->update(['guia_estado_aprobacion' => $es,
+                        'updated_at' => now('America/Lima')]);
+
+                // Guardar información de la guía actualizada
+                $guiasActualizadas[$despachoVenta->id_guia] = $es;
 
                 // Registrar en historial_guias
                 $guia = DB::table('guias')
@@ -2191,9 +1971,8 @@ class HistorialProgramacion extends Component
 
             // 2. Actualizar estados de servicios de transporte
             foreach ($this->estadoServicio as $key => $estado) {
-                // Extraer el id_despacho_venta del key
                 $parts = explode('_', $key);
-                if ($parts[0] != $id_despacho) continue; // Solo procesar los del despacho actual
+                if ($parts[0] != $id_despacho) continue;
 
                 $id_despacho_venta = $parts[1];
                 $es = (int)$estado;
@@ -2219,10 +1998,37 @@ class HistorialProgramacion extends Component
                     ->update(['serv_transpt_estado_aprobacion' => $es]);
             }
 
-            // Actualizar estado del despacho
+            // 3. Determinar el estado final del despacho actual
+            $estadoDespachoActual = $this->determinarEstadoDespacho($id_despacho);
             DB::table('despachos')
                 ->where('id_despacho', $id_despacho)
-                ->update(['despacho_estado_aprobacion' => 3]);
+                ->update(['despacho_estado_aprobacion' => $estadoDespachoActual]);
+
+            // 4. Actualizar despachos relacionados (provinciales) para las guías afectadas
+            if (!empty($guiasActualizadas)) {
+                foreach ($guiasActualizadas as $id_guia => $estadoGuia) {
+                    // Buscar todos los despachos que contengan esta guía (excepto el actual)
+                    $despachosRelacionados = DB::table('despacho_ventas')
+                        ->join('despachos', 'despacho_ventas.id_despacho', '=', 'despachos.id_despacho')
+                        ->where('despacho_ventas.id_guia', $id_guia)
+                        ->where('despacho_ventas.id_despacho', '!=', $id_despacho)
+                        ->where('despachos.despacho_estado_aprobacion', '!=', 2)
+                        ->where('despachos.despacho_estado_aprobacion', '!=', 3)
+                        ->where('despachos.despacho_estado_aprobacion', '!=', 4)
+                        ->select('despachos.id_despacho')
+                        ->distinct()
+                        ->get();
+
+                    foreach ($despachosRelacionados as $despachoRel) {
+                        // Determinar el estado del despacho relacionado
+                        $estadoDespachoRel = $this->determinarEstadoDespacho($despachoRel->id_despacho);
+
+                        DB::table('despachos')
+                            ->where('id_despacho', $despachoRel->id_despacho)
+                            ->update(['despacho_estado_aprobacion' => $estadoDespachoRel]);
+                    }
+                }
+            }
 
             DB::commit();
             session()->flash('successComprobante', 'Los estados fueron actualizados correctamente.');
@@ -2232,6 +2038,41 @@ class HistorialProgramacion extends Component
             $this->logs->insertarLog($e);
             session()->flash('errorComprobante', 'Ocurrió un error al cambiar el estado del registro. Por favor, inténtelo nuevamente.');
         }
+    }
+
+    public function determinarEstadoDespacho($id_despacho) {
+        // Obtener todas las guías del despacho con sus estados
+        $guiasDespacho = DB::table('despacho_ventas')
+            ->join('guias', 'despacho_ventas.id_guia', '=', 'guias.id_guia')
+            ->where('despacho_ventas.id_despacho', $id_despacho)
+            ->select('guias.guia_estado_aprobacion')
+            ->get();
+
+        if ($guiasDespacho->isEmpty()) {
+            return 4; // Rechazado si no tiene guías
+        }
+
+        $tieneEntregados = false;
+        $tieneNoEntregados = false;
+
+        foreach ($guiasDespacho as $guia) {
+            if ($guia->guia_estado_aprobacion == 8) {
+                $tieneEntregados = true;
+            } elseif ($guia->guia_estado_aprobacion == 11) {
+                $tieneNoEntregados = true;
+            }
+        }
+
+        // Lógica para determinar el estado del despacho
+        if ($tieneEntregados && !$tieneNoEntregados) {
+            return 3; // Culminado (todas las guías entregadas)
+        } elseif ($tieneNoEntregados && !$tieneEntregados) {
+            return 4; // Rechazado (todas las guías no entregadas)
+        } elseif ($tieneEntregados && $tieneNoEntregados) {
+            return 3; // Culminado (al menos una guía entregada)
+        }
+
+        return 4; // Por defecto rechazado
     }
 
 //    public function cambiarEstadoComprobante(){

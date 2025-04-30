@@ -15,10 +15,13 @@ use App\Models\LiquidacionGastos;
 use App\Models\General;
 use Illuminate\Support\Facades\Auth;
 use Livewire\WithFileUploads;
+use Livewire\WithoutUrlPagination;
+use Livewire\WithPagination;
 
 class LiquidacionFlete extends Component
 {
     use WithFileUploads;
+    use WithPagination, WithoutUrlPagination;
     private $logs;
     private $transportistas;
     private $despacho;
