@@ -725,10 +725,12 @@
                                                     @endphp
                                                     <td>{{ $ra }} %</td>
                                                     @php
-                                                        $ra2 = 0;
-                                                        if ($des->despacho_costo_total) {
-                                                            $to = $des->despacho_costo_total / $des->despacho_peso;
-                                                            $ra2 = $general->formatoDecimal($to);
+                                                        $ra2 = 'N/A'; // Valor por defecto cuando no se puede calcular
+
+                                                        if ($des->despacho_costo_total && $des->despacho_peso > 0) {
+                                                            $ra2 = $general->formatoDecimal($des->despacho_costo_total / $des->despacho_peso);
+                                                        } elseif ($des->despacho_costo_total) {
+                                                            $ra2 = '∞'; // Opcional para indicar división por cero
                                                         }
                                                     @endphp
                                                     <td>{{ $ra2 }}</td>

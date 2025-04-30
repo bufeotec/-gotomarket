@@ -488,12 +488,16 @@
                                                 <td>{{$ra}} %</td>
                                                 @php
                                                     $ra2 = 0;
-                                                    if ($des->despacho_costo_total){
+                                                    // Verificar que despacho_peso no sea 0 antes de dividir
+                                                    if ($des->despacho_costo_total && $des->despacho_peso > 0) {
                                                         $to = $des->despacho_costo_total / $des->despacho_peso;
                                                         $ra2 = $general->formatoDecimal($to);
+                                                    } elseif ($des->despacho_costo_total) {
+                                                        // Opcional: Manejar el caso cuando hay costo pero peso es 0
+                                                        $ra2 = 'N/A'; // O cualquier valor que quieras mostrar en este caso
                                                     }
                                                 @endphp
-                                                <td>{{$ra2}}</td>
+                                                <td>{{ $ra2 }}</td>
                                                 <td>
                                                     <button class="btn btn-primary btn-sm text-white mb-2" wire:click="listar_informacion_despacho({{$des->id_despacho}})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">
                                                         <i class="fa-solid fa-eye"></i> Despacho
