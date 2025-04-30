@@ -134,9 +134,11 @@ class Provincial extends Component
 
         // Filtrar por nombre del cliente si searchGuia tiene valor
         if (!empty($this->searchGuia)) {
-            $guiasQuery->where('guia_nombre_cliente', 'like', '%' . $this->searchGuia . '%')
-                ->orWhere('guia_nro_doc', 'like', '%' . $this->searchGuia)
-                ->orWhere('guia_nro_doc_ref', 'like', '%' . $this->searchGuia);
+            $guiasQuery->where(function($query) {
+                $query->where('guia_nombre_cliente', 'like', '%' . $this->searchGuia . '%')
+                    ->orWhere('guia_nro_doc', 'like', '%' . $this->searchGuia . '%')
+                    ->orWhere('guia_nro_doc_ref', 'like', '%' . $this->searchGuia . '%');
+            });
         }
 
         $guias = $guiasQuery->get();
