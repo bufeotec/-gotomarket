@@ -139,12 +139,38 @@ class Vehiculo extends Model
 //            $query = DB::table('vehiculos as v');
 
             $query = DB::table('tarifas_movil as tm')
+                ->select(
+                    'v.id_vehiculo',
+                    'v.vehiculo_placa',
+                    'v.vehiculo_capacidad_peso',
+                    'v.vehiculo_capacidad_volumen',
+                    'tr.id_transportistas',
+                    'tr.transportista_razon_social',
+                    't.id_tarifario',
+                    't.tarifa_cap_min',
+                    't.tarifa_cap_max',
+                    't.tarifa_monto',
+                    't.tarifa_estado_aprobacion'
+                )
                 ->join('vehiculos as v', 'v.id_vehiculo', '=', 'tm.id_vehiculo')
                 ->join('tarifarios as t', 't.id_tarifario', '=', 'tm.id_tarifario')
                 ->join('transportistas as tr', 'tr.id_transportistas', '=', 'v.id_transportistas')
                 ->where('v.vehiculo_estado','=', 1)
                 ->where('t.tarifa_estado_aprobacion','=', 1)
-                ->where('t.id_tipo_servicio','=', $type);
+                ->where('t.id_tipo_servicio','=', $type)
+                ->groupBy(
+                    'v.id_vehiculo',
+                    'v.vehiculo_placa',
+                    'v.vehiculo_capacidad_peso',
+                    'v.vehiculo_capacidad_volumen',
+                    'tr.id_transportistas',
+                    'tr.transportista_razon_social',
+                    't.id_tarifario',
+                    't.tarifa_cap_min',
+                    't.tarifa_cap_max',
+                    't.tarifa_monto',
+                    't.tarifa_estado_aprobacion'
+                );
                 if ($pesot > 0){
                     $query->where('t.tarifa_cap_min', '<=', $pesot)
                         ->where('t.tarifa_cap_max', '>=', $pesot);
