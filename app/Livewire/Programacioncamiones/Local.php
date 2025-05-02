@@ -689,7 +689,7 @@ class Local extends Component
                     ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
                     ->where('g.guia_estado_aprobacion', '<>', 9)
                     ->where('dv.id_guia', $factura['id_guia'])
-                    ->whereIn('g.guia_estado_aprobacion', [7, 4, 8])
+                    ->whereIn('g.guia_estado_aprobacion', [7, 8])
                     ->orderBy('dv.id_despacho_venta', 'desc')
                     ->exists();
                 if ($existe) {
@@ -704,7 +704,7 @@ class Local extends Component
                         ->join('servicios_transportes as st', 'dv.id_serv_transpt', '=', 'st.id_serv_transpt')
                         ->where('st.serv_transpt_estado_aprobacion', '<>', 3)
                         ->where('dv.id_serv_transpt', $servTrn['id_serv_transpt'])
-                        ->whereIn('st.serv_transpt_estado_aprobacion', [0, 1, 2, 4, 5])
+                        ->whereIn('st.serv_transpt_estado_aprobacion', [0, 1, 2])
                         ->orderBy('dv.id_despacho_venta', 'desc')
                         ->exists();
                     if ($existe) {
