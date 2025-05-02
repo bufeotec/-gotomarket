@@ -944,7 +944,7 @@ class Provincial extends Component
                 $existe = DB::table('despacho_ventas as dv')
                     ->join('despachos as d','d.id_despacho','=','dv.id_despacho')
                     ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
-                    ->where('g.guia_estado_aprobacion', '<>', 9)
+                    ->where('d.despacho_estado_aprobacion', '<>', 4)
                     ->where('dv.id_guia', $factura['id_guia'])
                     ->whereIn('g.guia_estado_aprobacion', [7, 8])
                     ->orderBy('dv.id_despacho_venta', 'desc')
