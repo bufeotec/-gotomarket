@@ -134,10 +134,8 @@ class Vehiculo extends Model
         return $result;
     }
 
-    public function obtener_vehiculos_con_tarifarios_local($pesot, $volument,$type, $idt = null){
+    public function obtener_vehiculos_con_tarifarios_local($pesot, $volument, $type, $idt = null) {
         try {
-//            $query = DB::table('vehiculos as v');
-
             $query = DB::table('tarifas_movil as tm')
                 ->select(
                     'v.id_vehiculo',
@@ -155,61 +153,40 @@ class Vehiculo extends Model
                 ->join('vehiculos as v', 'v.id_vehiculo', '=', 'tm.id_vehiculo')
                 ->join('tarifarios as t', 't.id_tarifario', '=', 'tm.id_tarifario')
                 ->join('transportistas as tr', 'tr.id_transportistas', '=', 'v.id_transportistas')
-                ->where('v.vehiculo_estado','=', 1)
-                ->where('t.tarifa_estado_aprobacion','=', 1)
-                ->where('t.id_tipo_servicio','=', $type)
-                ->groupBy(
-                    'v.id_vehiculo',
-                    'v.vehiculo_placa',
-                    'v.vehiculo_capacidad_peso',
-                    'v.vehiculo_capacidad_volumen',
-                    'tr.id_transportistas',
-                    'tr.transportista_razon_social',
-                    't.id_tarifario',
-                    't.tarifa_cap_min',
-                    't.tarifa_cap_max',
-                    't.tarifa_monto',
-                    't.tarifa_estado_aprobacion'
-                );
-                if ($pesot > 0){
-                    $query->where('t.tarifa_cap_min', '<=', $pesot)
-                        ->where('t.tarifa_cap_max', '>=', $pesot);
-                }
+                ->where('v.vehiculo_estado', '=', 1)
+                ->where('t.tarifa_estado_aprobacion', '=', 1)
+                ->where('t.id_tipo_servicio', '=', $type);
 
-                if ($volument > 0) {
-                    $query->where('v.vehiculo_capacidad_volumen','>=',$volument);
-                }
+            if ($idt) {
+                $query->where('tr.id_transportistas', '=', $idt)
+                    ->where('v.id_transportistas', '=', $idt);
+            }
 
-                if ($idt) {
-                    $query->where('tr.id_transportistas', '=', $idt)
-                        ->where('v.id_transportistas', '=', $idt);
-                }
-
-            // Verificar rango de tarifa
-
-//            $query->groupBy('tr.id_transportistas','v.id_vehiculo','v.vehiculo_placa','v.vehiculo_capacidad_peso','v.vehiculo_capacidad_volumen','t2.tarifa_cap_min','t2.tarifa_cap_max','t2.tarifa_monto','t2.tarifa_estado_aprobacion','t2.id_tarifario');
             $result = $query->get();
 
+            // Calcular porcentajes de uso y determinar si está lleno
             foreach ($result as $r) {
                 $r->vehiculo_capacidad_usada = ($pesot / $r->vehiculo_capacidad_peso) * 100;
                 $r->vehiculo_volumen_usado = ($volument / $r->vehiculo_capacidad_volumen) * 100;
+                $r->porcentaje_uso_maximo = max($r->vehiculo_capacidad_usada, $r->vehiculo_volumen_usado);
+                $r->esta_lleno = ($r->vehiculo_capacidad_usada >= 100 || $r->vehiculo_volumen_usado >= 100) ? 1 : 0;
             }
-            // Ordenar los resultados por vehiculo_capacidad_usada de mayor a menor
-//            $result = $result->sortByDesc('vehiculo_capacidad_usada');
 
-            $result = $result->sortByDesc(function($item) {
-                return [$item->tarifa_estado_aprobacion, $item->vehiculo_capacidad_usada];
-            });
-//            // Ordenar los resultados por vehiculo_capacidad_usada de mayor a menor
-//            $result = $result->sortByDesc(function ($vehiculo) {
-//                return max($vehiculo->vehiculo_capacidad_usada, $vehiculo->vehiculo_volumen_usado);
-//            });
+            // Eliminar duplicados por placa de vehículo
+            $uniqueResults = $result->unique('vehiculo_placa')->values();
+
+            // Ordenar: primero los no llenos (ordenados por porcentaje de uso descendente), luego los llenos
+            $sortedResults = $uniqueResults->sortBy([
+                ['esta_lleno', 'asc'],  // Los no llenos (0) primero
+                ['porcentaje_uso_maximo', 'desc']  // Dentro de cada grupo, los más llenos primero
+            ]);
+
+            return $sortedResults->values();
 
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);
-            $result = [];
+            return [];
         }
-        return $result;
     }
 
     public function listar_informacion_vehiculo($id){
@@ -233,8 +210,8 @@ class Vehiculo extends Model
             $query = DB::table('tarifarios as t')
                 ->where('t.tarifa_estado','=', 1)
                 ->where('t.id_tipo_servicio','=', $type)
-                ->where('t.tarifa_cap_min', '<=', $pesot)
-                ->where('t.tarifa_cap_max', '>=', $pesot)
+//                ->where('t.tarifa_cap_min', '<=', $pesot)
+//                ->where('t.tarifa_cap_max', '>=', $pesot)
             ;
             if ($idt) {
                 $query->where('t.id_transportistas', '=', $idt);
