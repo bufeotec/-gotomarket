@@ -39,6 +39,34 @@ class Guia extends Model
 
         return $result;
     }
+    public function listar_guia_detalle_x_num_doc($numdoc){
+        try {
+            $result = DB::table('guias_detalles')
+                ->where('guia_det_nro_documento','=',$numdoc)
+                ->count();
+
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+
+        return $result;
+    }
+    public function eliminar_guia_detalle($numdoc){
+        try {
+            $result = DB::table('guias_detalles')
+                ->where('guia_det_nro_documento', '=', $numdoc)
+                ->delete();
+
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+
+        return $result;
+    }
     public function listar_informacion_reporte_tiempos_atencion_pedido($tipo, $desde, $hasta,$arrayDe,$type,$typeGrafico = null,$mesGrafico = null){
         try {
 

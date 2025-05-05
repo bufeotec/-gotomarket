@@ -7,6 +7,8 @@ use App\Models\Facturaspreprogramacion;
 use App\Models\Historialguia;
 use App\Models\Logs;
 use App\Models\Guia;
+use App\Models\Server;
+use App\Models\Guiadetalle;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -23,12 +25,14 @@ class Facturacion extends Component
     private $facmovarea;
     private $historialguia;
     private $guia;
+    private $server;
     public function __construct(){
         $this->logs = new Logs();
         $this->facpreprog = new Facturaspreprogramacion();
         $this->facmovarea = new Facturamovimientoarea();
         $this->historialguia = new Historialguia();
         $this->guia = new Guia();
+        $this->server = new Server();
     }
     public $fecha_hasta;
     public $fecha_desde;
@@ -113,6 +117,52 @@ class Facturacion extends Component
                 'g.updated_at'
             );
             $this->listar_comprobantes = $result->get();
+    }
+    public function actualizar_detalle_guia($num_doc,$id){
+        $detalle_actual = $this->guia->listar_guia_detalle_x_num_doc($num_doc);
+        $detalle_real = $this->server->obtenerDetalleRemision($num_doc);
+        $id_ =  base64_decode($id);
+        if($detalle_actual != count($detalle_real)){
+            DB::beginTransaction();
+            $eliminar_detalle = $this->guia->eliminar_guia_detalle($num_doc);
+            if($eliminar_detalle == 0){
+                foreach ($detalle_real as $dg){
+                    $GuiaDetalle = new Guiadetalle();
+                    $GuiaDetalle->id_users = 4;
+                    $GuiaDetalle->id_guia  = $id_;
+                    $GuiaDetalle->guia_det_almacen_salida = $dg->ALMACEN_SALIDA ?: null;
+                    $GuiaDetalle->guia_det_fecha_emision = $dg->FECHA_EMISION ?: null;
+                    $GuiaDetalle->guia_det_estado = $dg->ESTADO ?: null;
+                    $GuiaDetalle->guia_det_tipo_documento = $dg->TIPO_DOCUMENTO ?: null;
+                    $GuiaDetalle->guia_det_nro_documento = $dg->NRO_DOCUMENTO ?: null;
+                    $GuiaDetalle->guia_det_nro_linea = $dg->NRO_LINEA ?: null;
+                    $GuiaDetalle->guia_det_cod_producto = $dg->COD_PRODUCTO ?: null;
+                    $GuiaDetalle->guia_det_descripcion_producto = $dg->DESCRIPCION_PRODUCTO ?: null;
+                    $GuiaDetalle->guia_det_lote = $dg->LOTE ?: null;
+                    $GuiaDetalle->guia_det_unidad = $dg->UNIDAD ?: null;
+                    $GuiaDetalle->guia_det_cantidad = $dg->CANTIDAD ?: null;
+                    $GuiaDetalle->guia_det_precio_unit_final_inc_igv = $dg->PRECIO_UNIT_FINAL_INC_IGV ?: null;
+                    $GuiaDetalle->guia_det_precio_unit_antes_descuente_inc_igv = $dg->PRECIO_UNIT_ANTES_DESCUENTO_INC_IGV ?: null;
+                    $GuiaDetalle->guia_det_descuento_total_sin_igv = $dg->DESCUENTO_TOTAL_SIN_IGV ?: null;
+                    $GuiaDetalle->guia_det_igv_total = $dg->IGV_TOTAL ?: null;
+                    $GuiaDetalle->guia_det_importe_total_inc_igv = $dg->IMPORTE_TOTAL_INC_IGV ?: null;
+                    $GuiaDetalle->guia_det_moneda = $dg->MONEDA ?: null;
+                    $GuiaDetalle->guia_det_tipo_cambio = $dg->TIPO_CAMBIO ?: null;
+                    $GuiaDetalle->guia_det_peso_gramo = $dg->PESO_GRAMOS ?: null;
+                    $GuiaDetalle->guia_det_volumen = $dg->VOLUMEN_CM3 ?: null;
+                    $GuiaDetalle->guia_det_peso_total_gramo = $dg->PESO_TOTAL_GRAMOS ?: null;
+                    $GuiaDetalle->guia_det_volumen_total = $dg->VOLUMEN_TOTAL_CM3 ?: null;
+
+                    if (!$GuiaDetalle->save()){
+                        DB::rollBack();
+                        session()->flash('error', 'Ocurrió un error, contactar a soporte');
+                        return;
+                    }
+                }
+                DB::commit();
+                session()->flash('success', 'Detalle de la Guía Actualizada Correctamente!.');
+            }
+        }
     }
 
     public function cambio_estado($id_guia, $estado_aprobacion){

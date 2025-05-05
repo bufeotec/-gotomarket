@@ -78,6 +78,35 @@
             </form>
         </x-slot>
     </x-modal-delete>
+    <x-modal-delete wire:ignore.self>
+        <x-slot name="id_modal">modalActualizarDetalle</x-slot>
+        <x-slot name="modalContentDelete">
+            <div class="row">
+                <div class="col-lg-12 col-md-12 col-sm-12">
+                    <h2 class="deleteTitle">Actualizando detalle de la guía</h2>
+                </div>
+                <div class="col-lg-12 col-md-12 col-sm-12">
+                    <div class="loader mt-2" wire:loading wire:target="actualizar_detalle_guia"></div>
+                </div>
+                @if (session()->has('success'))
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        <div class="alert alert-success alert-dismissible show fade mt-2">
+                            {{ session('success') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    </div>
+                @endif
+                @if (session()->has('error'))
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        <div class="alert alert-danger alert-dismissible show fade mt-2">
+                            {{ session('error') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </x-slot>
+    </x-modal-delete>
     {{-- MODAL FIN EDITAR ESTADO --}}
 
     {{--    MODAL GESTIONAR ESTADOS--}}
@@ -312,7 +341,12 @@
                                                                 <i class="fa-solid fa-edit"></i>
                                                             </x-slot>
                                                         </x-btn-accion>
+
                                                     @endif
+                                                    <a data-bs-toggle="modal" data-bs-target="#modalActualizarDetalle" wire:click="actualizar_detalle_guia('{{ $factura->guia_nro_doc }}', '{{ base64_encode($factura->id_guia) }}')" style="cursor:pointer;" class="btn-sm btn-warning text-white">
+                                                        <i class="fa fa-refresh">
+                                                        </i>
+                                                    </a>
                                                 </td>
                                             </tr>
                                         @endforeach
