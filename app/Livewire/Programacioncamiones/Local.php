@@ -126,7 +126,7 @@ class Local extends Component
         $facturas_pre_prog_estado_dos = $this->guia->listar_facturas_pre_programacion_estado_dos();
 
         // Obtener las guías con estado 3
-        $guiasQuery = Guia::where('guia_estado_aprobacion', 3)
+        $guiasQuery = Guia::wherein('guia_estado_aprobacion', [3,11])
             ->where('guia_departamento', 'LIMA');
 
         // Filtrar por nombre del cliente si searchGuia tiene valor
