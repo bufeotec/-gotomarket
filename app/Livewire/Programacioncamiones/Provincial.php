@@ -895,7 +895,7 @@ class Provincial extends Component
                 'id_tipo_servicios' => 'nullable|integer',
                 'id_transportistas' => 'required|integer',
                 'selectedTarifario' => 'required|integer',
-                'selectedFacturas' => 'required|array|min:1',
+                'selectedFacturas' => 'nullable|array',
                 'selectedServTrns' => 'nullable|array',
                 'id_departamento' => 'required|integer',
                 'id_provincia' => 'required|integer',
@@ -913,10 +913,6 @@ class Provincial extends Component
 
                 'id_transportistas.required' => 'Debes seleccionar un transportista.',
                 'id_transportistas.integer' => 'El transportista debe ser un número entero.',
-
-                'selectedFacturas.required' => 'Debes seleccionar al menos un comprobante.',
-                'selectedFacturas.array' => 'Los comprobantes deben ser un arreglo.',
-                'selectedFacturas.min' => 'Debes seleccionar al menos un comprobante.',
 
                 'id_departamento.required' => 'Debes seleccionar un departamento.',
                 'id_departamento.integer' => 'El departamento debe ser un número entero.',
@@ -1075,36 +1071,41 @@ class Provincial extends Component
                 }
             }
             // Actualizar el estado de las guías a 4
-            $idsGuias = array_column($this->selectedFacturas, 'id_guia');
-            DB::table('guias')
-                ->whereIn('id_guia', $idsGuias)
-                ->update(['guia_estado_aprobacion' => 4, 'updated_at' => now('America/Lima')]);
-            // Guardar en historial_guias
-            foreach ($this->selectedFacturas as $factura) {
-                // Obtener el número de documento de la guía
-                $guia = DB::table('guias')
-                    ->where('id_guia', $factura['id_guia'])
-                    ->first();
+            if (!empty($this->selectedFacturas)) {
+                $idsGuias = array_column($this->selectedFacturas, 'id_guia');
+                DB::table('guias')
+                    ->whereIn('id_guia', $idsGuias)
+                    ->update(['guia_estado_aprobacion' => 4, 'updated_at' => now('America/Lima')]);
+                // Guardar en historial_guias
+                foreach ($this->selectedFacturas as $factura) {
+                    // Obtener el número de documento de la guía
+                    $guia = DB::table('guias')
+                        ->where('id_guia', $factura['id_guia'])
+                        ->first();
 
-                if ($guia) {
-                    // Insertar en historial_guias
-                    DB::table('historial_guias')->insert([
-                        'id_users' => Auth::id(),
-                        'id_guia' => $factura['id_guia'],
-                        'guia_nro_doc' => $guia->guia_nro_doc,
-                        'historial_guia_estado_aprobacion' => 4,
-                        'historial_guia_fecha_hora' => Carbon::now('America/Lima'),
-                        'historial_guia_estado' => 1,
-                        'created_at' => Carbon::now('America/Lima'),
-                        'updated_at' => Carbon::now('America/Lima'),
-                    ]);
+                    if ($guia) {
+                        // Insertar en historial_guias
+                        DB::table('historial_guias')->insert([
+                            'id_users' => Auth::id(),
+                            'id_guia' => $factura['id_guia'],
+                            'guia_nro_doc' => $guia->guia_nro_doc,
+                            'historial_guia_estado_aprobacion' => 4,
+                            'historial_guia_fecha_hora' => Carbon::now('America/Lima'),
+                            'historial_guia_estado' => 1,
+                            'created_at' => Carbon::now('America/Lima'),
+                            'updated_at' => Carbon::now('America/Lima'),
+                        ]);
+                    }
                 }
             }
-            // Actualizar el estado de los servicios transporte a 1
-            $idsSerTr = array_column($this->selectedServTrns, 'id_serv_transpt');
-            DB::table('servicios_transportes')
-                ->whereIn('id_serv_transpt', $idsSerTr)
-                ->update(['serv_transpt_estado_aprobacion' => 1]);
+
+            // Actualizar el estado de los servicios transporte a 1 (solo si hay servicios)
+            if (!empty($this->selectedServTrns)) {
+                $idsSerTr = array_column($this->selectedServTrns, 'id_serv_transpt');
+                DB::table('servicios_transportes')
+                    ->whereIn('id_serv_transpt', $idsSerTr)
+                    ->update(['serv_transpt_estado_aprobacion' => 1]);
+            }
 
             DB::commit();
             if ($this->id_programacion_edit && $this->id_despacho_edit){

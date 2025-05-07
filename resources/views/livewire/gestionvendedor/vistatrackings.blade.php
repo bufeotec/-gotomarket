@@ -40,6 +40,11 @@
                                 </div>
 
                                 <div class="col-lg-3">
+                                    <strong style="color: #8c1017">Nombre cliente:</strong>
+                                    <p>{{ $guiainfo->guia_nombre_cliente }}</p>
+                                </div>
+
+                                <div class="col-lg-3">
                                     <strong style="color: #8c1017">Fecha Emisión:</strong>
                                     <p>{{ $guiainfo->guia_fecha_emision ? $me->obtenerNombreFecha($guiainfo->guia_fecha_emision, 'DateTime', 'Date') : '-' }}</p>
                                 </div>
@@ -64,37 +69,37 @@
                                     <p>{{ $guiainfo->guia_glosa }}</p>
                                 </div>
 
-                                <div class="col-lg-2">
+                                <div class="col-lg-3">
                                     <strong style="color: #8c1017">Estado:</strong>
                                     <p>{{ $guiainfo->guia_estado }}</p>
                                 </div>
 
-                                <div class="col-lg-2">
+                                <div class="col-lg-4">
                                     <strong style="color: #8c1017">Importe Total sin IGV:</strong>
                                     <p>{{ $me->formatoDecimal($guiainfo->guia_importe_total_sin_igv ?? 0)}}</p>
                                 </div>
 
-                                <div class="col-lg-2">
+                                <div class="col-lg-4">
                                     <strong style="color: #8c1017">Moneda:</strong>
                                     <p>{{ $guiainfo->guia_moneda }}</p>
                                 </div>
 
-                                <div class="col-lg-3">
+                                <div class="col-lg-4">
                                     <strong style="color: #8c1017">Dirección de Entrega:</strong>
                                     <p>{{ $guiainfo->guia_direc_entrega }}</p>
                                 </div>
 
-                                <div class="col-lg-3">
+                                <div class="col-lg-4">
                                     <strong style="color: #8c1017">Departamento:</strong>
                                     <p>{{ $guiainfo->guia_departamento }}</p>
                                 </div>
 
-                                <div class="col-lg-3">
+                                <div class="col-lg-4">
                                     <strong style="color: #8c1017">Provincia:</strong>
                                     <p>{{ $guiainfo->guia_provincia }}</p>
                                 </div>
 
-                                <div class="col-lg-3">
+                                <div class="col-lg-4">
                                     <strong style="color: #8c1017">Distrito:</strong>
                                     <p>{{ $guiainfo->guia_destrito }}</p>
                                 </div>

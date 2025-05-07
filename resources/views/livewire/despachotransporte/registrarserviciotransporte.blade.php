@@ -241,6 +241,7 @@
                                 <th>Destinatario</th>
                                 <th>Peso</th>
                                 <th>Volumen</th>
+                                <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
                         </x-slot>
@@ -266,6 +267,27 @@
                                         </td>
                                         <td>{{$general->formatoDecimal($lst->serv_transpt_peso)}} <b>(kg)</b></td>
                                         <td>{{$general->formatoDecimal($lst->serv_transpt_volumen)}} <b>(cm³)</b></td>
+                                        <td>
+                                            <span class="font-bold badge
+                                                @if($lst->serv_transpt_estado_aprobacion == 0) bg-label-secondary
+                                                @elseif($lst->serv_transpt_estado_aprobacion == 1) bg-label-primary
+                                                @elseif($lst->serv_transpt_estado_aprobacion == 2) bg-label-info
+                                                @elseif($lst->serv_transpt_estado_aprobacion == 3) bg-label-warning
+                                                @elseif($lst->serv_transpt_estado_aprobacion == 4) bg-label-dark
+                                                @elseif($lst->serv_transpt_estado_aprobacion == 5) bg-label-success
+                                                @elseif($lst->serv_transpt_estado_aprobacion == 6) bg-label-danger
+                                                @endif">
+
+                                                @if($lst->serv_transpt_estado_aprobacion == 0) Por despachar
+                                                @elseif($lst->serv_transpt_estado_aprobacion == 1) Despachado
+                                                @elseif($lst->serv_transpt_estado_aprobacion == 2) Aprobado
+                                                @elseif($lst->serv_transpt_estado_aprobacion == 3) Rechazado
+                                                @elseif($lst->serv_transpt_estado_aprobacion == 4) En camino
+                                                @elseif($lst->serv_transpt_estado_aprobacion == 5) Entregado
+                                                @elseif($lst->serv_transpt_estado_aprobacion == 6) No entregado
+                                                @endif
+                                            </span>
+                                        </td>
                                         <td>
                                             <x-btn-accion class=" text-primary"  wire:click="edit_data('{{ base64_encode($lst->id_serv_transpt) }}')" data-bs-toggle="modal" data-bs-target="#modalRegistrarServicioTransporte">
                                                 <x-slot name="message">
@@ -304,6 +326,21 @@
         @this.set('nombre_archivo', nombreArchivo);
         }
     </script>
+
+    <style>
+        .bg-label-info {
+            background-color: rgba(13, 202, 240, 0.1);
+            color: #0dcaf0;
+        }
+        .bg-label-dark {
+            background-color: rgba(33, 37, 41, 0.1);
+            color: #212529;
+        }
+        .bg-label-secondary {
+            background-color: rgba(108, 117, 125, 0.1);
+            color: #6c757d;
+        }
+    </style>
 
 </div>
 

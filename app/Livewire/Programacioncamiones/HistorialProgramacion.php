@@ -2048,31 +2048,74 @@ class HistorialProgramacion extends Component
             ->select('guias.guia_estado_aprobacion')
             ->get();
 
-        if ($guiasDespacho->isEmpty()) {
-            return 4; // Rechazado si no tiene guías
-        }
+        // Obtener todos los servicios de transporte del despacho con sus estados
+        $serviciosDespacho = DB::table('despacho_ventas')
+            ->join('servicios_transportes', 'despacho_ventas.id_serv_transpt', '=', 'servicios_transportes.id_serv_transpt')
+            ->where('despacho_ventas.id_despacho', $id_despacho)
+            ->whereNotNull('despacho_ventas.id_serv_transpt')
+            ->select('servicios_transportes.serv_transpt_estado_aprobacion')
+            ->get();
 
-        $tieneEntregados = false;
-        $tieneNoEntregados = false;
+        // Lógica para guías
+        $tieneGuias = !$guiasDespacho->isEmpty();
+        $tieneGuiasEntregadas = false;
+        $tieneGuiasNoEntregadas = false;
 
         foreach ($guiasDespacho as $guia) {
             if ($guia->guia_estado_aprobacion == 8) {
-                $tieneEntregados = true;
+                $tieneGuiasEntregadas = true;
             } elseif ($guia->guia_estado_aprobacion == 11) {
-                $tieneNoEntregados = true;
+                $tieneGuiasNoEntregadas = true;
             }
         }
 
-        // Lógica para determinar el estado del despacho
-        if ($tieneEntregados && !$tieneNoEntregados) {
-            return 3; // Culminado (todas las guías entregadas)
-        } elseif ($tieneNoEntregados && !$tieneEntregados) {
-            return 4; // Rechazado (todas las guías no entregadas)
-        } elseif ($tieneEntregados && $tieneNoEntregados) {
-            return 3; // Culminado (al menos una guía entregada)
+        // Lógica para servicios de transporte
+        $tieneServicios = !$serviciosDespacho->isEmpty();
+        $tieneServiciosEntregados = false;
+        $tieneServiciosNoEntregados = false;
+
+        foreach ($serviciosDespacho as $servicio) {
+            if ($servicio->serv_transpt_estado_aprobacion == 5) { // 5 = Entregado
+                $tieneServiciosEntregados = true;
+            } elseif ($servicio->serv_transpt_estado_aprobacion == 6) { // 6 = No entregado
+                $tieneServiciosNoEntregados = true;
+            }
         }
 
-        return 4; // Por defecto rechazado
+        // Caso 1: Solo tiene guías (mantener lógica original)
+        if ($tieneGuias && !$tieneServicios) {
+            if ($tieneGuiasEntregadas && !$tieneGuiasNoEntregadas) {
+                return 3; // Culminado (todas las guías entregadas)
+            } elseif ($tieneGuiasNoEntregadas && !$tieneGuiasEntregadas) {
+                return 4; // Rechazado (todas las guías no entregadas)
+            } elseif ($tieneGuiasEntregadas && $tieneGuiasNoEntregadas) {
+                return 3; // Culminado (al menos una guía entregada)
+            }
+        }
+        // Caso 2: Solo tiene servicios de transporte
+        elseif (!$tieneGuias && $tieneServicios) {
+            if ($tieneServiciosEntregados && !$tieneServiciosNoEntregados) {
+                return 3; // Culminado (todos los servicios entregados)
+            } elseif ($tieneServiciosNoEntregados && !$tieneServiciosEntregados) {
+                return 4; // Rechazado (todos los servicios no entregados)
+            } elseif ($tieneServiciosEntregados && $tieneServiciosNoEntregados) {
+                return 3; // Culminado (al menos un servicio entregado)
+            }
+        }
+        // Caso 3: Tiene ambos (guías y servicios)
+        elseif ($tieneGuias && $tieneServicios) {
+            // Si hay al menos una guía o servicio entregado, el despacho está culminado
+            if ($tieneGuiasEntregadas || $tieneServiciosEntregados) {
+                return 3;
+            }
+            // Solo si todos los items (guías y servicios) están no entregados
+            if (($tieneGuiasNoEntregadas && !$tieneGuiasEntregadas) &&
+                ($tieneServiciosNoEntregados && !$tieneServiciosEntregados)) {
+                return 4;
+            }
+        }
+
+        return 4; // Por defecto rechazado (caso sin items)
     }
 
 //    public function cambiarEstadoComprobante(){

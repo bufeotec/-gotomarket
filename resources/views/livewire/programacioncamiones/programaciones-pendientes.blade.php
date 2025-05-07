@@ -111,7 +111,7 @@
                                                 <th>N°</th>
                                                 <th>Guía</th>
                                                 <th>Nombre cliente</th>
-                                                <th>Almacén de Origen</th>
+{{--                                                <th>Almacén de Origen</th>--}}
                                                 <th>Tipo Documento</th>
                                                 <th>Fecha Emisión</th>
                                                 <th>Tipo de Movimiento</th>
@@ -131,7 +131,7 @@
                                                         <td>{{$conteo}}</td>
                                                         <td>{{ $ta->guia_nro_doc }}</td>
                                                         <td>{{ $ta->guia_nombre_cliente }}</td>
-                                                        <td>{{ $ta->guia_almacen_origen }}</td>
+{{--                                                        <td>{{ $ta->guia_almacen_origen }}</td>--}}
                                                         <td>{{ $ta->guia_tipo_doc }}</td>
                                                         <td>{{ $ta->guia_fecha_emision ? $general->obtenerNombreFecha($ta->guia_fecha_emision, 'DateTime', 'Date') : '-' }}</td>
                                                         <td>{{ $ta->guia_tipo_movimiento }}</td>
