@@ -544,6 +544,7 @@ class HistorialProgramacion extends Component
                     ->join('tipo_servicios as ts', 'ts.id_tipo_servicios', '=', 'd.id_tipo_servicios')
                     ->leftJoin('departamentos as dep', 'dep.id_departamento', '=', 'd.id_departamento')
                     ->where('d.id_programacion', '=', $rehs->id_programacion)
+                    ->where('d.despacho_estado_aprobacion', '!=', 4)
                     ->select('d.*', 't.*', 'ts.*', 'dep.departamento_nombre')
                     ->get();
 
@@ -557,6 +558,7 @@ class HistorialProgramacion extends Component
                     ->join('tipo_servicios as ts', 'ts.id_tipo_servicios', '=', 'd.id_tipo_servicios')
                     ->leftJoin('departamentos as dep', 'dep.id_departamento', '=', 'd.id_departamento')
                     ->where('d.id_programacion', '=', $rehs->id_programacion)
+                    ->where('d.despacho_estado_aprobacion', '!=', 4)
                     ->select('d.*', 't.*', 'ts.*', 'dep.departamento_nombre')
                     ->get();
 
@@ -576,6 +578,8 @@ class HistorialProgramacion extends Component
                                 ->join('despachos as d', 'd.id_despacho', '=', 'dv.id_despacho')
                                 ->where('d.id_despacho', '=', $des->id_despacho)
                                 ->where('d.id_programacion', '=', $rehs->id_programacion)
+                                ->where('d.despacho_estado_aprobacion', '!=', 4)
+                                ->where('dv.id_serv_transpt', '=', null)
                                 ->whereNotExists(function ($query) use ($rehs) {
                                     $query->select(DB::raw(1))
                                         ->from('despacho_ventas as dv_provincial')
@@ -1117,6 +1121,8 @@ class HistorialProgramacion extends Component
                                                             }
                                                         }
 
+                                                        $fac_pro = '';
+
                                                         // Obtener factura del proveedor
                                                         $fac_proveedor = DB::table('liquidaciones')
                                                             ->where('id_transportistas', '=', $des->id_transportistas)
@@ -1145,13 +1151,15 @@ class HistorialProgramacion extends Component
 
                                                 $rowO_W = $row; // Mantiene una fila separada para O:W
                                                 $totalGeneralLocal = ($costoTarifa + $costoMano + $costoOtros);
+                                                // Determinar si mostrar PEND o el monto
+                                                $valorCeldaP = $this->verificarAprobacion($informacionliquidacion->id_despacho) ? $fac_pro : 'PEND';
 
                                                 // Celdas afectadas entre O y W
                                                 $sheet1->setCellValue('L' . $rowO_W, $this->general->formatoDecimal($costoTarifa));
                                                 $sheet1->setCellValue('M' . $rowO_W, $this->general->formatoDecimal($costoOtros));
                                                 $sheet1->setCellValue('N' . $rowO_W, $this->general->formatoDecimal($costoMano));
                                                 $sheet1->setCellValue('O' . $rowO_W, $des->transportista_nom_comercial);
-                                                $sheet1->setCellValue('P' . $rowO_W, $fac_pro);
+                                                $sheet1->setCellValue('P' . $row, $valorCeldaP);
                                                 $sheet1->setCellValue('Q' . $rowO_W, $this->general->formatoDecimal($totalGeneralLocal));
                                                 $sheet1->setCellValue('R' . $rowO_W, "");
                                                 $sheet1->setCellValue('S' . $rowO_W, "");
@@ -1169,18 +1177,13 @@ class HistorialProgramacion extends Component
                                                     $vehiT = $vehiculo->tipo_vehiculo_concepto . ': ' . $vehiculo->vehiculo_capacidad_peso . 'kg - ' . $vehiculo->vehiculo_placa;
                                                 }
 
-                                                $aprPen = "";
-                                                if (!$this->verificarAprobacion($informacionliquidacion->id_despacho)) {
-                                                    $aprPen = 'PEND';
-                                                }
-
                                                 // Segunda fila solo en O-W
                                                 $sheet1->setCellValue('K' . $rowO_W, "");
                                                 $sheet1->setCellValue('L' . $rowO_W, "");
                                                 $sheet1->setCellValue('M' . $rowO_W, "");
                                                 $sheet1->setCellValue('N' . $rowO_W, "");
                                                 $sheet1->setCellValue('O' . $rowO_W, $vehiT);
-                                                $sheet1->setCellValue('P' . $rowO_W, $aprPen);
+                                                $sheet1->setCellValue('P' . $rowO_W, "");
                                                 $sheet1->setCellValue('Q' . $rowO_W, "");
                                                 $sheet1->setCellValue('R' . $rowO_W, "");
                                             }
@@ -1509,8 +1512,6 @@ class HistorialProgramacion extends Component
                                         }
                                     }
                                     /*--------------------------------------------------------------------------------------- */
-
-
                                     $cellRange = 'A'.$row.':Y'.$row;
                                     $rowStyle = $sheet1->getStyle($cellRange);
                                     $rowStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
@@ -1597,9 +1598,9 @@ class HistorialProgramacion extends Component
 
                                 /* ----------------------------------------------- */
 
-                                $cellRange = 'A'.$row.':N'.$row;
-                                $sheet1->mergeCells($cellRange);
-                                $row++;
+//                                $cellRange = 'A'.$row.':N'.$row;
+//                                $sheet1->mergeCells($cellRange);
+//                                $row++;
                             }
                         }
                     }
