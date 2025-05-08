@@ -579,7 +579,6 @@ class HistorialProgramacion extends Component
                                 ->where('d.id_despacho', '=', $des->id_despacho)
                                 ->where('d.id_programacion', '=', $rehs->id_programacion)
                                 ->where('d.despacho_estado_aprobacion', '!=', 4)
-                                ->where('dv.id_serv_transpt', '=', null)
                                 ->whereNotExists(function ($query) use ($rehs) {
                                     $query->select(DB::raw(1))
                                         ->from('despacho_ventas as dv_provincial')
