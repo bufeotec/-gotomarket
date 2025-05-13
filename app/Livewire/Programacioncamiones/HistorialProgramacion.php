@@ -1038,7 +1038,7 @@ class HistorialProgramacion extends Component
                                     $sheet1->setCellValue('A'.$row, $comproba->guia_nro_doc);
                                     $sheet1->setCellValue('B'.$row, date('d/m/Y', strtotime($comproba->guia_fecha_emision)));
                                     $sheet1->setCellValue('C'.$row, $comproba->guia_nombre_cliente);
-                                    $sheet1->setCellValue('D'.$row, $comproba->guia_nro_doc);
+                                    $sheet1->setCellValue('D'.$row, $comproba->guia_nro_doc_ref ?? '-');
 
                                     // Condición para el importe (celda E)
                                     if ($comproba->guia_estado_aprobacion == 11) {
