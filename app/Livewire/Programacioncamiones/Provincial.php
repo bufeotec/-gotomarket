@@ -130,7 +130,8 @@ class Provincial extends Component
 
         // Obtener las guías con estado 3
         $guiasQuery = Guia::wherein('guia_estado_aprobacion', [3,11])
-            ->where('guia_departamento','!=', 'LIMA');
+            ->where('guia_departamento','!=', 'LIMA')
+            ->where('guia_departamento','!=', 'CALLAO');
 
         // Filtrar por nombre del cliente si searchGuia tiene valor
         if (!empty($this->searchGuia)) {
