@@ -1597,9 +1597,9 @@ class HistorialProgramacion extends Component
 
                                 /* ----------------------------------------------- */
 
-//                                $cellRange = 'A'.$row.':N'.$row;
+                                $cellRange = 'A'.$row.':Y'.$row;
 //                                $sheet1->mergeCells($cellRange);
-//                                $row++;
+                                $row++;
                             }
                         }
                     }
