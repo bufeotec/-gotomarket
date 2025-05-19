@@ -1747,7 +1747,7 @@ class HistorialProgramacion extends Component
                                         'id_guia' => $despachoVenta->id_guia,
                                         'guia_nro_doc' => $guia->guia_nro_doc,
                                         'historial_guia_estado_aprobacion' => 7, // Estado de aprobación
-                                        'historial_guia_fecha_hora' => Carbon::now('America/Lima'), // Fecha y hora actual de Perú
+                                        'historial_guia_fecha_hora' => Carbon::now('America/Lima'),
                                         'historial_guia_estado' => 1, // Estado por defecto
                                         'created_at' => Carbon::now('America/Lima'),
                                         'updated_at' => Carbon::now('America/Lima'),

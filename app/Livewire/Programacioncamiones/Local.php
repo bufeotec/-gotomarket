@@ -827,7 +827,7 @@ class Local extends Component
                             'id_guia' => $factura['id_guia'],
                             'guia_nro_doc' => $guia->guia_nro_doc,
                             'historial_guia_estado_aprobacion' => 4,
-                            'historial_guia_fecha_hora' => Carbon::now('America/Lima'),
+                            'historial_guia_fecha_hora' => $programacion->programacion_fecha,
                             'historial_guia_estado' => 1,
                             'created_at' => Carbon::now('America/Lima'),
                             'updated_at' => Carbon::now('America/Lima'),
@@ -884,6 +884,7 @@ class Local extends Component
         $this->selectedVehiculo = "";
         $this->pesoTotal = 0;
         $this->volumenTotal = 0;
+        $this->importeTotalVenta = 0;
         $this->selectedFacturas = [];
         $this->selectedServTrns = [];
         $this->detalle_vehiculo = [];

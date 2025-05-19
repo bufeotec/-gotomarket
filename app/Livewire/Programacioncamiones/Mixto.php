@@ -768,18 +768,18 @@ class Mixto extends Component
             return;
         }
         $codiCli = $factura['guia_ruc_cliente'];
-        $nombCli = $factura['guia_nombre_cliente'];
-        $DEPARTAMENTO = $factura['guia_departamento'];
-        $PROVINCIA = $factura['guia_provincia'];
-        $DISTRITO = $factura['guia_destrito'];
+//        $nombCli = $factura['guia_nombre_cliente'];
+//        $DEPARTAMENTO = $factura['guia_departamento'];
+//        $PROVINCIA = $factura['guia_provincia'];
+//        $DISTRITO = $factura['guia_destrito'];
         $direccionLlegada = $factura['guia_direc_entrega'];
 
-        $validarExisteCliente =  collect($this->clientes_provinciales)->first(function ($cliente) use ($codiCli,$nombCli,$DEPARTAMENTO,$PROVINCIA,$DISTRITO,$direccionLlegada) {
+        $validarExisteCliente =  collect($this->clientes_provinciales)->first(function ($cliente) use ($codiCli,$direccionLlegada) {
             return $cliente['codigoCliente'] === $codiCli
-                && $cliente['nombreCliente'] === $nombCli
-                && $cliente['ubiDepar'] == $DEPARTAMENTO
-                && $cliente['ubiPro'] == $PROVINCIA
-                && $cliente['ubiDis'] == $DISTRITO
+//                && $cliente['nombreCliente'] === $nombCli
+//                && $cliente['ubiDepar'] == $DEPARTAMENTO
+//                && $cliente['ubiPro'] == $PROVINCIA
+//                && $cliente['ubiDis'] == $DISTRITO
                 && $cliente['ubiDirc'] == $direccionLlegada;
         });
         if ($validarExisteCliente){ // si existe el cliente
@@ -793,7 +793,7 @@ class Mixto extends Component
             }
             // Agregar el comprobante al cliente existente
             foreach ($this->clientes_provinciales as &$cliente) {
-                if ($cliente['codigoCliente'] == $codiCli && $cliente['nombreCliente'] == $nombCli && $cliente['ubiDepar'] == $DEPARTAMENTO && $cliente['ubiPro'] == $PROVINCIA && $cliente['ubiDis'] == $DISTRITO && $cliente['ubiDirc'] == $direccionLlegada) {
+                if ($cliente['codigoCliente'] == $codiCli &&  $cliente['ubiDirc'] == $direccionLlegada) {
                     $cliente['comprobantes'][] = [
                         'id_guia' => $factura['id_guia'],
                         'peso_total' => $factura['peso_total'],
@@ -829,9 +829,9 @@ class Mixto extends Component
                 'provincia' =>  null,
                 'distrito' =>  null,
                 'listo' =>  null,
-                'ubiDepar' =>  $DEPARTAMENTO,
-                'ubiPro' =>  $PROVINCIA,
-                'ubiDis' =>  $DISTRITO,
+                'ubiDepar' =>  $factura['guia_departamento'],
+                'ubiPro' =>  $factura['guia_provincia'],
+                'ubiDis' =>  $factura['guia_destrito'],
                 'ubiDirc' =>  $direccionLlegada,
                 'comprobantes' => [
                     [
@@ -1207,7 +1207,7 @@ class Mixto extends Component
                         'id_guia' => $factura['id_guia'],
                         'guia_nro_doc' => $guia->guia_nro_doc,
                         'historial_guia_estado_aprobacion' => 4,
-                        'historial_guia_fecha_hora' => Carbon::now('America/Lima'),
+                        'historial_guia_fecha_hora' => $programacion->programacion_fecha,
                         'historial_guia_estado' => 1,
                         'created_at' => Carbon::now('America/Lima'),
                         'updated_at' => Carbon::now('America/Lima'),

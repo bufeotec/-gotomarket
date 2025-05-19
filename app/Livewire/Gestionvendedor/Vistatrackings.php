@@ -169,7 +169,7 @@ class Vistatrackings extends Component
             $fechaHora = $this->general->obtenerNombreFecha($registro->historial_guia_fecha_hora, 'DateTime', 'Date');
             $estado = $registro->historial_guia_estado_aprobacion;
 
-            if ($estado == 1) {
+            if ($estado == 5) {
                 $this->mensajeEtapa1 = $fechaHora . '<br>' . 'Guía en créditos.';
                 $this->etapaActual = 1;
             }
