@@ -1916,6 +1916,22 @@ class HistorialProgramacion extends Component
                 return;
             }
 
+            // Validación para programación mixta
+            if ($despachoActual->id_tipo_servicios == 2) { // Si es provincial
+                // Buscar despachos locales de la misma programación
+                $despachosLocales = DB::table('despachos')
+                    ->where('id_programacion', $despachoActual->id_programacion)
+                    ->where('id_tipo_servicios', 1) // Local
+                    ->where('despacho_estado_aprobacion', '!=', 3) // No culminado
+                    ->get();
+
+                if ($despachosLocales->isNotEmpty()) {
+                    DB::rollBack();
+                    session()->flash('errorComprobante', 'Complete primero el proceso en el despacho local antes de continuar con el provincial.');
+                    return;
+                }
+            }
+
             // 1. Actualizar estados de guías (comprobantes) y recolectar guías afectadas
             $guiasActualizadas = [];
             foreach ($this->estadoComprobante as $key => $estado) {
@@ -1966,6 +1982,19 @@ class HistorialProgramacion extends Component
                         'created_at' => Carbon::now('America/Lima'),
                         'updated_at' => Carbon::now('America/Lima'),
                     ]);
+
+                    // Nuevo registro en historial_estados_guias
+//                    DB::table('historial_estados_guias')->insert([
+//                        'id_users' => Auth::id(),
+//                        'id_guia' => $despachoVenta->id_guia,
+//                        'id_despacho' => $id_despacho,
+//                        'id_tipo_servicios' => $despachoActual->id_tipo_servicios,
+//                        'heg_estado_guia' => $es,
+//                        'heg_fecha_hora' => Carbon::now('America/Lima'),
+//                        'heg_microtime' => microtime(true),
+//                        'created_at' => Carbon::now('America/Lima'),
+//                        'updated_at' => Carbon::now('America/Lima'),
+//                    ]);
                 }
             }
 
@@ -2007,25 +2036,45 @@ class HistorialProgramacion extends Component
             // 4. Actualizar despachos relacionados (provinciales) para las guías afectadas
             if (!empty($guiasActualizadas)) {
                 foreach ($guiasActualizadas as $id_guia => $estadoGuia) {
-                    // Buscar todos los despachos que contengan esta guía (excepto el actual)
-                    $despachosRelacionados = DB::table('despacho_ventas')
-                        ->join('despachos', 'despacho_ventas.id_despacho', '=', 'despachos.id_despacho')
-                        ->where('despacho_ventas.id_guia', $id_guia)
-                        ->where('despacho_ventas.id_despacho', '!=', $id_despacho)
-                        ->where('despachos.despacho_estado_aprobacion', '!=', 2)
-                        ->where('despachos.despacho_estado_aprobacion', '!=', 3)
-                        ->where('despachos.despacho_estado_aprobacion', '!=', 4)
-                        ->select('despachos.id_despacho')
-                        ->distinct()
+                    // 1. Buscar todos los despachos provinciales relacionados
+                    $despachosProvinciales = DB::table('despachos')
+                        ->where('id_programacion', $despachoActual->id_programacion)
+                        ->where('id_tipo_servicios', 2) // Solo provinciales
+                        ->where('id_despacho', '!=', $id_despacho) // Excluir el actual
+                        ->where(function($query) {
+                            $query->where('despacho_estado_aprobacion', '!=', 3) // No culminado
+                            ->orWhereNull('despacho_estado_aprobacion');
+                        })
                         ->get();
 
-                    foreach ($despachosRelacionados as $despachoRel) {
-                        // Determinar el estado del despacho relacionado
-                        $estadoDespachoRel = $this->determinarEstadoDespacho($despachoRel->id_despacho);
+                    foreach ($despachosProvinciales as $despachoProv) {
+                        // 2. Buscar TODAS las guías de este despacho provincial
+                        $guiasDespachoProv = DB::table('despacho_ventas')
+                            ->where('id_despacho', $despachoProv->id_despacho)
+                            ->join('guias', 'despacho_ventas.id_guia', '=', 'guias.id_guia')
+                            ->select('guias.id_guia', 'guias.guia_estado_aprobacion')
+                            ->get();
 
+                        // 3. Registrar CADA guía del despacho provincial en el historial
+//                        foreach ($guiasDespachoProv as $guiaProv) {
+//                            DB::table('historial_estados_guias')->insert([
+//                                'id_users' => Auth::id(),
+//                                'id_guia' => $guiaProv->id_guia,
+//                                'id_despacho' => $despachoProv->id_despacho,
+//                                'id_tipo_servicios' => 2, // Provincial
+//                                'heg_estado_guia' => $guiaProv->guia_estado_aprobacion,
+//                                'heg_fecha_hora' => Carbon::now('America/Lima'),
+//                                'heg_microtime' => microtime(true),
+//                                'created_at' => Carbon::now('America/Lima'),
+//                                'updated_at' => Carbon::now('America/Lima'),
+//                            ]);
+//                        }
+
+                        // 4. Actualizar estado del despacho provincial
+                        $estadoDespachoProv = $this->determinarEstadoDespacho($despachoProv->id_despacho);
                         DB::table('despachos')
-                            ->where('id_despacho', $despachoRel->id_despacho)
-                            ->update(['despacho_estado_aprobacion' => $estadoDespachoRel]);
+                            ->where('id_despacho', $despachoProv->id_despacho)
+                            ->update(['despacho_estado_aprobacion' => $estadoDespachoProv]);
                     }
                 }
             }
@@ -2042,18 +2091,18 @@ class HistorialProgramacion extends Component
 
     public function determinarEstadoDespacho($id_despacho) {
         // Obtener todas las guías del despacho con sus estados
-        $guiasDespacho = DB::table('despacho_ventas')
-            ->join('guias', 'despacho_ventas.id_guia', '=', 'guias.id_guia')
-            ->where('despacho_ventas.id_despacho', $id_despacho)
-            ->select('guias.guia_estado_aprobacion')
+        $guiasDespacho = DB::table('despacho_ventas as dv')
+            ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
+            ->where('dv.id_despacho', $id_despacho)
+            ->select('g.guia_estado_aprobacion')
             ->get();
 
         // Obtener todos los servicios de transporte del despacho con sus estados
-        $serviciosDespacho = DB::table('despacho_ventas')
-            ->join('servicios_transportes', 'despacho_ventas.id_serv_transpt', '=', 'servicios_transportes.id_serv_transpt')
-            ->where('despacho_ventas.id_despacho', $id_despacho)
-            ->whereNotNull('despacho_ventas.id_serv_transpt')
-            ->select('servicios_transportes.serv_transpt_estado_aprobacion')
+        $serviciosDespacho = DB::table('despacho_ventas as dv')
+            ->join('servicios_transportes as st', 'dv.id_serv_transpt', '=', 'st.id_serv_transpt')
+            ->where('dv.id_despacho', $id_despacho)
+            ->whereNotNull('dv.id_serv_transpt')
+            ->select('st.serv_transpt_estado_aprobacion')
             ->get();
 
         // Lógica para guías
