@@ -376,38 +376,45 @@
 
                                         <x-slot name="tbody">
                                             @if (!empty($facturasRelacionadas))
-                                                @foreach ($facturasRelacionadas as $fr)
-                                                    <tr>
-                                                        <td>
-                                                            {{ $fr->guia_nro_doc }}
-                                                            <x-btn-accion class="btn text-primary" wire:click.prevent="modal_guia_info('{{ $fr->id_guia }}')" data-bs-toggle="modal" data-bs-target="#modalInformacionGuia">
-                                                                <x-slot name="message">
-                                                                    <i class="fas fa-eye"></i>
-                                                                </x-slot>
-                                                            </x-btn-accion>
+                                                @foreach ($facturasRelacionadas as $grupoCliente)
+{{--                                                    <tr class="table-primary">--}}
+{{--                                                        <td colspan="4">--}}
+{{--                                                            <strong>Cliente: {{ $grupoCliente['nombre_cliente'] }}</strong>--}}
+{{--                                                        </td>--}}
+{{--                                                    </tr>--}}
+                                                    @foreach ($grupoCliente['guias'] as $guia)
+                                                        <tr>
+                                                            <td>
+                                                                {{ $guia->guia_nro_doc }}
+                                                                <x-btn-accion class="btn text-primary" wire:click.prevent="modal_guia_info('{{ $guia->id_guia }}')" data-bs-toggle="modal" data-bs-target="#modalInformacionGuia">
+                                                                    <x-slot name="message">
+                                                                        <i class="fas fa-eye"></i>
+                                                                    </x-slot>
+                                                                </x-btn-accion>
 
-                                                            <x-btn-accion class="btn text-success"
-                                                                          wire:click="generar_excel_guia_factura('{{ $fr->id_guia }}')"
-                                                                          wire:loading.attr="disabled">
-                                                                <x-slot name="message">
-                                                                    <i class="fa-solid fa-file-excel"></i>
-                                                                </x-slot>
-                                                            </x-btn-accion>
-                                                        </td>
-                                                        <td>
-                                                            {{ $fr->guia_nro_doc_ref }}
-                                                            <x-btn-accion class="btn text-primary" wire:click.prevent="listar_detalle_guia('{{ $fr->id_guia }}')" data-bs-toggle="modal" data-bs-target="#modalDetalleGuia">
-                                                                <x-slot name="message">
-                                                                    <i class="fas fa-eye"></i>
-                                                                </x-slot>
-                                                            </x-btn-accion>
-                                                        </td>
-                                                        <td>S/ {{ $me->formatoDecimal($fr->guia_importe_total_sin_igv) }}</td>
-                                                        <td>
-                                                            {{ $me->formatoDecimal($fr->peso_total_kilogramos ?? 0) }} kg /<br>
-                                                            {{ $me->formatoDecimal($fr->volumen_total ?? 0) }} cm³
-                                                        </td>
-                                                    </tr>
+                                                                <x-btn-accion class="btn text-success"
+                                                                              wire:click="generar_excel_guia_factura('{{ $guia->id_guia }}')"
+                                                                              wire:loading.attr="disabled">
+                                                                    <x-slot name="message">
+                                                                        <i class="fa-solid fa-file-excel"></i>
+                                                                    </x-slot>
+                                                                </x-btn-accion>
+                                                            </td>
+                                                            <td>
+                                                                {{ $guia->guia_nro_doc_ref }}
+                                                                <x-btn-accion class="btn text-primary" wire:click.prevent="listar_detalle_guia('{{ $guia->id_guia }}')" data-bs-toggle="modal" data-bs-target="#modalDetalleGuia">
+                                                                    <x-slot name="message">
+                                                                        <i class="fas fa-eye"></i>
+                                                                    </x-slot>
+                                                                </x-btn-accion>
+                                                            </td>
+                                                            <td>S/ {{ $me->formatoDecimal($guia->guia_importe_total_sin_igv) }}</td>
+                                                            <td>
+                                                                {{ $me->formatoDecimal($guia->peso_total_kilogramos ?? 0) }} kg /<br>
+                                                                {{ $me->formatoDecimal($guia->volumen_total ?? 0) }} cm³
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
                                                 @endforeach
                                             @else
                                                 <tr>

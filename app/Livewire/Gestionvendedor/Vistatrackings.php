@@ -207,40 +207,60 @@ class Vistatrackings extends Component
             $despachoVentaActual = DespachoVenta::where('id_guia', $preProg->id_guia)->first();
 
             if ($despachoVentaActual) {
-                // Obtener todas las guías con el mismo id_despacho
+                // Primero obtener el cliente de la guía actual
+                $guiaActual = DB::table('guias')->where('id_guia', $preProg->id_guia)->first();
+                $nombreClienteActual = $guiaActual->guia_nombre_cliente;
+
+                // Obtener todas las guías con el mismo id_despacho Y del mismo cliente
                 $despachosRelacionados = DB::table('despacho_ventas as dv')
                     ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
                     ->where('dv.id_despacho', $despachoVentaActual->id_despacho)
                     ->where('g.id_guia', '!=', $preProg->id_guia)
-                    ->select('g.*') // Seleccionar todos los campos de guías
+                    ->where('g.guia_nombre_cliente', $nombreClienteActual) // Filtramos solo guías del mismo cliente
+                    ->select('g.*')
                     ->get();
 
-                // Calcular peso y volumen para cada guía relacionada
-                $this->facturasRelacionadas = $despachosRelacionados->map(function($guia) {
-                    // Obtener detalles de la guía
-                    $detallesGuia = DB::table('guias_detalles')
-                        ->where('id_guia', $guia->id_guia)
-                        ->get();
+                if ($despachosRelacionados->isNotEmpty()) {
+                    // Calcular peso y volumen para cada guía y agrupar por nombre de cliente
+                    $this->facturasRelacionadas = $despachosRelacionados->map(function($guia) {
+                        // Obtener detalles de la guía
+                        $detallesGuia = DB::table('guias_detalles')
+                            ->where('id_guia', $guia->id_guia)
+                            ->get();
 
-                    // Calcular el peso y volumen total
-                    $pesoTotalGramos = 0;
-                    $volumenTotal = 0;
+                        // Calcular el peso y volumen total
+                        $pesoTotalGramos = 0;
+                        $volumenTotal = 0;
 
-                    foreach ($detallesGuia as $detalle) {
-                        $pesoTotalGramos += $detalle->guia_det_peso_gramo * $detalle->guia_det_cantidad;
-                        $volumenTotal += $detalle->guia_det_volumen * $detalle->guia_det_cantidad;
-                    }
+                        foreach ($detallesGuia as $detalle) {
+                            $pesoTotalGramos += $detalle->guia_det_peso_gramo * $detalle->guia_det_cantidad;
+                            $volumenTotal += $detalle->guia_det_volumen * $detalle->guia_det_cantidad;
+                        }
 
-                    // Convertir el peso total a kilogramos
-                    $pesoTotalKilogramos = $pesoTotalGramos / 1000;
+                        // Convertir el peso total a kilogramos
+                        $pesoTotalKilogramos = $pesoTotalGramos / 1000;
 
-                    // Agregar los totales calculados al objeto guía
-                    $guia->peso_total_gramos = $pesoTotalGramos;
-                    $guia->peso_total_kilogramos = $pesoTotalKilogramos;
-                    $guia->volumen_total = $volumenTotal;
+                        // Agregar los totales calculados al objeto guía
+                        $guia->peso_total_gramos = $pesoTotalGramos;
+                        $guia->peso_total_kilogramos = $pesoTotalKilogramos;
+                        $guia->volumen_total = $volumenTotal;
 
-                    return $guia;
-                })->toArray();
+                        return $guia;
+                    });
+
+                    // Creamos la estructura que espera la vista
+                    $this->facturasRelacionadas = [
+                        [
+                            'nombre_cliente' => $nombreClienteActual,
+                            'guias' => $despachosRelacionados,
+                            'total_peso_gramos' => $despachosRelacionados->sum('peso_total_gramos'),
+                            'total_peso_kilogramos' => $despachosRelacionados->sum('peso_total_kilogramos'),
+                            'total_volumen' => $despachosRelacionados->sum('volumen_total')
+                        ]
+                    ];
+                } else {
+                    $this->facturasRelacionadas = [];
+                }
             } else {
                 $this->facturasRelacionadas = [];
             }
