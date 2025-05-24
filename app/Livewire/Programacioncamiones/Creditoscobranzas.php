@@ -144,7 +144,7 @@ class Creditoscobranzas extends Component
                         $historial->id_guia = $select;
                         $historial->guia_nro_doc = $facturaPreprogramada->guia_nro_doc;
                         $historial->historial_guia_estado_aprobacion = 5;
-                        $historial->historial_guia_fecha_hora = Carbon::now('America/Lima');
+                        $historial->historial_guia_fecha_hora = $this->fechaHoraManual3 ?: Carbon::now('America/Lima');
                         $historial->historial_guia_estado = 1;
                         $historial->save();
 
@@ -195,7 +195,7 @@ class Creditoscobranzas extends Component
                     $historial->id_guia = $this->id_guia;
                     $historial->guia_nro_doc = $updateDespacho->guia_nro_doc;
                     $historial->historial_guia_estado_aprobacion = 5;
-                    $historial->historial_guia_fecha_hora = Carbon::now('America/Lima');
+                    $historial->historial_guia_fecha_hora = $this->fechaHoraManual3 ?: Carbon::now('America/Lima');
                     $historial->historial_guia_estado = 1;
                     $historial->save();
 
@@ -289,7 +289,7 @@ class Creditoscobranzas extends Component
             }
 
             DB::commit();
-            session()->flash('success', 'Facturas enviadas a estados de facturación exitosamente.');
+            session()->flash('success', 'Guías enviadas a validar recibido por despachos.');
             $this->dispatch('hidemodalFacApro');
             $this->reset(['selectedItems', 'selectAll']); // Limpiar selecciones
         } catch (\Exception $e) {

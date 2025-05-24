@@ -366,7 +366,7 @@ class Facturacion extends Component
 
             $this->validate([
                 'id_guia' => 'required|integer',
-                'guia_estado_aprobacion' => 'required|in:1,2,3,4,7,11,8',
+                'guia_estado_aprobacion' => 'required|in:1,2,3,4,7,12,8',
             ], [
                 'id_guia.required' => 'El identificador es obligatorio.',
                 'id_guia.integer' => 'El identificador debe ser un número entero.',

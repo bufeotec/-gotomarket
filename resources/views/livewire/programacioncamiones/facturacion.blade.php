@@ -65,7 +65,7 @@
                             <option value="3">Por programar</option>
                             <option value="4">Programado</option>
                             <option value="7">En ruta</option>
-                            <option value="11">Anulado</option>
+                            <option value="12">Anulado</option>
                             <option value="8">Entregado</option>
                         </select>
                     </div>
@@ -321,6 +321,9 @@
                                                                 @break
                                                             @case(11)
                                                                 Guía no entregada
+                                                                @break
+                                                            @case(12)
+                                                                Guía anulada
                                                                 @break
                                                                 @default
                                                                 Estado desconocido

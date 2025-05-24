@@ -1168,7 +1168,7 @@ class HistorialProgramacion extends Component
 
                                                 $rowO_W++;
 
-                                                $vehiculo = DB::table('vehiculos  as v')
+                                                $vehiculo = DB::table('vehiculos as v')
                                                     ->join('tipo_vehiculos as tv', 'tv.id_tipo_vehiculo', '=', 'v.id_tipo_vehiculo')
                                                     ->where('v.id_vehiculo', '=', $des->id_vehiculo)->first();
                                                 $vehiT = "";
@@ -1176,25 +1176,80 @@ class HistorialProgramacion extends Component
                                                     $vehiT = $vehiculo->tipo_vehiculo_concepto . ': ' . $vehiculo->vehiculo_capacidad_peso . 'kg - ' . $vehiculo->vehiculo_placa;
                                                 }
 
+                                                $comentario = DB::table('despachos')
+                                                    ->where('id_despacho', '=', $des->id_despacho)->first();
+                                                $comen = "";
+                                                if ($comentario && !empty($comentario->despacho_descripcion_otros)) {
+                                                    $comen = $comentario->despacho_descripcion_otros;
+                                                }
+
+                                                $comentariosLiquidacion = DB::table('liquidacion_detalles')
+                                                    ->where('id_despacho', '=', $des->id_despacho)
+                                                    ->orderBy('id_liquidacion_detalle', 'desc')
+                                                    ->orderBy('id_despacho', 'desc')
+                                                    ->first();
+                                                $comenLi = "";
+                                                if ($comentariosLiquidacion && !empty($comentariosLiquidacion->liquidacion_detalle_comentarios)) {
+                                                    $comenLi = $comentariosLiquidacion->liquidacion_detalle_comentarios;
+                                                }
+
                                                 // Segunda fila solo en O-W
                                                 $sheet1->setCellValue('K' . $rowO_W, "");
                                                 $sheet1->setCellValue('L' . $rowO_W, "");
-                                                $sheet1->setCellValue('M' . $rowO_W, "");
-                                                $sheet1->setCellValue('N' . $rowO_W, "");
                                                 $sheet1->setCellValue('O' . $rowO_W, $vehiT);
-                                                $sheet1->setCellValue('P' . $rowO_W, "");
-                                                $sheet1->setCellValue('Q' . $rowO_W, "");
-                                                $sheet1->setCellValue('R' . $rowO_W, "");
+
+                                                if (!empty($comenLi)) {
+                                                    // Si hay comentario de liquidación
+                                                    $sheet1->setCellValue('M' . $rowO_W, $comen);
+                                                    $sheet1->setCellValue('N' . $rowO_W, "");
+                                                    $sheet1->setCellValue('P' . $rowO_W, $comenLi);
+                                                    $sheet1->setCellValue('Q' . $rowO_W, "");
+                                                    $sheet1->setCellValue('R' . $rowO_W, "");
+
+                                                    // Formato para comentario de despacho (solo si hay contenido)
+                                                    if (!empty($comen)) {
+                                                        $cellRange = 'M'.$rowO_W.':N'.$rowO_W;
+                                                        $sheet1->mergeCells($cellRange);
+                                                        $rowStyle = $sheet1->getStyle($cellRange);
+                                                        $rowStyle->getFont()->setSize(10);
+                                                        $rowStyle->getFont()->setBold(true);
+                                                        $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FABF8F');
+                                                    }
+
+                                                    // Formato para comentario de liquidación
+                                                    $cellRange = 'P'.$rowO_W.':R'.$rowO_W;
+                                                    $sheet1->mergeCells($cellRange);
+                                                    $rowStyle = $sheet1->getStyle($cellRange);
+                                                    $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FABF8F');
+                                                } else {
+                                                    // Si no hay comentario de liquidación
+                                                    if (!empty($comen)) {
+                                                        // Solo mostrar y formatear si hay comentario de despacho
+                                                        $sheet1->setCellValue('M' . $rowO_W, $comen);
+                                                        $sheet1->setCellValue('N' . $rowO_W, "");
+
+                                                        $cellRange = 'M'.$rowO_W.':N'.$rowO_W;
+                                                        $sheet1->mergeCells($cellRange);
+                                                        $rowStyle = $sheet1->getStyle($cellRange);
+                                                        $rowStyle->getFont()->setSize(10);
+                                                        $rowStyle->getFont()->setBold(true);
+                                                        $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FABF8F');
+                                                    } else {
+                                                        // No mostrar nada si no hay comentarios
+                                                        $sheet1->setCellValue('M' . $rowO_W, "");
+                                                        $sheet1->setCellValue('N' . $rowO_W, "");
+                                                    }
+
+                                                    $sheet1->setCellValue('P' . $rowO_W, "");
+                                                    $sheet1->setCellValue('Q' . $rowO_W, "");
+                                                    $sheet1->setCellValue('R' . $rowO_W, "");
+                                                }
                                             }
                                         } else {
                                             $sheet1->setCellValue('O' . $row, '');
                                             $sheet1->setCellValue('P' . $row, '');
                                             $sheet1->setCellValue('Q' . $row, '');
                                             $sheet1->setCellValue('R' . $row, '');
-                                            $sheet1->setCellValue('S' . $row, '');
-                                            $sheet1->setCellValue('T' . $row, '');
-                                            $sheet1->setCellValue('U' . $row, '');
-                                            $sheet1->setCellValue('V' . $row, '');
                                         }
 
                                         /* PROVINCIAL */
@@ -1302,12 +1357,14 @@ class HistorialProgramacion extends Component
                                                         $zonaP = "PROVINCIA 2";
                                                     }
                                                 }
+                                                // Determinar si mostrar PEND o el monto
+                                                $valorCeldaPro = $this->verificarAprobacion($informacionliquidacion->id_despacho) ? $fac_pro : 'PEND';
 
                                                 // Primera fila (datos principales)
                                                 $sheet1->setCellValue('T'.$rowW_X, $des->transportista_nom_comercial ?? '');
                                                 $sheet1->setCellValue('U'.$rowW_X, $destino);
                                                 $sheet1->setCellValue('V'.$rowW_X, $zonaP);
-                                                $sheet1->setCellValue('W'.$rowW_X, $fac_pro);
+                                                $sheet1->setCellValue('W'.$rowW_X, $valorCeldaPro);
                                                 $sheet1->setCellValue('X'.$rowW_X, $this->general->formatoDecimal($totalGeneralLocalProvin));
                                                 $sheet1->setCellValue('Y' . $rowW_X, '');
 
@@ -1320,26 +1377,52 @@ class HistorialProgramacion extends Component
 
                                                 $rowW_X++;
 
-                                                // Verificar aprobación para la segunda fila
-                                                $aprPenM = "";
-                                                if (!$this->verificarAprobacion($informacionliquidacion->id_despacho)) {
-                                                    $aprPenM = 'PEND';
-                                                }
+                                                $comentariosLiquidacion = DB::table('liquidacion_detalles')
+                                                    ->where('id_despacho', '=', $des->id_despacho)
+                                                    ->orderBy('id_liquidacion_detalle', 'desc')
+                                                    ->orderBy('id_despacho', 'desc')
+                                                    ->first();
+                                                $comenLi = $comentariosLiquidacion->liquidacion_detalle_comentarios ?? "";
 
+                                                $comentario = DB::table('despachos')
+                                                    ->where('id_despacho', '=', $des->id_despacho)
+                                                    ->first();
+                                                $comenDesPro = $comentario->despacho_descripcion_otros ?? "";
 
+                                                // Configuración común para todas las celdas
                                                 $sheet1->setCellValue('S' . $rowW_X, "");
                                                 $sheet1->setCellValue('T' . $rowW_X, "");
                                                 $sheet1->setCellValue('U' . $rowW_X, "");
                                                 $sheet1->setCellValue('V' . $rowW_X, "");
-                                                $sheet1->setCellValue('W' . $rowW_X, $aprPenM);
+                                                $sheet1->setCellValue('W' . $rowW_X, "");
                                                 $sheet1->setCellValue('X' . $rowW_X, "");
                                                 $sheet1->setCellValue('Y' . $rowW_X, "");
+
+                                                // Solo procesar comentarios de despacho si existen
+                                                if (!empty($comenDesPro)) {
+                                                    $sheet1->setCellValue('S' . $rowW_X, $comenDesPro);
+                                                    $cellRangeDespacho = 'S'.$rowW_X.':T'.$rowW_X;
+                                                    $sheet1->mergeCells($cellRangeDespacho);
+                                                    $rowStyleDespacho = $sheet1->getStyle($cellRangeDespacho);
+                                                    $rowStyleDespacho->getFont()->setSize(10);
+                                                    $rowStyleDespacho->getFont()->setBold(true);
+                                                    $rowStyleDespacho->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FABF8F');
+                                                }
+
+                                                // Solo procesar comentarios de liquidación si existen
+                                                if (!empty($comenLi)) {
+                                                    $sheet1->setCellValue('W' . $rowW_X, $comenLi);
+                                                    $cellRangeLiquidacion = 'W'.$rowW_X.':Y'.$rowW_X;
+                                                    $sheet1->mergeCells($cellRangeLiquidacion);
+                                                    $rowStyleLiquidacion = $sheet1->getStyle($cellRangeLiquidacion);
+                                                    $rowStyleLiquidacion->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FABF8F');
+                                                }
 
                                                 $cellRange = 'A' . $rowW_X . ':Y' . $rowW_X;
                                                 $rowStyle = $sheet1->getStyle($cellRange);
                                                 $rowStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
                                                 $rowStyle = $sheet1->getStyle($cellRange);
-                                                $rowStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+//                                                $rowStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
                                                 $rowStyle->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
                                             }
                                         }
@@ -1491,6 +1574,8 @@ class HistorialProgramacion extends Component
                                                     $aprPenMX = 'PEND';
                                                 }
 
+                                                $comentariosLiquidacion = DB::table('liquidacion_detalles')->where('id_despacho','=',$des->id_despacho)->orderBy('id_liquidacion_detalle','desc')->orderBy('id_despacho','desc')->first();
+
                                                 $sheet1->setCellValue('S'.$rowW_XX, $osMixtoProgramacion->despacho_numero_correlativo ?? '');
                                                 $sheet1->setCellValue('T'.$rowW_XX, $osMixtoProgramacion->transportista_nom_comercial ?? '');
                                                 $sheet1->setCellValue('U'.$rowW_XX, $destino);
@@ -1507,6 +1592,54 @@ class HistorialProgramacion extends Component
                                                 $rowStyle = $sheet1->getStyle($cellRange);
                                                 $rowStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
                                                 $rowStyle = $sheet1->getStyle($cellRange);
+
+                                                $rowW_XX++;
+
+                                                // Obtener comentarios con sintaxis más limpia
+                                                $comenDesMix = DB::table('despachos')
+                                                    ->where('id_despacho', '=', $osMixtoProgramacion->id_despacho)
+                                                    ->value('despacho_descripcion_otros') ?? "";
+
+                                                $comenLi = DB::table('liquidacion_detalles')
+                                                    ->where('id_despacho', '=', $osMixtoProgramacion->id_despacho)
+                                                    ->orderBy('id_liquidacion_detalle', 'desc')
+                                                    ->orderBy('id_despacho', 'desc')
+                                                    ->value('liquidacion_detalle_comentarios') ?? "";
+
+                                                // Inicializar todas las celdas como vacías
+                                                $sheet1->setCellValue('S' . $rowW_XX, "");
+                                                $sheet1->setCellValue('T' . $rowW_XX, "");
+                                                $sheet1->setCellValue('U' . $rowW_XX, "");
+                                                $sheet1->setCellValue('V' . $rowW_XX, "");
+                                                $sheet1->setCellValue('W' . $rowW_XX, "");
+                                                $sheet1->setCellValue('X' . $rowW_XX, "");
+                                                $sheet1->setCellValue('Y' . $rowW_XX, "");
+
+                                                // Aplicar formato solo si hay contenido
+                                                if (!empty($comenDesMix)) {
+                                                    $sheet1->setCellValue('S' . $rowW_XX, $comenDesMix);
+                                                    $cellRangeDespacho = 'S'.$rowW_XX.':T'.$rowW_XX;
+                                                    $sheet1->mergeCells($cellRangeDespacho);
+
+                                                    $styleDespacho = $sheet1->getStyle($cellRangeDespacho);
+                                                    $styleDespacho->getFont()
+                                                        ->setSize(10)
+                                                        ->setBold(true);
+                                                    $styleDespacho->getFill()
+                                                        ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                                                        ->getStartColor()->setARGB('FABF8F');
+                                                }
+
+                                                if (!empty($comenLi)) {
+                                                    $sheet1->setCellValue('W' . $rowW_XX, $comenLi);
+                                                    $cellRangeLiquidacion = 'W'.$rowW_XX.':Y'.$rowW_XX;
+                                                    $sheet1->mergeCells($cellRangeLiquidacion);
+
+                                                    $styleLiquidacion = $sheet1->getStyle($cellRangeLiquidacion);
+                                                    $styleLiquidacion->getFill()
+                                                        ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                                                        ->getStartColor()->setARGB('FABF8F');
+                                                }
                                             }
                                         }
                                     }
@@ -1537,11 +1670,7 @@ class HistorialProgramacion extends Component
                                     $totalPesoDespachos += $comproba->peso_total_kilos;
 
                                 }
-                                $comentariosLiquidacion = DB::table('liquidacion_detalles')->where('id_despacho','=',$des->id_despacho)->orderBy('id_liquidacion_detalle','desc')->orderBy('id_despacho','desc')->first();
-                                $comenLi = "";
-                                if ($comentariosLiquidacion){
-                                    $comenLi = $comentariosLiquidacion->liquidacion_detalle_comentarios;
-                                }
+
                                 $sheet1->setCellValue('A'.$row, "");
                                 $sheet1->setCellValue('B'.$row, "");
                                 $sheet1->setCellValue('C'.$row, "");
@@ -1550,19 +1679,10 @@ class HistorialProgramacion extends Component
                                 $sheet1->setCellValue('F'.$row, "");
                                 $sheet1->getStyle('E'.$row)->getFont()->setBold(true);
                                 $sheet1->getStyle('E'.$row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
-                                if ($comenLi){
-                                    $sheet1->setCellValue('G'.$row, $comenLi);
-                                    $cellRange = 'G'.$row.':J'.$row;
-                                    $sheet1->mergeCells($cellRange);
-                                    $rowStyle = $sheet1->getStyle($cellRange);
-                                    $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FABF8F'); // Fondo
-                                    //$rowStyle->getFont()->setBold(true); // Hacer negritas
-                                }else{
-                                    $sheet1->setCellValue('G'.$row, "");
-                                    $sheet1->setCellValue('H'.$row, "");
-                                    $sheet1->setCellValue('I'.$row, "");
-                                    $sheet1->setCellValue('J'.$row, $this->general->formatoDecimal($totalPesoDespachos));
-                                }
+                                $sheet1->setCellValue('G'.$row, "");
+                                $sheet1->setCellValue('H'.$row, "");
+                                $sheet1->setCellValue('I'.$row, "");
+                                $sheet1->setCellValue('J'.$row, $this->general->formatoDecimal($totalPesoDespachos));
                                 $sheet1->setCellValue('K'.$row, "");
                                 $sheet1->setCellValue('L'.$row, "");
                                 $sheet1->setCellValue('M'.$row, "");

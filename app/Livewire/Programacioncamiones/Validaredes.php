@@ -124,7 +124,7 @@ class Validaredes extends Component
                         $historial->id_guia = $select;
                         $historial->guia_nro_doc = $factura->guia_nro_doc;
                         $historial->historial_guia_estado_aprobacion = 3;
-                        $historial->historial_guia_fecha_hora = Carbon::now('America/Lima');
+                        $historial->historial_guia_fecha_hora = $this->fmanual ?: Carbon::now('America/Lima');
                         $historial->historial_guia_estado = 1;
                         $historial->save();
                         // Buscar si ya existe un registro en la tabla facturas_mov
@@ -184,7 +184,7 @@ class Validaredes extends Component
                     $historial->id_guia = $this->id_guia;
                     $historial->guia_nro_doc = $factura->guia_nro_doc;
                     $historial->historial_guia_estado_aprobacion = $this->guia_estado_aprobacion;
-                    $historial->historial_guia_fecha_hora = Carbon::now('America/Lima');
+                    $historial->historial_guia_fecha_hora = $this->fmanual ?: Carbon::now('America/Lima');
                     $historial->historial_guia_estado = 1;
                     $historial->save();
                     // Buscar si ya existe un registro en la tabla facturas_mov
