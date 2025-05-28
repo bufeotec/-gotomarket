@@ -189,8 +189,15 @@
                                                                         </select>
                                                                     @else
                                                                         @php
-                                                                            // Priorizar despacho_detalle_estado_entrega pero mantener compatibilidad con guia_estado_aprobacion
-                                                                            $estadoMostrar = isset($ta->despacho_detalle_estado_entrega) ? $ta->despacho_detalle_estado_entrega : $ta->guia_estado_aprobacion;
+                                                                            $estadoMostrar = $ta->guia_estado_aprobacion;
+
+                                                                            if (isset($ta->despacho_detalle_estado_entrega)) {
+                                                                                if ($ta->despacho_detalle_estado_entrega == 0) {
+                                                                                    $estadoMostrar = $ta->guia_estado_aprobacion;
+                                                                                } elseif (in_array($ta->despacho_detalle_estado_entrega, [8, 11])) {
+                                                                                    $estadoMostrar = $ta->despacho_detalle_estado_entrega;
+                                                                                }
+                                                                            }
                                                                         @endphp
 
                                                                         <span class="font-bold badge {{$estadoMostrar == 8 ? 'bg-label-success' : 'bg-label-danger'}}">

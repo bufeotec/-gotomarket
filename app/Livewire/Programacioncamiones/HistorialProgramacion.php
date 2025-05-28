@@ -450,12 +450,20 @@ class HistorialProgramacion extends Component
 
                 foreach ($comprobantes as $comp) {
                     $key = $id_despacho.'_'.$comp->id_despacho_venta;
-                    // Priorizar despacho_detalle_estado_entrega pero mantener compatibilidad
-                    $estado = isset($comp->despacho_detalle_estado_entrega) ? $comp->despacho_detalle_estado_entrega : $comp->guia_estado_aprobacion;
+
+                    $estado = $comp->guia_estado_aprobacion;
+                    if (isset($comp->despacho_detalle_estado_entrega)) {
+                        if ($comp->despacho_detalle_estado_entrega == 0) {
+                            $estado = $comp->guia_estado_aprobacion;
+                        } elseif (in_array($comp->despacho_detalle_estado_entrega, [8, 11])) {
+                            $estado = $comp->despacho_detalle_estado_entrega;
+                        }
+                    }
+
                     $this->estadoComprobante[$key] = in_array($estado, [8, 11, 12]) ? $estado : 8;
                 }
 
-                // Saber el estado de los servicio transporte
+                // Saber el estado de los servicios transporte
                 $servicios = DB::table('despacho_ventas as dv')
                     ->join('servicios_transportes as st', 'st.id_serv_transpt', '=', 'dv.id_serv_transpt')
                     ->where('dv.id_despacho', '=', $id_despacho)
