@@ -188,8 +188,13 @@
                                                                             <option value="11">No entregado</option>
                                                                         </select>
                                                                     @else
-                                                                        <span class="font-bold badge  {{$ta->guia_estado_aprobacion == 8 ? 'bg-label-success' : 'bg-label-danger'}}">
-                                                                            {{$ta->guia_estado_aprobacion == 8 ? 'ENTREGADO ' : 'NO ENTREGADO'}}
+                                                                        @php
+                                                                            // Priorizar despacho_detalle_estado_entrega pero mantener compatibilidad con guia_estado_aprobacion
+                                                                            $estadoMostrar = isset($ta->despacho_detalle_estado_entrega) ? $ta->despacho_detalle_estado_entrega : $ta->guia_estado_aprobacion;
+                                                                        @endphp
+
+                                                                        <span class="font-bold badge {{$estadoMostrar == 8 ? 'bg-label-success' : 'bg-label-danger'}}">
+                                                                            {{$estadoMostrar == 8 ? 'ENTREGADO' : 'NO ENTREGADO'}}
                                                                         </span>
                                                                     @endif
                                                                 </td>

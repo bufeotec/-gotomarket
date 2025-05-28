@@ -439,23 +439,23 @@ class HistorialProgramacion extends Component
                 ->first();
 
             if ($this->listar_detalle_despacho) {
-                // Obtener comprobantes
+                // Obtener comprobantes con ambos estados
                 $comprobantes = DB::table('despacho_ventas as dv')
                     ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
                     ->where('dv.id_despacho', '=', $id_despacho)
+                    ->select('dv.*', 'g.*', 'dv.despacho_detalle_estado_entrega')
                     ->get();
 
                 $this->listar_detalle_despacho->comprobantes = $comprobantes;
 
                 foreach ($comprobantes as $comp) {
-                    // Usar un identificador único que combine id_despacho y id_despacho_venta
                     $key = $id_despacho.'_'.$comp->id_despacho_venta;
-                    $this->estadoComprobante[$key] = in_array($comp->guia_estado_aprobacion, [8, 11, 12])
-                        ? $comp->guia_estado_aprobacion
-                        : 8;
+                    // Priorizar despacho_detalle_estado_entrega pero mantener compatibilidad
+                    $estado = isset($comp->despacho_detalle_estado_entrega) ? $comp->despacho_detalle_estado_entrega : $comp->guia_estado_aprobacion;
+                    $this->estadoComprobante[$key] = in_array($estado, [8, 11, 12]) ? $estado : 8;
                 }
 
-                // Obtener servicios de transporte
+                // Saber el estado de los servicio transporte
                 $servicios = DB::table('despacho_ventas as dv')
                     ->join('servicios_transportes as st', 'st.id_serv_transpt', '=', 'dv.id_serv_transpt')
                     ->where('dv.id_despacho', '=', $id_despacho)
@@ -464,7 +464,6 @@ class HistorialProgramacion extends Component
                 $this->listar_detalle_despacho->servicios_transportes = $servicios;
 
                 foreach ($servicios as $serv) {
-                    // Usar un identificador único que combine id_despacho y id_despacho_venta
                     $key = $id_despacho.'_'.$serv->id_despacho_venta;
                     $this->estadoServicio[$key] = in_array($serv->serv_transpt_estado_aprobacion, [5, 6, 3])
                         ? $serv->serv_transpt_estado_aprobacion
@@ -2036,24 +2035,15 @@ class HistorialProgramacion extends Component
                 return;
             }
 
-            // Validación para programación mixta
-            if ($despachoActual->id_tipo_servicios == 2) { // Si es provincial
-                // Buscar despachos locales de la misma programación
-                $despachosLocales = DB::table('despachos')
-                    ->where('id_programacion', $despachoActual->id_programacion)
-                    ->where('id_tipo_servicios', 1) // Local
-                    ->where('despacho_estado_aprobacion', '!=', 3) // No culminado
-                    ->get();
+            // Variables para determinar el estado final del despacho
+            $tieneGuias = false;
+            $tieneGuiasEntregadas = false;
+            $tieneGuiasNoEntregadas = false;
+            $tieneServicios = false;
+            $tieneServiciosEntregados = false;
+            $tieneServiciosNoEntregados = false;
 
-                if ($despachosLocales->isNotEmpty()) {
-                    DB::rollBack();
-                    session()->flash('errorComprobante', 'Complete primero el proceso en el despacho local antes de continuar con el provincial.');
-                    return;
-                }
-            }
-
-            // 1. Actualizar estados de guías (comprobantes) y recolectar guías afectadas
-            $guiasActualizadas = [];
+            // Actualizar estados en despacho_ventas y evaluar estados
             foreach ($this->estadoComprobante as $key => $estado) {
                 $parts = explode('_', $key);
                 if ($parts[0] != $id_despacho) continue;
@@ -2077,14 +2067,31 @@ class HistorialProgramacion extends Component
                     return;
                 }
 
-                // Actualizar estado en guías
-                DB::table('guias')
-                    ->where('id_guia', $despachoVenta->id_guia)
-                    ->update(['guia_estado_aprobacion' => $es,
-                        'updated_at' => now('America/Lima')]);
+                // Actualizar estado en despacho_ventas
+                DB::table('despacho_ventas')
+                    ->where('id_despacho_venta', $id_despacho_venta)
+                    ->update([
+                        'despacho_detalle_estado_entrega' => $es,
+                        'updated_at' => now('America/Lima')
+                    ]);
 
-                // Guardar información de la guía actualizada
-                $guiasActualizadas[$despachoVenta->id_guia] = $es;
+                // Actualización adicional para la tabla guías
+                if ($es == 11) {
+                    DB::table('guias')
+                        ->where('id_guia', $despachoVenta->id_guia)
+                        ->update([
+                            'guia_estado_aprobacion' => 11,
+                            'updated_at' => now('America/Lima')
+                        ]);
+                }
+
+                // Evaluar estado para determinar estado del despacho
+                $tieneGuias = true;
+                if ($es == 8) {
+                    $tieneGuiasEntregadas = true;
+                } elseif ($es == 11) {
+                    $tieneGuiasNoEntregadas = true;
+                }
 
                 // Registrar en historial_guias
                 $guia = DB::table('guias')
@@ -2102,23 +2109,10 @@ class HistorialProgramacion extends Component
                         'created_at' => Carbon::now('America/Lima'),
                         'updated_at' => Carbon::now('America/Lima'),
                     ]);
-
-                    // Nuevo registro en historial_estados_guias
-//                    DB::table('historial_estados_guias')->insert([
-//                        'id_users' => Auth::id(),
-//                        'id_guia' => $despachoVenta->id_guia,
-//                        'id_despacho' => $id_despacho,
-//                        'id_tipo_servicios' => $despachoActual->id_tipo_servicios,
-//                        'heg_estado_guia' => $es,
-//                        'heg_fecha_hora' => Carbon::now('America/Lima'),
-//                        'heg_microtime' => microtime(true),
-//                        'created_at' => Carbon::now('America/Lima'),
-//                        'updated_at' => Carbon::now('America/Lima'),
-//                    ]);
                 }
             }
 
-            // 2. Actualizar estados de servicios de transporte
+            // Actualizar estados de servicios de transporte y evaluar estados
             foreach ($this->estadoServicio as $key => $estado) {
                 $parts = explode('_', $key);
                 if ($parts[0] != $id_despacho) continue;
@@ -2145,59 +2139,36 @@ class HistorialProgramacion extends Component
                 DB::table('servicios_transportes')
                     ->where('id_serv_transpt', $despachoVenta->id_serv_transpt)
                     ->update(['serv_transpt_estado_aprobacion' => $es]);
-            }
 
-            // 3. Determinar el estado final del despacho actual
-            $estadoDespachoActual = $this->determinarEstadoDespacho($id_despacho);
-            DB::table('despachos')
-                ->where('id_despacho', $id_despacho)
-                ->update(['despacho_estado_aprobacion' => $estadoDespachoActual]);
-
-            // 4. Actualizar despachos relacionados (provinciales) para las guías afectadas
-            if (!empty($guiasActualizadas)) {
-                foreach ($guiasActualizadas as $id_guia => $estadoGuia) {
-                    // 1. Buscar todos los despachos provinciales relacionados
-                    $despachosProvinciales = DB::table('despachos')
-                        ->where('id_programacion', $despachoActual->id_programacion)
-                        ->where('id_tipo_servicios', 2) // Solo provinciales
-                        ->where('id_despacho', '!=', $id_despacho) // Excluir el actual
-                        ->where(function($query) {
-                            $query->where('despacho_estado_aprobacion', '!=', 3) // No culminado
-                            ->orWhereNull('despacho_estado_aprobacion');
-                        })
-                        ->get();
-
-                    foreach ($despachosProvinciales as $despachoProv) {
-                        // 2. Buscar TODAS las guías de este despacho provincial
-                        $guiasDespachoProv = DB::table('despacho_ventas')
-                            ->where('id_despacho', $despachoProv->id_despacho)
-                            ->join('guias', 'despacho_ventas.id_guia', '=', 'guias.id_guia')
-                            ->select('guias.id_guia', 'guias.guia_estado_aprobacion')
-                            ->get();
-
-                        // 3. Registrar CADA guía del despacho provincial en el historial
-//                        foreach ($guiasDespachoProv as $guiaProv) {
-//                            DB::table('historial_estados_guias')->insert([
-//                                'id_users' => Auth::id(),
-//                                'id_guia' => $guiaProv->id_guia,
-//                                'id_despacho' => $despachoProv->id_despacho,
-//                                'id_tipo_servicios' => 2, // Provincial
-//                                'heg_estado_guia' => $guiaProv->guia_estado_aprobacion,
-//                                'heg_fecha_hora' => Carbon::now('America/Lima'),
-//                                'heg_microtime' => microtime(true),
-//                                'created_at' => Carbon::now('America/Lima'),
-//                                'updated_at' => Carbon::now('America/Lima'),
-//                            ]);
-//                        }
-
-                        // 4. Actualizar estado del despacho provincial
-                        $estadoDespachoProv = $this->determinarEstadoDespacho($despachoProv->id_despacho);
-                        DB::table('despachos')
-                            ->where('id_despacho', $despachoProv->id_despacho)
-                            ->update(['despacho_estado_aprobacion' => $estadoDespachoProv]);
-                    }
+                // Evaluar estado para determinar estado del despacho
+                $tieneServicios = true;
+                if ($es == 5) {
+                    $tieneServiciosEntregados = true;
+                } elseif ($es == 6) {
+                    $tieneServiciosNoEntregados = true;
                 }
             }
+
+            // Determinar el estado final del despacho actual
+            $estadoDespacho = 4; // Por defecto rechazado
+
+            // Si hay guías o servicios
+            if ($tieneGuias || $tieneServicios) {
+                // Si hay al menos una guía o servicio entregado, el despacho está culminado
+                if ($tieneGuiasEntregadas || $tieneServiciosEntregados) {
+                    $estadoDespacho = 3; // Culminado
+                }
+                // Si todos los items están no entregados
+                elseif (($tieneGuiasNoEntregadas && !$tieneGuiasEntregadas) ||
+                    ($tieneServiciosNoEntregados && !$tieneServiciosEntregados)) {
+                    $estadoDespacho = 4; // Rechazado
+                }
+            }
+
+            // Actualizar estado del despacho
+            DB::table('despachos')
+                ->where('id_despacho', $id_despacho)
+                ->update(['despacho_estado_aprobacion' => $estadoDespacho]);
 
             DB::commit();
             session()->flash('successComprobante', 'Los estados fueron actualizados correctamente.');
@@ -2207,84 +2178,6 @@ class HistorialProgramacion extends Component
             $this->logs->insertarLog($e);
             session()->flash('errorComprobante', 'Ocurrió un error al cambiar el estado del registro. Por favor, inténtelo nuevamente.');
         }
-    }
-
-    public function determinarEstadoDespacho($id_despacho) {
-        // Obtener todas las guías del despacho con sus estados
-        $guiasDespacho = DB::table('despacho_ventas as dv')
-            ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
-            ->where('dv.id_despacho', $id_despacho)
-            ->select('g.guia_estado_aprobacion')
-            ->get();
-
-        // Obtener todos los servicios de transporte del despacho con sus estados
-        $serviciosDespacho = DB::table('despacho_ventas as dv')
-            ->join('servicios_transportes as st', 'dv.id_serv_transpt', '=', 'st.id_serv_transpt')
-            ->where('dv.id_despacho', $id_despacho)
-            ->whereNotNull('dv.id_serv_transpt')
-            ->select('st.serv_transpt_estado_aprobacion')
-            ->get();
-
-        // Lógica para guías
-        $tieneGuias = !$guiasDespacho->isEmpty();
-        $tieneGuiasEntregadas = false;
-        $tieneGuiasNoEntregadas = false;
-
-        foreach ($guiasDespacho as $guia) {
-            if ($guia->guia_estado_aprobacion == 8) {
-                $tieneGuiasEntregadas = true;
-            } elseif ($guia->guia_estado_aprobacion == 11) {
-                $tieneGuiasNoEntregadas = true;
-            }
-        }
-
-        // Lógica para servicios de transporte
-        $tieneServicios = !$serviciosDespacho->isEmpty();
-        $tieneServiciosEntregados = false;
-        $tieneServiciosNoEntregados = false;
-
-        foreach ($serviciosDespacho as $servicio) {
-            if ($servicio->serv_transpt_estado_aprobacion == 5) { // 5 = Entregado
-                $tieneServiciosEntregados = true;
-            } elseif ($servicio->serv_transpt_estado_aprobacion == 6) { // 6 = No entregado
-                $tieneServiciosNoEntregados = true;
-            }
-        }
-
-        // Caso 1: Solo tiene guías (mantener lógica original)
-        if ($tieneGuias && !$tieneServicios) {
-            if ($tieneGuiasEntregadas && !$tieneGuiasNoEntregadas) {
-                return 3; // Culminado (todas las guías entregadas)
-            } elseif ($tieneGuiasNoEntregadas && !$tieneGuiasEntregadas) {
-                return 4; // Rechazado (todas las guías no entregadas)
-            } elseif ($tieneGuiasEntregadas && $tieneGuiasNoEntregadas) {
-                return 3; // Culminado (al menos una guía entregada)
-            }
-        }
-        // Caso 2: Solo tiene servicios de transporte
-        elseif (!$tieneGuias && $tieneServicios) {
-            if ($tieneServiciosEntregados && !$tieneServiciosNoEntregados) {
-                return 3; // Culminado (todos los servicios entregados)
-            } elseif ($tieneServiciosNoEntregados && !$tieneServiciosEntregados) {
-                return 4; // Rechazado (todos los servicios no entregados)
-            } elseif ($tieneServiciosEntregados && $tieneServiciosNoEntregados) {
-                return 3; // Culminado (al menos un servicio entregado)
-            }
-        }
-        // Caso 3: Tiene ambos (guías y servicios)
-        elseif ($tieneGuias && $tieneServicios) {
-            // Si hay al menos una guía o servicio entregado, el despacho está culminado
-            if ($tieneGuiasEntregadas || $tieneServiciosEntregados) {
-                return 3;
-            }
-            // Solo si todos los items (guías y servicios) están no entregados
-            if (($tieneGuiasNoEntregadas && !$tieneGuiasEntregadas) &&
-                ($tieneServiciosNoEntregados && !$tieneServiciosEntregados)) {
-                return 4;
-            }
-        }
-
-        return 4; // Por defecto rechazado (caso sin items)
     }
 
 //    public function cambiarEstadoComprobante(){
