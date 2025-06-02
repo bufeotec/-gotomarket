@@ -993,7 +993,7 @@ class HistorialProgramacion extends Component
                                 $totalPesoDespachos = 0;
                                 $importeTotalDespachos = 0;
                                 $osAnteriorMixto = null;
-                                foreach ($des->comprobantes  as $indexComprobante => $comproba){
+                                foreach ($des->comprobantes  as $indexComprobante => $comproba) {
                                     // buscar si es mixto o un servicio normal
                                     // Verificar si es mixto
                                     $validarMixto = DB::table('despacho_ventas as dv')
@@ -1034,41 +1034,83 @@ class HistorialProgramacion extends Component
                                         default => '',
                                     };
 
-                                    // Resto del código para mostrar los datos...
-                                    $estado = '';
-                                    if ($comproba->guia_estado_aprobacion == 8) {
+                                    //  Obtener estado de entrega desde despacho_ventas
+                                    $estadoEntrega = DB::table('despacho_ventas')
+                                        ->where('id_guia', $comproba->id_guia)
+                                        ->value('despacho_detalle_estado_entrega');
+
+                                    // Estado de aprobación
+                                    $estadoAprobacion = $comproba->guia_estado_aprobacion;
+
+                                    // -------- CELDA A-G --------
+                                    $sheet1->setCellValue('A' . $row, $comproba->guia_nro_doc);
+                                    $sheet1->setCellValue('B' . $row, date('d/m/Y', strtotime($comproba->guia_fecha_emision)));
+                                    $sheet1->setCellValue('C' . $row, $comproba->guia_nombre_cliente);
+                                    $sheet1->setCellValue('D' . $row, $comproba->guia_nro_doc_ref ?? '-');
+
+                                    // -------- CELDA E (IMPORTE) --------
+                                    $yellowStyle = [
+                                        'fill' => [
+                                            'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                                            'startColor' => ['argb' => 'FFFFFF00'],
+                                        ],
+                                    ];
+
+                                    if ($estadoEntrega == 0) {
+                                        if ($estadoAprobacion == 8) {
+                                            $sheet1->setCellValue('E' . $row, $this->general->formatoDecimal($comproba->guia_importe_total_sin_igv));
+                                        } elseif ($estadoAprobacion == 11) {
+                                            $sheet1->setCellValue('E' . $row, 0);
+                                            $sheet1->getStyle('E' . $row)->applyFromArray($yellowStyle);
+                                        }
+                                    } elseif ($estadoEntrega == 8) {
+                                        $sheet1->setCellValue('E' . $row, $this->general->formatoDecimal($comproba->guia_importe_total_sin_igv));
+                                    } elseif ($estadoEntrega == 11) {
+                                        if ($estadoAprobacion == 11) {
+                                            $sheet1->setCellValue('E' . $row, 0);
+                                            $sheet1->getStyle('E' . $row)->applyFromArray($yellowStyle);
+                                        } else {
+                                            $sheet1->setCellValue('E' . $row, 0);
+                                        }
+                                    }
+
+                                    $sheet1->getStyle('E' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+
+                                    // -------- CELDA F-G --------
+                                    $sheet1->setCellValue('F' . $row, $resPro->programacion_numero_correlativo);
+                                    $sheet1->setCellValue('G' . $row, date('d/m/Y', strtotime($resPro->programacion_fecha)));
+
+                                    // -------- CELDA H (SI / NO) --------
+                                    if ($estadoEntrega == 0) {
+                                        $estado = ($estadoAprobacion == 8) ? 'SI' : (($estadoAprobacion == 11) ? 'NO' : '');
+                                    } elseif ($estadoEntrega == 8) {
                                         $estado = 'SI';
-                                    } elseif ($comproba->guia_estado_aprobacion == 11) {
+                                    } elseif ($estadoEntrega == 11) {
                                         $estado = 'NO';
                                     }
+                                    $sheet1->setCellValue('H' . $row, $estado);
 
-                                    $sheet1->setCellValue('A'.$row, $comproba->guia_nro_doc);
-                                    $sheet1->setCellValue('B'.$row, date('d/m/Y', strtotime($comproba->guia_fecha_emision)));
-                                    $sheet1->setCellValue('C'.$row, $comproba->guia_nombre_cliente);
-                                    $sheet1->setCellValue('D'.$row, $comproba->guia_nro_doc_ref ?? '-');
+                                    // -------- CELDA I-J --------
+                                    $sheet1->setCellValue('I' . $row, $loc);
 
-                                    // Condición para el importe (celda E)
-                                    if ($comproba->guia_estado_aprobacion == 11) {
-                                        $sheet1->setCellValue('E'.$row, 0);
-                                        $sheet1->getStyle('E'.$row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
-                                        $yellowStyle = [
-                                            'fill' => [
-                                                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                                                'startColor' => ['argb' => 'FFFFFF00'],
-                                            ]
-                                        ];
-                                        $sheet1->getStyle('E'.$row.':E'.$row)->applyFromArray($yellowStyle);
-                                    } else {
-                                        $sheet1->setCellValue('E'.$row, $this->general->formatoDecimal(($comproba->guia_importe_total_sin_igv)));
-                                        $sheet1->getStyle('E'.$row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                                    if ($estadoEntrega == 0) {
+                                        if ($estadoAprobacion == 8) {
+                                            $sheet1->setCellValue('J' . $row, $this->general->formatoDecimal($comproba->peso_total_kilos));
+                                        } elseif ($estadoAprobacion == 11) {
+                                            $sheet1->setCellValue('J' . $row, 0);
+                                            $sheet1->getStyle('J' . $row)->applyFromArray($yellowStyle);
+                                        }
+                                    } elseif ($estadoEntrega == 8) {
+                                        $sheet1->setCellValue('J' . $row, $this->general->formatoDecimal($comproba->peso_total_kilos));
+                                    } elseif ($estadoEntrega == 11) {
+                                        if ($estadoAprobacion == 11) {
+                                            $sheet1->setCellValue('J' . $row, 0);
+                                            $sheet1->getStyle('J' . $row)->applyFromArray($yellowStyle);
+                                        } else {
+                                            $sheet1->setCellValue('J' . $row, 0);
+                                        }
                                     }
-
-                                    $sheet1->setCellValue('F'.$row, $resPro->programacion_numero_correlativo);
-                                    $sheet1->setCellValue('G'.$row, date('d/m/Y', strtotime($resPro->programacion_fecha)));
-                                    $sheet1->setCellValue('H'.$row, $estado);
-                                    $sheet1->setCellValue('I'.$row, $loc);
-                                    $sheet1->setCellValue('J'.$row, round($comproba->peso_total_kilos, 2));
-                                    $rowStyle = $sheet1->getStyle($cellRange);
+                                    $sheet1->getStyle('J' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
 
                                     if ($indexComprobante == 0 || $indexComprobante == 1) {
                                         /* LOCAL */
@@ -1215,7 +1257,7 @@ class HistorialProgramacion extends Component
 
                                                     // Formato para comentario de despacho (solo si hay contenido)
                                                     if (!empty($comen)) {
-                                                        $cellRange = 'M'.$rowO_W.':N'.$rowO_W;
+                                                        $cellRange = 'M' . $rowO_W . ':N' . $rowO_W;
                                                         $sheet1->mergeCells($cellRange);
                                                         $rowStyle = $sheet1->getStyle($cellRange);
                                                         $rowStyle->getFont()->setSize(10);
@@ -1224,7 +1266,7 @@ class HistorialProgramacion extends Component
                                                     }
 
                                                     // Formato para comentario de liquidación
-                                                    $cellRange = 'P'.$rowO_W.':R'.$rowO_W;
+                                                    $cellRange = 'P' . $rowO_W . ':R' . $rowO_W;
                                                     $sheet1->mergeCells($cellRange);
                                                     $rowStyle = $sheet1->getStyle($cellRange);
                                                     $rowStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FABF8F');
@@ -1235,7 +1277,7 @@ class HistorialProgramacion extends Component
                                                         $sheet1->setCellValue('M' . $rowO_W, $comen);
                                                         $sheet1->setCellValue('N' . $rowO_W, "");
 
-                                                        $cellRange = 'M'.$rowO_W.':N'.$rowO_W;
+                                                        $cellRange = 'M' . $rowO_W . ':N' . $rowO_W;
                                                         $sheet1->mergeCells($cellRange);
                                                         $rowStyle = $sheet1->getStyle($cellRange);
                                                         $rowStyle->getFont()->setSize(10);
@@ -1266,7 +1308,7 @@ class HistorialProgramacion extends Component
                                                     ->where('id_despacho', '=', $des->id_despacho)
                                                     ->orderBy('id_despacho', 'desc')->first();
 
-                                                $sheet1->setCellValue('S'.$row, $des->despacho_numero_correlativo);
+                                                $sheet1->setCellValue('S' . $row, $des->despacho_numero_correlativo);
 
                                                 $liquidacion_detalle = DB::table('liquidacion_detalles')
                                                     ->where('id_despacho', '=', $des->id_despacho)
@@ -1313,7 +1355,7 @@ class HistorialProgramacion extends Component
                                                             ->first();
 
                                                         if ($fac_proveedor) {
-                                                            $fac_pro = $fac_proveedor->liquidacion_serie. ' - ' . $fac_proveedor->liquidacion_correlativo;
+                                                            $fac_pro = $fac_proveedor->liquidacion_serie . ' - ' . $fac_proveedor->liquidacion_correlativo;
                                                         }
                                                     } else {
                                                         // Liquidación no aprobada - usar valores del despacho (conservando signos)
@@ -1341,14 +1383,14 @@ class HistorialProgramacion extends Component
 
                                                 $destino = "";
                                                 $departamentoNombre = "";
-                                                if (isset($informacionliquidacion->id_departamento) && $informacionliquidacion->id_departamento){
-                                                    $dep = DB::table('departamentos')->where('id_departamento','=',$informacionliquidacion->id_departamento)->first();
+                                                if (isset($informacionliquidacion->id_departamento) && $informacionliquidacion->id_departamento) {
+                                                    $dep = DB::table('departamentos')->where('id_departamento', '=', $informacionliquidacion->id_departamento)->first();
                                                     $departamentoNombre = $dep->departamento_nombre ?? '';
-                                                    $destino.= $departamentoNombre;
+                                                    $destino .= $departamentoNombre;
                                                 }
-                                                if (isset($informacionliquidacion->id_provincia) && $informacionliquidacion->id_provincia){
-                                                    $provi = DB::table('provincias')->where('id_provincia','=',$informacionliquidacion->id_provincia)->first();
-                                                    $destino.= "-".($provi->provincia_nombre ?? '');
+                                                if (isset($informacionliquidacion->id_provincia) && $informacionliquidacion->id_provincia) {
+                                                    $provi = DB::table('provincias')->where('id_provincia', '=', $informacionliquidacion->id_provincia)->first();
+                                                    $destino .= "-" . ($provi->provincia_nombre ?? '');
                                                 }
 
                                                 // Determinar la zona (LOCAL, PROVINCIA 1 o PROVINCIA 2)
@@ -1368,11 +1410,11 @@ class HistorialProgramacion extends Component
                                                 $valorCeldaPro = $this->verificarAprobacion($informacionliquidacion->id_despacho) ? $fac_pro : 'PEND';
 
                                                 // Primera fila (datos principales)
-                                                $sheet1->setCellValue('T'.$rowW_X, $des->transportista_nom_comercial ?? '');
-                                                $sheet1->setCellValue('U'.$rowW_X, $destino);
-                                                $sheet1->setCellValue('V'.$rowW_X, $zonaP);
-                                                $sheet1->setCellValue('W'.$rowW_X, $valorCeldaPro);
-                                                $sheet1->setCellValue('X'.$rowW_X, $this->general->formatoDecimal($totalGeneralLocalProvin));
+                                                $sheet1->setCellValue('T' . $rowW_X, $des->transportista_nom_comercial ?? '');
+                                                $sheet1->setCellValue('U' . $rowW_X, $destino);
+                                                $sheet1->setCellValue('V' . $rowW_X, $zonaP);
+                                                $sheet1->setCellValue('W' . $rowW_X, $valorCeldaPro);
+                                                $sheet1->setCellValue('X' . $rowW_X, $this->general->formatoDecimal($totalGeneralLocalProvin));
                                                 $sheet1->setCellValue('Y' . $rowW_X, '');
 
                                                 // Aplicar bordes a la primera fila
@@ -1408,7 +1450,7 @@ class HistorialProgramacion extends Component
                                                 // Solo procesar comentarios de despacho si existen
                                                 if (!empty($comenDesPro)) {
                                                     $sheet1->setCellValue('S' . $rowW_X, $comenDesPro);
-                                                    $cellRangeDespacho = 'S'.$rowW_X.':T'.$rowW_X;
+                                                    $cellRangeDespacho = 'S' . $rowW_X . ':T' . $rowW_X;
                                                     $sheet1->mergeCells($cellRangeDespacho);
                                                     $rowStyleDespacho = $sheet1->getStyle($cellRangeDespacho);
                                                     $rowStyleDespacho->getFont()->setSize(10);
@@ -1419,7 +1461,7 @@ class HistorialProgramacion extends Component
                                                 // Solo procesar comentarios de liquidación si existen
                                                 if (!empty($comenLi)) {
                                                     $sheet1->setCellValue('W' . $rowW_X, $comenLi);
-                                                    $cellRangeLiquidacion = 'W'.$rowW_X.':Y'.$rowW_X;
+                                                    $cellRangeLiquidacion = 'W' . $rowW_X . ':Y' . $rowW_X;
                                                     $sheet1->mergeCells($cellRangeLiquidacion);
                                                     $rowStyleLiquidacion = $sheet1->getStyle($cellRangeLiquidacion);
                                                     $rowStyleLiquidacion->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FABF8F');
@@ -1440,11 +1482,11 @@ class HistorialProgramacion extends Component
                                         /*--------------------------------------------------------------------------------------- */
                                         /* SI EN CASO LA PROGRAMACIÓN ES MIXTA LLENAR LAS OS DE PROVINCIAL */
                                         $osMixtoProgramacion = DB::table('despachos as d')
-                                            ->join('despacho_ventas as dv','dv.id_despacho','=','d.id_despacho')
-                                            ->join('transportistas as t','t.id_transportistas','=','d.id_transportistas')
-                                            ->where('d.id_programacion','=',$resPro->id_programacion)
-                                            ->where('dv.id_guia','=',$comproba->id_guia)
-                                            ->where('d.id_tipo_servicios','=',2)
+                                            ->join('despacho_ventas as dv', 'dv.id_despacho', '=', 'd.id_despacho')
+                                            ->join('transportistas as t', 't.id_transportistas', '=', 'd.id_transportistas')
+                                            ->where('d.id_programacion', '=', $resPro->id_programacion)
+                                            ->where('dv.id_guia', '=', $comproba->id_guia)
+                                            ->where('d.id_tipo_servicios', '=', 2)
                                             ->first();
 
                                         // Aplicar filtro por estado de liquidación para despachos mixtos
@@ -1458,7 +1500,7 @@ class HistorialProgramacion extends Component
                                         }
 
                                         if ($osMixtoProgramacion && $mostrarDespachoMixto) {
-                                            if(!$osAnteriorMixto) { // SI ESTO ES NULO ES POR QUE AUN NO ESTA CON VALOR DE OS
+                                            if (!$osAnteriorMixto) { // SI ESTO ES NULO ES POR QUE AUN NO ESTA CON VALOR DE OS
                                                 $osAnteriorMixto = $osMixtoProgramacion->despacho_numero_correlativo ?? '';
                                                 $ingreExcelMixto = true;
                                             } else {
@@ -1473,16 +1515,16 @@ class HistorialProgramacion extends Component
                                             if ($ingreExcelMixto) {
                                                 $totalImporteComprobanteDespachoPro = DB::table('despacho_ventas as dv')
                                                     ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
-                                                    ->where('dv.id_despacho','=',$osMixtoProgramacion->id_despacho)
+                                                    ->where('dv.id_despacho', '=', $osMixtoProgramacion->id_despacho)
                                                     ->sum('g.guia_importe_total_sin_igv');
 
                                                 $InformacionDespachoMixto = DB::table('despachos')
-                                                    ->where('id_despacho','=',$osMixtoProgramacion->id_despacho)
+                                                    ->where('id_despacho', '=', $osMixtoProgramacion->id_despacho)
                                                     ->orderBy('id_despacho', 'desc')->first();
 
                                                 // Verificar si existe liquidación para este despacho
                                                 $liquidacion_detalle = DB::table('liquidacion_detalles')
-                                                    ->where('id_despacho','=',$osMixtoProgramacion->id_despacho)
+                                                    ->where('id_despacho', '=', $osMixtoProgramacion->id_despacho)
                                                     ->first();
 
                                                 $fac_pro = "";
@@ -1493,14 +1535,14 @@ class HistorialProgramacion extends Component
                                                 if ($liquidacion_detalle) {
                                                     // Buscar liquidación aprobada
                                                     $liquidacion = DB::table('liquidaciones')
-                                                        ->where('id_liquidacion','=',$liquidacion_detalle->id_liquidacion)
-                                                        ->where('liquidacion_estado_aprobacion',1)
+                                                        ->where('id_liquidacion', '=', $liquidacion_detalle->id_liquidacion)
+                                                        ->where('liquidacion_estado_aprobacion', 1)
                                                         ->first();
 
                                                     if ($liquidacion) {
                                                         // Obtener valores de liquidación (respetando signos)
                                                         $gastos_liquidacion = DB::table('liquidacion_gastos')
-                                                            ->where('id_liquidacion_detalle','=',$liquidacion_detalle->id_liquidacion_detalle)
+                                                            ->where('id_liquidacion_detalle', '=', $liquidacion_detalle->id_liquidacion_detalle)
                                                             ->get();
 
                                                         foreach ($gastos_liquidacion as $gasto) {
@@ -1520,12 +1562,12 @@ class HistorialProgramacion extends Component
 
                                                         // Obtener factura del proveedor
                                                         $fac_proveedor = DB::table('liquidaciones')
-                                                            ->where('id_transportistas','=',$osMixtoProgramacion->id_transportistas)
-                                                            ->where('id_liquidacion','=',$liquidacion_detalle->id_liquidacion)
+                                                            ->where('id_transportistas', '=', $osMixtoProgramacion->id_transportistas)
+                                                            ->where('id_liquidacion', '=', $liquidacion_detalle->id_liquidacion)
                                                             ->first();
 
                                                         if ($fac_proveedor) {
-                                                            $fac_pro = $fac_proveedor->liquidacion_serie.' - '.$fac_proveedor->liquidacion_correlativo;
+                                                            $fac_pro = $fac_proveedor->liquidacion_serie . ' - ' . $fac_proveedor->liquidacion_correlativo;
                                                         }
                                                     }
                                                 }
@@ -1540,26 +1582,26 @@ class HistorialProgramacion extends Component
 
                                                     // Obtener factura del proveedor (versión original)
                                                     $fac_proveedor = DB::table('liquidaciones')
-                                                        ->where('id_transportistas','=',$osMixtoProgramacion->id_transportistas)
+                                                        ->where('id_transportistas', '=', $osMixtoProgramacion->id_transportistas)
                                                         ->first();
                                                     if ($fac_proveedor) {
-                                                        $fac_pro = $fac_proveedor->liquidacion_serie.' - '.$fac_proveedor->liquidacion_correlativo;
+                                                        $fac_pro = $fac_proveedor->liquidacion_serie . ' - ' . $fac_proveedor->liquidacion_correlativo;
                                                     }
                                                 }
 
                                                 $rowW_XX = $row;
-                                                $totalGeneralMixto = ($costoTarifa * $peso) + $costoOtros; // Cálculo que respeta signos
+                                                $totalGeneralMixto = ($costoTarifa * $peso) + $costoOtros;
 
                                                 $destino = "";
                                                 $departamentoNombre = "";
-                                                if ($InformacionDespachoMixto->id_departamento ?? false){
-                                                    $dep = DB::table('departamentos')->where('id_departamento','=',$InformacionDespachoMixto->id_departamento)->first();
+                                                if ($InformacionDespachoMixto->id_departamento ?? false) {
+                                                    $dep = DB::table('departamentos')->where('id_departamento', '=', $InformacionDespachoMixto->id_departamento)->first();
                                                     $departamentoNombre = $dep->departamento_nombre ?? '';
-                                                    $destino.= $departamentoNombre;
+                                                    $destino .= $departamentoNombre;
                                                 }
-                                                if ($InformacionDespachoMixto->id_provincia ?? false){
-                                                    $provi = DB::table('provincias')->where('id_provincia','=',$InformacionDespachoMixto->id_provincia)->first();
-                                                    $destino.= "-".($provi->provincia_nombre ?? '');
+                                                if ($InformacionDespachoMixto->id_provincia ?? false) {
+                                                    $provi = DB::table('provincias')->where('id_provincia', '=', $InformacionDespachoMixto->id_provincia)->first();
+                                                    $destino .= "-" . ($provi->provincia_nombre ?? '');
                                                 }
 
                                                 // Determinar la zona (LOCAL, PROVINCIA 1 o PROVINCIA 2)
@@ -1577,25 +1619,25 @@ class HistorialProgramacion extends Component
                                                 }
 
                                                 $aprPenMX = "";
-                                                if (!$this->verificarAprobacion($osMixtoProgramacion->id_despacho)){
+                                                if (!$this->verificarAprobacion($osMixtoProgramacion->id_despacho)) {
                                                     $aprPenMX = 'PEND';
                                                 }
 
-                                                $comentariosLiquidacion = DB::table('liquidacion_detalles')->where('id_despacho','=',$des->id_despacho)->orderBy('id_liquidacion_detalle','desc')->orderBy('id_despacho','desc')->first();
+                                                $comentariosLiquidacion = DB::table('liquidacion_detalles')->where('id_despacho', '=', $des->id_despacho)->orderBy('id_liquidacion_detalle', 'desc')->orderBy('id_despacho', 'desc')->first();
 
-                                                $sheet1->setCellValue('S'.$rowW_XX, $osMixtoProgramacion->despacho_numero_correlativo ?? '');
-                                                $sheet1->setCellValue('T'.$rowW_XX, $osMixtoProgramacion->transportista_nom_comercial ?? '');
-                                                $sheet1->setCellValue('U'.$rowW_XX, $destino);
-                                                $sheet1->setCellValue('V'.$rowW_XX, $zona);
-                                                $sheet1->setCellValue('W'.$rowW_XX, ($aprPenMX == 'PEND') ? 'PEND' : $fac_pro);
-                                                $sheet1->setCellValue('X'.$rowW_XX, $this->general->formatoDecimal($totalGeneralMixto));
+                                                $sheet1->setCellValue('S' . $rowW_XX, $osMixtoProgramacion->despacho_numero_correlativo ?? '');
+                                                $sheet1->setCellValue('T' . $rowW_XX, $osMixtoProgramacion->transportista_nom_comercial ?? '');
+                                                $sheet1->setCellValue('U' . $rowW_XX, $destino);
+                                                $sheet1->setCellValue('V' . $rowW_XX, $zona);
+                                                $sheet1->setCellValue('W' . $rowW_XX, ($aprPenMX == 'PEND') ? 'PEND' : $fac_pro);
+                                                $sheet1->setCellValue('X' . $rowW_XX, $this->general->formatoDecimal($totalGeneralMixto));
                                                 $poMixto = $totalImporteComprobanteDespachoPro != 0 ? ($totalGeneralMixto / floatval($totalImporteComprobanteDespachoPro)) * 100 : 0;
-                                                $sheet1->setCellValue('Y'.$rowW_XX, $this->general->formatoDecimal($poMixto));
+                                                $sheet1->setCellValue('Y' . $rowW_XX, $this->general->formatoDecimal($poMixto));
 
-                                                $firstRowRange = 'A'.$rowW_XX.':Y'.$rowW_XX;
+                                                $firstRowRange = 'A' . $rowW_XX . ':Y' . $rowW_XX;
                                                 $sheet1->getStyle($firstRowRange)->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
 
-                                                $cellRange = 'A'.$rowW_XX.':Y'.$rowW_XX;
+                                                $cellRange = 'A' . $rowW_XX . ':Y' . $rowW_XX;
                                                 $rowStyle = $sheet1->getStyle($cellRange);
                                                 $rowStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
                                                 $rowStyle = $sheet1->getStyle($cellRange);
@@ -1625,7 +1667,7 @@ class HistorialProgramacion extends Component
                                                 // Aplicar formato solo si hay contenido
                                                 if (!empty($comenDesMix)) {
                                                     $sheet1->setCellValue('S' . $rowW_XX, $comenDesMix);
-                                                    $cellRangeDespacho = 'S'.$rowW_XX.':T'.$rowW_XX;
+                                                    $cellRangeDespacho = 'S' . $rowW_XX . ':T' . $rowW_XX;
                                                     $sheet1->mergeCells($cellRangeDespacho);
 
                                                     $styleDespacho = $sheet1->getStyle($cellRangeDespacho);
@@ -1639,7 +1681,7 @@ class HistorialProgramacion extends Component
 
                                                 if (!empty($comenLi)) {
                                                     $sheet1->setCellValue('W' . $rowW_XX, $comenLi);
-                                                    $cellRangeLiquidacion = 'W'.$rowW_XX.':Y'.$rowW_XX;
+                                                    $cellRangeLiquidacion = 'W' . $rowW_XX . ':Y' . $rowW_XX;
                                                     $sheet1->mergeCells($cellRangeLiquidacion);
 
                                                     $styleLiquidacion = $sheet1->getStyle($cellRangeLiquidacion);
@@ -1651,16 +1693,16 @@ class HistorialProgramacion extends Component
                                         }
                                     }
                                     /*--------------------------------------------------------------------------------------- */
-                                    $cellRange = 'A'.$row.':Y'.$row;
+                                    $cellRange = 'A' . $row . ':Y' . $row;
                                     $rowStyle = $sheet1->getStyle($cellRange);
                                     $rowStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
                                     $rowStyle->getBorders()->getAllBorders()->getColor()->setARGB('000000');
-                                    $cellRange = 'E'.$row.':E'.$row;
+                                    $cellRange = 'E' . $row . ':E' . $row;
                                     $rowStyle = $sheet1->getStyle($cellRange);
 //                        $rowStyle->getFont()->setSize(10);
                                     $rowStyle->getFont()->setBold(false);
 
-                                    $cellRange = 'O'.$row.':AA'.$row;
+                                    $cellRange = 'O' . $row . ':AA' . $row;
                                     $rowStyle = $sheet1->getStyle($cellRange);
 //                        $rowStyle->getFont()->setBold(true);
 //                                    $rowStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
@@ -1668,14 +1710,22 @@ class HistorialProgramacion extends Component
 //                                $sheet1->mergeCells('P'.$row.':Q'.$row);
 
                                     $row++;
+                                    // Obtener valores necesarios
                                     $importe_sin_igv = $comproba->guia_importe_total_sin_igv;
-                                    // Solo suma el importe si el estado NO es 11 (no entregado)
-                                    if ($comproba->guia_estado_aprobacion != 11) {
-                                        $importeTotalDespachos += $importe_sin_igv;
-                                    }
-                                    // Suma el peso independientemente del estado (si es necesario)
-                                    $totalPesoDespachos += $comproba->peso_total_kilos;
+                                    $peso_total_pro = $comproba->peso_total_kilos;
+                                    $estadoEntrega = DB::table('despacho_ventas')
+                                        ->where('id_guia', $comproba->id_guia)
+                                        ->value('despacho_detalle_estado_entrega');
+                                    $estadoAprobacion = $comproba->guia_estado_aprobacion;
 
+                                    // Sumar importe bajo condiciones
+                                    if ($estadoEntrega == 0 && $estadoAprobacion == 8) {
+                                        $importeTotalDespachos += $importe_sin_igv;
+                                        $totalPesoDespachos += $peso_total_pro;
+                                    } elseif ($estadoEntrega == 8) {
+                                        $importeTotalDespachos += $importe_sin_igv;
+                                        $totalPesoDespachos += $peso_total_pro;
+                                    }
                                 }
 
                                 $sheet1->setCellValue('A'.$row, "");
