@@ -227,7 +227,7 @@ class ProgramacionesPendientes extends Component
 
                             if ($guia) {
                                 // Determinar el valor de historial_guia_estado_aprobacion
-                                $historialEstadoAprobacion = ($this->estadoPro == 1) ? 9 : 10;
+                                $historialEstadoAprobacion = ($this->estadoPro == 1) ? 9 : 11;
 
                                 // Actualizar el estado en la tabla guias
                                 DB::table('guias')
