@@ -902,6 +902,10 @@ class Mixto extends Component
                 ->values()
                 ->toArray();
 
+            $GuiaUpEstate = Guia::find($id_guia);
+            $GuiaUpEstate->guia_estado_aprobacion = 11;
+            $GuiaUpEstate->save();
+
             // Actualiza los totales
             $this->pesoTotal -= $factura['peso_total'];
             $this->volumenTotal -= $factura['volumen_total'];

@@ -512,9 +512,12 @@ class Local extends Component
             $this->selectedFacturas = collect($this->selectedFacturas)
                 ->reject(function ($f) use ($id_guia) {
                     return (string)$f['id_guia'] === $id_guia; // Convertir a string para comparar
-                })
-                ->values()
-                ->toArray();
+                }) ->values()
+            ->toArray();
+
+            $GuiaUpEstate = Guia::find($id_guia);
+            $GuiaUpEstate->guia_estado_aprobacion = 11;
+            $GuiaUpEstate->save();
 
             // Actualiza los totales
             $this->pesoTotal -= $factura['peso_total'];

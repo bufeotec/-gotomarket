@@ -74,6 +74,7 @@ class Facturaspreprogramaciones extends Component
             }
         }
         $this->filteredGuias = $this->server->obtenerDocumentosRemision($this->desde, $this->hasta) ?? [];
+
         $this->filtereddetGuias = [];
         foreach ($this->filteredGuias as $guia) {
             $serie = isset($guia->serie) ? $guia->serie : null;
