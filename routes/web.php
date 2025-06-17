@@ -4,6 +4,7 @@ use App\Http\Controllers\LoginController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ConfigurationController;
 use App\Http\Controllers\GestiontransporteController;
+use App\Http\Controllers\VendedorController;
 //use App\Http\Controllers\RegistrofleteController;
 use App\Http\Controllers\TarifarioController;
 use App\Http\Controllers\IntranetController;
@@ -140,4 +141,9 @@ Route::prefix('Despachotransporte')->middleware(['auth', 'canMenu:Despachotransp
     route::get('/editar_programaciones',[DespachotransporteController::class ,'editar_programaciones'])->name('Despachotransporte.editar_programaciones')->middleware('verifyUserStatus')->middleware('can:editar_programaciones');
     route::get('/guias_antiguas',[DespachotransporteController::class ,'guias_antiguas'])->name('Despachotransporte.guias_antiguas')->middleware('verifyUserStatus')->middleware('can:guias_antiguas');
     route::get('/reporte_despacho_transporte',[DespachotransporteController::class ,'reporte_despacho_transporte'])->name('Despachotransporte.reporte_despacho_transporte')->middleware('verifyUserStatus')->middleware('can:reporte_despacho_transporte');
+});
+
+Route::prefix('Vendedor')->middleware(['auth', 'canMenu:Vendedor'])->group(function () {
+    /* VENDEDOR */
+    route::get('/vendedores',[VendedorController::class ,'vendedores'])->name('Vendedor.vendedores')->middleware('verifyUserStatus')->middleware('can:vendedores');
 });
