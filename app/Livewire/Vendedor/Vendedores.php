@@ -30,6 +30,7 @@ class Vendedores extends Component
     public $vendedor_estado = "";
     public $messageDeshabilitarVendedor;
     public $messageEliminarVendedor;
+    public $vendedor_codigo_intranet = "";
 
     public function render(){
         $vendedores = $this->vendedor->listar_vendedores_activos($this->paginacion_vendedores);
@@ -220,6 +221,7 @@ class Vendedores extends Component
             }
 
             $vendedor->vendedor_estado = 0;
+            $vendedor->vendedor_codigo_intranet = null;
 
             if ($vendedor->save()) {
                 DB::commit();
@@ -239,4 +241,66 @@ class Vendedores extends Component
             session()->flash('error', 'Ocurrió un error al eliminar el registro: ' . $e->getMessage());
         }
     }
+
+    public function btn_codigo_intranet($id_v){
+        $id = base64_decode($id_v);
+        if ($id){
+            $this->id_vendedor = $id;
+            $this->vendedor_codigo_intranet = "";
+        }
+    }
+
+    public function guardar_codigo_intranet(){
+        try {
+            if (!Gate::allows('guardar_codigo_intranet')) {
+                session()->flash('error_codigo_intranet', 'No tiene permisos para cambiar los estados de este registro.');
+                return;
+            }
+
+            $this->validate([
+                'id_vendedor' => 'required|integer',
+                'vendedor_codigo_intranet' => 'required|string|max:50',
+            ], [
+                'id_vendedor.required' => 'El identificador es obligatorio.',
+                'id_vendedor.integer' => 'El identificador debe ser un número entero.',
+
+                'vendedor_codigo_intranet.required' => 'El código correlativo es obligatorio.',
+            ]);
+            DB::beginTransaction();
+
+            $vendedor = Vendedor::find($this->id_vendedor);
+
+            if (!$vendedor) {
+                session()->flash('error_codigo_intranet', 'Vendedor no encontrado.');
+                return;
+            }
+
+            $correlativo = trim($this->vendedor_codigo_intranet);
+            $codigo = 'VEN' . $correlativo;
+            $validar_cod = DB::table('vendedores')->where('vendedor_codigo_intranet', '=', $codigo)->exists();
+            if (!$validar_cod) {
+                $vendedor->vendedor_codigo_intranet = $codigo;
+                if ($vendedor->save()) {
+                    DB::commit();
+                    $this->dispatch('hideModalCodigoIntranet');
+                    session()->flash('success', 'Corrido creado correctamente.');
+                } else {
+                    DB::rollBack();
+                    session()->flash('error_codigo_intranet', 'No se pudo eliminar el registro.');
+                    return;
+                }
+            } else {
+                session()->flash('error_codigo_intranet', 'El código ya esta registrado.');
+                return;
+            }
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->setErrorBag($e->validator->errors());
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logs->insertarLog($e);
+            session()->flash('error_codigo_intranet', 'Ocurrió un error al eliminar el registro: ' . $e->getMessage());
+        }
+    }
+
 }

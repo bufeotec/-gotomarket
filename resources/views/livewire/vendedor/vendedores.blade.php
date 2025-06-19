@@ -62,6 +62,47 @@
     </x-modal-delete>
 {{--    FIN MODAL ELIMINAR VENDEDOR--}}
 
+    <x-modal-general wire:ignore.self>
+        <x-slot name="id_modal">modalCodigoIntranet</x-slot>
+        <x-slot name="titleModal">Generar código intranet</x-slot>
+        <x-slot name="modalContent">
+            <form wire:submit.prevent="guardar_codigo_intranet">
+                <div class="row">
+                    <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                        <div class="row">
+                            <div class="col-lg-12 col-md-12 col-sm-12">
+                                @if (session()->has('error_codigo_intranet'))
+                                    <div class="alert alert-danger alert-dismissible show fade">
+                                        {{ session('error_codigo_intranet') }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div class="col-lg-12 col-md-12 col-sm-12">
+                                <label for="vendedor_codigo_intranet" class="form-label">Correlativo</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">VEN</span>
+                                    <input type="text"
+                                           class="form-control"
+                                           id="vendedor_codigo_intranet"
+                                           wire:model="vendedor_codigo_intranet"
+                                           onkeyup="validar_numeros(this.id)"
+                                           placeholder="Ingrese el número correlativo">
+                                </div>
+                            </div>
+
+                            <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-end">
+                                <button type="button" data-bs-dismiss="modal" class="btn btn-secondary">Cerrar</button>
+                                <button type="submit" class="btn btn-success text-white">Guardar Registro</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </x-slot>
+    </x-modal-general>
+
     <div class="row">
         <div class="col-lg-6 col-md-6 col-sm-12 d-flex align-items-center mb-2">
             <h5 class="text-dark">Fecha de última actualización: <strong>{{ $ultimaActualizacion ? $me->obtenerNombreFecha($ultimaActualizacion, 'DateTime', 'DateTime') : '-' }}</strong></h5>
@@ -137,6 +178,12 @@
                                                     <i class="fa-solid fa-trash"></i>
                                                 </x-slot>
                                             </x-btn-accion>
+
+                                            @if(empty($v->vendedor_codigo_intranet))
+                                                <button class="btn text-info btn-sm mb-2" wire:click="btn_codigo_intranet('{{ base64_encode($v->id_vendedor) }}')" data-bs-toggle="modal" data-bs-target="#modalCodigoIntranet">
+                                                    <i class="fa-regular fa-square-plus"></i>
+                                                </button>
+                                            @endif
                                         </td>
                                     </tr>
                                     @php $a++ @endphp
@@ -165,6 +212,10 @@
 
     $wire.on('hideModalEliminarVendedor', () => {
         $('#modalEliminarVendedor').modal('hide');
+    });
+
+    $wire.on('hideModalCodigoIntranet', () => {
+        $('#modalCodigoIntranet').modal('hide');
     });
 </script>
 @endscript
