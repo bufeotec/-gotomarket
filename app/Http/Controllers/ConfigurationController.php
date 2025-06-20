@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Logs;
 use App\Models\Menu;
 use Illuminate\Http\Request;
+use Spatie\Permission\Models\Role;
 
 class ConfigurationController extends Controller
 {
@@ -91,9 +92,16 @@ class ConfigurationController extends Controller
     }
     public function nuevoperfil(){
         try {
-            $id_perfil = base64_decode($_GET['id']) !== null ? base64_decode($_GET['id']) : null;
-            return view('configuration.nuevoperfil',compact('id_perfil'));
-        }catch (\Exception $e){
+            $id_perfil = isset($_GET['id']) ? base64_decode($_GET['id']) : null;
+            // Verificar si el perfil existe si se proporciona un ID
+            if($id_perfil) {
+                $perfil = Role::find($id_perfil);
+                if(!$perfil) {
+                    return redirect()->back()->with('error', 'El perfil solicitado no existe.');
+                }
+            }
+            return view('configuration.nuevoperfil', compact('id_perfil'));
+        } catch (\Exception $e) {
             $this->logs->insertarLog($e);
             return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
         }

@@ -6,11 +6,18 @@
         </div>
     @endif
 
+    @if (session()->has('error'))
+        <div class="alert alert-danger alert-dismissible show fade mt-2">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     <div class="card">
         <div class="card-body">
             <div class="row">
                 <div class="col-lg-12 col-md-12 col-sm-12">
-                    <form wire:submit.prevent="guardar_perfil">
+                    <form wire:submit.prevent="guardar_editar_perfil">
                         <div class="row">
                             <div class="col-lg-12 col-md-12 col-sm-12">
                                 <h6>Datos del perfil</h6>
@@ -19,15 +26,15 @@
                             <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
                                 <div class="row">
                                     <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
-                                        <label for="nombre_perfil" class="form-label">Nombre del perfil</label>
-                                        <x-input-general  type="text" id="nombre_perfil" wire:model="nombre_perfil"/>
-                                        @error('nombre_perfil') <span class="message-error">{{ $message }}</span> @enderror
+                                        <label for="name" class="form-label">Nombre del perfil</label>
+                                        <x-input-general  type="text" id="name" wire:model="name"/>
+                                        @error('name') <span class="message-error">{{ $message }}</span> @enderror
                                     </div>
 
                                     <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
-                                        <label for="descripcion_perfil" class="form-label">Descripción del perfil</label>
-                                        <textarea id="descripcion_perfil" name="descripcion_perfil" wire:model="descripcion_perfil" class="form-control" rows="3"></textarea>
-                                        @error('descripcion_perfil') <span class="message-error">{{ $message }}</span> @enderror
+                                        <label for="rol_descripcion" class="form-label">Descripción del perfil</label>
+                                        <textarea id="rol_descripcion" name="rol_descripcion" wire:model="rol_descripcion" class="form-control" rows="3"></textarea>
+                                        @error('rol_descripcion') <span class="message-error">{{ $message }}</span> @enderror
                                     </div>
 
                                     <div class="col-lg-12 col-sm-12 mb-3 mt-4">
@@ -51,6 +58,10 @@
 
                                     <div class="col-lg-12 col-md-12 col-sm-12">
                                         <div class="loader mt-2" wire:loading wire:target="agregar_usuario"></div>
+                                    </div>
+
+                                    <div class="col-lg-12 col-md-12 col-sm-12">
+                                        <div class="loader mt-2" wire:loading wire:target="eliminar_usuario"></div>
                                     </div>
 
                                     @if (session()->has('error_select_user'))
@@ -77,10 +88,10 @@
                                                             <td>{{ $a }}</td>
                                                             <td>{{ $us['name'] }} - {{ $us['username'] }}</td>
                                                             <td>
-                                                                <button class="btn btn-danger btn-sm"
+                                                                <a class="btn btn-danger btn-sm"
                                                                         wire:click="eliminar_usuario({{ $index }})">
                                                                     <i class="fa-solid fa-trash"></i>
-                                                                </button>
+                                                                </a>
                                                             </td>
                                                         </tr>
                                                         @php $a++; @endphp
@@ -125,6 +136,12 @@
                                                 <div class="ms-5">
                                                     @foreach($ms->submenus as $subm)
                                                         <div class="mb-2 d-flex align-content-center text-center">
+                                                            <input
+                                                                type="checkbox"
+                                                                class="form-check-input"
+                                                                id="submenu_{{ $subm->id_submenu }}"
+                                                                wire:model="submenuSeleccionados.{{ $subm->id_submenu }}"
+                                                            />
                                                             <h6 style="color: #607080" class="text-capitalize mt-1 ms-2">{{ $subm->submenu_name }}</h6>
                                                         </div>
 
@@ -158,11 +175,11 @@
                             <div class="col-lg-5 col-md-5 col-sm-12 mb-3">
                                 <div class="row">
                                     <div class="col-lg-12 d-flex align-items-center justify-content-between mb-3">
-                                        <label for="credito_check" class="form-label">Perfil vendedor</label>
+                                        <label for="rol_vendedor" class="form-label">Perfil vendedor</label>
                                         <div class="form-check form-switch">
 
-                                            <input class="form-check-input" type="checkbox" role="switch" name="credito_check" id="credito_check"  wire:model="credito_check">
-                                            <label class="form-check-label" for="credito_check"></label>
+                                            <input class="form-check-input" type="checkbox" role="switch" name="credito_check" id="rol_vendedor"  wire:model="rol_vendedor">
+                                            <label class="form-check-label" for="rol_vendedor"></label>
                                         </div>
                                     </div>
 
@@ -170,7 +187,7 @@
                                         <label for="codigo" class="form-label">
                                             Código del perfil
                                         </label>
-                                        <h5>{{ $codigo_perfil }}</h5>
+                                        <h5 >{{ $codigo_perfil }}</h5>
                                         @error('codigo') <span class="message-error">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
