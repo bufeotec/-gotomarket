@@ -91,8 +91,8 @@ class ConfigurationController extends Controller
     }
     public function nuevoperfil(){
         try {
-
-            return view('configuration.nuevoperfil');
+            $id_perfil = base64_decode($_GET['id']) !== null ? base64_decode($_GET['id']) : null;
+            return view('configuration.nuevoperfil',compact('id_perfil'));
         }catch (\Exception $e){
             $this->logs->insertarLog($e);
             return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
