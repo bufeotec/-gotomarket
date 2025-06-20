@@ -45,6 +45,8 @@ Route::prefix('configuracion')->middleware(['auth', 'canMenu:configuracion'])->g
     route::get('/roles',[ConfigurationController::class ,'roles'])->name('configuracion.roles')->middleware('verifyUserStatus')->middleware('can:roles');
     route::get('/iconos',[ConfigurationController::class ,'iconos'])->name('configuracion.iconos')->middleware('verifyUserStatus')->middleware('can:iconos');
     route::get('/empresas',[ConfigurationController::class ,'empresas'])->name('configuracion.empresas')->middleware('verifyUserStatus')->middleware('can:empresas');
+    route::get('/nuevoperfil',[ConfigurationController::class ,'nuevoperfil'])->name('configuracion.nuevoperfil')->middleware('verifyUserStatus')->middleware('can:nuevoperfil');
+    route::get('/vendedores',[ConfigurationController::class ,'vendedores'])->name('configuracion.vendedores')->middleware('verifyUserStatus')->middleware('can:vendedores');
 });
 
 /* ----------------------------- RUTAS FINALES DE CONFIGURACIÓN ---------------------------------*/
@@ -141,9 +143,4 @@ Route::prefix('Despachotransporte')->middleware(['auth', 'canMenu:Despachotransp
     route::get('/editar_programaciones',[DespachotransporteController::class ,'editar_programaciones'])->name('Despachotransporte.editar_programaciones')->middleware('verifyUserStatus')->middleware('can:editar_programaciones');
     route::get('/guias_antiguas',[DespachotransporteController::class ,'guias_antiguas'])->name('Despachotransporte.guias_antiguas')->middleware('verifyUserStatus')->middleware('can:guias_antiguas');
     route::get('/reporte_despacho_transporte',[DespachotransporteController::class ,'reporte_despacho_transporte'])->name('Despachotransporte.reporte_despacho_transporte')->middleware('verifyUserStatus')->middleware('can:reporte_despacho_transporte');
-});
-
-Route::prefix('Vendedor')->middleware(['auth', 'canMenu:Vendedor'])->group(function () {
-    /* VENDEDOR */
-    route::get('/vendedores',[VendedorController::class ,'vendedores'])->name('Vendedor.vendedores')->middleware('verifyUserStatus')->middleware('can:vendedores');
 });

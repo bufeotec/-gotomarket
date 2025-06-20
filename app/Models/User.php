@@ -117,5 +117,16 @@ class User extends Authenticatable
 
         return $result;
     }
+    public function listra_usuarios_activos(){
+        try {
+            $result = DB::table('users')
+                ->where('users_status','=',1)
+                ->get();
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
 
 }

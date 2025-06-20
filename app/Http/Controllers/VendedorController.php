@@ -14,13 +14,4 @@ class VendedorController extends Controller
         $this->logs = new Logs();
         $this->transportista = new Transportista();
     }
-
-    public function vendedores(){
-        try {
-            return view('vendedor.vendedores');
-        }catch (\Exception $e){
-            $this->logs->insertarLog($e);
-            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
-        }
-    }
 }

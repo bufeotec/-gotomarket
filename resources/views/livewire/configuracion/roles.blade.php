@@ -136,12 +136,16 @@
             <x-select-filter wire:model.live="pagination" />
         </div>
         <div class="col-lg-6 col-md-6 col-sm-12 text-end mb-2">
-            <x-btn-export wire:click="clear_form" class="bg-success text-white" data-bs-toggle="modal" data-bs-target="#modalRoles" >
-                <x-slot name="icons">
-                    fa-solid fa-plus
-                </x-slot>
-                Agregar Rol
-            </x-btn-export>
+{{--            <x-btn-export wire:click="clear_form" class="bg-success text-white" data-bs-toggle="modal" data-bs-target="#modalRoles" >--}}
+{{--                <x-slot name="icons">--}}
+{{--                    fa-solid fa-plus--}}
+{{--                </x-slot>--}}
+{{--                Agregar Rol--}}
+{{--            </x-btn-export>--}}
+
+            <a href="{{route('configuracion.nuevoperfil')}}" target="_blank" class="btn btn-success btn-sm text-white">
+                <i class="fa-solid fa-plus"></i> Nuevo perfil
+            </a>
         </div>
     </div>
 
@@ -152,6 +156,7 @@
         </div>
     @endif
 
+{{--    NUEVA TABLA PERFILES    --}}
     <x-card-general-view>
         <x-slot name="content">
             <div class="row">
@@ -160,65 +165,92 @@
                         <x-slot name="thead">
                             <tr>
                                 <th>N°</th>
-                                <th>Nombre</th>
-                                <th>Estado</th>
-                                <th>Permisos</th>
+                                <th>Código perfil</th>
+                                <th>Nombre del perfil</th>
+                                <th>Perfil de ventas</th>
+                                <th>Descripción</th>
+                                <th>Usuarios asignados</th>
                                 <th>Acciones</th>
                             </tr>
                         </x-slot>
 
                         <x-slot name="tbody">
-                            @if(count($roles) > 0)
-                                @php $conteoRol  = 1; @endphp
-                                @foreach($roles as $ro)
-                                    <tr>
-                                        <td>{{$conteoRol}}</td>
-                                        <td>{{$ro->name}}</td>
-                                        <td>
-                                            <span class="font-bold badge {{$ro->roles_status == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
-                                                {{$ro->roles_status == 1 ? 'Habilitado ' : 'Desabilitado'}}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <button class="btn bg-warning text-white" wire:click="listar_permissions_roles('{{ base64_encode($ro->id) }}')" data-bs-toggle="modal" data-bs-target="#modalRolesPermissions">
-                                                {{$ro->permisos}}
-                                            </button>
-                                        </td>
-                                        <td>
 
-                                            <span class=" text-primary m-1 cursoPointer" wire:click="edit_roles('{{ base64_encode($ro->id) }}')"
-                                                  data-bs-toggle="modal" data-bs-target="#modalRoles">
-                                                    <i class="fa-solid fa-pen-to-square"></i>
-                                            </span>
-
-                                            @if($ro->roles_status == 1)
-                                                <span class=" text-danger m-1 cursoPointer" wire:click="btn_disable('{{ base64_encode($ro->id) }}',0)" data-bs-toggle="modal" data-bs-target="#modalRolesDelete" >
-                                                    <i class="fa-solid fa-ban"></i>
-                                                </span>
-                                            @else
-                                                <span class=" text-success m-1 cursoPointer" wire:click="btn_disable('{{ base64_encode($ro->id) }}',1)" data-bs-toggle="modal" data-bs-target="#modalRolesDelete" >
-                                                    <i class="fa-solid fa-check"></i>
-                                                </span>
-                                            @endif
-
-                                        </td>
-                                    </tr>
-                                    @php $conteoRol++; @endphp
-                                @endforeach
-                            @else
-                                <tr class="odd">
-                                    <td valign="top" colspan="4" class="dataTables_empty text-center">
-                                        No se han encontrado resultados.
-                                    </td>
-                                </tr>
-                            @endif
                         </x-slot>
                     </x-table-general>
                 </div>
             </div>
         </x-slot>
     </x-card-general-view>
-    {{ $roles->links(data: ['scrollTo' => false]) }}
+{{--    --}}
+
+{{--    <x-card-general-view>--}}
+{{--        <x-slot name="content">--}}
+{{--            <div class="row">--}}
+{{--                <div class="col-lg-12 col-md-12 col-sm-12">--}}
+{{--                    <x-table-general>--}}
+{{--                        <x-slot name="thead">--}}
+{{--                            <tr>--}}
+{{--                                <th>N°</th>--}}
+{{--                                <th>Nombre</th>--}}
+{{--                                <th>Estado</th>--}}
+{{--                                <th>Permisos</th>--}}
+{{--                                <th>Acciones</th>--}}
+{{--                            </tr>--}}
+{{--                        </x-slot>--}}
+
+{{--                        <x-slot name="tbody">--}}
+{{--                            @if(count($roles) > 0)--}}
+{{--                                @php $conteoRol  = 1; @endphp--}}
+{{--                                @foreach($roles as $ro)--}}
+{{--                                    <tr>--}}
+{{--                                        <td>{{$conteoRol}}</td>--}}
+{{--                                        <td>{{$ro->name}}</td>--}}
+{{--                                        <td>--}}
+{{--                                            <span class="font-bold badge {{$ro->roles_status == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">--}}
+{{--                                                {{$ro->roles_status == 1 ? 'Habilitado ' : 'Desabilitado'}}--}}
+{{--                                            </span>--}}
+{{--                                        </td>--}}
+{{--                                        <td>--}}
+{{--                                            <button class="btn bg-warning text-white" wire:click="listar_permissions_roles('{{ base64_encode($ro->id) }}')" data-bs-toggle="modal" data-bs-target="#modalRolesPermissions">--}}
+{{--                                                {{$ro->permisos}}--}}
+{{--                                            </button>--}}
+{{--                                        </td>--}}
+{{--                                        <td>--}}
+
+{{--                                            <span class=" text-primary m-1 cursoPointer" wire:click="edit_roles('{{ base64_encode($ro->id) }}')"--}}
+{{--                                                  data-bs-toggle="modal" data-bs-target="#modalRoles">--}}
+{{--                                                    <i class="fa-solid fa-pen-to-square"></i>--}}
+{{--                                            </span>--}}
+
+{{--                                            @if($ro->roles_status == 1)--}}
+{{--                                                <span class=" text-danger m-1 cursoPointer" wire:click="btn_disable('{{ base64_encode($ro->id) }}',0)" data-bs-toggle="modal" data-bs-target="#modalRolesDelete" >--}}
+{{--                                                    <i class="fa-solid fa-ban"></i>--}}
+{{--                                                </span>--}}
+{{--                                            @else--}}
+{{--                                                <span class=" text-success m-1 cursoPointer" wire:click="btn_disable('{{ base64_encode($ro->id) }}',1)" data-bs-toggle="modal" data-bs-target="#modalRolesDelete" >--}}
+{{--                                                    <i class="fa-solid fa-check"></i>--}}
+{{--                                                </span>--}}
+{{--                                            @endif--}}
+
+{{--                                        </td>--}}
+{{--                                    </tr>--}}
+{{--                                    @php $conteoRol++; @endphp--}}
+{{--                                @endforeach--}}
+{{--                            @else--}}
+{{--                                <tr class="odd">--}}
+{{--                                    <td valign="top" colspan="4" class="dataTables_empty text-center">--}}
+{{--                                        No se han encontrado resultados.--}}
+{{--                                    </td>--}}
+{{--                                </tr>--}}
+{{--                            @endif--}}
+{{--                        </x-slot>--}}
+{{--                    </x-table-general>--}}
+{{--                </div>--}}
+{{--            </div>--}}
+{{--        </x-slot>--}}
+{{--    </x-card-general-view>--}}
+{{--    {{ $roles->links(data: ['scrollTo' => false]) }}--}}
 </div>
 
 @script

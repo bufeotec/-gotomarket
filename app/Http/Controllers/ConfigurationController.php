@@ -81,5 +81,22 @@ class ConfigurationController extends Controller
             return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
         }
     }
+    public function vendedores(){
+        try {
+            return view('vendedor.vendedores');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
+    public function nuevoperfil(){
+        try {
+
+            return view('configuration.nuevoperfil');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
 
 }
