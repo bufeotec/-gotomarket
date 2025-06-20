@@ -31,4 +31,17 @@ class Vendedor extends Model
         }
         return $result;
     }
+
+    public function listra_vendedores_activos(){
+        try {
+            $result = DB::table('vendedores')
+                ->where('vendedor_estado','!=',0)
+                ->whereNotNull('vendedor_codigo_intranet')
+                ->get();
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
 }

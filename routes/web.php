@@ -47,6 +47,7 @@ Route::prefix('configuracion')->middleware(['auth', 'canMenu:configuracion'])->g
     route::get('/empresas',[ConfigurationController::class ,'empresas'])->name('configuracion.empresas')->middleware('verifyUserStatus')->middleware('can:empresas');
     route::get('/nuevoperfil',[ConfigurationController::class ,'nuevoperfil'])->name('configuracion.nuevoperfil')->middleware('verifyUserStatus')->middleware('can:nuevoperfil');
     route::get('/vendedores',[ConfigurationController::class ,'vendedores'])->name('configuracion.vendedores')->middleware('verifyUserStatus')->middleware('can:vendedores');
+    route::get('/crear_usuario',[ConfigurationController::class ,'crear_usuario'])->name('configuracion.crear_usuario')->middleware('verifyUserStatus')->middleware('can:crear_usuario');
 });
 
 /* ----------------------------- RUTAS FINALES DE CONFIGURACIÓN ---------------------------------*/

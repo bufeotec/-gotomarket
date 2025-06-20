@@ -151,13 +151,17 @@
         </div>
         <div class="col-lg-6 col-md-6 col-sm-12 text-end mb-2">
 
+            <a href="{{route('configuracion.crear_usuario')}}" target="_blank" class="btn btn-success btn-sm text-white">
+                <i class="fa-solid fa-plus"></i> Crear Usuario
+            </a>
 
-            <x-btn-export wire:click="clear_form" class="bg-success text-white" data-bs-toggle="modal" data-bs-target="#modalUsuarios" >
-                <x-slot name="icons">
-                    fa-solid fa-plus
-                </x-slot>
-                Agregar Usuario
-            </x-btn-export>
+
+{{--        <x-btn-export wire:click="clear_form" class="bg-success text-white" data-bs-toggle="modal" data-bs-target="#modalUsuarios" >--}}
+{{--            <x-slot name="icons">--}}
+{{--                fa-solid fa-plus--}}
+{{--            </x-slot>--}}
+{{--            Agregar Usuario--}}
+{{--        </x-btn-export>--}}
         </div>
     </div>
 
