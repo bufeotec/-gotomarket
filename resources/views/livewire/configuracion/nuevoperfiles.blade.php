@@ -19,15 +19,15 @@
                             <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
                                 <div class="row">
                                     <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
-                                        <label for="nombre" class="form-label">Nombre del perfil</label>
-                                        <x-input-general  type="text" id="nombre" wire:model="nombre"/>
-                                        @error('nombre') <span class="message-error">{{ $message }}</span> @enderror
+                                        <label for="nombre_perfil" class="form-label">Nombre del perfil</label>
+                                        <x-input-general  type="text" id="nombre_perfil" wire:model="nombre_perfil"/>
+                                        @error('nombre_perfil') <span class="message-error">{{ $message }}</span> @enderror
                                     </div>
 
                                     <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
-                                        <label for="descripcion" class="form-label">Descripción del perfil</label>
-                                        <textarea id="descripcion" name="descripcion" wire:model="descripcion" class="form-control" rows="3"></textarea>
-                                        @error('descripcion') <span class="message-error">{{ $message }}</span> @enderror
+                                        <label for="descripcion_perfil" class="form-label">Descripción del perfil</label>
+                                        <textarea id="descripcion_perfil" name="descripcion_perfil" wire:model="descripcion_perfil" class="form-control" rows="3"></textarea>
+                                        @error('descripcion_perfil') <span class="message-error">{{ $message }}</span> @enderror
                                     </div>
 
                                     <div class="col-lg-12 col-sm-12 mb-3 mt-4">
@@ -102,27 +102,25 @@
                                     <div class="col-lg-12 col-sm-12 mb-3 mt4">
                                         @foreach($menus_show as $ms)
                                             <h5 class="mb-3 mt-3">{{ $ms->menu_name }}</h5>
+                                            {{--                                            <div class="mb-3 ms-4 d-flex align-content-center text-center">
+                                                <input
+                                                    type="checkbox"
+                                                    class="checkbox form-check-input"
+                                                    wire:change="toggleTodosConsulta({{ $ms->id_menu }})"
+                                                    @checked($permisos[$ms->id_menu]['consultar'] ?? false)
+                                                />
+                                                <h6 style="color: #607080" class="text-capitalize mt-1 ms-2">todos solo consulta</h6>
+                                            </div>
 
-{{--                                            <div class="mb-3 ms-4 d-flex align-content-center text-center">--}}
-{{--                                                <input--}}
-{{--                                                    type="checkbox"--}}
-{{--                                                    class="checkbox form-check-input"--}}
-{{--                                                    wire:change="toggleTodosConsulta({{ $ms->id_menu }})"--}}
-{{--                                                    @checked($permisos[$ms->id_menu]['consultar'] ?? false)--}}
-{{--                                                />--}}
-{{--                                                <h6 style="color: #607080" class="text-capitalize mt-1 ms-2">todos solo consulta</h6>--}}
-{{--                                            </div>--}}
-
-{{--                                            <div class="mb-3 ms-4 d-flex align-content-center text-center">--}}
-{{--                                                <input--}}
-{{--                                                    type="checkbox"--}}
-{{--                                                    class="checkbox form-check-input"--}}
-{{--                                                    wire:change="toggleTodosEditar({{ $ms->id_menu }})"--}}
-{{--                                                    @checked($permisos[$ms->id_menu]['editar'] ?? false)--}}
-{{--                                                />--}}
-{{--                                                <h6 style="color: #607080" class="text-capitalize mt-1 ms-2">todos editar / gestionar</h6>--}}
-{{--                                            </div>--}}
-
+                                            <div class="mb-3 ms-4 d-flex align-content-center text-center">
+                                                <input
+                                                    type="checkbox"
+                                                    class="checkbox form-check-input"
+                                                    wire:change="toggleTodosEditar({{ $ms->id_menu }})"
+                                                    @checked($permisos[$ms->id_menu]['editar'] ?? false)
+                                                />
+                                                <h6 style="color: #607080" class="text-capitalize mt-1 ms-2">todos editar / gestionar</h6>
+                                            </div>--}}
                                             @if($ms->submenus->count() > 0)
                                                 <div class="ms-5">
                                                     @foreach($ms->submenus as $subm)

@@ -6,8 +6,9 @@
 
     <div class="page-heading">
         <x-navegation-view text="Agregar nuevo perfil en el sistema." />
+{{--        @livewire('configuracion.nuevoperfiles'['id_perfil'=>$id_perfil])--}}
+        @livewire('configuracion.nuevoperfiles', ['id_perfil' => $id_perfil])
 
-        @livewire('configuracion.nuevoperfiles')
 
     </div>
 

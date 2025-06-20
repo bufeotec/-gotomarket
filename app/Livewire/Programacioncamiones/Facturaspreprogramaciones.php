@@ -5,6 +5,7 @@ namespace App\Livewire\Programacioncamiones;
 use App\Models\Guia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use App\Models\Logs;
 use App\Models\TipoServicio;
@@ -60,6 +61,13 @@ class Facturaspreprogramaciones extends Component
         return view('livewire.programacioncamiones.facturaspreprogramaciones', compact('listar_tipo_servicios'));
     }
     public function buscar_comprobantes() {
+
+        if (!Gate::allows('buscar_guias')) {
+            session()->flash('error', 'No tiene permisos para buscar guías.');
+            return;
+        }
+
+
         if (empty($this->desde) && empty($this->hasta) && empty($this->searchGuia)) {
             session()->flash('error', 'Debe ingresar al menos una fecha o un criterio de búsqueda.');
             return;
@@ -73,6 +81,7 @@ class Facturaspreprogramaciones extends Component
                 return;
             }
         }
+
         $this->filteredGuias = $this->server->obtenerDocumentosRemision($this->desde, $this->hasta) ?? [];
 
         $this->filtereddetGuias = [];
@@ -87,6 +96,12 @@ class Facturaspreprogramaciones extends Component
         }
     }
     public function seleccionarGuia($NRO_DOC) {
+
+        if (!Gate::allows('seleccionar_guias')) {
+            session()->flash('error', 'No tiene permisos para seleccionar guías.');
+            return;
+        }
+
         if (!is_array($this->selectedGuias)) {
             $this->selectedGuias = [];
         }
@@ -179,6 +194,12 @@ class Facturaspreprogramaciones extends Component
     }
 
     public function guardarGuias() {
+
+        if (!Gate::allows('enviar_guias')) {
+            session()->flash('error', 'No tiene permisos para enviar guías.');
+            return;
+        }
+
         $this->filteredGuias = [];
         $this->isSaving = true; // Activar el estado de guardado
         try {
