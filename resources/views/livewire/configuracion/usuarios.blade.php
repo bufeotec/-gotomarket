@@ -230,10 +230,15 @@
                                                 </span>
                                             @else
                                                @if(Auth::user()->roles->first()->id == 1)
-                                                    <span class=" text-primary m-1 cursoPointer" wire:click="edit_users('{{ base64_encode($me->id_users) }}')"
-                                                          data-bs-toggle="modal" data-bs-target="#modalUsuarios">
+{{--                                                    <span class=" text-primary m-1 cursoPointer" wire:click="edit_users('{{ base64_encode($me->id_users) }}')"--}}
+{{--                                                          data-bs-toggle="modal" data-bs-target="#modalUsuarios">--}}
+{{--                                                        <i class="fa-solid fa-pen-to-square"></i>--}}
+{{--                                                </span>--}}
+
+                                                    <a href="{{route('configuracion.crear_usuario',['id_users'=>base64_encode($me->id_users)])}}"
+                                                       style="cursor: pointer" class="btn-sm text-primary">
                                                         <i class="fa-solid fa-pen-to-square"></i>
-                                                </span>
+                                                    </a>
                                                @endif
                                             @endif
 
