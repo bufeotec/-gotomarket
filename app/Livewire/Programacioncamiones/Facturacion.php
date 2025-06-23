@@ -119,6 +119,12 @@ class Facturacion extends Component
             $this->listar_comprobantes = $result->get();
     }
     public function actualizar_detalle_guia($num_doc,$id){
+
+        if (!Gate::allows('actualizar_detalle_guia')) {
+            session()->flash('error_pre_pro', 'No tiene permisos para cambiar los estados de este registro.');
+            return;
+        }
+
         $detalle_actual = $this->guia->listar_guia_detalle_x_num_doc($num_doc);
         $detalle_real = $this->server->obtenerDetalleRemision($num_doc);
         $id_ =  base64_decode($id);
