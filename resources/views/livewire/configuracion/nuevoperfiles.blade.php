@@ -112,7 +112,7 @@
 
                                     <div class="col-lg-12 col-sm-12 mb-3 mt4">
                                         @foreach($menus_show as $ms)
-                                            <h5 class="mb-3 mt-3">{{ $ms->menu_name }}</h5>
+                                            <h5>{{ $ms->menu_name }}</h5>
                                             @if($ms->submenus->count() > 0)
                                                 <div class="ms-5">
                                                     @foreach($ms->submenus as $subm)
@@ -124,7 +124,7 @@
                                                                 wire:model="submenuSeleccionados.{{ $subm->id_submenu }}"
                                                                 @checked(isset($submenuSeleccionados[$subm->id_submenu]) && $submenuSeleccionados[$subm->id_submenu])
                                                             />
-                                                            <h6 style="color: #607080" class="text-capitalize mt-1 ms-2">{{ $subm->submenu_name }}</h6>
+                                                            <h6 style="color: #607080" class="text-capitalize ms-2">{{ $subm->submenu_name }}</h6>
                                                         </div>
 
                                                         @if(isset($subm->permisos) && $subm->permisos->count() > 0)
@@ -139,7 +139,7 @@
                                                                             @checked(isset($permisosSeleccionados[$permiso->id]) && $permisosSeleccionados[$permiso->id])
                                                                         />
                                                                         <label for="permiso_{{ $permiso->id }}" style="color: #607080">
-                                                                            {{ $permiso->name }}
+                                                                            {{ $permiso->descripcion }}
                                                                         </label>
                                                                     </div>
                                                                 @endforeach

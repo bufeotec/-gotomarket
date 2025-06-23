@@ -66,7 +66,7 @@ class Nuevoperfiles extends Component
             // Obtener permisos para cada submenú
             foreach ($menu->submenus as $submenu) {
                 $submenu->permisos = DB::table('permissions')
-                    ->where('permissions_group',3)
+//                    ->where('permissions_group',3)
                     ->where('permissions_group_id', $submenu->id_submenu)
                     ->orderBy('descripcion')
                     ->get();
