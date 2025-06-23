@@ -46,8 +46,7 @@ class Nuevoperfiles extends Component
         }
     }
 
-    public function render()
-    {
+    public function render(){
         // OBTENER MENUS PRINCIPALES
         $menus_show = DB::table('menus')
             ->where('menu_show', '=', 1)

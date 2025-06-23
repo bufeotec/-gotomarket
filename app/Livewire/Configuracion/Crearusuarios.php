@@ -35,6 +35,7 @@ class Crearusuarios extends Component
     public $ruta_img_default = "";
     public $id_vendedor= '';
     public $vendedor_seleccionados = [];
+    public $rol_vendedor = false;
 
     public function render(){
         $listar_vendedores = $this->vendedor->listra_vendedores_activos();
