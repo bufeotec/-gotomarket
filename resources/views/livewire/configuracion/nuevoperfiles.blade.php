@@ -113,25 +113,6 @@
                                     <div class="col-lg-12 col-sm-12 mb-3 mt4">
                                         @foreach($menus_show as $ms)
                                             <h5 class="mb-3 mt-3">{{ $ms->menu_name }}</h5>
-                                            {{--                                            <div class="mb-3 ms-4 d-flex align-content-center text-center">
-                                                <input
-                                                    type="checkbox"
-                                                    class="checkbox form-check-input"
-                                                    wire:change="toggleTodosConsulta({{ $ms->id_menu }})"
-                                                    @checked($permisos[$ms->id_menu]['consultar'] ?? false)
-                                                />
-                                                <h6 style="color: #607080" class="text-capitalize mt-1 ms-2">todos solo consulta</h6>
-                                            </div>
-
-                                            <div class="mb-3 ms-4 d-flex align-content-center text-center">
-                                                <input
-                                                    type="checkbox"
-                                                    class="checkbox form-check-input"
-                                                    wire:change="toggleTodosEditar({{ $ms->id_menu }})"
-                                                    @checked($permisos[$ms->id_menu]['editar'] ?? false)
-                                                />
-                                                <h6 style="color: #607080" class="text-capitalize mt-1 ms-2">todos editar / gestionar</h6>
-                                            </div>--}}
                                             @if($ms->submenus->count() > 0)
                                                 <div class="ms-5">
                                                     @foreach($ms->submenus as $subm)
@@ -141,6 +122,7 @@
                                                                 class="form-check-input"
                                                                 id="submenu_{{ $subm->id_submenu }}"
                                                                 wire:model="submenuSeleccionados.{{ $subm->id_submenu }}"
+                                                                @checked(isset($submenuSeleccionados[$subm->id_submenu]) && $submenuSeleccionados[$subm->id_submenu])
                                                             />
                                                             <h6 style="color: #607080" class="text-capitalize mt-1 ms-2">{{ $subm->submenu_name }}</h6>
                                                         </div>
@@ -154,9 +136,10 @@
                                                                             class="form-check-input me-2"
                                                                             id="permiso_{{ $permiso->id }}"
                                                                             wire:model="permisosSeleccionados.{{ $permiso->id }}"
+                                                                            @checked(isset($permisosSeleccionados[$permiso->id]) && $permisosSeleccionados[$permiso->id])
                                                                         />
                                                                         <label for="permiso_{{ $permiso->id }}" style="color: #607080">
-                                                                            {{ $permiso->descripcion }}
+                                                                            {{ $permiso->name }}
                                                                         </label>
                                                                     </div>
                                                                 @endforeach
