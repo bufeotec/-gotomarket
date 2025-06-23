@@ -46,7 +46,8 @@ class Nuevoperfiles extends Component
         }
     }
 
-    public function render(){
+    public function render()
+    {
         // OBTENER MENUS PRINCIPALES
         $menus_show = DB::table('menus')
             ->where('menu_show', '=', 1)
@@ -65,21 +66,33 @@ class Nuevoperfiles extends Component
             // Obtener permisos para cada submenú
             foreach ($menu->submenus as $submenu) {
                 $submenu->permisos = DB::table('permissions')
-//                    ->where('id_submenu', $submenu->id_submenu)
                     ->where('permissions_group',3)
-                    ->where('permissions_group_id',$submenu->id_submenu)
+                    ->where('permissions_group_id', $submenu->id_submenu)
                     ->orderBy('descripcion')
                     ->get();
 
-                if($this->id_perfil){
-                    foreach ($submenu->permisos as $li) {
+                // Verificar si el submenú está en los permisos del rol
+                if ($this->id_perfil) {
+                    // Marcar submenú si tiene algún permiso asignado al rol
+                    $hasPermission = DB::table('role_has_permissions as rhp')
+                        ->join('permissions as p', 'rhp.permission_id', '=', 'p.id')
+                        ->where('rhp.role_id', $this->id_perfil)
+                        ->where('p.permissions_group_id', $submenu->id_submenu)
+                        ->exists();
+
+                    if ($hasPermission) {
+                        $this->submenuSeleccionados[$submenu->id_submenu] = true;
+                    }
+
+                    // Marcar permisos individuales
+                    foreach ($submenu->permisos as $permiso) {
                         $perMenu = DB::table('role_has_permissions')->where([
-                            ['permission_id', '=', $li->id],
+                            ['permission_id', '=', $permiso->id],
                             ['role_id', '=', $this->id_perfil]
                         ])->first();
                         if ($perMenu) {
-                            $this->check[] = $li->id;
-                            $this->permisosSeleccionados[$li->id] = true;
+                            $this->check[] = $permiso->id;
+                            $this->permisosSeleccionados[$permiso->id] = true;
                         }
                     }
                 }
@@ -118,10 +131,10 @@ class Nuevoperfiles extends Component
             $this->codigo_perfil = 'PU' . $data_perfil->id;
 
             // Cargar usuarios existentes
-            $this->users_seleccionados = DB::table('model_has_roles')
-                ->join('users', 'model_has_roles.model_id', '=', 'users.id_users')
-                ->where('model_has_roles.role_id', $this->id_perfil)
-                ->select('users.id_users', 'users.name', 'users.username')
+            $this->users_seleccionados = DB::table('model_has_roles as mhr')
+                ->join('users as u', 'mhr.model_id', '=', 'u.id_users')
+                ->where('mhr.role_id', $this->id_perfil)
+                ->select('u.id_users', 'u.name', 'u.username')
                 ->get()
                 ->map(function($user) {
                     return [
@@ -228,22 +241,30 @@ class Nuevoperfiles extends Component
                         }
                     }
 
-                    // Asignar permisos al rol (solo los seleccionados)
-                    foreach ($this->permisosSeleccionados as $id_permiso => $seleccionado) {
+                    // Procesar submenús seleccionados
+                    $permisosSubmenus = [];
+                    foreach ($this->submenuSeleccionados as $id_submenu => $seleccionado) {
                         if ($seleccionado) {
-                            // Verificar si el permiso ya está asignado para evitar duplicados
-                            $exists = DB::table('role_has_permissions')
-                                ->where('role_id', $role_save->id)
-                                ->where('permission_id', $id_permiso)
-                                ->exists();
+                            // Buscar el permiso principal del submenú
+                            $permisoSubmenu = DB::table('permissions')
+                                ->where('id_submenu', $id_submenu)
+                                ->first();
 
-                            if (!$exists) {
-                                DB::table('role_has_permissions')->insert([
-                                    'permission_id' => $id_permiso,
-                                    'role_id' => $role_save->id
-                                ]);
+                            if ($permisoSubmenu) {
+                                $permisosSubmenus[] = $permisoSubmenu->id;
                             }
                         }
+                    }
+
+                    // Obtener permisos normales seleccionados
+                    $permisosNormales = array_keys(array_filter($this->permisosSeleccionados));
+
+                    // Combinar ambos tipos de permisos
+                    $permisosFinales = array_merge($permisosNormales, $permisosSubmenus);
+
+                    // Asignar todos los permisos al rol
+                    if (!empty($permisosFinales)) {
+                        $role_save->syncPermissions($permisosFinales);
                     }
 
                     DB::commit();
@@ -258,7 +279,6 @@ class Nuevoperfiles extends Component
                     session()->flash('error', 'No tiene permisos para actualizar este registro.');
                     return;
                 }
-
             }
         } catch (\Illuminate\Validation\ValidationException $e) {
             $this->setErrorBag($e->validator->errors());
