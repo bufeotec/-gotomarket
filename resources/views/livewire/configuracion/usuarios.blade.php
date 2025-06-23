@@ -182,7 +182,7 @@
                                 <th>Nombre completo</th>
                                 <th>Nombre de usuario</th>
                                 <th>Correo electronico</th>
-                                <th>Rol</th>
+                                <th>Perfiles</th>
                                 <th>Cargo</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
@@ -211,7 +211,7 @@
                                                 ->join('roles as r','r.id','=','mr.role_id')->where('mr.model_id','=',$me->id_users)->first();
                                             @endphp
                                             <span class="font-bold text-warning">
-                                                {{$rol->name}}
+                                                {{$rol->rol_codigo}} - {{$rol->name}}
                                             </span>
                                         </td>
                                         <td>{{$me->users_cargo}}</td>

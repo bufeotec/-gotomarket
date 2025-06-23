@@ -117,82 +117,103 @@
                                 @enderror
                             </div>
                         </div>
+
                         <div class="row">
-                            <div class="col-lg-12 col-md-12 col-sm-12 mt-3">
-                                <small class="text-primary" style="font-size: 11pt">Perfil vendedor</small>
+                            <div class="col-lg-6 col-md-6 col-sm-12 mt-3">
+                                <small class="text-primary" style="font-size: 11pt">Perfiles en Intranet</small>
                                 <hr>
                             </div>
-                            <div class="col-lg-12 col-md-12 col-sm-12">
-                                <div class="row align-items-center">
-                                    <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
-                                        <div class="row">
-                                            <div class="col-lg-12 col-sm-12 mb-3 d-flex justify-content-center align-content-center">
-                                                <select class="form-select" name="id_vendedor" id="id_vendedor" wire:model="id_vendedor">
-                                                    <option value="">Seleccionar...</option>
-                                                    @foreach($listar_vendedores as $lv)
-                                                        <option value="{{ $lv->id_vendedor }}">{{$lv->vendedor_des}}</option>
-                                                    @endforeach
-                                                </select>
-                                                <div class="align-content-center ms-3">
-                                                    <a class="btn btn-success text-white btn-sm" wire:click="agregar_vendedor">
-                                                        <i class="fa-solid fa-plus"></i>
-                                                    </a>
+
+                            <div class="col-lg-12">
+
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-lg-6 col-md-6 col-sm-12 mt-3 d-flex justify-content-between">
+                                <label for="rol_vendedor" class="text-primary" style="font-size: 11pt">Perfil vendedor</label>
+                                <div class="form-check form-switch mb-2 d-flex align-items-end">
+                                    <input class="form-check-input" type="checkbox" role="switch" name="credito_check" id="rol_vendedor" wire:model.live="rol_vendedor">
+                                    <label class="form-check-label" for="rol_vendedor"></label>
+                                </div>
+                            </div>
+                            <div class="col-lg-6"></div>
+                            <div class="col-lg-6 mb-3"><hr></div>
+
+                            @if($rol_vendedor)
+                                <div class="col-lg-12 col-md-12 col-sm-12">
+                                    <div class="row align-items-center">
+                                        <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
+                                            <div class="row">
+                                                <div class="col-lg-12 col-sm-12 mb-3 d-flex justify-content-center align-content-center">
+                                                    <select class="form-select" name="id_vendedor" id="id_vendedor" wire:model="id_vendedor">
+                                                        <option value="">Seleccionar...</option>
+                                                        @foreach($listar_vendedores as $lv)
+                                                            <option value="{{ $lv->id_vendedor }}">{{$lv->vendedor_des}}</option>
+                                                        @endforeach
+                                                    </select>
+                                                    <div class="align-content-center ms-3">
+                                                        <a class="btn btn-success text-white btn-sm" wire:click="agregar_vendedor">
+                                                            <i class="fa-solid fa-plus"></i>
+                                                        </a>
+                                                    </div>
                                                 </div>
-                                            </div>
 
-                                            <div class="col-lg-12 col-md-12 col-sm-12">
-                                                <div class="loader mt-2" wire:loading wire:target="agregar_vendedor"></div>
-                                            </div>
-
-                                            @if (session()->has('error_select_vendedor'))
-                                                <div class="alert alert-danger alert-dismissible show fade mt-2">
-                                                    {{ session('error_select_vendedor') }}
-                                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                                <div class="col-lg-12 col-md-12 col-sm-12">
+                                                    <div class="loader mt-2" wire:loading wire:target="agregar_vendedor"></div>
                                                 </div>
-                                            @endif
 
-                                            @if(count($vendedor_seleccionados) > 0)
-                                                <div class="col-lg-12 col-sm-12 mb-5">
-                                                    <x-table-general>
-                                                        <x-slot name="thead">
-                                                            <tr>
-                                                                <th>N°</th>
-                                                                <th>Código INTRANET</th>
-                                                                <th>Código Vendedor STARSOFT</th>
-                                                                <th>Nombre vendedor</th>
-                                                                <th>Acciones</th>
-                                                            </tr>
-                                                        </x-slot>
-                                                        <x-slot name="tbody">
-                                                            @php $a = 1 @endphp
-                                                            @foreach($vendedor_seleccionados as $index => $us)
+                                                @if (session()->has('error_select_vendedor'))
+                                                    <div class="alert alert-danger alert-dismissible show fade mt-2">
+                                                        {{ session('error_select_vendedor') }}
+                                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                                    </div>
+                                                @endif
+
+                                                @if(count($vendedor_seleccionados) > 0)
+                                                    <div class="col-lg-12 col-sm-12 mb-5">
+                                                        <x-table-general>
+                                                            <x-slot name="thead">
                                                                 <tr>
-                                                                    <td>{{ $a }}</td>
-                                                                    <td>{{ $us['vendedor_codigo_intranet'] }}</td>
-                                                                    <td>{{ $us['vendedor_codigo_vendedor_starsoft'] }}</td>
-                                                                    <td>{{ $us['vendedor_des'] }}</td>
-                                                                    <td>
-                                                                        <button class="btn btn-danger btn-sm"
-                                                                                wire:click="eliminar_vendedor({{ $index }})">
-                                                                            <i class="fa-solid fa-trash"></i>
-                                                                        </button>
-                                                                    </td>
+                                                                    <th>N°</th>
+                                                                    <th>Código INTRANET</th>
+                                                                    <th>Código Vendedor STARSOFT</th>
+                                                                    <th>Nombre vendedor</th>
+                                                                    <th>Acciones</th>
                                                                 </tr>
-                                                                @php $a++; @endphp
-                                                            @endforeach
-                                                        </x-slot>
-                                                    </x-table-general>
-                                                </div>
-                                            @else
-                                                <h6 class="mt-3 text-danger">
-                                                    No se han seleccionado vendedores.
-                                                </h6>
-                                            @endif
+                                                            </x-slot>
+                                                            <x-slot name="tbody">
+                                                                @php $a = 1 @endphp
+                                                                @foreach($vendedor_seleccionados as $index => $us)
+                                                                    <tr>
+                                                                        <td>{{ $a }}</td>
+                                                                        <td>{{ $us['vendedor_codigo_intranet'] }}</td>
+                                                                        <td>{{ $us['vendedor_codigo_vendedor_starsoft'] }}</td>
+                                                                        <td>{{ $us['vendedor_des'] }}</td>
+                                                                        <td>
+                                                                            <button class="btn btn-danger btn-sm"
+                                                                                    wire:click="eliminar_vendedor({{ $index }})">
+                                                                                <i class="fa-solid fa-trash"></i>
+                                                                            </button>
+                                                                        </td>
+                                                                    </tr>
+                                                                    @php $a++; @endphp
+                                                                @endforeach
+                                                            </x-slot>
+                                                        </x-table-general>
+                                                    </div>
+                                                @else
+                                                    <h6 class="mt-3 text-danger">
+                                                        No se han seleccionado vendedores.
+                                                    </h6>
+                                                @endif
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            @endif
                         </div>
+
                         <div class="row">
                             <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-end">
                                 <button type="submit" class="btn btn-success text-white">Guardar Registros</button>

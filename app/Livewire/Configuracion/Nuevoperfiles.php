@@ -46,8 +46,7 @@ class Nuevoperfiles extends Component
         }
     }
 
-    public function render()
-    {
+    public function render(){
         // OBTENER MENUS PRINCIPALES
         $menus_show = DB::table('menus')
             ->where('menu_show', '=', 1)
@@ -66,7 +65,7 @@ class Nuevoperfiles extends Component
             // Obtener permisos para cada submenú
             foreach ($menu->submenus as $submenu) {
                 $submenu->permisos = DB::table('permissions')
-                    ->where('permissions_group',3)
+//                    ->where('permissions_group',3)
                     ->where('permissions_group_id', $submenu->id_submenu)
                     ->orderBy('descripcion')
                     ->get();
