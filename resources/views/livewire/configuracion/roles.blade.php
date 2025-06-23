@@ -199,12 +199,12 @@
                                     <td>{{$ro->rol_descripcion}}</td>
                                     <td></td>
                                     <td>
-{{--                                        @if($conteoRol != 1 && $conteoRol != 2)--}}
+                                        @if($conteoRol != 1 && $conteoRol != 2)
                                             <a href="{{route('configuracion.nuevoperfil',['id'=>base64_encode($ro->id)])}}"
                                             style="cursor: pointer" class="btn-sm btn-warning text-white">
                                                 <i class="fa fa-pencil"></i>
                                             </a>
-{{--                                        @endif--}}
+                                        @endif
                                     </td>
                                 </tr>
                                 @php $conteoRol++; @endphp
