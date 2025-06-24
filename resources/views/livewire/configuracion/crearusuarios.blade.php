@@ -31,7 +31,7 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-lg-12 col-md-12 col-sm-12">
-                    <form wire:submit.prevent="save_users">
+                    <form wire:submit.prevent="save_usuario">
                         <div class="row ">
                             <div class="col-lg-12 col-md-12 col-sm-12 mb-1">
                                 <small class="text-primary" style="font-size: 11pt">Datos personales</small>
@@ -76,17 +76,13 @@
                             </div>
                             <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
                                 <label for="username" class="form-label">Nombre de Usuario (*)</label>
-                                <x-input-general   type="text" id="username" wire:model="username"/>
-                                @error('username')
-                                <span class="message-error">{{ $message }}</span>
-                                @enderror
+                                <x-input-general type="text" id="username" wire:model="username"/>
+                                @error('username')<span class="message-error">{{ $message }}</span>@enderror
                             </div>
                             <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
                                 <label for="email" class="form-label">Correo Electronico (*)</label>
                                 <x-input-general  type="email" id="email" wire:model="email"/>
-                                @error('email')
-                                <span class="message-error">{{ $message }}</span>
-                                @enderror
+                                @error('email')<span class="message-error">{{ $message }}</span>@enderror
                             </div>
 
                             <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
@@ -99,7 +95,12 @@
 
                             <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
                                 <label for="password" class="form-label">{{!empty($id_users) ? 'Actualizar Contraseña': 'Contraseña'}}</label>
-                                <x-input-general type="password" id="password"   wire:model="password" />
+                                <div class="input-group input-group-merge has-validation">
+                                    <x-input-general type="password" id="password" wire:model="password" />
+                                    <span class="input-group-text cursor-pointer toggle-password bg-white" style="cursor: pointer!important;">
+                                    <i class="fa-solid fa-eye"></i>
+                                </span>
+                                </div>
                                 @error('password')
                                 <span class="message-error">{{ $message }}</span>
                                 @enderror
@@ -125,7 +126,70 @@
                             </div>
 
                             <div class="col-lg-12">
+                                <div class="row align-items-center">
+                                    <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
+                                        <div class="row">
+                                            <div class="col-lg-12 col-sm-12 mb-3 d-flex justify-content-center align-content-center">
+                                                <select class="form-select" name="id_rol" id="id_vendedor" wire:model="id_rol">
+                                                    <option value="">Seleccionar...</option>
+                                                    @foreach($listar_perfiles as $lp)
+                                                        <option value="{{ $lp->id }}">{{$lp->rol_codigo}} - {{$lp->name}}</option>
+                                                    @endforeach
+                                                </select>
+                                                <div class="align-content-center ms-3">
+                                                    <a class="btn btn-success text-white btn-sm" wire:click="agregar_perfil">
+                                                        <i class="fa-solid fa-plus"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
 
+                                            <div class="col-lg-12 col-md-12 col-sm-12">
+                                                <div class="loader mt-2" wire:loading wire:target="agregar_perfil"></div>
+                                            </div>
+
+                                            @if (session()->has('error_select_perfil'))
+                                                <div class="alert alert-danger alert-dismissible show fade mt-2">
+                                                    {{ session('error_select_perfil') }}
+                                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                                </div>
+                                            @endif
+
+                                            @if(count($perfil_seleccionado) > 0)
+                                                <div class="col-lg-12 col-sm-12 mb-5">
+                                                    <x-table-general>
+                                                        <x-slot name="thead">
+                                                            <tr>
+                                                                <th>N°</th>
+                                                                <th>Perfiles Asignados</th>
+                                                                <th>Acciones</th>
+                                                            </tr>
+                                                        </x-slot>
+                                                        <x-slot name="tbody">
+                                                            @php $a = 1 @endphp
+                                                            @foreach($perfil_seleccionado as $index => $us)
+                                                                <tr>
+                                                                    <td>{{ $a }}</td>
+                                                                    <td>{{ $us['rol_codigo'] }} - {{ $us['name'] }}</td>
+                                                                    <td>
+                                                                        <button class="btn btn-danger btn-sm"
+                                                                                wire:click="eliminar_perfil({{ $index }})">
+                                                                            <i class="fa-solid fa-trash"></i>
+                                                                        </button>
+                                                                    </td>
+                                                                </tr>
+                                                                @php $a++; @endphp
+                                                            @endforeach
+                                                        </x-slot>
+                                                    </x-table-general>
+                                                </div>
+                                            @else
+                                                <h6 class="mt-3 text-danger">
+                                                    No se a seleccionado el perfil.
+                                                </h6>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

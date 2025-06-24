@@ -44,4 +44,16 @@ class Vendedor extends Model
         }
         return $result;
     }
+
+    public function listra_perfiles_activos(){
+        try {
+            $result = DB::table('roles')
+                ->where('roles_status','=',1)
+                ->get();
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
 }

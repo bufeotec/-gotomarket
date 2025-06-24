@@ -7,7 +7,7 @@
     <div class="page-heading">
         <x-navegation-view text="Agregar nuevo usuario en el sistema." />
 
-        @livewire('configuracion.crearusuarios')
+        @livewire('configuracion.crearusuarios', ['id_users' => $id_users])
 
     </div>
 

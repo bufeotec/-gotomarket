@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Logs;
 use App\Models\Menu;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 
@@ -108,8 +109,15 @@ class ConfigurationController extends Controller
     }
     public function crear_usuario(){
         try {
-
-            return view('configuration.crear_usuario');
+            $id_users = isset($_GET['id_users']) ? base64_decode($_GET['id_users']) : null;
+            // Verificar si el perfil existe si se proporciona un ID
+            if($id_users) {
+                $users = User::find($id_users);
+                if(!$users) {
+                    return redirect()->back()->with('error', 'El usuario solicitado no existe.');
+                }
+            }
+            return view('configuration.crear_usuario',compact('id_users'));
         }catch (\Exception $e){
             $this->logs->insertarLog($e);
             return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
