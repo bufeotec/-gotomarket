@@ -227,6 +227,10 @@
                                                     <div class="loader mt-2" wire:loading wire:target="agregar_vendedor"></div>
                                                 </div>
 
+                                                <div class="col-lg-12 col-md-12 col-sm-12">
+                                                    <div class="loader mt-2" wire:loading wire:target="eliminar_vendedor"></div>
+                                                </div>
+
                                                 @if (session()->has('error_select_vendedor'))
                                                     <div class="alert alert-danger alert-dismissible show fade mt-2">
                                                         {{ session('error_select_vendedor') }}
@@ -255,10 +259,10 @@
                                                                         <td>{{ $us['vendedor_codigo_vendedor_starsoft'] }}</td>
                                                                         <td>{{ $us['vendedor_des'] }}</td>
                                                                         <td>
-                                                                            <button class="btn btn-danger btn-sm"
+                                                                            <a class="btn btn-danger btn-sm"
                                                                                     wire:click="eliminar_vendedor({{ $index }})">
                                                                                 <i class="fa-solid fa-trash"></i>
-                                                                            </button>
+                                                                            </a>
                                                                         </td>
                                                                     </tr>
                                                                     @php $a++; @endphp
