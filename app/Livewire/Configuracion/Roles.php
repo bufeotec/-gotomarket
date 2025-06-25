@@ -36,6 +36,7 @@ class Roles extends Component
     public $statusRol = "";
     public $check = [];
     public $urlActual = "";
+    public $messageDeleteRole;
     /* ---------------- FIN DATOS DEL FORMULARIO -------------*/
     public function __construct()
     {
@@ -179,9 +180,9 @@ class Roles extends Component
             $this->id_rol = $id;
             $this->statusRol = $status;
             if ($status == 0){
-                $this->messageDelete = "¿Está seguro que desea deshabilitar este rol?";
+                $this->messageDeleteRole = "¿Está seguro que desea deshabilitar este rol?";
             }else{
-                $this->messageDelete = "¿Está seguro que desea habilitar este rol?";
+                $this->messageDeleteRole = "¿Está seguro que desea habilitar este rol?";
             }
         }
     }

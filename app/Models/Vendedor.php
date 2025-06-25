@@ -17,11 +17,11 @@ class Vendedor extends Model
         $this->logs = new Logs();
     }
 
-    public function listar_vendedores_activos($pagination,$order = 'asc'){
+    public function listar_vendedores_activos($pagination,$order = 'desc'){
         try {
             $query = DB::table('vendedores')
-                ->where('vendedor_estado', '!=', 0)
-                ->orderBy('id_vendedor', $order);
+//                ->where('vendedor_estado', '!=', 0)
+                ->orderBy('vendedor_codigo_intranet', $order);
 
             $result = $query->paginate($pagination);
 

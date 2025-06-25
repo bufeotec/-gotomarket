@@ -30,6 +30,7 @@ class Nuevoperfiles extends Component
     public $id_perfil;
     public $name = '';
     public $rol_descripcion = '';
+    public $menuSeleccionados = [];
     public $users_seleccionados = [];
     public $submenuSeleccionados = [];
     public $permisosSeleccionados = [];
@@ -52,9 +53,23 @@ class Nuevoperfiles extends Component
             ->where('menu_show', '=', 1)
             ->get();
 
-        // OBTENER SUBMENUS PARA CADA MENU
+        // OBTENER SUBMENUS Y PERMISOS PARA CADA MENU
         $this->check = [];
         foreach ($menus_show as $menu) {
+            // Verificar si el menú está en los permisos del rol (solo en edición)
+            if ($this->id_perfil) {
+                $hasMenuPermission = DB::table('role_has_permissions as rhp')
+                    ->join('permissions as p', 'rhp.permission_id', '=', 'p.id')
+                    ->where('rhp.role_id', $this->id_perfil)
+                    ->where('p.id_menu', $menu->id_menu)
+                    ->exists();
+
+                if ($hasMenuPermission) {
+                    $this->menuSeleccionados[$menu->id_menu] = true;
+                }
+            }
+
+            // Obtener submenús para este menú
             $menu->submenus = DB::table('submenus')
                 ->where('id_menu', $menu->id_menu)
                 ->where('submenu_show', 1)
@@ -65,21 +80,20 @@ class Nuevoperfiles extends Component
             // Obtener permisos para cada submenú
             foreach ($menu->submenus as $submenu) {
                 $submenu->permisos = DB::table('permissions')
-//                    ->where('permissions_group',3)
                     ->where('permissions_group_id', $submenu->id_submenu)
                     ->orderBy('descripcion')
                     ->get();
 
-                // Verificar si el submenú está en los permisos del rol
+                // Verificar si el submenú está en los permisos del rol (solo en edición)
                 if ($this->id_perfil) {
                     // Marcar submenú si tiene algún permiso asignado al rol
-                    $hasPermission = DB::table('role_has_permissions as rhp')
+                    $hasSubmenuPermission = DB::table('role_has_permissions as rhp')
                         ->join('permissions as p', 'rhp.permission_id', '=', 'p.id')
                         ->where('rhp.role_id', $this->id_perfil)
                         ->where('p.permissions_group_id', $submenu->id_submenu)
                         ->exists();
 
-                    if ($hasPermission) {
+                    if ($hasSubmenuPermission) {
                         $this->submenuSeleccionados[$submenu->id_submenu] = true;
                     }
 
@@ -89,6 +103,7 @@ class Nuevoperfiles extends Component
                             ['permission_id', '=', $permiso->id],
                             ['role_id', '=', $this->id_perfil]
                         ])->first();
+
                         if ($perMenu) {
                             $this->check[] = $permiso->id;
                             $this->permisosSeleccionados[$permiso->id] = true;
@@ -126,7 +141,7 @@ class Nuevoperfiles extends Component
         if($data_perfil) {
             $this->name = $data_perfil->name;
             $this->rol_descripcion = $data_perfil->rol_descripcion;
-            $this->rol_vendedor = $data_perfil->rol_vendedor;
+            $this->rol_vendedor = $data_perfil->rol_vendedor == 1;
             $this->codigo_perfil = 'PU' . $data_perfil->id;
 
             // Cargar usuarios existentes
@@ -189,15 +204,14 @@ class Nuevoperfiles extends Component
     public function guardar_editar_perfil() {
         try {
             // Validar que se haya seleccionado al menos un usuario
-            if (count($this->users_seleccionados) === 0) {
-                session()->flash('error', 'Debes seleccionar al menos un usuario.');
-                return;
-            }
+//            if (count($this->users_seleccionados) === 0) {
+//                session()->flash('error', 'Debes seleccionar al menos un usuario.');
+//                return;
+//            }
 
             $this->validate([
                 'name' => 'required|string|max:255',
                 'rol_descripcion' => 'required|string',
-                'rol_vendedor' => 'required|boolean',
             ], [
                 'name.required' => 'El nombre del perfil es obligatorio.',
                 'name.string' => 'El nombre debe ser una cadena de texto.',
@@ -205,9 +219,6 @@ class Nuevoperfiles extends Component
 
                 'rol_descripcion.required' => 'La descripción del perfil es obligatoria.',
                 'rol_descripcion.string' => 'La descripción debe ser una cadena de texto.',
-
-                'rol_vendedor.required' => 'Debe especificar si es perfil vendedor.',
-                'rol_vendedor.boolean' => 'El valor debe ser verdadero o falso.',
             ]);
 
             DB::beginTransaction();
@@ -223,20 +234,33 @@ class Nuevoperfiles extends Component
                 $role_save->guard_name = 'web';
                 $role_save->rol_descripcion = $this->rol_descripcion;
                 $role_save->rol_tipo = 1;
-                $role_save->rol_vendedor = $this->rol_vendedor ? 1 : 0;
                 $role_save->rol_codigo = $this->codigo_perfil;
                 $role_save->roles_status = 1;
 
                 if ($role_save->save()) {
                     // Asignar usuarios al rol
-                    foreach ($this->users_seleccionados as $usuario) {
-                        $user = User::find($usuario['id_users']);
-                        if ($user) {
-                            DB::table('model_has_roles')->insert([
-                                'role_id' => $role_save->id,
-                                'model_type' => 'App\Models\User',
-                                'model_id' => $user->id_users
-                            ]);
+//                    foreach ($this->users_seleccionados as $usuario) {
+//                        $user = User::find($usuario['id_users']);
+//                        if ($user) {
+//                            DB::table('model_has_roles')->insert([
+//                                'role_id' => $role_save->id,
+//                                'model_type' => 'App\Models\User',
+//                                'model_id' => $user->id_users
+//                            ]);
+//                        }
+//                    }
+
+                    // Procesar menús seleccionados
+                    $permisosMenus = [];
+                    foreach ($this->menuSeleccionados as $id_menu => $seleccionado) {
+                        if ($seleccionado) {
+                            // Buscar permisos asociados a este menú
+                            $permisosMenu = DB::table('permissions')
+                                ->where('id_menu', $id_menu)
+                                ->pluck('id')
+                                ->toArray();
+
+                            $permisosMenus = array_merge($permisosMenus, $permisosMenu);
                         }
                     }
 
@@ -244,22 +268,21 @@ class Nuevoperfiles extends Component
                     $permisosSubmenus = [];
                     foreach ($this->submenuSeleccionados as $id_submenu => $seleccionado) {
                         if ($seleccionado) {
-                            // Buscar el permiso principal del submenú
-                            $permisoSubmenu = DB::table('permissions')
+                            // Buscar permisos asociados a este submenú
+                            $permisosSubmenu = DB::table('permissions')
                                 ->where('id_submenu', $id_submenu)
-                                ->first();
+                                ->pluck('id')
+                                ->toArray();
 
-                            if ($permisoSubmenu) {
-                                $permisosSubmenus[] = $permisoSubmenu->id;
-                            }
+                            $permisosSubmenus = array_merge($permisosSubmenus, $permisosSubmenu);
                         }
                     }
 
-                    // Obtener permisos normales seleccionados
-                    $permisosNormales = array_keys(array_filter($this->permisosSeleccionados));
+                    // Obtener permisos específicos seleccionados
+                    $permisosEspecificos = array_keys(array_filter($this->permisosSeleccionados));
 
-                    // Combinar ambos tipos de permisos
-                    $permisosFinales = array_merge($permisosNormales, $permisosSubmenus);
+                    // Combinar todos los permisos
+                    $permisosFinales = array_merge($permisosMenus, $permisosSubmenus, $permisosEspecificos);
 
                     // Asignar todos los permisos al rol
                     if (!empty($permisosFinales)) {

@@ -103,14 +103,19 @@
         </x-slot>
     </x-modal-general>
 
-    <div class="row">
-        <div class="col-lg-6 col-md-6 col-sm-12 d-flex align-items-center mb-2">
+    <div class="row align-content-center">
+        <div class="col-lg-6 col-md-6 col-sm-12 d-flex align-items-center mb-3">
             <h5 class="text-dark">Fecha de última actualización: <strong>{{ $ultimaActualizacion ? $me->obtenerNombreFecha($ultimaActualizacion, 'DateTime', 'DateTime') : '-' }}</strong></h5>
         </div>
-        <div class="col-lg-6 col-md-6 col-sm-12 text-end">
+
+        <div class="col-lg-6 col-md-6 col-sm-12 text-end mb-3">
             <a class="btn btn-sm  btn-warning text-white fs-6" wire:click="actualizar_vendedores">
                 Actualizar
             </a>
+        </div>
+
+        <div class="col-lg-6 col-md-6 col-sm-12 d-flex align-items-center mb-3">
+            <x-select-filter wire:model.live="paginacion_vendedores" />
         </div>
     </div>
 
@@ -142,6 +147,7 @@
                                 <th>Ruta</th>
                                 <th>Zona</th>
                                 <th>Usuario INTRANET</th>
+                                <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
                         </x-slot>
@@ -150,7 +156,7 @@
                             @if(count($vendedores) > 0)
                                 @php $a = 1 @endphp
                                 @foreach($vendedores as $v)
-                                    <tr style="background: {{ $v->vendedor_estado == 2 ? '#ffcccc' : 'transparent' }}">
+                                    <tr style="background: {{ $v->vendedor_estado == 0 ? '#ffcccc' : 'transparent' }}">
                                         <td>{{ $a }}</td>
                                         <td>{{ $v->vendedor_codigo_intranet ?? '-' }}</td>
                                         <td>{{ $v->vendedor_codigo_vendedor_starsoft ?? '-' }}</td>
@@ -160,26 +166,37 @@
                                         <td>{{ $v->vendedor_codigo_zona ?? '-' }}</td>
                                         <td>{{ $v->vendedor_usuario ?? '-' }}</td>
                                         <td>
+                                            <span class="font-bold badge
+                                                {{ $v->vendedor_estado == 1 ? 'bg-label-success' : ($v->vendedor_estado == 0 ? 'bg-label-danger' : 'bg-label-warning') }}">
+                                                {{ $v->vendedor_estado == 1 ? 'Habilitado' : ($v->vendedor_estado == 0 ? 'Eliminado' : 'Deshabilitado') }}
+                                            </span>
+                                        </td>
+                                        <td>
                                             @if($v->vendedor_estado == 1)
                                                 <x-btn-accion class="text-danger" wire:click="btn_deshabilitar_vendedor('{{ base64_encode($v->id_vendedor) }}',2)" data-bs-toggle="modal" data-bs-target="#modalDeshabilitarVendedor">
                                                     <x-slot name="message">
                                                         <i class="fa-solid fa-ban"></i>
                                                     </x-slot>
                                                 </x-btn-accion>
-                                            @else
+                                            @elseif($v->vendedor_estado == 2)
                                                 <x-btn-accion class="text-success" wire:click="btn_deshabilitar_vendedor('{{ base64_encode($v->id_vendedor) }}',1)" data-bs-toggle="modal" data-bs-target="#modalDeshabilitarVendedor">
                                                     <x-slot name="message">
                                                         <i class="fa-solid fa-check"></i>
                                                     </x-slot>
                                                 </x-btn-accion>
-                                            @endif
-                                            <x-btn-accion class="text-primary" wire:click="btn_eliminar_vendedor('{{ base64_encode($v->id_vendedor) }}')" data-bs-toggle="modal" data-bs-target="#modalEliminarVendedor">
-                                                <x-slot name="message">
-                                                    <i class="fa-solid fa-trash"></i>
-                                                </x-slot>
-                                            </x-btn-accion>
+                                            @else
 
-                                            @if(empty($v->vendedor_codigo_intranet))
+                                            @endif
+
+                                            @if($v->vendedor_estado == 1 || $v->vendedor_estado == 2)
+                                                <x-btn-accion class="text-primary" wire:click="btn_eliminar_vendedor('{{ base64_encode($v->id_vendedor) }}')" data-bs-toggle="modal" data-bs-target="#modalEliminarVendedor">
+                                                    <x-slot name="message">
+                                                        <i class="fa-solid fa-trash"></i>
+                                                    </x-slot>
+                                                </x-btn-accion>
+                                            @endif
+
+                                            @if($v->vendedor_estado == 1)
                                                 <button class="btn text-info btn-sm mb-2" wire:click="btn_codigo_intranet('{{ base64_encode($v->id_vendedor) }}')" data-bs-toggle="modal" data-bs-target="#modalCodigoIntranet">
                                                     <i class="fa-regular fa-square-plus"></i>
                                                 </button>

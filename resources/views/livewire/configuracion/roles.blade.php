@@ -100,18 +100,19 @@
             </form>
         </x-slot>
     </x-modal-general>
+
     <x-modal-delete  wire:ignore.self >
-        <x-slot name="id_modal">modalRolesDelete</x-slot>
+        <x-slot name="id_modal">modalDeleteRole</x-slot>
         <x-slot name="modalContentDelete">
             <form wire:submit.prevent="disable_roles">
                 <div class="row">
                     <div class="col-lg-12 col-md-12 col-sm-12">
-                        <h2 class="deleteTitle">{{$messageDelete}}</h2>
+                        <h2 class="deleteTitle">{{$messageDeleteRole}}</h2>
                     </div>
                     <div class="col-lg-12 col-md-12 col-sm-12">
-                        @error('id_menu') <span class="message-error">{{ $message }}</span> @enderror
+                        @error('id_rol') <span class="message-error">{{ $message }}</span> @enderror
 
-                        @error('statusMenu') <span class="message-error">{{ $message }}</span> @enderror
+                        @error('statusRol') <span class="message-error">{{ $message }}</span> @enderror
 
                         @if (session()->has('error_delete'))
                             <div class="alert alert-danger alert-dismissible show fade">
@@ -199,11 +200,25 @@
                                     <td>{{$ro->rol_descripcion}}</td>
                                     <td></td>
                                     <td>
-                                        @if($conteoRol != 1 && $conteoRol != 2)
+{{--                                        @if($conteoRol != 1 && $conteoRol != 2)--}}
                                             <a href="{{route('configuracion.nuevoperfil',['id'=>base64_encode($ro->id)])}}"
                                             style="cursor: pointer" class="btn-sm btn-warning text-white">
                                                 <i class="fa fa-pencil"></i>
                                             </a>
+{{--                                        @endif--}}
+
+                                        @if($ro->roles_status == 1)
+                                            <x-btn-accion class=" text-danger" wire:click="btn_disable('{{ base64_encode($ro->id) }}',0)" data-bs-toggle="modal" data-bs-target="#modalDeleteRole">
+                                                <x-slot name="message">
+                                                    <i class="fa-solid fa-ban"></i>
+                                                </x-slot>
+                                            </x-btn-accion>
+                                        @else
+                                            <x-btn-accion class=" text-success" wire:click="btn_disable('{{ base64_encode($ro->id) }}',1)" data-bs-toggle="modal" data-bs-target="#modalDeleteRole">
+                                                <x-slot name="message">
+                                                    <i class="fa-solid fa-check"></i>
+                                                </x-slot>
+                                            </x-btn-accion>
                                         @endif
                                     </td>
                                 </tr>
@@ -294,7 +309,7 @@
         $('#modalRolesPermissions').modal('hide');
     });
     $wire.on('hideModalDelete', () => {
-        $('#modalRolesDelete').modal('hide');
+        $('#modalDeleteRole').modal('hide');
     });
 </script>
 @endscript
