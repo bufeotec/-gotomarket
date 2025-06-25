@@ -317,7 +317,7 @@ class Nuevoperfiles extends Component
                     session()->flash('error', 'Error al guardar el perfil.');
                 }
             } else { // ACTUALIZAR PERFIL EXISTENTE
-                if (!Gate::allows('update_vehiculos')) {
+                if (!Gate::allows('actualizar_perfil')) {
                     session()->flash('error', 'No tiene permisos para actualizar este registro.');
                     return;
                 }
