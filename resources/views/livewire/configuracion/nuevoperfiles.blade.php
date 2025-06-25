@@ -111,50 +111,41 @@
                                     </div>
 
                                     <div class="col-lg-12 col-sm-12 mb-3 mt4">
-                                        @foreach($menus_show as $ms)
-                                            <div class="mb-2 d-flex align-content-center text-center">
-{{--                                                NUEVO CHECK PARA LOS MENUS--}}
-                                                <input type="checkbox"
-                                                       class="form-check-input"
-                                                       id="mene_{{$ms->id_menu}}"
-                                                       wire:model="menuSeleccionados.{{ $ms->id_menu }}"
-                                                    @checked(isset($menuSeleccionados[$ms->id_menu]) && $menuSeleccionados[$ms->id_menu])
-                                                />
-                                                <h5 class="mt1 ms-2">{{ $ms->menu_name }}</h5>
-                                            </div>
-                                            @if($ms->submenus->count() > 0)
-                                                <div class="ms-5">
-                                                    @foreach($ms->submenus as $subm)
-                                                        <div class="mb-2 d-flex align-content-center text-center">
-                                                            <input type="checkbox"
-                                                                class="form-check-input"
-                                                                id="submenu_{{ $subm->id_submenu }}"
-                                                                wire:model="submenuSeleccionados.{{ $subm->id_submenu }}"
-                                                                @checked(isset($submenuSeleccionados[$subm->id_submenu]) && $submenuSeleccionados[$subm->id_submenu])
-                                                            />
-                                                            <h6 style="color: #607080" class="text-capitalize mt-1 ms-2">{{ $subm->submenu_name }}</h6>
-                                                        </div>
-
-                                                        @if(isset($subm->permisos) && $subm->permisos->count() > 0)
-                                                            <div class="ms-4">
-                                                                @foreach($subm->permisos as $permiso)
-                                                                    <div class="mb-2 d-flex align-items-center">
-                                                                        <input type="checkbox"
-                                                                            class="form-check-input me-2"
-                                                                            id="permiso_{{ $permiso->id }}"
-                                                                            wire:model="permisosSeleccionados.{{ $permiso->id }}"
-                                                                            @checked(isset($permisosSeleccionados[$permiso->id]) && $permisosSeleccionados[$permiso->id])
-                                                                        />
-                                                                        <label for="permiso_{{ $permiso->id }}" style="color: #607080">
-                                                                            {{ $permiso->name }}
-                                                                        </label>
-                                                                    </div>
-                                                                @endforeach
+                                        @foreach($listar_permisos_general as $index => $v)
+                                            <div class="col-lg-12">
+                                                <div class="accordion" id="accordionExample_{{$index}}">
+                                                    <div class="accordion-item">
+                                                        <h2 class="accordion-header">
+                                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne_{{$index}}" aria-expanded="false" aria-controls="collapseOne_{{$index}}">
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input" type="checkbox" wire:model="check"  id="edit_check_permisos_{{ $v->id }}" value="{{ $v->id }}" >
+                                                                    <label class="form-check-label" for="edit_check_permisos_{{ $v->id }}"> {{ $v->menu_name }} </label>
+                                                                </div>
+                                                            </button>
+                                                        </h2>
+                                                        <div id="collapseOne_{{$index}}" class="accordion-collapse collapse " data-bs-parent="#accordionExample_{{$index}}">
+                                                            <div class="">
+                                                                <ul class="list-group">
+                                                                    @foreach($v->sub as $s)
+                                                                        <li class="list-group-item">
+                                                                            <input class="form-check-input  me-1"  wire:model="check" type="checkbox"  id="edit_check_permisos_{{ $s->id }}" value="{{ $s->id }}" >
+                                                                            <label class="form-check-label" for="edit_check_permisos_{{ $s->id }}"> {{ $s->name }} </label>
+                                                                            <ul class="list-group mt-2">
+                                                                                @foreach($s->permisos as $p)
+                                                                                    <li class="list-group-item" style="border: none!important;">
+                                                                                        <input class="form-check-input  me-1"  wire:model="check" type="checkbox"  id="edit_check_permisos_{{ $p->id }}" value="{{ $p->id }}"  >
+                                                                                        <label class="form-check-label" for="edit_check_permisos_{{ $p->id }}"> {{ $p->descripcion }} </label>
+                                                                                    </li>
+                                                                                @endforeach
+                                                                            </ul>
+                                                                        </li>
+                                                                    @endforeach
+                                                                </ul>
                                                             </div>
-                                                        @endif
-                                                    @endforeach
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            @endif
+                                            </div>
                                         @endforeach
                                     </div>
                                 </div>
