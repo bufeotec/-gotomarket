@@ -119,7 +119,7 @@
                                                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne_{{$index}}" aria-expanded="false" aria-controls="collapseOne_{{$index}}">
                                                                 <div class="form-check">
                                                                     <input class="form-check-input" type="checkbox" wire:model="check"  id="edit_check_permisos_{{ $v->id }}" value="{{ $v->id }}" >
-                                                                    <label class="form-check-label" for="edit_check_permisos_{{ $v->id }}"> {{ $v->name }} </label>
+                                                                    <label class="form-check-label" for="edit_check_permisos_{{ $v->id }}"> {{ $v->menu_name }} </label>
                                                                 </div>
                                                             </button>
                                                         </h2>
@@ -134,7 +134,7 @@
                                                                                 @foreach($s->permisos as $p)
                                                                                     <li class="list-group-item" style="border: none!important;">
                                                                                         <input class="form-check-input  me-1"  wire:model="check" type="checkbox"  id="edit_check_permisos_{{ $p->id }}" value="{{ $p->id }}"  >
-                                                                                        <label class="form-check-label" for="edit_check_permisos_{{ $p->id }}"> {{ $p->name }} </label>
+                                                                                        <label class="form-check-label" for="edit_check_permisos_{{ $p->id }}"> {{ $p->descripcion }} </label>
                                                                                     </li>
                                                                                 @endforeach
                                                                             </ul>

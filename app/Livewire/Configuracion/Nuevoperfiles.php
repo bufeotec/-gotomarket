@@ -58,7 +58,9 @@ class Nuevoperfiles extends Component
         $this->check = [];
         $listar_permisos = DB::table('permissions as p')
             ->join('menus','menus.id_menu','=','p.permissions_group_id')
-            ->where([['p.permission_status','=',1],['p.permissions_group','=',1]])->get();
+            ->where([['p.permission_status','=',1],['p.permissions_group','=',1]])
+            ->where([['menus.menu_show','=',1]])
+            ->get();
 
         foreach ($listar_permisos as $li){
             $perMenu = DB::table('role_has_permissions')->where([['permission_id','=',$li->id],['role_id','=',$this->id_perfil]])->first();
@@ -69,6 +71,7 @@ class Nuevoperfiles extends Component
             $li->sub = DB::table('permissions as p')
                 ->join('submenus as s','s.id_submenu','=','p.permissions_group_id')
                 ->where('s.id_menu','=',$li->id_menu)
+                ->where('s.submenu_show','=',1)
                 ->where('p.permission_status','=',1)
                 ->where('p.permissions_group','=',2)
                 ->get();
