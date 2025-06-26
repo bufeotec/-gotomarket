@@ -200,25 +200,25 @@
                                     <td>{{$ro->rol_descripcion}}</td>
                                     <td></td>
                                     <td>
-{{--                                        @if($conteoRol != 1 && $conteoRol != 2)--}}
-                                            <a href="{{route('configuracion.nuevoperfil',['id'=>base64_encode($ro->id)])}}"
-                                            style="cursor: pointer" class="btn-sm btn-warning text-white">
+                                        @if( (Auth::user()->roles->first()->id == 1) || (Auth::user()->roles->first()->id == 2 && $ro->id != 1) )
+                                            <a href="{{ route('configuracion.nuevoperfil', ['id' => base64_encode($ro->id)]) }}"
+                                               style="cursor: pointer" class="btn-sm btn-warning text-white">
                                                 <i class="fa fa-pencil"></i>
                                             </a>
-{{--                                        @endif--}}
 
-                                        @if($ro->roles_status == 1)
-                                            <x-btn-accion class=" text-danger" wire:click="btn_disable('{{ base64_encode($ro->id) }}',0)" data-bs-toggle="modal" data-bs-target="#modalDeleteRole">
-                                                <x-slot name="message">
-                                                    <i class="fa-solid fa-ban"></i>
-                                                </x-slot>
-                                            </x-btn-accion>
-                                        @else
-                                            <x-btn-accion class=" text-success" wire:click="btn_disable('{{ base64_encode($ro->id) }}',1)" data-bs-toggle="modal" data-bs-target="#modalDeleteRole">
-                                                <x-slot name="message">
-                                                    <i class="fa-solid fa-check"></i>
-                                                </x-slot>
-                                            </x-btn-accion>
+                                            @if($ro->roles_status == 1)
+                                                <x-btn-accion class=" text-danger" wire:click="btn_disable('{{ base64_encode($ro->id) }}',0)" data-bs-toggle="modal" data-bs-target="#modalDeleteRole">
+                                                    <x-slot name="message">
+                                                        <i class="fa-solid fa-ban"></i>
+                                                    </x-slot>
+                                                </x-btn-accion>
+                                            @else
+                                                <x-btn-accion class=" text-success" wire:click="btn_disable('{{ base64_encode($ro->id) }}',1)" data-bs-toggle="modal" data-bs-target="#modalDeleteRole">
+                                                    <x-slot name="message">
+                                                        <i class="fa-solid fa-check"></i>
+                                                    </x-slot>
+                                                </x-btn-accion>
+                                            @endif
                                         @endif
                                     </td>
                                 </tr>

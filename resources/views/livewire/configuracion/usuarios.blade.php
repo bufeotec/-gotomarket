@@ -224,10 +224,10 @@
                                         <td>
 
                                             @if(Auth::user()->roles->first()->id != 1 && $index > 0)
-                                                <span class=" text-primary m-1 cursoPointer" wire:click="edit_users('{{ base64_encode($me->id_users) }}')"
-                                                          data-bs-toggle="modal" data-bs-target="#modalUsuarios">
-                                                        <i class="fa-solid fa-pen-to-square"></i>
-                                                </span>
+{{--                                                <span class=" text-primary m-1 cursoPointer" wire:click="edit_users('{{ base64_encode($me->id_users) }}')"--}}
+{{--                                                          data-bs-toggle="modal" data-bs-target="#modalUsuarios">--}}
+{{--                                                        <i class="fa-solid fa-pen-to-square"></i>--}}
+{{--                                                </span>--}}
                                             @else
                                                @if(Auth::user()->roles->first()->id == 1)
 {{--                                                    <span class=" text-primary m-1 cursoPointer" wire:click="edit_users('{{ base64_encode($me->id_users) }}')"--}}
