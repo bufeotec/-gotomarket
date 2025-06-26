@@ -231,7 +231,7 @@
         </x-slot>
     </x-card-general-view>
 
-    <x-card-general-view>
+    {{--<x-card-general-view>
         <x-slot name="content">
             <div class="row">
                 <div class="col-lg-12 col-md-12 col-sm-12">
@@ -296,7 +296,7 @@
                 </div>
             </div>
         </x-slot>
-    </x-card-general-view>
+    </x-card-general-view>--}}
     {{ $roles->links(data: ['scrollTo' => false]) }}
 </div>
 

@@ -129,14 +129,16 @@
                                                                     @foreach($v->sub as $s)
                                                                         <li class="list-group-item">
                                                                             <input class="form-check-input  me-1"  wire:model="check" type="checkbox"  id="edit_check_permisos_{{ $s->id }}" value="{{ $s->id }}" >
-                                                                            <label class="form-check-label" for="edit_check_permisos_{{ $s->id }}"> {{ $s->name }} </label>
+                                                                            <label class="form-check-label" for="edit_check_permisos_{{ $s->id }}"> {{ $s->descripcion }} </label>
                                                                             <ul class="list-group mt-2">
-                                                                                @foreach($s->permisos as $p)
-                                                                                    <li class="list-group-item" style="border: none!important;">
-                                                                                        <input class="form-check-input  me-1"  wire:model="check" type="checkbox"  id="edit_check_permisos_{{ $p->id }}" value="{{ $p->id }}"  >
-                                                                                        <label class="form-check-label" for="edit_check_permisos_{{ $p->id }}"> {{ $p->descripcion }} </label>
-                                                                                    </li>
-                                                                                @endforeach
+                                                                                @if(!empty($s->permisos))
+                                                                                    @foreach($s->permisos as $p)
+                                                                                        <li class="list-group-item" style="border: none!important;">
+                                                                                            <input class="form-check-input  me-1"  wire:model="check" type="checkbox"  id="edit_check_permisos_{{ $p->id }}" value="{{ $p->id }}"  >
+                                                                                            <label class="form-check-label" for="edit_check_permisos_{{ $p->id }}"> {{ $p->descripcion }} </label>
+                                                                                        </li>
+                                                                                    @endforeach
+                                                                                @endif
                                                                             </ul>
                                                                         </li>
                                                                     @endforeach

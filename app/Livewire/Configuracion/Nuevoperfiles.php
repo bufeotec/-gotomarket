@@ -74,8 +74,10 @@ class Nuevoperfiles extends Component
                 ->where('s.submenu_show','=',1)
                 ->where('p.permission_status','=',1)
                 ->where('p.permissions_group','=',2)
+                ->whereNotIn('s.submenu_name', ['Menus', 'Iconos', 'Empresas'])
                 ->get();
             foreach($li->sub as $se){
+
                 $peSub = DB::table('role_has_permissions')->where([['permission_id','=',$se->id],['role_id','=',$this->id_perfil]])->first();
                 if ($peSub){
                     $this->check[] = $se->id;
@@ -93,6 +95,8 @@ class Nuevoperfiles extends Component
                         $this->check[] = $per->id;
                     }
                 }
+
+
             }
         }
         $this->listar_permisos_general = $listar_permisos;
