@@ -231,7 +231,8 @@
         </x-slot>
     </x-card-general-view>
 
-    <x-card-general-view>
+    @if(Auth::user()->roles->first()->id == 1)
+        <x-card-general-view>
         <x-slot name="content">
             <div class="row">
                 <div class="col-lg-12 col-md-12 col-sm-12">
@@ -297,6 +298,8 @@
             </div>
         </x-slot>
     </x-card-general-view>
+    @endif
+
     {{ $roles->links(data: ['scrollTo' => false]) }}
 </div>
 

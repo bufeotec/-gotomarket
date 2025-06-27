@@ -64,6 +64,12 @@ class Creditoscobranzas extends Component
         return view('livewire.programacioncamiones.creditoscobranzas');
     }
     public function buscar_comprobantes(){
+
+        if (!Gate::allows('buscar_comprobantes_anticipados')) {
+            session()->flash('error_pre_pro', 'No tiene permisos para cambiar los estados de este registro.');
+            return;
+        }
+
         // Construir la consulta base
         $query = DB::table('guias')
             ->where('guia_estado_aprobacion', 1);

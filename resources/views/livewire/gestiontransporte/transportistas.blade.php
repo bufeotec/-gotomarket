@@ -164,7 +164,7 @@
                 <x-slot name="icons">
                     fa-solid fa-plus
                 </x-slot>
-                Agregar Transportistas
+                Agregar Transportista
             </x-btn-export>
         </div>
     </div>
@@ -218,7 +218,8 @@
                                         </td>
 
                                         <td>
-                                            <x-btn-accion class=" text-primary"  wire:click="edit_data('{{ base64_encode($tr->id_transportistas) }}')" data-bs-toggle="modal" data-bs-target="#modalTransportistas">
+                                            <x-btn-accion class=" text-primary"  wire:click="edit_data('{{ base64_encode($tr->id_transportistas) }}')"
+                                                          data-bs-toggle="modal" data-bs-target="#modalTransportistas">
                                                 <x-slot name="message">
                                                     <i class="fa-solid fa-pen-to-square"></i>
                                                 </x-slot>

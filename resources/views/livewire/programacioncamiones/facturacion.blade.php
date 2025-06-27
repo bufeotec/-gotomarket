@@ -470,7 +470,8 @@
 {{--                                                        </x-btn-accion>--}}
 {{--                                                    @endif--}}
                                                     @if($factura->guia_estado_aprobacion != 7)
-                                                        <x-btn-accion class="btn bg-primary btn-sm text-white" wire:click="edit_guia('{{ base64_encode($factura->id_guia) }}')" data-bs-toggle="modal" data-bs-target="#modalEditCambioEstado">
+                                                        <x-btn-accion class="btn bg-primary btn-sm text-white" wire:click="edit_guia('{{ base64_encode($factura->id_guia) }}')"
+                                                                      data-bs-toggle="modal" data-bs-target="#modalEditCambioEstado">
                                                             <x-slot name="message">
                                                                 <i class="fa-solid fa-edit"></i>
                                                             </x-slot>
@@ -482,9 +483,10 @@
                                                             </x-slot>
                                                         </x-btn-accion>
                                                     @endif
-                                                    <a data-bs-toggle="modal" data-bs-target="#modalActualizarDetalle" wire:click="actualizar_detalle_guia('{{ $factura->guia_nro_doc }}', '{{ base64_encode($factura->id_guia) }}')" style="cursor:pointer;" class="btn-sm btn-warning text-white">
-                                                        <i class="fa fa-refresh">
-                                                        </i>
+                                                    <br>
+                                                    <a data-bs-toggle="modal" data-bs-target="#modalActualizarDetalle" wire:click="actualizar_detalle_guia('{{ $factura->guia_nro_doc }}',
+                                                    '{{ base64_encode($factura->id_guia) }}')" style="cursor:pointer;" class="btn-sm btn-warning text-white">
+                                                        <i class="fa fa-refresh"></i>
                                                     </a>
                                                 </td>
                                             </tr>
