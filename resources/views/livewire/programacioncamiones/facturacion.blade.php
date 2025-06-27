@@ -201,15 +201,12 @@
                                 <tr>
                                     <td>Emisión</td>
                                     <td>{{ $guia_fecha_emision ? $me->obtenerNombreFecha($guia_fecha_emision, 'DateTime', 'Date') : ' ' }}</td>
-                                    <td></td>
+                                    <td>{{$nombre_usuario}}</td>
                                     <td></td>
                                     <td>
                                         <h6 class="text-dark">{{ $guia_fecha_emision ? $me->obtenerNombreFecha($guia_fecha_emision, 'DateTime', 'Date') : '-' }}</h6>
                                     </td>
-                                    <td>
-                                    <textarea class="form-control form-control-sm"
-                                              wire:model="comentario_emision"></textarea>
-                                    </td>
+                                    <td></td>
                                 </tr>
 
                                 @php
@@ -247,8 +244,7 @@
                                         </td>
                                         <td>
                                             @if($historial)
-                                                <textarea class="form-control form-control-sm"
-                                                          wire:model="comentariosEditados.{{ $estado }}"></textarea>
+                                                <textarea class="form-control form-control-sm" rows="3" wire:model="comentariosEditados.{{ $estado }}"></textarea>
                                             @endif
                                         </td>
                                     </tr>
