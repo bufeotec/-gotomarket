@@ -279,7 +279,8 @@ class Nuevoperfiles extends Component
                 53 => 192,
                 54 => 196,
                 200 => 166,
-                134 => [139, 140]
+                134 => [139, 140],
+                143 => [168, 173, 169, 174, 170, 175, 171, 176, 172, 177]
             ];
 
             // Función para manejar permisos relacionados
@@ -393,11 +394,14 @@ class Nuevoperfiles extends Component
 
                         // 5. Filtrar permissionsToKeep para eliminar permisos relacionados no deseados
                         $permissionsToKeep = array_filter($permissionsToKeep, function($perm) use ($selectedPermissions, $relatedPermissionsMap) {
-                            // Si el permiso es uno de los relacionados
-                            if (in_array($perm, $relatedPermissionsMap)) {
-                                $mainPermission = array_search($perm, $relatedPermissionsMap);
-                                // Solo mantenerlo si el permiso principal está seleccionado
-                                return in_array($mainPermission, $selectedPermissions);
+                            // Verificar si el permiso es uno de los relacionados en cualquier grupo
+                            foreach ($relatedPermissionsMap as $main => $related) {
+                                $relatedArray = is_array($related) ? $related : [$related];
+
+                                if (in_array($perm, $relatedArray)) {
+                                    // Solo mantenerlo si el permiso principal está seleccionado
+                                    return in_array($main, $selectedPermissions);
+                                }
                             }
                             return true;
                         });
