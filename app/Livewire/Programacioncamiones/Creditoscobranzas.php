@@ -258,6 +258,12 @@ class Creditoscobranzas extends Component
     }
     public function confirmarEnvio(){
         try {
+
+            if (!Gate::allows('enviar_guias')) {
+                session()->flash('error', 'No tiene permisos para cambiar los estados del menú.');
+                return;
+            }
+
             if (empty($this->selectedItems)) {
                 session()->flash('error', 'Debes seleccionar al menos una guía.');
                 return;

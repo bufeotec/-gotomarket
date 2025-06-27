@@ -188,7 +188,7 @@
                                             @endforeach
                                         @else
                                             <tr>
-                                                <td colspan="3" class="text-center">
+                                                <td colspan="5" class="text-center">
                                                     <p class="mb-0" style="font-size: 12px">No se encontraron comprobantes.</p>
                                                 </td>
                                             </tr>
