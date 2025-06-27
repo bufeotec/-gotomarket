@@ -69,6 +69,11 @@ class Facturacion extends Component
 
     public function buscar_comprobantes(){
 
+        if (!Gate::allows('buscar_comprobantes_ged')) {
+            session()->flash('error_pre_pro', 'No tiene permisos para cambiar los estados de este registro.');
+            return;
+        }
+
         $query = DB::table('guias as g')
             ->leftJoin('guias_detalles as gd', 'g.id_guia', '=', 'gd.id_guia')
             ->where('g.guia_estado_registro', '=', 1);

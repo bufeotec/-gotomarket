@@ -304,7 +304,7 @@
             <div class="row align-items-center">
                 <div class="col-lg-2 col-md-6 col-sm-12 mb-3 position-relative">
                     <label for="buscar_numero_guia" class="form-label">Número de guía</label>
-                    <input type="text" name="buscar_numero_guia" id="buscar_numero_guia" wire:model.live="buscar_numero_guia" class="form-control" placeholder="Ingrese número de guía (ej: T0123456)" >
+                    <input type="text" name="buscar_numero_guia" id="buscar_numero_guia" wire:model.live="buscar_numero_guia" class="form-control" placeholder="Ej: T0010016811" >
                 </div>
                 <div class="col-lg-2 col-md-2 col-sm-12 mb-3">
                     <label for="buscar_ruc_nombre" class="form-label">Nombre del cliente</label>

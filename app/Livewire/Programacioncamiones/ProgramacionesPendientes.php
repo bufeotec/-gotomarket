@@ -154,10 +154,21 @@ class ProgramacionesPendientes extends Component
     }
     public function cambiarEstadoProgramacionFormulario() {
         try {
-            if (!Gate::allows('aprobar_rechazar_programacion')) {
-                session()->flash('error_delete', 'No tiene permisos para aprobar o rechazar esta programación.');
-                return;
+
+            if ($this->estadoPro == 1) {
+                if (!Gate::allows('aprobar_programacion')) {
+                    session()->flash('error_delete', 'No tiene permisos para aprobar o rechazar esta programación.');
+                    return;
+                }
+            }else{
+                if (!Gate::allows('rechazar_programacion')) {
+                    session()->flash('error_delete', 'No tiene permisos para aprobar o rechazar esta programación.');
+                    return;
+                }
             }
+
+
+
 
             $this->validate([
                 'id_progr' => 'required|integer',

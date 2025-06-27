@@ -100,7 +100,7 @@ class Validaredes extends Component
     public function disable_pre_pro(){
         try {
             // Verificar permisos del usuario
-            if (!Gate::allows('disable_pre_pro')) {
+            if (!Gate::allows('disable_pre_pro_2')) {
                 session()->flash('error_pre_pro', 'No tiene permisos para cambiar los estados de este registro.');
                 return;
             }
