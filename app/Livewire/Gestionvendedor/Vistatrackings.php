@@ -73,6 +73,7 @@ class Vistatrackings extends Component
     public $facturasRelacionadas = [];
     public $guiainfo = [];
     public $guia_detalle = [];
+    public $id_guia_seleccionada = null;
 
     public function render(){
         $nombre = $this->guia_nombre_cliente;
@@ -165,9 +166,8 @@ class Vistatrackings extends Component
         $this->mensajeEtapa0 = $fechaEmision . '<br>' . 'Fecha de emisión de la guía.';
 
         // Procesar historial
-        // Procesar historial
         foreach ($historialGuia as $registro) {
-            $fechaHora = $this->general->obtenerNombreFecha($registro->historial_guia_fecha_hora, 'DateTime', 'Date');
+            $fechaHora = $this->general->obtenerNombreFecha($registro->historial_guia_fecha_hora, 'DateTime', 'DateTime');
             $estado = $registro->historial_guia_estado_aprobacion;
 
             switch ($estado) {
@@ -179,7 +179,7 @@ class Vistatrackings extends Component
                     $this->mensajeEtapa2 = $fechaHora . '<br>' . 'Guía listo para despachar.';
                     $this->etapaActual = max($this->etapaActual, 2);
                     break;
-                case 4: // Programado
+                case 9: // Programado
                     $this->mensajeEtapa3 = $fechaHora . '<br>' . 'Guía despachado.';
                     $this->etapaActual = max($this->etapaActual, 3);
                     break;
@@ -279,10 +279,7 @@ class Vistatrackings extends Component
         $this->mensajeEtapa5 = '';
     }
 
-    // Agrega esta propiedad al componente
-    public $id_guia_seleccionada = null;
 
-// Método para establecer la guía seleccionada
     public function seleccionarGuia($id_guia) {
         $this->id_guia_seleccionada = $id_guia;
     }
@@ -320,26 +317,29 @@ class Vistatrackings extends Component
             $sheet = $spreadsheet->getActiveSheet();
 
             // Configurar encabezados
-            $sheet->setCellValue('A1', 'Almacén Salida');
-            $sheet->setCellValue('B1', 'Fecha Emisión');
-            $sheet->setCellValue('C1', 'Tipo Documento');
-            $sheet->setCellValue('D1', 'Nro Documento');
-            $sheet->setCellValue('E1', 'Nro Línea');
-            $sheet->setCellValue('F1', 'Código Producto');
-            $sheet->setCellValue('G1', 'Descripción Producto');
-            $sheet->setCellValue('H1', 'Lote');
-            $sheet->setCellValue('I1', 'Unidad');
-            $sheet->setCellValue('J1', 'Cantidad');
-            $sheet->setCellValue('K1', 'Precio Unit. (Inc IGV)');
-            $sheet->setCellValue('L1', 'Descuento Total (Sin IGV)');
-            $sheet->setCellValue('M1', 'IGV Total');
-            $sheet->setCellValue('N1', 'Importe Total (Inc IGV)');
-            $sheet->setCellValue('O1', 'Moneda');
-            $sheet->setCellValue('P1', 'Tipo Cambio');
-            $sheet->setCellValue('Q1', 'Peso Unit. (g)');
-            $sheet->setCellValue('R1', 'Volumen Unit.');
-            $sheet->setCellValue('S1', 'Peso Total (g)');
-            $sheet->setCellValue('T1', 'Volumen Total');
+            $sheet->setCellValue('A1', 'Fecha Emisión');
+            $sheet->setCellValue('B1', 'Nro Documento');
+            $sheet->setCellValue('C1', 'Código Producto');
+            $sheet->setCellValue('D1', 'Descripción Producto');
+            $sheet->setCellValue('E1', 'Unidad');
+            $sheet->setCellValue('F1', 'Cantidad');
+            $sheet->setCellValue('G1', 'Precio Unit. (Inc IGV)');
+            $sheet->setCellValue('H1', 'Descuento Total (Sin IGV)');
+            $sheet->setCellValue('I1', 'Importe Total (Inc IGV)');
+            $sheet->setCellValue('J1', 'Moneda');
+            $sheet->setCellValue('K1', 'Lote');
+            $sheet->setCellValue('L1', 'Peso Total (g)');
+            $sheet->setCellValue('M1', 'Volumen Total');
+            $sheet->setCellValue('N1', 'ESTADO');
+
+//            $sheet->setCellValue('A1', 'Almacén Salida');
+//            $sheet->setCellValue('C1', 'Tipo Documento');
+//            $sheet->setCellValue('E1', 'Nro Línea');
+//            $sheet->setCellValue('M1', 'IGV Total');
+//            $sheet->setCellValue('P1', 'Tipo Cambio');
+//            $sheet->setCellValue('Q1', 'Peso Unit. (g)');
+//            $sheet->setCellValue('R1', 'Volumen Unit.');
+
 
             // Estilo para encabezados
             $headerStyle = [
@@ -347,42 +347,44 @@ class Vistatrackings extends Component
                 'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
                     'startColor' => ['rgb' => '4472C4']]
             ];
-            $sheet->getStyle('A1:T1')->applyFromArray($headerStyle);
+            $sheet->getStyle('A1:N1')->applyFromArray($headerStyle);
 
             // Llenar datos
             $row = 2;
             foreach ($detalles as $detalle) {
-                $sheet->setCellValue('A'.$row, $detalle->guia_det_almacen_salida);
-                $sheet->setCellValue('B'.$row, $detalle->guia_det_fecha_emision);
-                $sheet->setCellValue('C'.$row, $detalle->guia_det_tipo_documento);
-                $sheet->setCellValue('D'.$row, $detalle->guia_det_nro_documento);
-                $sheet->setCellValue('E'.$row, $detalle->guia_det_nro_linea);
-                $sheet->setCellValue('F'.$row, $detalle->guia_det_cod_producto);
-                $sheet->setCellValue('G'.$row, $detalle->guia_det_descripcion_producto);
-                $sheet->setCellValue('H'.$row, $detalle->guia_det_lote);
-                $sheet->setCellValue('I'.$row, $detalle->guia_det_unidad);
-                $sheet->setCellValue('J'.$row, $detalle->guia_det_cantidad);
-                $sheet->setCellValue('K'.$row, $detalle->guia_det_precio_unit_final_inc_igv);
-                $sheet->setCellValue('L'.$row, $detalle->guia_det_descuento_total_sin_igv);
-                $sheet->setCellValue('M'.$row, $detalle->guia_det_igv_total);
-                $sheet->setCellValue('N'.$row, $detalle->guia_det_importe_total_inc_igv);
-                $sheet->setCellValue('O'.$row, $detalle->guia_det_moneda);
-                $sheet->setCellValue('P'.$row, $detalle->guia_det_tipo_cambio);
-                $sheet->setCellValue('Q'.$row, $detalle->guia_det_peso_gramo);
-                $sheet->setCellValue('R'.$row, $detalle->guia_det_volumen);
-                $sheet->setCellValue('S'.$row, $detalle->guia_det_peso_total_gramo);
-                $sheet->setCellValue('T'.$row, $detalle->guia_det_volumen_total);
+                $sheet->setCellValue('A'.$row, $detalle->guia_det_fecha_emision);
+                $sheet->setCellValue('B'.$row, $detalle->guia_det_nro_documento);
+                $sheet->setCellValue('C'.$row, $detalle->guia_det_cod_producto);
+                $sheet->setCellValue('D'.$row, $detalle->guia_det_descripcion_producto);
+                $sheet->setCellValue('E'.$row, $detalle->guia_det_unidad);
+                $sheet->setCellValue('F'.$row, $detalle->guia_det_cantidad);
+                $sheet->setCellValue('G'.$row, $detalle->guia_det_precio_unit_final_inc_igv);
+                $sheet->setCellValue('H'.$row, $detalle->guia_det_descuento_total_sin_igv);
+                $sheet->setCellValue('I'.$row, $detalle->guia_det_importe_total_inc_igv);
+                $sheet->setCellValue('J'.$row, $detalle->guia_det_moneda);
+                $sheet->setCellValue('K'.$row, $detalle->guia_det_lote);
+                $sheet->setCellValue('L'.$row, $detalle->guia_det_peso_total_gramo);
+                $sheet->setCellValue('M'.$row, $detalle->guia_det_volumen_total);
+                $sheet->setCellValue('N'.$row, $detalle->guia_det_estado);
+
+//                $sheet->setCellValue('A'.$row, $detalle->guia_det_almacen_salida);
+//                $sheet->setCellValue('C'.$row, $detalle->guia_det_tipo_documento);
+//                $sheet->setCellValue('E'.$row, $detalle->guia_det_nro_linea);
+//                $sheet->setCellValue('M'.$row, $detalle->guia_det_igv_total);
+//                $sheet->setCellValue('P'.$row, $detalle->guia_det_tipo_cambio);
+//                $sheet->setCellValue('Q'.$row, $detalle->guia_det_peso_gramo);
+//                $sheet->setCellValue('R'.$row, $detalle->guia_det_volumen);
 
                 $row++;
             }
 
             // Autoajustar columnas
-            foreach (range('A', 'T') as $column) {
+            foreach (range('A', 'N') as $column) {
                 $sheet->getColumnDimension($column)->setAutoSize(true);
             }
 
             // Formato de números
-            $numberColumns = ['J', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T'];
+            $numberColumns = ['F', 'G', 'H', 'I', 'L', 'M'];
             foreach ($numberColumns as $col) {
                 $sheet->getStyle($col.'2:'.$col.$row)
                     ->getNumberFormat()

@@ -227,7 +227,7 @@ class ProgramacionesPendientes extends Component
 
                             if ($guia) {
                                 // Determinar el valor de historial_guia_estado_aprobacion
-                                $historialEstadoAprobacion = ($this->estadoPro == 1) ? 9 : 11;
+                                $historialEstadoAprobacion = ($this->estadoPro == 1) ? 9 : 10;
 
                                 // Actualizar el estado en la tabla guias
                                 DB::table('guias')
@@ -240,7 +240,7 @@ class ProgramacionesPendientes extends Component
                                     'id_guia' => $despachoVenta->id_guia,
                                     'guia_nro_doc' => $guia->guia_nro_doc,
                                     'historial_guia_estado_aprobacion' => $historialEstadoAprobacion,
-                                    'historial_guia_fecha_hora' => Carbon::now('America/Lima'), // Fecha y hora actual de Perú
+                                    'historial_guia_fecha_hora' => Carbon::now('America/Lima'),
                                     'historial_guia_estado' => 1, // Estado por defecto
                                     'created_at' => Carbon::now('America/Lima'),
                                     'updated_at' => Carbon::now('America/Lima'),

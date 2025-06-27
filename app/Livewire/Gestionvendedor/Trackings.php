@@ -26,9 +26,11 @@ class Trackings extends Component
     public $listar_comprobantes = [];
     public $desde;
     public $hasta;
-    public $buscar_guia;
+    public $buscar_ruc_nombre;
+    public $buscar_numero_guia;
+    public $buscar_estado;
     public function mount(){
-        $this->desde = date('Y-01-01');
+        $this->desde = date('Y-m-01');
         $this->hasta =  date('Y-m-d');
     }
     public function render(){
@@ -39,20 +41,46 @@ class Trackings extends Component
         // Construir la consulta base
         $query = DB::table('guias');
 
-        // Aplicar filtros de fecha si están presentes
-        if ($this->desde) {
-            $query->whereDate('guia_fecha_emision', '>=', $this->desde);
-        }
-        if ($this->hasta) {
-            $query->whereDate('guia_fecha_emision', '<=', $this->hasta);
+        // Si hay número de guía, solo buscar por ese campo e ignorar otros filtros
+        if (!empty($this->buscar_numero_guia)) {
+            $query->where('guia_nro_doc', 'LIKE', '%' . $this->buscar_numero_guia . '%');
+        } else {
+            // Aplicar filtros de fecha
+            if ($this->desde) {
+                $query->whereDate('guia_fecha_emision', '>=', $this->desde);
+            }
+            if ($this->hasta) {
+                $query->whereDate('guia_fecha_emision', '<=', $this->hasta);
+            }
+
+            // Filtro por estado de aprobación
+            if (!empty($this->buscar_estado)) {
+                $query->where('guia_estado_aprobacion', $this->buscar_estado);
+            }
         }
 
-        // Aplicar filtro por nombre de cliente si está presente
-        if (!empty($this->buscar_guia)) {
-            $query->where('guia_nombre_cliente', 'LIKE', '%' . $this->buscar_guia . '%');
+        // Filtro por RUC y/o Nombre
+        if (!empty($this->buscar_ruc_nombre)) {
+            $busqueda = trim($this->buscar_ruc_nombre);
+
+            // Verificar si tiene el formato "RUC - Nombre"
+            if (preg_match('/^(\d+)\s*-\s*(.+)$/', $busqueda, $matches)) {
+                $ruc = trim($matches[1]);
+                $nombre = trim($matches[2]);
+
+                $query->where(function($q) use ($ruc, $nombre) {
+                    $q->where('guia_ruc_cliente', 'LIKE', '%' . $ruc . '%')
+                        ->where('guia_nombre_cliente', 'LIKE', '%' . $nombre . '%');
+                });
+            } else {
+                // Búsqueda normal (RUC o Nombre)
+                $query->where(function($q) use ($busqueda) {
+                    $q->where('guia_ruc_cliente', 'LIKE', '%' . $busqueda . '%')
+                        ->orWhere('guia_nombre_cliente', 'LIKE', '%' . $busqueda . '%');
+                });
+            }
         }
 
-        // Obtener los resultados de la consulta
         $this->listar_comprobantes = $query->get();
     }
 }

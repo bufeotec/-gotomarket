@@ -121,61 +121,63 @@
         <x-slot name="titleModal">Detalles de la guía</x-slot>
         <x-slot name="modalContent">
             <div class="modal-body">
-                <h6>Detalles de la Guía</h6>
+{{--                <h6>Detalles de la Guía</h6>--}}
                 <hr>
                 @if(!empty($guia_detalle))
                     <x-table-general>
                         <x-slot name="thead">
                             <tr>
-                                <th>Almacén Salida</th>
-                                <th>Fecha Emisión</th>
-                                <th>Estado</th>
-                                <th>Tipo Documento</th>
-                                <th>Nro Documento</th>
-                                <th>Nro Línea</th>
                                 <th>Cód Producto</th>
                                 <th>Descripción Producto</th>
-                                <th>Lote</th>
                                 <th>Unidad</th>
                                 <th>Cantidad</th>
                                 <th>Precio Unit Final Inc IGV</th>
                                 <th>Precio Unit Antes Descuento Inc IGV</th>
                                 <th>Descuento Total Sin IGV</th>
-                                <th>IGV Total</th>
                                 <th>Importe Total Inc IGV</th>
                                 <th>Moneda</th>
-                                <th>Tipo Cambio</th>
-                                <th>Peso Gramos</th>
-                                <th>Volumen CM3</th>
-                                <th>Peso Total Gramos</th>
-                                <th>Volumen Total CM3</th>
+                                <th>Lote</th>
+
+{{--                                <th>Almacén Salida</th>--}}
+{{--                                <th>Fecha Emisión</th>--}}
+{{--                                <th>Estado</th>--}}
+{{--                                <th>Tipo Documento</th>--}}
+{{--                                <th>Nro Documento</th>--}}
+{{--                                <th>Nro Línea</th>--}}
+{{--                                <th>IGV Total</th>--}}
+{{--                                <th>Tipo Cambio</th>--}}
+{{--                                <th>Peso Gramos</th>--}}
+{{--                                <th>Volumen CM3</th>--}}
+{{--                                <th>Peso Total Gramos</th>--}}
+{{--                                <th>Volumen Total CM3</th>--}}
                             </tr>
                         </x-slot>
                         <x-slot name="tbody">
                             @foreach($guia_detalle as $detalle)
                                 <tr>
-                                    <td>{{ $detalle->guia_det_almacen_salida ?? '-' }}</td>
-                                    <td>{{ $detalle->guia_det_fecha_emision ? $me->obtenerNombreFecha($detalle->guia_det_fecha_emision, 'DateTime', 'Date') : '-' }}</td>
-                                    <td>{{ $detalle->guia_det_estado ?? '-'}}</td>
-                                    <td>{{ $detalle->guia_det_tipo_documento ?? '-' }}</td>
-                                    <td>{{ $detalle->guia_det_nro_documento ?? '-'}}</td>
-                                    <td>{{ $detalle->guia_det_nro_linea ?? '-'}}</td>
                                     <td>{{ $detalle->guia_det_cod_producto ?? '-'}}</td>
                                     <td>{{ $detalle->guia_det_descripcion_producto ?? '-'}}</td>
-                                    <td>{{ $detalle->guia_det_lote ?? '-'}}</td>
                                     <td>{{ $detalle->guia_det_unidad ?? '-'}}</td>
                                     <td>{{ $detalle->guia_det_cantidad ?? '-'}}</td>
                                     <td>{{ $me->formatoDecimal($detalle->guia_det_precio_unit_final_inc_igv ?? 0)}}</td>
                                     <td>{{ $me->formatoDecimal($detalle->guia_det_precio_unit_antes_descuente_inc_igv ?? 0)}}</td>
                                     <td>{{ $me->formatoDecimal($detalle->guia_det_descuento_total_sin_igv ?? 0)}}</td>
-                                    <td>{{ $me->formatoDecimal($detalle->guia_det_igv_total ?? 0)}}</td>
                                     <td>{{ $me->formatoDecimal($detalle->guia_det_importe_total_inc_igv ?? 0) }}</td>
                                     <td>{{ $detalle->guia_det_moneda ?? '-'}}</td>
-                                    <td>{{ $me->formatoDecimal($detalle->guia_det_tipo_cambio ?? 0)}}</td>
-                                    <td>{{ $me->formatoDecimal($detalle->guia_det_peso_gramo ?? 0)}}</td>
-                                    <td>{{ $me->formatoDecimal($detalle->guia_det_volumen ?? 0)}}</td>
-                                    <td>{{ $me->formatoDecimal($detalle->guia_det_peso_total_gramo ?? 0)}}</td>
-                                    <td>{{ $me->formatoDecimal($detalle->guia_det_volumen_total ?? 0)}}</td>
+                                    <td>{{ $detalle->guia_det_lote ?? '-'}}</td>
+
+{{--                                    <td>{{ $detalle->guia_det_almacen_salida ?? '-' }}</td>--}}
+{{--                                    <td>{{ $detalle->guia_det_fecha_emision ? $me->obtenerNombreFecha($detalle->guia_det_fecha_emision, 'DateTime', 'Date') : '-' }}</td>--}}
+{{--                                    <td>{{ $detalle->guia_det_estado ?? '-'}}</td>--}}
+{{--                                    <td>{{ $detalle->guia_det_tipo_documento ?? '-' }}</td>--}}
+{{--                                    <td>{{ $detalle->guia_det_nro_documento ?? '-'}}</td>--}}
+{{--                                    <td>{{ $detalle->guia_det_nro_linea ?? '-'}}</td>--}}
+{{--                                    <td>{{ $me->formatoDecimal($detalle->guia_det_igv_total ?? 0)}}</td>--}}
+{{--                                    <td>{{ $me->formatoDecimal($detalle->guia_det_tipo_cambio ?? 0)}}</td>--}}
+{{--                                    <td>{{ $me->formatoDecimal($detalle->guia_det_peso_gramo ?? 0)}}</td>--}}
+{{--                                    <td>{{ $me->formatoDecimal($detalle->guia_det_volumen ?? 0)}}</td>--}}
+{{--                                    <td>{{ $me->formatoDecimal($detalle->guia_det_peso_total_gramo ?? 0)}}</td>--}}
+{{--                                    <td>{{ $me->formatoDecimal($detalle->guia_det_volumen_total ?? 0)}}</td>--}}
                                 </tr>
                             @endforeach
                         </x-slot>
@@ -237,10 +239,10 @@
 
                                 @if ($comprobanteNoEntregado)
                                     <img src="{{ asset('assets/images/tracking/comprobante_no_entregado.png') }}" alt="Guía No Entregado" class="tracking-img">
-                                    <p class="fw-bold text-dark">GUÍA NO ENTREGADO</p>
+                                    <p class="fw-bold text-dark">GUÍA NO ENTREGADA</p>
                                 @else
                                     <img src="{{ asset('assets/images/tracking/comprobante_entregado.png') }}" alt="Guía Entregado" class="tracking-img">
-                                    <p class="fw-bold {{ $etapaActual >= 5 ? 'text-dark' : 'text-muted' }}">GUÍA ENTREGADO</p>
+                                    <p class="fw-bold {{ $etapaActual >= 5 ? 'text-dark' : 'text-muted' }}">GUÍA ENTREGADA</p>
                                 @endif
                             </div>
                         </div>

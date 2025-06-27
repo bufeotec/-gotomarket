@@ -150,7 +150,7 @@ class Mixto extends Component
         }
 
         // Obtener las guías con estado 3
-        $guiasQuery = Guia::wherein('guia_estado_aprobacion', [3,11]);
+        $guiasQuery = Guia::wherein('guia_estado_aprobacion', [3, 11, 10]);
 
         // Filtrar por nombre del cliente si searchGuia tiene valor
         if (!empty($this->searchGuia)) {

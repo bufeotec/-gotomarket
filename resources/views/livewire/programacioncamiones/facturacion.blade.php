@@ -172,6 +172,120 @@
     </x-modal-delete>
     {{-- MODAL RECHAZAR FACTURA EN APROBRAR --}}
 
+{{--    EDITAR FECHA DE GUÍA--}}
+    <x-modal-general wire:ignore.self>
+        <x-slot name="id_modal">modalEditCambioFecha</x-slot>
+        <x-slot name="titleModal">Cambio de fecha de la guía</x-slot>
+        <x-slot name="tama">modal-lg</x-slot>
+        <x-slot name="modalContent">
+            <form wire:submit.prevent="cambio_fecha_edit_guia">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h5 class="text-dark mb-3">Guía: <strong>{{$guia_nro_doc}}</strong></h5>
+                    </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        @error('id_guia') <span class="message-error">{{ $message }}</span> @enderror
+                        @error('guia_estado_aprobacion') <span class="message-error">{{ $message }}</span> @enderror
+                        <x-table-general>
+                            <x-slot name="thead">
+                                <tr>
+                                    <th>Estado</th>
+                                    <th>Fecha de registro</th>
+                                    <th>Ultimo usuario que registro</th>
+                                    <th>Ultimo comentario</th>
+                                    <th>Editar fecha</th>
+                                    <th>Motivo de modificación</th>
+                                </tr>
+                            </x-slot>
+                            <x-slot name="tbody">
+                                <tr>
+                                    <td>Emisión</td>
+                                    <td>{{ $guia_fecha_emision ? $me->obtenerNombreFecha($guia_fecha_emision, 'DateTime', 'Date') : ' ' }}</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td>
+                                        <h6 class="text-dark">{{ $guia_fecha_emision ? $me->obtenerNombreFecha($guia_fecha_emision, 'DateTime', 'Date') : '-' }}</h6>
+                                    </td>
+                                    <td>
+                                    <textarea class="form-control form-control-sm"
+                                              wire:model="comentario_emision"></textarea>
+                                    </td>
+                                </tr>
+
+                                @php
+                                    $estadosConfig = [
+                                        5 => 'En Crédito',
+                                        3 => 'Por Programar',
+                                        9 => 'Programado',
+                                        7 => 'En Ruta',
+                                        8 => 'Entregado',
+                                        11 => 'Anulado'
+                                    ];
+                                @endphp
+
+                                @foreach($estadosConfig as $estado => $label)
+                                    @php
+                                        $historial = $historialEstados[$estado] ?? null;
+                                    @endphp
+                                    <tr>
+                                        <td>{{ $label }}</td>
+                                        <td>
+                                            @isset($historial['historial_guia_fecha_hora'])
+                                                {{ $me->obtenerNombreFecha($historial['historial_guia_fecha_hora'], 'DateTime', 'DateTime') }}
+                                            @else
+                                                -
+                                            @endisset
+                                        </td>
+                                        <td>{{ $historial['name'] ?? '' }}</td>
+                                        <td></td>
+                                        <td>
+                                            @if($historial)
+                                                <input type="datetime-local" class="form-control form-control-sm"
+                                                       wire:model="fechasEditadas.{{ $estado }}"
+                                                       value="{{ $fechasEditadas[$estado] ?? '' }}">
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if($historial)
+                                                <textarea class="form-control form-control-sm"
+                                                          wire:model="comentariosEditados.{{ $estado }}"></textarea>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+
+                                <!-- Estados fijos sin datos -->
+                                <tr>
+                                    <td>Pendiente de NC</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+
+                                <tr>
+                                    <td>Anulado con NC</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            </x-slot>
+                        </x-table-general>
+                    </div>
+
+                    <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-end">
+                        <button type="button" data-bs-dismiss="modal" class="btn btn-secondary">Cerrar</button>
+{{--                        <button type="submit" class="btn btn-success text-white">Guardar Registros</button>--}}
+                    </div>
+                </div>
+            </form>
+        </x-slot>
+    </x-modal-general>
+{{--    FIN EDITAR FECHA DE GUÍA--}}
+
     <div class="row">
         @if (session()->has('success'))
             <div class="col-lg-12 col-md-12 col-sm-12">
@@ -190,32 +304,49 @@
             </div>
         @endif
 
-            <div class="col-lg-12">
-                <div class="row align-items-center">
-                    <div class="col-lg-3 col-md-2 col-sm-12 mb-2">
-                        <label for="nombre_cliente" class="form-label">Nombre del cliente</label>
-                        <input type="text" name="nombre_cliente" id="nombre_cliente" wire:model.live="nombre_cliente" class="form-control">
-                    </div>
-                    <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-                        <label for="fecha_desde" class="form-label">Desde (Fecha emisión)</label>
-                        <input type="date" name="fecha_desde" id="fecha_desde" wire:model.live="fecha_desde" class="form-control">
-                    </div>
-                    <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-                        <label for="fecha_hasta" class="form-label">Hasta (Fecha emisión)</label>
-                        <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model.live="fecha_hasta" class="form-control">
-                    </div>
-                    <div class="col-lg-2 col-md-3 col-sm-12 mb-2 mt-4">
-                        <button class="btn btn-sm bg-primary text-white w-75" wire:click="buscar_comprobantes" wire:loading.attr="disabled">
-                            <i class="fa fa-search"></i>
-                            <spanc class="ms-1" wire:loading.remove wire:target="buscar_comprobantes">BUSCAR</spanc>
-                            <spanc class="ms-1" wire:loading wire:target="buscar_comprobantes">BUSCANDO...</spanc>
-                        </button>
-                    </div>
-                    <div class="col-lg-12 col-md-12 col-sm-12">
-                        <div class="loader mt-2" wire:loading wire:target="buscar_comprobantes"></div>
-                    </div>
+        <div class="col-lg-12">
+            <div class="row align-items-center">
+                <div class="col-lg-2 col-md-6 col-sm-12 mb-3 position-relative">
+                    <label for="buscar_numero_guia" class="form-label">Número de guía</label>
+                    <input type="text" name="buscar_numero_guia" id="buscar_numero_guia" wire:model.live="buscar_numero_guia" class="form-control" placeholder="Ingrese número de guía (ej: T0123456)" >
+                </div>
+                <div class="col-lg-2 col-md-2 col-sm-12 mb-3">
+                    <label for="buscar_ruc_nombre" class="form-label">Nombre del cliente</label>
+                    <input type="text" name="buscar_ruc_nombre" id="buscar_ruc_nombre" wire:model.live="buscar_ruc_nombre" class="form-control" placeholder="Buscar por RUC o nombre de cliente">
+                </div>
+                <div class="col-lg-2 col-md-2 col-sm-12 mb-3">
+                    <label for="buscar_ruc_nombre" class="form-label">Seleccionar estado</label>
+                    <select name="guia_estado_aprobacion" id="guia_estado_aprobacion" wire:model="buscar_estado" class="form-select">
+                        <option value="">Seleccionar...</option>
+                        <option value="1">Creditos</option>
+                        <option value="2">Despacho</option>
+                        <option value="3">Por programar</option>
+                        <option value="4">Programado</option>
+                        <option value="7">En ruta</option>
+                        <option value="12">Anulado</option>
+                        <option value="8">Entregado</option>
+                    </select>
+                </div>
+                <div class="col-lg-2 col-md-2 col-sm-12 mb-3">
+                    <label for="fecha_desde" class="form-label">Desde (Fecha emisión)</label>
+                    <input type="date" name="fecha_desde" id="fecha_desde" wire:model.live="fecha_desde" class="form-control">
+                </div>
+                <div class="col-lg-2 col-md-2 col-sm-12 mb-3">
+                    <label for="fecha_hasta" class="form-label">Hasta (Fecha emisión)</label>
+                    <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model.live="fecha_hasta" class="form-control">
+                </div>
+                <div class="col-lg-2 col-md-3 col-sm-12 mb-3 mt-4">
+                    <button class="btn btn-sm bg-primary text-white w-75" wire:click="buscar_comprobantes" wire:loading.attr="disabled">
+                        <i class="fa fa-search"></i>
+                        <spanc class="ms-1" wire:loading.remove wire:target="buscar_comprobantes">BUSCAR</spanc>
+                        <spanc class="ms-1" wire:loading wire:target="buscar_comprobantes">BUSCANDO...</spanc>
+                    </button>
+                </div>
+                <div class="col-lg-12 col-md-12 col-sm-12">
+                    <div class="loader mt-2" wire:loading wire:target="buscar_comprobantes"></div>
                 </div>
             </div>
+        </div>
 
         <div class="col-lg-12">
             <div class="card">
@@ -345,6 +476,11 @@
                                                             </x-slot>
                                                         </x-btn-accion>
 
+                                                        <x-btn-accion class="btn bg-info btn-sm text-white" wire:click="edit_fecha_guia('{{ base64_encode($factura->id_guia) }}')" data-bs-toggle="modal" data-bs-target="#modalEditCambioFecha">
+                                                            <x-slot name="message">
+                                                                <i class="fa-solid fa-calendar-days"></i>
+                                                            </x-slot>
+                                                        </x-btn-accion>
                                                     @endif
                                                     <a data-bs-toggle="modal" data-bs-target="#modalActualizarDetalle" wire:click="actualizar_detalle_guia('{{ $factura->guia_nro_doc }}', '{{ base64_encode($factura->id_guia) }}')" style="cursor:pointer;" class="btn-sm btn-warning text-white">
                                                         <i class="fa fa-refresh">

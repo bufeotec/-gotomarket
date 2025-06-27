@@ -4,16 +4,33 @@
     @endphp
 
     <div class="row">
-        <div class="col-lg-3 col-md-6 col-sm-12 mb-3 position-relative">
-            <input type="text" class="form-control w-100 me-4 ps-5 rounded-pill"  wire:model.live="buscar_guia" placeholder="Buscar guía">
+        <div class="col-lg-2 col-md-6 col-sm-12 mb-3 position-relative">
+            <x-input-general type="text" class="form-control w-100 me-4 ps-5 rounded-pill" wire:model="buscar_numero_guia" placeholder="Ingrese número de guía (ej: T0123456)" />
             <i class="fas fa-search position-absolute"
                style="left: 30px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
         </div>
-        <div class="col-lg-2 col-md-6 col-sm-12 mb-3">
-            <input type="date" name="desde" id="desde" wire:model.live="desde" class="form-control" min="2025-01-01">
+        <div class="col-lg-2 col-md-6 col-sm-12 mb-3 position-relative">
+            <x-input-general type="text" class="form-control w-100 me-4 ps-5 rounded-pill"  wire:model="buscar_ruc_nombre" placeholder="Buscar por RUC o nombre de cliente" />
+            <i class="fas fa-search position-absolute"
+               style="left: 30px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
+        </div>
+        <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
+            <select name="guia_estado_aprobacion" id="guia_estado_aprobacion" wire:model="buscar_estado" class="form-select">
+                <option value="">Seleccionar estado...</option>
+                <option value="1">Creditos</option>
+                <option value="2">Despacho</option>
+                <option value="3">Por programar</option>
+                <option value="4">Programado</option>
+                <option value="7">En ruta</option>
+                <option value="12">Anulado</option>
+                <option value="8">Entregado</option>
+            </select>
         </div>
         <div class="col-lg-2 col-md-6 col-sm-12 mb-3">
-            <input type="date" name="hasta" id="hasta" wire:model.live="hasta" class="form-control" min="2025-01-01">
+            <input type="date" name="desde" id="desde" wire:model="desde" class="form-control" min="2025-01-01">
+        </div>
+        <div class="col-lg-2 col-md-6 col-sm-12 mb-3">
+            <input type="date" name="hasta" id="hasta" wire:model="hasta" class="form-control" min="2025-01-01">
         </div>
         <div class="col-lg-2 col-md-3 col-sm-12 mb-2 mt-1">
             <button class="btn btn-sm bg-primary text-white w-75" wire:click="buscar_comprobantes" wire:loading.attr="disabled">
@@ -63,10 +80,10 @@
 
                         <x-slot name="tbody">
                             @if(count($listar_comprobantes) > 0)
-                                @php $conteoMenu = 1; @endphp
+                                @php $conteo = 1; @endphp
                                 @foreach($listar_comprobantes as $me)
                                     <tr>
-                                        <td>{{$conteoMenu}}</td>
+                                        <td>{{$conteo}}</td>
                                         <td>{{$me->guia_nombre_cliente}}</td>
                                         <td>{{$me->guia_ruc_cliente}}</td>
                                         <td>{{$me->guia_nro_doc}}</td>
@@ -100,7 +117,7 @@
                                             </a>
                                         </td>
                                     </tr>
-                                    @php $conteoMenu++; @endphp
+                                    @php $conteo++; @endphp
                                 @endforeach
                             @else
                                 <tr class="odd">

@@ -36,7 +36,7 @@ class Facturacion extends Component
     }
     public $fecha_hasta;
     public $fecha_desde;
-    public $nombre_cliente = "";
+    public $buscar_ruc_nombre = "";
     public $messagePrePro = "";
     public $id_guia = "";
     public $guia_estado_aprobacion;
@@ -46,9 +46,19 @@ class Facturacion extends Component
     public $fac_mov_area_motivo_rechazo = "";
     public $messageRecFactApro;
     public $listar_comprobantes = [];
+    public $buscar_numero_guia;
+    public $buscar_estado;
+
+    public $guia_fecha_emision;
+    public $historialEstados = [];
+    public $fechasEditadas = [];
+    public $comentariosEditados = [];
+    public $fecha_emision_edit;
+    public $comentario_emision;
+    public $guia_nro_doc;
 
     public function mount(){
-        $this->fecha_desde = date('Y-01-01');
+        $this->fecha_desde = date('Y-m-01');
         $this->fecha_hasta = date('Y-m-d');
     }
     public function render(){
@@ -63,17 +73,43 @@ class Facturacion extends Component
             ->where('g.guia_estado_registro', '=', 1);
 
         // Aplicar filtro por nombre de cliente si existe
-        if (!empty($this->nombre_cliente)) {
-            $query->where('g.guia_nombre_cliente', 'like', '%' . $this->nombre_cliente . '%');
+        if (!empty($this->buscar_ruc_nombre)) {
+            $busqueda = trim($this->buscar_ruc_nombre);
+
+            // Verificar si tiene el formato "RUC - Nombre"
+            if (preg_match('/^(\d+)\s*-\s*(.+)$/', $busqueda, $matches)) {
+                $ruc = trim($matches[1]);
+                $nombre = trim($matches[2]);
+
+                $query->where(function($q) use ($ruc, $nombre) {
+                    $q->where('guia_ruc_cliente', 'LIKE', '%' . $ruc . '%')
+                        ->where('guia_nombre_cliente', 'LIKE', '%' . $nombre . '%');
+                });
+            } else {
+                // Búsqueda normal (RUC o Nombre)
+                $query->where(function($q) use ($busqueda) {
+                    $q->where('guia_ruc_cliente', 'LIKE', '%' . $busqueda . '%')
+                        ->orWhere('guia_nombre_cliente', 'LIKE', '%' . $busqueda . '%');
+                });
+            }
         }
 
         // Aplicar filtro por rango de fechas si existen
-        if (!empty($this->fecha_desde)) {
-            $query->whereDate('g.guia_fecha_emision', '>=', $this->fecha_desde);
-        }
+        if (!empty($this->buscar_numero_guia)) {
+            $query->where('guia_nro_doc', 'LIKE', '%' . $this->buscar_numero_guia . '%');
+        } else {
+            // Aplicar filtros de fecha
+            if ($this->fecha_desde) {
+                $query->whereDate('guia_fecha_emision', '>=', $this->fecha_desde);
+            }
+            if ($this->fecha_hasta) {
+                $query->whereDate('guia_fecha_emision', '<=', $this->fecha_hasta);
+            }
 
-        if (!empty($this->fecha_hasta)) {
-            $query->whereDate('g.guia_fecha_emision', '<=', $this->fecha_hasta);
+            // Filtro por estado de aprobación
+            if (!empty($this->buscar_estado)) {
+                $query->where('guia_estado_aprobacion', $this->buscar_estado);
+            }
         }
 
         $result = $query->select(
@@ -402,6 +438,70 @@ class Facturacion extends Component
             DB::rollBack();
             $this->logs->insertarLog($e);
             session()->flash('error', 'Ocurrió un error al cambiar el estado del registro. Por favor, inténtelo nuevamente.');
+        }
+    }
+//
+    public function edit_fecha_guia($id_guia){
+        try {
+            $this->id_guia = base64_decode($id_guia);
+            $this->fechasEditadas = [];
+            $this->comentariosEditados = [];
+
+            // Obtener fecha de emisión de la guía
+            $guia = DB::table('guias')
+                ->where('id_guia', $this->id_guia)
+                ->first();
+
+            $this->guia_fecha_emision = $guia->guia_fecha_emision ?? null;
+            $this->fecha_emision_edit = $this->formatDateForInput($this->guia_fecha_emision);
+            $this->guia_nro_doc = $guia->guia_nro_doc;
+
+            // Estados que nos interesan
+            $estadosRelevantes = [
+                5 => 'En Crédito',
+                3 => 'Por Programar',
+                9 => 'Programado',
+                7 => 'En Ruta',
+                8 => 'Entregado',
+                11 => 'Anulado'
+            ];
+
+            $this->historialEstados = [];
+
+            foreach ($estadosRelevantes as $estado => $label) {
+                $registro = DB::table('historial_guias as hg')
+                    ->join('users as u', 'hg.id_users', '=', 'u.id_users')
+                    ->where('hg.id_guia', $this->id_guia)
+                    ->where('hg.historial_guia_estado_aprobacion', $estado)
+                    ->orderBy('hg.historial_guia_fecha_hora', 'desc')
+                    ->select('hg.*', 'u.name')
+                    ->first();
+
+                if ($registro) {
+                    $this->historialEstados[$estado] = [
+                        'historial_guia_fecha_hora' => $registro->historial_guia_fecha_hora,
+                        'name' => $registro->name,
+                        'fecha_formateada' => $this->formatDateForInput($registro->historial_guia_fecha_hora)
+                    ];
+                    $this->fechasEditadas[$estado] = $this->historialEstados[$estado]['fecha_formateada'];
+                } else {
+                    $this->historialEstados[$estado] = null;
+                }
+            }
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error: '.$e->getMessage());
+        }
+    }
+
+    public function formatDateForInput($date) {
+        if (!$date) return null;
+        try {
+            return Carbon::parse($date)->format('Y-m-d\TH:i');
+        } catch (\Exception $e) {
+            return null;
         }
     }
 }

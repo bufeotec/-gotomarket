@@ -2093,6 +2093,20 @@ class HistorialProgramacion extends Component
                 return;
             }
 
+            // Verificar si es programación mixta
+            $esProgramacionMixta = false;
+            $esDespachoProvincial = ($despachoActual->id_tipo_servicios == 2);
+
+            // Obtener todos los despachos con la misma programación
+            $despachosMismaProgramacion = DB::table('despachos')
+                ->where('id_programacion', $despachoActual->id_programacion)
+                ->get();
+
+            // Es mixta si hay más de un despacho con la misma programación y diferentes id_despacho
+            if ($despachosMismaProgramacion->count() > 1) {
+                $esProgramacionMixta = true;
+            }
+
             // Variables para determinar el estado final del despacho
             $tieneGuias = false;
             $tieneGuiasEntregadas = false;
@@ -2151,22 +2165,22 @@ class HistorialProgramacion extends Component
                     $tieneGuiasNoEntregadas = true;
                 }
 
-                // Registrar en historial_guias
-                $guia = DB::table('guias')
-                    ->where('id_guia', $despachoVenta->id_guia)
-                    ->first();
+                // Registrar en historial_guias solo si
+                $debeGuardarEnHistorial = !$esProgramacionMixta || ($esProgramacionMixta && $esDespachoProvincial);
 
-                if ($guia) {
-                    DB::table('historial_guias')->insert([
-                        'id_users' => Auth::id(),
-                        'id_guia' => $despachoVenta->id_guia,
-                        'guia_nro_doc' => $guia->guia_nro_doc,
-                        'historial_guia_estado_aprobacion' => $es,
-                        'historial_guia_fecha_hora' => Carbon::now('America/Lima'),
-                        'historial_guia_estado' => 1,
-                        'created_at' => Carbon::now('America/Lima'),
-                        'updated_at' => Carbon::now('America/Lima'),
-                    ]);
+                if ($guia = DB::table('guias')->where('id_guia', $despachoVenta->id_guia)->first()) {
+                    if ($debeGuardarEnHistorial) {
+                        DB::table('historial_guias')->insert([
+                            'id_users' => Auth::id(),
+                            'id_guia' => $despachoVenta->id_guia,
+                            'guia_nro_doc' => $guia->guia_nro_doc,
+                            'historial_guia_estado_aprobacion' => $es,
+                            'historial_guia_fecha_hora' => Carbon::now('America/Lima'),
+                            'historial_guia_estado' => 1,
+                            'created_at' => Carbon::now('America/Lima'),
+                            'updated_at' => Carbon::now('America/Lima'),
+                        ]);
+                    }
                 }
             }
 
