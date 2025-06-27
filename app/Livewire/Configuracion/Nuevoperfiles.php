@@ -323,29 +323,48 @@ class Nuevoperfiles extends Component
                     DB::rollBack();
                     session()->flash('error', 'Error al guardar el perfil.');
                 }
-            } else { // ACTUALIZAR PERFIL EXISTENTE
+            } else {
                 if (!Gate::allows('actualizar_perfil')) {
                     session()->flash('error', 'No tiene permisos para actualizar este registro.');
                     return;
                 }
 
-                // Lógica para actualizar el perfil existente
                 $role_save = Role::find($this->id_perfil);
                 if ($role_save) {
                     $role_save->name = $this->name;
                     $role_save->rol_descripcion = $this->rol_descripcion;
 
                     if ($role_save->save()) {
-                        // Actualizar permisos
-                        $permissions = Permission::whereIn('id', $this->check)
+                        // Obtener TODOS los permisos actuales del rol
+                        $currentPermissions = DB::table('role_has_permissions')
+                            ->where('role_id', $this->id_perfil)
+                            ->pluck('permission_id')
+                            ->toArray();
+
+                        // Obtener permisos VISIBLES en la vista
+                        $visiblePermissions = collect($this->listar_permisos_general)
+                            ->flatMap(function($menu) {
+                                return collect($menu->sub)
+                                    ->flatMap(function($submenu) {
+                                        return collect($submenu->permisos)
+                                            ->pluck('id');
+                                    });
+                            })->toArray();
+
+                        // Filtrar permisos no visibles (que deben mantenerse)
+                        $hiddenPermissions = array_diff($currentPermissions, $visiblePermissions);
+
+                        // Combinar permisos seleccionados (check) con los no visibles
+                        $finalPermissions = array_merge($this->check, $hiddenPermissions);
+
+                        // Obtener objetos Permission
+                        $permissions = Permission::whereIn('id', $finalPermissions)
                             ->where('permission_status', 1)
                             ->get();
 
-                        $datosPermissions = [];
-                        foreach ($permissions as $per) {
-                            $datosPermissions[] = $per->name;
-                        }
+                        $datosPermissions = $permissions->pluck('name')->toArray();
 
+                        // Sincronizar permisos
                         $role_save->syncPermissions($datosPermissions);
 
                         DB::commit();
