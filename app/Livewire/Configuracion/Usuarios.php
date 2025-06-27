@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Gate;
 class Usuarios extends Component
 {
     use WithPagination, WithoutUrlPagination;
-    use WithFileUploads; // Usa el trait aquí
+    use WithFileUploads;
     /* ----------- VARIABLES GLOBALES ----------------------*/
     public $ruta_img_default = "";
     public $search;
