@@ -56,6 +56,7 @@ class Facturacion extends Component
     public $fecha_emision_edit;
     public $comentario_emision;
     public $guia_nro_doc;
+    public $nombre_usuario;
 
     public function mount(){
         $this->fecha_desde = date('Y-m-01');
@@ -459,13 +460,15 @@ class Facturacion extends Component
             $this->comentariosEditados = [];
 
             // Obtener fecha de emisión de la guía
-            $guia = DB::table('guias')
-                ->where('id_guia', $this->id_guia)
+            $guia = DB::table('guias as g')
+                ->join('users as u', 'g.id_users', 'u.id_users')
+                ->where('g.id_guia', $this->id_guia)
                 ->first();
 
             $this->guia_fecha_emision = $guia->guia_fecha_emision ?? null;
             $this->fecha_emision_edit = $this->formatDateForInput($this->guia_fecha_emision);
             $this->guia_nro_doc = $guia->guia_nro_doc;
+            $this->nombre_usuario = $guia->name;
 
             // Estados que nos interesan
             $estadosRelevantes = [
@@ -506,7 +509,6 @@ class Facturacion extends Component
             session()->flash('error', 'Ocurrió un error: '.$e->getMessage());
         }
     }
-
     public function formatDateForInput($date) {
         if (!$date) return null;
         try {
@@ -515,4 +517,6 @@ class Facturacion extends Component
             return null;
         }
     }
+
+//    public function
 }
