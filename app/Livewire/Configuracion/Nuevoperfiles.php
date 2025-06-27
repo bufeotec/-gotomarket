@@ -250,12 +250,6 @@ class Nuevoperfiles extends Component
 
     public function guardar_editar_perfil() {
         try {
-            // Validar que se haya seleccionado al menos un usuario
-//            if (count($this->users_seleccionados) === 0) {
-//                session()->flash('error', 'Debes seleccionar al menos un usuario.');
-//                return;
-//            }
-
             $this->validate([
                 'name' => 'required|string|max:255',
                 'rol_descripcion' => 'required|string',
@@ -276,6 +270,39 @@ class Nuevoperfiles extends Component
 
             DB::beginTransaction();
 
+            // Mapeo de permisos principales a sus relacionados
+            $relatedPermissionsMap = [
+                29 => 193,
+                49 => 194,
+                50 => 195,
+                30 => 184,
+                53 => 192,
+                54 => 196
+            ];
+
+            // Función para manejar permisos relacionados
+            $handleRelatedPermissions = function($permissions) use ($relatedPermissionsMap) {
+                $changed = false;
+
+                // Primero eliminamos permisos relacionados cuyos padres no están seleccionados
+                foreach ($relatedPermissionsMap as $main => $related) {
+                    if (!in_array($main, $permissions) && in_array($related, $permissions)) {
+                        $permissions = array_diff($permissions, [$related]);
+                        $changed = true;
+                    }
+                }
+
+                // Luego agregamos permisos relacionados para los padres seleccionados
+                foreach ($relatedPermissionsMap as $main => $related) {
+                    if (in_array($main, $permissions) && !in_array($related, $permissions)) {
+                        $permissions[] = $related;
+                        $changed = true;
+                    }
+                }
+
+                return $changed ? array_unique($permissions) : $permissions;
+            };
+
             if (!$this->id_perfil) { // CREAR NUEVO PERFIL
                 if (!Gate::allows('guardar_perfil')) {
                     session()->flash('error', 'No tiene permisos para crear.');
@@ -291,20 +318,11 @@ class Nuevoperfiles extends Component
                 $role_save->roles_status = 1;
 
                 if ($role_save->save()) {
-                    // Asignar usuarios al rol
-//                    foreach ($this->users_seleccionados as $usuario) {
-//                        $user = User::find($usuario['id_users']);
-//                        if ($user) {
-//                            DB::table('model_has_roles')->insert([
-//                                'role_id' => $role_save->id,
-//                                'model_type' => 'App\Models\User',
-//                                'model_id' => $user->id_users
-//                            ]);
-//                        }
-//                    }
+                    // Aplicar reglas de permisos relacionados
+                    $selectedPermissions = $handleRelatedPermissions($this->check);
 
-                    // Obtener permisos seleccionados (directamente desde $this->check)
-                    $permissions = Permission::whereIn('id', $this->check)
+                    // Obtener permisos seleccionados
+                    $permissions = Permission::whereIn('id', $selectedPermissions)
                         ->where('permission_status', 1)
                         ->get();
 
@@ -323,7 +341,7 @@ class Nuevoperfiles extends Component
                     DB::rollBack();
                     session()->flash('error', 'Error al guardar el perfil.');
                 }
-            } else {
+            } else { // ACTUALIZAR PERFIL EXISTENTE
                 if (!Gate::allows('actualizar_perfil')) {
                     session()->flash('error', 'No tiene permisos para actualizar este registro.');
                     return;
@@ -335,36 +353,55 @@ class Nuevoperfiles extends Component
                     $role_save->rol_descripcion = $this->rol_descripcion;
 
                     if ($role_save->save()) {
-                        // Obtener TODOS los permisos actuales del rol
+                        // 1. Obtener todos los permisos actuales del rol
                         $currentPermissions = DB::table('role_has_permissions')
                             ->where('role_id', $this->id_perfil)
                             ->pluck('permission_id')
                             ->toArray();
 
-                        // Obtener permisos VISIBLES en la vista
-                        $visiblePermissions = collect($this->listar_permisos_general)
-                            ->flatMap(function($menu) {
-                                return collect($menu->sub)
-                                    ->flatMap(function($submenu) {
-                                        return collect($submenu->permisos)
-                                            ->pluck('id');
-                                    });
-                            })->toArray();
+                        // 2. Obtener todos los permisos que se muestran en la vista
+                        $displayedPermissionIds = [];
+                        foreach ($this->listar_permisos_general as $menu) {
+                            $displayedPermissionIds[] = $menu->id;
+                            foreach ($menu->sub as $submenu) {
+                                $displayedPermissionIds[] = $submenu->id;
+                                foreach ($submenu->permisos as $permiso) {
+                                    $displayedPermissionIds[] = $permiso->id;
+                                }
+                            }
+                        }
 
-                        // Filtrar permisos no visibles (que deben mantenerse)
-                        $hiddenPermissions = array_diff($currentPermissions, $visiblePermissions);
+                        // 3. Separar los permisos en dos grupos:
+                        $permissionsToKeep = array_diff($currentPermissions, $displayedPermissionIds);
 
-                        // Combinar permisos seleccionados (check) con los no visibles
-                        $finalPermissions = array_merge($this->check, $hiddenPermissions);
+                        // 4. Aplicar reglas de permisos relacionados a los nuevos seleccionados
+                        $selectedPermissions = $handleRelatedPermissions($this->check);
 
-                        // Obtener objetos Permission
+                        // 5. Filtrar permissionsToKeep para eliminar permisos relacionados no deseados
+                        $permissionsToKeep = array_filter($permissionsToKeep, function($perm) use ($selectedPermissions, $relatedPermissionsMap) {
+                            // Si el permiso es uno de los relacionados
+                            if (in_array($perm, $relatedPermissionsMap)) {
+                                $mainPermission = array_search($perm, $relatedPermissionsMap);
+                                // Solo mantenerlo si el permiso principal está seleccionado
+                                return in_array($mainPermission, $selectedPermissions);
+                            }
+                            return true;
+                        });
+
+                        // 6. Combinar los permisos
+                        $finalPermissions = array_merge($permissionsToKeep, $selectedPermissions);
+
+                        // 7. Obtener los nombres de los permisos para la sincronización
                         $permissions = Permission::whereIn('id', $finalPermissions)
                             ->where('permission_status', 1)
                             ->get();
 
-                        $datosPermissions = $permissions->pluck('name')->toArray();
+                        $datosPermissions = [];
+                        foreach ($permissions as $per) {
+                            $datosPermissions[] = $per->name;
+                        }
 
-                        // Sincronizar permisos
+                        // 8. Sincronizar todos los permisos
                         $role_save->syncPermissions($datosPermissions);
 
                         DB::commit();
