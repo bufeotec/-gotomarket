@@ -277,7 +277,8 @@ class Nuevoperfiles extends Component
                 50 => 195,
                 30 => 184,
                 53 => 192,
-                54 => 196
+                54 => 196,
+                200 => 166
             ];
 
             // Función para manejar permisos relacionados
