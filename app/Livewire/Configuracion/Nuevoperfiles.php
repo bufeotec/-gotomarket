@@ -278,7 +278,8 @@ class Nuevoperfiles extends Component
                 30 => 184,
                 53 => 192,
                 54 => 196,
-                200 => 166
+                200 => 166,
+                134 => [139, 140]
             ];
 
             // Función para manejar permisos relacionados
@@ -287,17 +288,29 @@ class Nuevoperfiles extends Component
 
                 // Primero eliminamos permisos relacionados cuyos padres no están seleccionados
                 foreach ($relatedPermissionsMap as $main => $related) {
-                    if (!in_array($main, $permissions) && in_array($related, $permissions)) {
-                        $permissions = array_diff($permissions, [$related]);
-                        $changed = true;
+                    $relatedArray = is_array($related) ? $related : [$related];
+
+                    if (!in_array($main, $permissions)) {
+                        foreach ($relatedArray as $rel) {
+                            if (in_array($rel, $permissions)) {
+                                $permissions = array_diff($permissions, [$rel]);
+                                $changed = true;
+                            }
+                        }
                     }
                 }
 
                 // Luego agregamos permisos relacionados para los padres seleccionados
                 foreach ($relatedPermissionsMap as $main => $related) {
-                    if (in_array($main, $permissions) && !in_array($related, $permissions)) {
-                        $permissions[] = $related;
-                        $changed = true;
+                    $relatedArray = is_array($related) ? $related : [$related];
+
+                    if (in_array($main, $permissions)) {
+                        foreach ($relatedArray as $rel) {
+                            if (!in_array($rel, $permissions)) {
+                                $permissions[] = $rel;
+                                $changed = true;
+                            }
+                        }
                     }
                 }
 
