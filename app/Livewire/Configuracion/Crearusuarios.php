@@ -11,10 +11,15 @@ use App\Models\User;
 use App\Models\Usersvendedor;
 use App\Models\General;
 use App\Models\Vendedor;
+use Livewire\WithFileUploads;
+use Livewire\WithoutUrlPagination;
+use Livewire\WithPagination;
 use Spatie\Permission\Models\Role;
 
 class Crearusuarios extends Component
 {
+    use WithPagination, WithoutUrlPagination;
+    use WithFileUploads;
     private $logs;
     private $user;
     private $vendedor;
