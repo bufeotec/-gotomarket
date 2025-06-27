@@ -5,12 +5,12 @@
 
     <div class="row">
         <div class="col-lg-2 col-md-6 col-sm-12 mb-3 position-relative">
-            <x-input-general type="text" class="form-control w-100 me-4 ps-5 rounded-pill" wire:model="buscar_numero_guia" placeholder="Ingrese número de guía (ej: T0123456)" />
+            <x-input-general type="text" class="form-control w-100 me-4 ps-5 rounded-pill" wire:model="buscar_numero_guia" placeholder="Ej: T0010016827" />
             <i class="fas fa-search position-absolute"
                style="left: 30px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
         </div>
         <div class="col-lg-2 col-md-6 col-sm-12 mb-3 position-relative">
-            <x-input-general type="text" class="form-control w-100 me-4 ps-5 rounded-pill"  wire:model="buscar_ruc_nombre" placeholder="Buscar por RUC o nombre de cliente" />
+            <x-input-general type="text" class="form-control w-100 me-4 ps-5 rounded-pill"  wire:model="buscar_ruc_nombre" placeholder="RUC – Nombre de Cliente" />
             <i class="fas fa-search position-absolute"
                style="left: 30px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
         </div>

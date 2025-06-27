@@ -180,7 +180,7 @@ class Vistatrackings extends Component
                     $this->etapaActual = max($this->etapaActual, 2);
                     break;
                 case 9: // Programado
-                    $this->mensajeEtapa3 = $fechaHora . '<br>' . 'Guía despachado.';
+                    $this->mensajeEtapa3 = $fechaHora . '<br>' . 'Guía despachada.';
                     $this->etapaActual = max($this->etapaActual, 3);
                     break;
                 case 7: // En Ruta
@@ -188,11 +188,11 @@ class Vistatrackings extends Component
                     $this->etapaActual = max($this->etapaActual, 4);
                     break;
                 case 8: // Entregado
-                    $this->mensajeEtapa5 = $fechaHora . '<br>' . 'Guía entregado.';
+                    $this->mensajeEtapa5 = $fechaHora . '<br>' . 'Guía entregada.';
                     $this->etapaActual = 5;
                     break;
                 case 11: // No Entregado
-                    $this->mensajeEtapa5 = $fechaHora . '<br>' . 'Guía no entregado.';
+                    $this->mensajeEtapa5 = $fechaHora . '<br>' . 'Guía no entregada.';
                     $this->etapaActual = 5;
                     break;
             }
