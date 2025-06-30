@@ -1878,10 +1878,10 @@ class HistorialProgramacion extends Component
     public function cambiarEstadoDespachoFormulario(){
         try {
 
-            if (!Gate::allows('cambiar_estado_despacho')) {
-                session()->flash('error_delete', 'No tiene permisos para poder cambiar el estado del despacho.');
-                return;
-            }
+//            if (!Gate::allows('cambiar_estado_despacho')) {
+//                session()->flash('error_delete', 'No tiene permisos para poder cambiar el estado del despacho.');
+//                return;
+//            }
             if (count($this->selectedItems) > 0) {
                 // Validar que al menos un checkbox esté seleccionado
                 $this->validate([
