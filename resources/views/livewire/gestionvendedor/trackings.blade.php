@@ -108,22 +108,58 @@
                                         <td>S/ {{$general->formatoDecimal($me->guia_importe_total_sin_igv) ?? 0 }}</td>
                                         <td>S/ {{ $general->formatoDecimal($me->guia_importe_total_sin_igv * 1.18) ?? 0 }}</td>
                                         <td>
-                                            @php
-                                                $estado = [
-                                                    1 => 'Enviado a Créditos',
-                                                    2 => 'Enviado a Despacho',
-                                                    3 => 'Listo para despacho',
-                                                    4 => 'Pendiente de aprobación de despacho',
-                                                    5 => 'Aceptado por Créditos',
-                                                    6 => 'Estado de facturación',
-                                                    7 => 'Guía en transtio',
-                                                    8 => 'Guía entregada',
-                                                    9 => 'Despacho aprobado',
-                                                    10 => 'Despacho rechazado',
-                                                    11 => 'Guía no entregada'
-                                                ];
-                                            @endphp
-                                            {{ $estado[$me->guia_estado_aprobacion] ?? 'Desconocido' }}
+                                            <span class="d-block tamanhoTablaComproantes">
+                                                @php
+                                                    // Obtener el estado de entrega desde la tabla despacho_ventas
+                                                    $estadoEntrega = \App\Models\DespachoVenta::where('id_guia', $me->id_guia)
+                                                        ->value('despacho_detalle_estado_entrega');
+                                                @endphp
+
+                                                @if($me->guia_estado_aprobacion == 7 && $estadoEntrega == 8)
+                                                    Guía entregada
+                                                @else
+                                                    @switch($me->guia_estado_aprobacion)
+                                                        @case(1)
+                                                            Enviado a Créditos
+                                                            @break
+                                                        @case(2)
+                                                            Enviado a Despacho
+                                                            @break
+                                                        @case(3)
+                                                            Listo para despacho
+                                                            @break
+                                                        @case(4)
+                                                            Pendiente de aprobación de despacho
+                                                            @break
+                                                        @case(5)
+                                                            Aceptado por Créditos
+                                                            @break
+                                                        @case(6)
+                                                            Estado de facturación
+                                                            @break
+                                                        @case(7)
+                                                            Guía en tránsito
+                                                            @break
+                                                        @case(8)
+                                                            Guía entregada
+                                                            @break
+                                                        @case(9)
+                                                            Despacho aprobado
+                                                            @break
+                                                        @case(10)
+                                                            Despacho rechazado
+                                                            @break
+                                                        @case(11)
+                                                            Guía no entregada
+                                                            @break
+                                                        @case(12)
+                                                            Guía anulada
+                                                            @break
+                                                        @default
+                                                            Estado desconocido
+                                                    @endswitch
+                                                @endif
+                                            </span>
                                         </td>
                                         <td>
                                             <a href="{{ route('Programacioncamion.vistatracking', ['data' => base64_encode(json_encode(['id' => $me->id_guia, 'numdoc' => $me->guia_nro_doc, 'nombre' => $me->guia_nombre_cliente]))]) }}"

@@ -60,6 +60,10 @@
                                     <div class="col-lg-5 col-md-5 col-sm-12 d-flex align-items-center justify-content-center">
                                         <div style="width: 150px;" wire:ignore>
                                             <img src="" id="previeImageUsers" class="w-100" style="margin-top: 10%;" alt="">
+                                            <div wire:loading wire:target="profile_picture">
+                                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                Cargando...
+                                            </div>
                                             <label for="profile_picture" class="iconsPreviewImage">
                                                 <i class="fa-solid fa-camera "></i>
                                             </label>

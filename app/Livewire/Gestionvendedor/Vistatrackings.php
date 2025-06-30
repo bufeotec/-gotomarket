@@ -146,6 +146,7 @@ class Vistatrackings extends Component
 
         // Buscar en la tabla historialguias
         $historialGuia = Historialguia::where('guia_nro_doc', $numdoc)
+            ->where('historial_guia_estado', '=', 1)
             ->orderBy('historial_guia_fecha_hora', 'asc')
             ->get();
 
@@ -352,9 +353,13 @@ class Vistatrackings extends Component
             // Llenar datos
             $row = 2;
             foreach ($detalles as $detalle) {
-                $sheet->setCellValue('A'.$row, $detalle->guia_det_fecha_emision);
+                $sheet->setCellValue('A'.$row, date('d/m/Y', strtotime($detalle->guia_det_fecha_emision)));
                 $sheet->setCellValue('B'.$row, $detalle->guia_det_nro_documento);
-                $sheet->setCellValue('C'.$row, $detalle->guia_det_cod_producto);
+                $sheet->setCellValueExplicit(
+                    'C'.$row,
+                    $detalle->guia_det_cod_producto,
+                    \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING
+                );
                 $sheet->setCellValue('D'.$row, $detalle->guia_det_descripcion_producto);
                 $sheet->setCellValue('E'.$row, $detalle->guia_det_unidad);
                 $sheet->setCellValue('F'.$row, $detalle->guia_det_cantidad);

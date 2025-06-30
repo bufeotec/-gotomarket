@@ -52,11 +52,12 @@ class Facturacion extends Component
     public $guia_fecha_emision;
     public $historialEstados = [];
     public $fechasEditadas = [];
-    public $comentariosEditados = [];
+    public $comentarios_fecha_edits = [];
     public $fecha_emision_edit;
     public $comentario_emision;
     public $guia_nro_doc;
     public $nombre_usuario;
+    public $ids_historial_guia = [];
 
     public function mount(){
         $this->fecha_desde = date('Y-m-01');
@@ -401,12 +402,12 @@ class Facturacion extends Component
         }
     }
 
-    public function cambio_estado_edit(){
+    public function cambio_estado_edit() {
         try {
 
             $this->validate([
                 'id_guia' => 'required|integer',
-                'guia_estado_aprobacion' => 'required|in:1,2,3,4,7,12,8',
+                'guia_estado_aprobacion' => 'required|in:1,2,3,4,5,7,12,8,9',
             ], [
                 'id_guia.required' => 'El identificador es obligatorio.',
                 'id_guia.integer' => 'El identificador debe ser un número entero.',
@@ -425,10 +426,96 @@ class Facturacion extends Component
                 return;
             }
 
+            // Obtener el estado actual antes de cambiarlo
+            $estado_actual = $edit_guia_update->guia_estado_aprobacion;
+            $nuevo_estado = $this->guia_estado_aprobacion;
+
             // Cambiar el estado de la guía
-            $edit_guia_update->guia_estado_aprobacion = $this->guia_estado_aprobacion;
+            $edit_guia_update->guia_estado_aprobacion = $nuevo_estado;
 
             if ($edit_guia_update->save()) {
+                // Lógica para manejar el historial según los estados
+                if ($nuevo_estado == 1) { // Si cambia a Créditos
+                    // Eliminar todo el historial excepto Créditos (estado 1)
+                    DB::table('historial_guias')
+                        ->where('id_guia', $this->id_guia)
+                        ->where('historial_guia_estado_aprobacion', '!=', 1)
+                        ->delete();
+                }
+                elseif ($nuevo_estado == 3) { // Si cambia a Por Programar
+                    // Eliminar historial de estados posteriores (Programado, En ruta, Entregado)
+                    DB::table('historial_guias')
+                        ->where('id_guia', $this->id_guia)
+                        ->whereIn('historial_guia_estado_aprobacion', [4, 7, 8, 9])
+                        ->delete();
+                }
+                elseif ($nuevo_estado == 4) { // Si cambia a Programado
+                    // Eliminar historial de estados posteriores (En ruta, Entregado)
+                    DB::table('historial_guias')
+                        ->where('id_guia', $this->id_guia)
+                        ->whereIn('historial_guia_estado_aprobacion', [7, 8])
+                        ->delete();
+                }
+                elseif ($nuevo_estado == 7) { // Si cambia a En ruta
+                    // Eliminar historial de estado Entregado
+                    DB::table('historial_guias')
+                        ->where('id_guia', $this->id_guia)
+                        ->where('historial_guia_estado_aprobacion', 8)
+                        ->delete();
+                }
+                elseif ($nuevo_estado == 8) { // Si cambia a Entregado
+                    // No se elimina nada, solo se agrega el nuevo estado
+                }
+                elseif ($nuevo_estado == 12) { // Si cambia a Anulado
+                    // Eliminar todo el historial
+                    DB::table('historial_guias')
+                        ->where('id_guia', $this->id_guia)
+                        ->delete();
+                }
+
+                // crear los registros intermedios faltantes
+                if ($nuevo_estado == 8) {
+                    $historial_existente = DB::table('historial_guias')
+                        ->where('id_guia', $this->id_guia)
+                        ->pluck('historial_guia_estado_aprobacion')
+                        ->toArray();
+
+                    $estados_faltantes = [];
+
+                    // Verificar qué estados intermedios faltan
+                    if (!in_array(3, $historial_existente)) $estados_faltantes[] = 3; // Listo para despachar
+                    if (!in_array(5, $historial_existente)) $estados_faltantes[] = 5; // Aceptado por créditos
+                    if (!in_array(4, $historial_existente)) $estados_faltantes[] = 4; // Guía despachada
+                    if (!in_array(7, $historial_existente)) $estados_faltantes[] = 7; // Guía en ruta
+                    if (!in_array(9, $historial_existente)) $estados_faltantes[] = 9; // Programación abrobada
+
+                    // Insertar los estados faltantes
+                    foreach ($estados_faltantes as $estado) {
+                        DB::table('historial_guias')->insert([
+                            'id_users' => Auth::id(),
+                            'id_guia' => $this->id_guia,
+                            'guia_nro_doc' => $edit_guia_update->guia_nro_doc,
+                            'historial_guia_estado_aprobacion' => $estado,
+                            'historial_guia_fecha_hora' => Carbon::now('America/Lima'),
+                            'historial_guia_estado' => 1,
+                            'created_at' => Carbon::now('America/Lima'),
+                            'updated_at' => Carbon::now('America/Lima'),
+                        ]);
+                    }
+                }
+
+                // Insertar el nuevo estado en el historial
+                DB::table('historial_guias')->insert([
+                    'id_users' => Auth::id(),
+                    'id_guia' => $this->id_guia,
+                    'guia_nro_doc' => $edit_guia_update->guia_nro_doc,
+                    'historial_guia_estado_aprobacion' => $nuevo_estado,
+                    'historial_guia_fecha_hora' => Carbon::now('America/Lima'),
+                    'historial_guia_estado' => 1,
+                    'created_at' => Carbon::now('America/Lima'),
+                    'updated_at' => Carbon::now('America/Lima'),
+                ]);
+
                 DB::commit();
                 $this->dispatch('modalEditCambioEstado');
                 session()->flash('success', 'La guía cambio de estado.');
@@ -449,7 +536,8 @@ class Facturacion extends Component
         try {
             $this->id_guia = base64_decode($id_guia);
             $this->fechasEditadas = [];
-            $this->comentariosEditados = [];
+            $this->comentarios_fecha_edits = [];
+            $this->ids_historial_guia = [];
 
             // Obtener fecha de emisión de la guía
             $guia = DB::table('guias as g')
@@ -485,11 +573,15 @@ class Facturacion extends Component
 
                 if ($registro) {
                     $this->historialEstados[$estado] = [
+                        'id_historial_guia' => $registro->id_historial_guia,
                         'historial_guia_fecha_hora' => $registro->historial_guia_fecha_hora,
                         'name' => $registro->name,
-                        'fecha_formateada' => $this->formatDateForInput($registro->historial_guia_fecha_hora)
+                        'fecha_formateada' => $this->formatDateForInput($registro->historial_guia_fecha_hora),
+                        'comentario' => $registro->historial_guia_descripcion // Agregar el comentario existente
                     ];
                     $this->fechasEditadas[$estado] = $this->historialEstados[$estado]['fecha_formateada'];
+                    $this->ids_historial_guia[$estado] = $registro->id_historial_guia;
+                    $this->comentarios_fecha_edits[$estado] = $registro->historial_guia_descripcion;
                 } else {
                     $this->historialEstados[$estado] = null;
                 }
@@ -510,5 +602,65 @@ class Facturacion extends Component
         }
     }
 
-//    public function
+    public function cambio_fecha_edit_guia() {
+        try {
+            if (!Gate::allows('cambiar_fecha_historial')) {
+                session()->flash('error_fecha_guia', 'No tiene permisos para aprobar o rechazar este servicio de transporte.');
+                return;
+            }
+
+            // Validar que los comentarios estén presentes cuando se cambia la fecha
+            $errores = [];
+            foreach ($this->fechasEditadas as $estado => $fechaEditada) {
+                $fechaOriginal = $this->historialEstados[$estado]['fecha_formateada'] ?? null;
+                $comentario = $this->comentarios_fecha_edits[$estado] ?? null;
+
+                if ($fechaEditada != $fechaOriginal && empty($comentario)) {
+                    $nombreEstado = [
+                        5 => 'En Crédito',
+                        3 => 'Por Programar',
+                        9 => 'Programado',
+                        7 => 'En Ruta',
+                        8 => 'Entregado',
+                        11 => 'Anulado'
+                    ][$estado] ?? 'Desconocido';
+
+                    $errores[] = "Debe ingresar un comentario para el estado '$nombreEstado' ya que modificó la fecha";
+                }
+            }
+
+            if (!empty($errores)) {
+                session()->flash('error_fecha_guia', implode('<br>', $errores));
+                return;
+            }
+
+            DB::beginTransaction();
+
+            // Actualizar solo los registros modificados
+            foreach ($this->fechasEditadas as $estado => $fechaEditada) {
+                $idHistorial = $this->ids_historial_guia[$estado] ?? null;
+                $fechaOriginal = $this->historialEstados[$estado]['fecha_formateada'] ?? null;
+                $comentario = $this->comentarios_fecha_edits[$estado] ?? null;
+
+                if ($idHistorial && $fechaEditada != $fechaOriginal) {
+                    DB::table('historial_guias')
+                        ->where('id_historial_guia', $idHistorial)
+                        ->update([
+                            'historial_guia_fecha_hora' => Carbon::parse($fechaEditada)->format('Y-m-d H:i:s'),
+                            'historial_guia_descripcion' => $comentario,
+                            'updated_at' => now('America/Lima')
+                        ]);
+                }
+            }
+
+            DB::commit();
+            session()->flash('success', 'Fechas actualizadas correctamente');
+            $this->dispatch('modalEditFechaGuia');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error al actualizar las fechas: '.$e->getMessage());
+        }
+    }
 }

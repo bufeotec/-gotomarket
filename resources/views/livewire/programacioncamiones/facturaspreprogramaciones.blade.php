@@ -329,6 +329,9 @@
                                                                                     Sin Factura Asociada
                                                                                 </span>
                                                                             @endisset
+                                                                            <span class="d-block tamanhoTablaComprobantes">
+                                                                                {{ $guia->ESTADO}}
+                                                                            </span>
                                                                         </td>
                                                                         <td style="width: 37%">
                                                                             <span class="d-block tamanhoTablaComprobantes">

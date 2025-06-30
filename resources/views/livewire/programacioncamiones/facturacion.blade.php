@@ -84,6 +84,9 @@
             </form>
         </x-slot>
     </x-modal-delete>
+    {{-- MODAL FIN EDITAR ESTADO --}}
+
+{{--    MODAL ACTUALIZAR GUÍAS/ PESO Y VOLUMEN--}}
     <x-modal-delete wire:ignore.self>
         <x-slot name="id_modal">modalActualizarDetalle</x-slot>
         <x-slot name="modalContentDelete">
@@ -113,7 +116,7 @@
             </div>
         </x-slot>
     </x-modal-delete>
-    {{-- MODAL FIN EDITAR ESTADO --}}
+{{--    FIN MODAL ACTUALIZAR GUÍAS/ PESO Y VOLUMEN--}}
 
     {{--    MODAL GESTIONAR ESTADOS--}}
     <x-modal-delete wire:ignore.self>
@@ -192,6 +195,14 @@
                     <div class="col-lg-12 col-md-12 col-sm-12">
                         @error('id_guia') <span class="message-error">{{ $message }}</span> @enderror
                         @error('guia_estado_aprobacion') <span class="message-error">{{ $message }}</span> @enderror
+                        @if (session()->has('error_fecha_guia'))
+                            <div class="col-lg-12 col-md-12 col-sm-12">
+                                <div class="alert alert-danger alert-dismissible show fade mt-2">
+                                    {{ session('error_fecha_guia') }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            </div>
+                        @endif
                         <x-table-general>
                             <x-slot name="thead">
                                 <tr>
@@ -243,6 +254,7 @@
                                         <td></td>
                                         <td>
                                             @if($historial)
+                                                <input type="hidden" wire:model="ids_historial_guia.{{ $estado }}" value="{{ $historial['id_historial_guia'] ?? '' }}">
                                                 <input type="datetime-local" class="form-control form-control-sm"
                                                        wire:model="fechasEditadas.{{ $estado }}"
                                                        value="{{ $fechasEditadas[$estado] ?? '' }}">
@@ -250,7 +262,15 @@
                                         </td>
                                         <td>
                                             @if($historial)
-                                                <textarea class="form-control form-control-sm" rows="3" wire:model="comentariosEditados.{{ $estado }}"></textarea>
+                                                <textarea class="form-control form-control-sm @error('comentarios_fecha_edits.'.$estado) is-invalid @enderror"
+                                                          id="historial_guia_descripcion"
+                                                          name="historial_guia_descripcion"
+                                                          rows="3"
+                                                          wire:model="comentarios_fecha_edits.{{ $estado }}"
+                                                          @if(isset($fechasEditadas[$estado]) && $fechasEditadas[$estado] != $historial['fecha_formateada']) required @endif>{{ $comentarios_fecha_edits[$estado] ?? '' }}</textarea>
+                                                @error('comentarios_fecha_edits.'.$estado)
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                                @enderror
                                             @endif
                                         </td>
                                     </tr>
@@ -280,7 +300,7 @@
 
                     <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-end">
                         <button type="button" data-bs-dismiss="modal" class="btn btn-secondary">Cerrar</button>
-{{--                        <button type="submit" class="btn btn-success text-white">Guardar Registros</button>--}}
+                        <button type="submit" class="btn btn-success text-white">Guardar Registros</button>
                     </div>
                 </div>
             </form>
@@ -317,8 +337,8 @@
                     <input type="text" name="buscar_ruc_nombre" id="buscar_ruc_nombre" wire:model.live="buscar_ruc_nombre" class="form-control" placeholder="Buscar por RUC o nombre de cliente">
                 </div>
                 <div class="col-lg-2 col-md-2 col-sm-12 mb-3">
-                    <label for="buscar_ruc_nombre" class="form-label">Seleccionar estado</label>
-                    <select name="guia_estado_aprobacion" id="guia_estado_aprobacion" wire:model="buscar_estado" class="form-select">
+                    <label for="buscar_estado" class="form-label">Seleccionar estado</label>
+                    <select name="guia_estado_aprobacion" id="buscar_estado" wire:model="buscar_estado" class="form-select">
                         <option value="">Seleccionar...</option>
                         <option value="1">Creditos</option>
                         <option value="2">Despacho</option>
@@ -421,46 +441,56 @@
 {{--                                                </td>--}}
                                                 <td>
                                                     <span class="d-block tamanhoTablaComprobantes text-primary">
-                                                        @switch($factura->guia_estado_aprobacion)
-                                                            @case(1)
-                                                                Enviado a Créditos
-                                                                @break
-                                                            @case(2)
-                                                                Enviado a Despacho
-                                                                @break
-                                                            @case(3)
-                                                                Listo para despacho
-                                                                @break
-                                                            @case(4)
-                                                                Pendiente de aprobación de despacho
-                                                                @break
-                                                            @case(5)
-                                                                Aceptado por Créditos
-                                                                @break
-                                                            @case(6)
-                                                                Estado de facturación
-                                                                @break
-                                                            @case(7)
-                                                                Guía en transtio
-                                                                @break
-                                                            @case(8)
-                                                                Guía entregada
-                                                                @break
-                                                            @case(9)
-                                                                Despacho aprobado
-                                                                @break
-                                                            @case(10)
-                                                                Despacho rechazado
-                                                                @break
-                                                            @case(11)
-                                                                Guía no entregada
-                                                                @break
-                                                            @case(12)
-                                                                Guía anulada
-                                                                @break
+                                                        @php
+                                                            // Obtener el estado de entrega desde la tabla despacho_ventas
+                                                            $estadoEntrega = \App\Models\DespachoVenta::where('id_guia', $factura->id_guia)
+                                                                ->value('despacho_detalle_estado_entrega');
+                                                        @endphp
+
+                                                        @if($factura->guia_estado_aprobacion == 7 && $estadoEntrega == 8)
+                                                            Guía entregada
+                                                        @else
+                                                            @switch($factura->guia_estado_aprobacion)
+                                                                @case(1)
+                                                                    Enviado a Créditos
+                                                                    @break
+                                                                @case(2)
+                                                                    Enviado a Despacho
+                                                                    @break
+                                                                @case(3)
+                                                                    Listo para despacho
+                                                                    @break
+                                                                @case(4)
+                                                                    Pendiente de aprobación de despacho
+                                                                    @break
+                                                                @case(5)
+                                                                    Aceptado por Créditos
+                                                                    @break
+                                                                @case(6)
+                                                                    Estado de facturación
+                                                                    @break
+                                                                @case(7)
+                                                                    Guía en tránsito
+                                                                    @break
+                                                                @case(8)
+                                                                    Guía entregada
+                                                                    @break
+                                                                @case(9)
+                                                                    Despacho aprobado
+                                                                    @break
+                                                                @case(10)
+                                                                    Despacho rechazado
+                                                                    @break
+                                                                @case(11)
+                                                                    Guía no entregada
+                                                                    @break
+                                                                @case(12)
+                                                                    Guía anulada
+                                                                    @break
                                                                 @default
-                                                                Estado desconocido
-                                                        @endswitch
+                                                                    Estado desconocido
+                                                            @endswitch
+                                                        @endif
                                                     </span>
                                                 </td>
                                                 <td>
@@ -471,7 +501,7 @@
 {{--                                                            </x-slot>--}}
 {{--                                                        </x-btn-accion>--}}
 {{--                                                    @endif--}}
-                                                    @if($factura->guia_estado_aprobacion != 7)
+{{--                                                    @if($factura->guia_estado_aprobacion != 7)--}}
                                                         <x-btn-accion class="btn bg-primary btn-sm text-white" wire:click="edit_guia('{{ base64_encode($factura->id_guia) }}')"
                                                                       data-bs-toggle="modal" data-bs-target="#modalEditCambioEstado">
                                                             <x-slot name="message">
@@ -484,10 +514,10 @@
                                                                 <i class="fa-solid fa-calendar-days"></i>
                                                             </x-slot>
                                                         </x-btn-accion>
-                                                    @endif
-                                                    <br>
+{{--                                                    @endif--}}
+{{--                                                    <br>--}}
                                                     <a data-bs-toggle="modal" data-bs-target="#modalActualizarDetalle" wire:click="actualizar_detalle_guia('{{ $factura->guia_nro_doc }}',
-                                                    '{{ base64_encode($factura->id_guia) }}')" style="cursor:pointer;" class="btn-sm btn-warning text-white">
+                                                    '{{ base64_encode($factura->id_guia) }}')" style="cursor:pointer;" class="btn btn-sm btn-warning text-white">
                                                         <i class="fa fa-refresh"></i>
                                                     </a>
                                                 </td>
@@ -516,6 +546,10 @@
 
     $wire.on('modalEditCambioEstado', () => {
         $('#modalEditCambioEstado').modal('hide');
+    });
+
+    $wire.on('modalEditFechaGuia', () => {
+        $('#modalEditCambioFecha').modal('hide');
     });
 
     document.getElementById("btnEditar").addEventListener("click", function() {
