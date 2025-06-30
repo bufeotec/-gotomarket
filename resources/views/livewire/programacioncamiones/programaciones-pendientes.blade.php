@@ -421,10 +421,10 @@
                                     // Obtén el primer rol del usuario y su ID
                                     $roleId = $user->roles->first()->id ?? null;
                                 @endphp
-                                @if($roleId == 1 || $roleId == 2)
+{{--                                @if($roleId == 1 || $roleId == 2)--}}
                                     <button class="btn btn-sm text-white bg-success" wire:click="cambiarEstadoProgramacion({{$r->id_programacion}},1)" data-bs-toggle="modal" data-bs-target="#modalAprobarProgramacion"><i class="fa-solid fa-check"></i> APROBAR</button>
                                     <button class="btn btn-sm text-white bg-danger" wire:click="cambiarEstadoProgramacion({{$r->id_programacion}},4)" data-bs-toggle="modal" data-bs-target="#modalAprobarProgramacion"><i class="fa fa-x"></i> RECHAZAR</button>
-                                @endif
+{{--                                @endif--}}
                                 @php
                                         if(Gate::allows('editar_aprobar_programacion')) {
                                         @endphp

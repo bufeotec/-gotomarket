@@ -55,6 +55,12 @@ class Notascreditos extends Component
     }
 
     public function buscar_comprobantes(){
+
+        if (!Gate::allows('buscar_nc_starsoft')) {
+            session()->flash('error', 'No tiene permisos para buscar Notas de Crédito.');
+            return;
+        }
+
         // Verificar si no hay fechas ni búsqueda
         if (empty($this->desde) && empty($this->hasta) && empty($this->searchFactura)) {
             session()->flash('error-guia', 'Debe ingresar las fechas de búsqueda.');
@@ -84,6 +90,12 @@ class Notascreditos extends Component
     }
 
     public function seleccionar_nota_credito($NRO_DOCUMENTO){
+
+        if (!Gate::allows('seleccionar_nc_starsoft')) {
+            session()->flash('error', 'No tiene permisos para seleccionar las Notas de Crédito.');
+            return;
+        }
+
         // Validar que la nota credito no exista en el array selectedGuias
         $comprobanteExiste = collect($this->selectedGuias)->first(function ($factura) use ($NRO_DOCUMENTO) {
             return $factura['NRO_DOCUMENTO'] === $NRO_DOCUMENTO;
@@ -130,6 +142,12 @@ class Notascreditos extends Component
     }
 
     public function eliminar_nota_credito_seleccionada($NRO_DOCUMENTO){
+
+        if (!Gate::allows('eliminar_nc_seleccionada')) {
+            session()->flash('error', 'No tiene permisos para eliminar la nota seleccionada.');
+            return;
+        }
+
         // Encuentra la nota credito en las seleccionadas
         $factura = collect($this->selectedGuias)->first(function ($f) use ($NRO_DOCUMENTO) {
             return $f['NRO_DOCUMENTO'] === $NRO_DOCUMENTO;
@@ -178,7 +196,7 @@ class Notascreditos extends Component
     public function saveNotaCredito() {
         try {
             if (!Gate::allows('guardar_nota_credito')) {
-                session()->flash('error', 'No tiene permisos para crear una programación local.');
+                session()->flash('error', 'No tiene permisos para guardar las notas de créditos.');
                 return;
             }
 
@@ -283,7 +301,7 @@ class Notascreditos extends Component
             $this->hasta = date('Y-m-d'); // Reiniciar la fecha "hasta"
             // Cerrar el modal y mostrar mensaje de éxito
             $this->dispatch('hideModal');
-            session()->flash('success', 'Facturas procesadas correctamente.');
+            session()->flash('success', 'Notas de Crédito guardadas correctamente.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -315,10 +333,7 @@ class Notascreditos extends Component
 
     public function cambiar_estado_aprobacion(){
         try {
-            if (!Gate::allows('cambiar_estado_aprobacion')) {
-                session()->flash('error_pre_pro', 'No tiene permisos para cambiar los estados de este registro.');
-                return;
-            }
+
             $this->validate([
                 'id_nota_credito' => 'required|integer',
             ], [

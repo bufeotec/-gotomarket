@@ -272,15 +272,17 @@ class Nuevoperfiles extends Component
 
             // Mapeo de permisos principales a sus relacionados
             $relatedPermissionsMap = [
-                29 => 193,
-                49 => 194,
-                50 => 195,
-                30 => 184,
-                53 => 192,
-                54 => 196,
-                200 => 166,
-                134 => [139, 140],
-                143 => [168, 173, 169, 174, 170, 175, 171, 176, 172, 177]
+                /*29 => 193,*/
+                49 => [187, 181], //Crear Usuario
+                50 => 188, //Actualizar Usuario
+                53 => [179, 182], //Crear Perfil
+                54 => 183, //Actualizar Perfil
+                217 => [139, 140], //Ver Detalle del Tracking
+                143 => [168, 173, 169, 174, 170, 175, 171, 176, 172, 177], //Reportes Control Documentario
+                149 => [76, 78], //Tarifas
+                200 => 166, //Editar Programación
+                225 => 165,
+                178 => [157, 158, 159, 160] //Reporte Despacho y Transporte
             ];
 
             // Función para manejar permisos relacionados

@@ -2,7 +2,9 @@
 
 namespace App\Livewire\Gestionvendedor;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
@@ -38,6 +40,13 @@ class Trackings extends Component
     }
 
     public function buscar_comprobantes(){
+
+        if (!Gate::allows('buscar_guias_tracking')) {
+            session()->flash('error', 'No tiene permisos para buscar guías.');
+            return;
+        }
+
+
         // Construir la consulta base
         $query = DB::table('guias');
 
@@ -82,5 +91,26 @@ class Trackings extends Component
         }
 
         $this->listar_comprobantes = $query->get();
+        if($this->listar_comprobantes){
+            $id_usuario = Auth::id();
+            $vende = DB::table('users')
+                ->where('users_perfil_vendedor', 1)
+                ->where('id_users',$id_usuario)
+                ->first();
+
+            if ($vende){
+                $vendedor = DB::table('users_vendedores as uv')
+                    ->join('vendedores as v', 'uv.id_vendedor', '=', 'v.id_vendedor')
+                    ->where('uv.id_users', $id_usuario)
+                    ->where('uv.user_vendedor_estado',1)
+                    ->select('v.vendedor_codigo_vendedor_starsoft')
+                    ->get();
+
+                $codigosVendedores = $vendedor->pluck('vendedor_codigo_vendedor_starsoft')->toArray();
+                $this->listar_comprobantes = $this->listar_comprobantes->filter(function ($item) use ($codigosVendedores) {
+                    return in_array($item->guia_vendedor_codigo, $codigosVendedores);
+                });
+            }
+        }
     }
 }

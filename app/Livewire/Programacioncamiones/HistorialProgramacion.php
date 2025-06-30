@@ -502,10 +502,10 @@ class HistorialProgramacion extends Component
     }
     public function generar_excel_historial_programacion(){
         try {
-            if (!Gate::allows('generar_excel_historial_programacion')) {
-                session()->flash('error', 'No tiene permisos para generar el reporte en excel.');
-                return;
-            }
+//            if (!Gate::allows('generar_excel_historial_programacion')) {
+//                session()->flash('error', 'No tiene permisos para generar el reporte en excel.');
+//                return;
+//            }
             $resultado = $this->programacion->listar_programaciones_historial_programacion_excel($this->desde, $this->hasta, $this->tipo_reporte, $this->estadoPro);
             $conteoDesp = 0;
 

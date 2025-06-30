@@ -101,7 +101,7 @@ class Validaredes extends Component
         try {
             // Verificar permisos del usuario
             if (!Gate::allows('disable_pre_pro_2')) {
-                session()->flash('error_pre_pro', 'No tiene permisos para cambiar los estados de este registro.');
+                session()->flash('error_pre_pro', 'No tiene permisos para enviar esta guía a Programar Despachos.');
                 return;
             }
             if (count($this->selectedGuiaIds) > 0) {

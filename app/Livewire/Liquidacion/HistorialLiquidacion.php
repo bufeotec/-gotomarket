@@ -56,6 +56,13 @@ class HistorialLiquidacion extends Component
     }
 
     public function buscar_historial_liquidacion(){
+
+        if (!Gate::allows('buscar_historial_liquidacion')) {
+            session()->flash('error', 'No tiene permisos para buscar el historial de liquidaciones.');
+            return;
+        }
+
+
         $resultado = $this->liquidacion->listar_liquidacion_aprobadas_new($this->search, $this->desde, $this->hasta, $this->tipo_reporte);
 
         // Separar y ordenar resultados por transportista

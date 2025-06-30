@@ -3,6 +3,18 @@
         $general = new \App\Models\General();
     @endphp
 
+    @if (session()->has('success'))
+        <div class="alert alert-success alert-dismissible show fade mt-2">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+    @if (session()->has('error'))
+        <div class="alert alert-danger alert-dismissible show fade mt-2">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
     <div class="row">
         <div class="col-lg-2 col-md-6 col-sm-12 mb-3 position-relative">
             <x-input-general type="text" class="form-control w-100 me-4 ps-5 rounded-pill" wire:model="buscar_numero_guia" placeholder="Ej: T0010016827" />
@@ -83,7 +95,11 @@
                                 @php $conteo = 1; @endphp
                                 @foreach($listar_comprobantes as $me)
                                     <tr>
-                                        <td>{{$conteo}}</td>
+                                        <td>
+                                            {{$conteo}}
+                                            {{--VENDEDOR: {{$me->guia_vendedor}}
+                                            CODIGO: {{$me->guia_vendedor_codigo}}--}}
+                                        </td>
                                         <td>{{$me->guia_nombre_cliente}}</td>
                                         <td>{{$me->guia_ruc_cliente}}</td>
                                         <td>{{$me->guia_nro_doc}}</td>

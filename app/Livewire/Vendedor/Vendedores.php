@@ -43,6 +43,12 @@ class Vendedores extends Component
 
     public function actualizar_vendedores(){
         try {
+
+            if (!Gate::allows('actualizar_vendedores_ss')) {
+                session()->flash('error', 'No tiene permisos para actualizar los vendedores.');
+                return;
+            }
+
             DB::beginTransaction();
 
             $datosResult = $this->server->obtenervendedores();
