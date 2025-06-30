@@ -511,12 +511,22 @@
                                         $user = \Illuminate\Support\Facades\Auth::user(); // Obtiene el usuario autenticado
                                         $roleId = $user->roles->first()->id ?? null;
                                     @endphp
-                                    @if($roleId == 1 || $roleId == 2)
+{{--                                    @if($roleId == 1 || $roleId == 2)--}}
                                         <button class="btn btn-sm text-white bg-success" wire:click="cambiarEstadoLiquidacion({{$r->id_liquidacion}},1)" data-bs-toggle="modal" data-bs-target="#modalAprobarLiquidacion"><i class="fa-solid fa-check"></i> APROBAR</button>
                                         <button class="btn btn-sm text-white bg-warning" wire:click="gestionObservacionLiquidacion({{$r->id_liquidacion}})" data-bs-toggle="modal" data-bs-target="#modalComentarioLiquidacion"><i class="fa fa-eye"></i> OBSERVAR</button>
                                         <button class="btn btn-sm text-white bg-danger" wire:click="cambiarEstadoLiquidacion({{$r->id_liquidacion}},2)" data-bs-toggle="modal" data-bs-target="#modalAprobarLiquidacion"><i class="fa fa-x"></i> RECHAZAR</button>
-                                    @endif
-                                    <a class="btn btn-sm text-white bg-primary" href="{{route('Despachotransporte.editar_liquidaciones',['data'=>base64_encode($r->id_liquidacion)])}}"><i class="fa-solid fa-pencil"></i> EDITAR</a>
+{{--                                    @endif--}}
+
+                                    @php
+                                        if (Gate::allows('editar_fletes')) {
+                                            @endphp
+                                                <a class="btn btn-sm text-white bg-primary" href="{{route('Despachotransporte.editar_liquidaciones',['data'=>base64_encode($r->id_liquidacion)])}}"><i class="fa-solid fa-pencil"></i> EDITAR</a>
+                                            @php
+                                        }
+                                    @endphp
+
+
+
                                     @if(file_exists($r->liquidacion_ruta_comprobante))
                                         <a class="btn btn-sm text-white bg-secondary" href="{{asset($r->liquidacion_ruta_comprobante)}}" target="_blank"><i class="fa-solid fa-eye"></i> VER DOCUMENTO</a>
                                     @else

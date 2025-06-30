@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Despachotransporte;
 
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use App\Models\Logs;
 use App\Models\Server;
@@ -22,6 +23,27 @@ class PaseGuiasAntiguas extends Component
         }
     public function render()
     {
+
+        $codigo_vendedor = DB::table('vendedores')->get();
+
+        foreach ($codigo_vendedor as $cv){
+            $guias_con_vendedor_des = DB::table('guias')
+                ->where('guia_vendedor',$cv->vendedor_des)
+                ->where('guia_vendedor_codigo',null)
+                ->get();
+            if($guias_con_vendedor_des){
+                foreach ($guias_con_vendedor_des as $gcv){
+                    $guia = Guia::find($gcv->id_guia);
+                    if($guia){
+                        $guia->guia_vendedor_codigo = $cv->vendedor_codigo_vendedor_starsoft;
+                        $guia->save();
+                    }
+                }
+            }
+        }
+
+
+
 //        $guias_antiguas = $this->despachoventas->listar_guias_antiguas()->toArray();
 //        $guias_sin_duplicidad = [];
 //

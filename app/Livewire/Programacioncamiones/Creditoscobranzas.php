@@ -126,7 +126,7 @@ class Creditoscobranzas extends Component
         try {
             // Verifica permisos
             if (!Gate::allows('aceptar_fac_credito')) {
-                session()->flash('error', 'No tiene permisos para cambiar los estados del menú.');
+                session()->flash('error', 'No tiene permisos para aceptar las guías.');
                 return;
             }
 
@@ -259,8 +259,8 @@ class Creditoscobranzas extends Component
     public function confirmarEnvio(){
         try {
 
-            if (!Gate::allows('enviar_guias')) {
-                session()->flash('error', 'No tiene permisos para cambiar los estados del menú.');
+            if (!Gate::allows('enviar_facturas_aprobrar')) {
+                session()->flash('error', 'No tiene permisos para enviar las guías.');
                 return;
             }
 

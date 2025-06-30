@@ -83,10 +83,6 @@ class Tipovehiculos extends Component
 
             if (!$this->id_tipo_vehiculo) { // INSERT
 
-                if (!Gate::allows('crear_tipo_vehiculo')) {
-                    session()->flash('error', 'No tiene permisos para crear el servicios.');
-                    return;
-                }
                 $microtime = microtime(true);
                 DB::beginTransaction();
                 $tipovehiculo_save = new TipoVehiculo();
@@ -107,12 +103,6 @@ class Tipovehiculos extends Component
                     session()->flash('error', 'Ocurrió un error al guardar el registro.');
                     return;
                 }
-            } else {
-                if (!Gate::allows('update_menus')) {
-                    session()->flash('error', 'No tiene permisos para actualizar el registro.');
-                    return;
-                }
-
             }
         } catch (\Illuminate\Validation\ValidationException $e) {
             $this->setErrorBag($e->validator->errors());

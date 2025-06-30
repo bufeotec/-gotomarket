@@ -243,11 +243,7 @@ class Facturacion extends Component
     }
     public function disable_pre_pro(){
         try {
-            // Verificar permisos del usuario
-            if (!Gate::allows('disable_pre_pro')) {
-                session()->flash('error_pre_pro', 'No tiene permisos para cambiar los estados de este registro.');
-                return;
-            }
+
 
             // Validar los datos de entrada
             $this->validate([
@@ -407,10 +403,6 @@ class Facturacion extends Component
 
     public function cambio_estado_edit(){
         try {
-            if (!Gate::allows('cambio_estado_edit')) {
-                session()->flash('error-edit-guia', 'No tiene permisos para aprobar o rechazar este servicio de transporte.');
-                return;
-            }
 
             $this->validate([
                 'id_guia' => 'required|integer',

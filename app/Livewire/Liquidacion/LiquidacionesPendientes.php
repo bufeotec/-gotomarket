@@ -199,10 +199,19 @@ class LiquidacionesPendientes extends Component
     public function cambiarEstadoLiquidacionFormulario(){
         try {
 
-            if (!Gate::allows('aprobar_rechazar_liquidacion')) {
-                session()->flash('error_delete', 'No tiene permisos para aprobar o rechazar esta liquidación.');
-                return;
+            if($this->estado_liquidacion == 1){
+                if (!Gate::allows('aprobar_af')) {
+                    session()->flash('error_delete', 'No tiene permisos para aprobar o rechazar esta liquidación.');
+                    return;
+                }
+            }else{
+                if (!Gate::allows('rechazar_af')) {
+                    session()->flash('error_delete', 'No tiene permisos para aprobar o rechazar esta liquidación.');
+                    return;
+                }
             }
+
+
             $this->validate([
                 'id_liqui' => 'required|integer',
                 'estado_liquidacion' => 'required|integer',

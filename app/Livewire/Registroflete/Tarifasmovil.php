@@ -60,7 +60,7 @@ class Tarifasmovil extends Component
     public function disable_tm() {
         try {
             if (!Gate::allows('disable_tm')) {
-                session()->flash('error_delete', 'No tiene permisos para cambiar los estados de este registro.');
+                session()->flash('error_delete', 'No tiene permisos para aprobar los vehículos.');
                 return;
             }
 
