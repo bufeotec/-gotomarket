@@ -146,6 +146,7 @@ class Vistatrackings extends Component
 
         // Buscar en la tabla historialguias
         $historialGuia = Historialguia::where('guia_nro_doc', $numdoc)
+            ->where('historial_guia_estado', '=', 1)
             ->orderBy('historial_guia_fecha_hora', 'asc')
             ->get();
 
