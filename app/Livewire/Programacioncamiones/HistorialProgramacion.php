@@ -1041,6 +1041,7 @@ class HistorialProgramacion extends Component
 
                                     // Estado de aprobación
                                     $estadoAprobacion = $comproba->guia_estado_aprobacion;
+                                    $estado = '';
 
                                     // -------- CELDA A-G --------
                                     $sheet1->setCellValue('A' . $row, $comproba->guia_nro_doc);
