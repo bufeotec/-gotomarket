@@ -50,7 +50,9 @@ class LiquidacionesPendientes extends Component
     }
     public function render(){
         $resultado = $this->liquidacion->listar_liquidacion_pendientes($this->search,$this->desde, $this->hasta);
-        return view('livewire.liquidacion.liquidaciones-pendientes', compact('resultado'));
+
+        $conteoLiquidacionPend = DB::table('liquidaciones')->where('liquidacion_estado_aprobacion', '=', 0)->count();
+        return view('livewire.liquidacion.liquidaciones-pendientes', compact('resultado', 'conteoLiquidacionPend'));
     }
     public function listar_guias_despachos($id){
         try {

@@ -470,6 +470,10 @@
         </div>
     </div>
 
+    <div class="col-lg-12 col-md-12 col-sm-12">
+        <p>Actualmente, hay <b class="colorgotomarket">{{$conteoLiquidacionPend}}</b> liquidaciones pendientes.</p>
+    </div>
+
     @if(count($resultado) > 0)
         <div class="row mt-4">
             <div class="col-lg col-md-3 col-sm-3 mb-1">
