@@ -85,6 +85,7 @@
                                 <th>Fecha de emision</th>
                                 <th>Monto sin IGV</th>
                                 <th>Monto con IGV</th>
+                                <th>Vendedor</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
@@ -107,6 +108,7 @@
                                         <td>{{ $general->obtenerNombreFecha($me->guia_fecha_emision,'DateTime','Date') }}</td>
                                         <td>S/ {{$general->formatoDecimal($me->guia_importe_total_sin_igv) ?? 0 }}</td>
                                         <td>S/ {{ $general->formatoDecimal($me->guia_importe_total_sin_igv * 1.18) ?? 0 }}</td>
+                                        <td>VENDEDOR: {{$me->guia_vendedor}}</td>
                                         <td>
                                             <span class="d-block tamanhoTablaComproantes">
                                                 @php

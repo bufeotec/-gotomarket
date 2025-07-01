@@ -2075,10 +2075,10 @@ class HistorialProgramacion extends Component
 
     public function cambiarEstadoComprobante(){
         try {
-            if (!Gate::allows('cambiar_estado_comprobante')) {
-                session()->flash('errorComprobante', 'No tiene permisos para poder cambiar el estado del comprobante.');
-                return;
-            }
+//            if (!Gate::allows('cambiar_estado_comprobante')) {
+//                session()->flash('errorComprobante', 'No tiene permisos para poder cambiar el estado del comprobante.');
+//                return;
+//            }
 
             DB::beginTransaction();
             $id_despacho = $this->currentDespachoId;

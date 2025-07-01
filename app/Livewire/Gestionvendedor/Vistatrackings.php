@@ -303,9 +303,10 @@ class Vistatrackings extends Component
             }
 
             // Obtener los detalles de la guía (usando $guiaId en lugar de $this->id_guia)
-            $detalles = DB::table('guias_detalles')
-                ->where('id_guia', $guiaId)
-                ->orderBy('id_guia_det')
+            $detalles = DB::table('guias_detalles as gd')
+                ->join('guias as g', 'gd.id_guia', '=', 'g.id_guia')
+                ->where('gd.id_guia', $guiaId)
+                ->orderBy('gd.id_guia_det')
                 ->get();
 
             if ($detalles->isEmpty()) {
@@ -332,6 +333,7 @@ class Vistatrackings extends Component
             $sheet->setCellValue('L1', 'Peso Total (g)');
             $sheet->setCellValue('M1', 'Volumen Total');
             $sheet->setCellValue('N1', 'ESTADO');
+            $sheet->setCellValue('O1', 'VENDEDOR');
 
 //            $sheet->setCellValue('A1', 'Almacén Salida');
 //            $sheet->setCellValue('C1', 'Tipo Documento');
@@ -348,7 +350,7 @@ class Vistatrackings extends Component
                 'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
                     'startColor' => ['rgb' => '4472C4']]
             ];
-            $sheet->getStyle('A1:N1')->applyFromArray($headerStyle);
+            $sheet->getStyle('A1:O1')->applyFromArray($headerStyle);
 
             // Llenar datos
             $row = 2;
@@ -371,6 +373,7 @@ class Vistatrackings extends Component
                 $sheet->setCellValue('L'.$row, $detalle->guia_det_peso_total_gramo);
                 $sheet->setCellValue('M'.$row, $detalle->guia_det_volumen_total);
                 $sheet->setCellValue('N'.$row, $detalle->guia_det_estado);
+                $sheet->setCellValue('O'.$row, $detalle->guia_vendedor);
 
 //                $sheet->setCellValue('A'.$row, $detalle->guia_det_almacen_salida);
 //                $sheet->setCellValue('C'.$row, $detalle->guia_det_tipo_documento);
@@ -384,7 +387,7 @@ class Vistatrackings extends Component
             }
 
             // Autoajustar columnas
-            foreach (range('A', 'N') as $column) {
+            foreach (range('A', 'O') as $column) {
                 $sheet->getColumnDimension($column)->setAutoSize(true);
             }
 
