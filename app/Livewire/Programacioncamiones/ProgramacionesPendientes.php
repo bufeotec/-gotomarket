@@ -166,10 +166,6 @@ class ProgramacionesPendientes extends Component
                     return;
                 }
             }
-
-
-
-
             $this->validate([
                 'id_progr' => 'required|integer',
                 'estadoPro' => 'required|integer',
