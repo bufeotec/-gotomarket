@@ -499,6 +499,9 @@
         <div class="col-lg-12 col-md-12 col-sm-12">
             <div class="loader mt-2" wire:loading wire:target="buscar_comprobantes"></div>
         </div>
+        <div class="col-lg-12 col-md-12 col-sm-12">
+            <div class="loader mt-2" wire:loading wire:target="generar_excel_historial_programacion"></div>
+        </div>
     </div>
     @if (session()->has('success'))
         <div class="alert alert-success alert-dismissible show fade mt-2">

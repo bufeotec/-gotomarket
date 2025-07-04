@@ -1880,11 +1880,11 @@ class HistorialProgramacion extends Component
 //    CAMBIAR EL ESTADO A EN RUTA
     public function cambiarEstadoDespachoFormulario() {
         try {
-            if (!Gate::allows('cambiar_estado_despacho')) {
-                session()->flash('error_delete', 'No tiene permisos para poder cambiar el estado del despacho.');
-                return;
-            }
 
+//            if (!Gate::allows('cambiar_estado_despacho')) {
+//                session()->flash('error_delete', 'No tiene permisos para poder cambiar el estado del despacho.');
+//                return;
+//            }
             if (count($this->selectedItems) > 0) {
                 // Validación para múltiples despachos
                 $this->validate([
@@ -2069,10 +2069,10 @@ class HistorialProgramacion extends Component
 
     public function cambiarEstadoComprobante() {
         try {
-            if (!Gate::allows('cambiar_estado_comprobante')) {
-                session()->flash('errorComprobante', 'No tiene permisos para poder cambiar el estado del comprobante.');
-                return;
-            }
+//            if (!Gate::allows('cambiar_estado_comprobante')) {
+//                session()->flash('errorComprobante', 'No tiene permisos para poder cambiar el estado del comprobante.');
+//                return;
+//            }
 
             DB::beginTransaction();
             $id_despacho = $this->currentDespachoId;

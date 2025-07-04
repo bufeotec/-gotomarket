@@ -624,6 +624,7 @@ class Guia extends Model
                     'guias.guia_nombre_cliente',
                     'guias.guia_forma_pago',
                     'guias.guia_vendedor',
+                    'guias.guia_vendedor_codigo',
                     'guias.guia_moneda',
                     'guias.guia_tipo_cambio',
                     'guias.guia_estado',

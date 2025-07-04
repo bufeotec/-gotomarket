@@ -143,6 +143,7 @@ class Facturacion extends Component
                 'g.guia_nombre_cliente',
                 'g.guia_forma_pago',
                 'g.guia_vendedor',
+                'g.guia_vendedor_codigo',
                 'g.guia_moneda',
                 'g.guia_tipo_cambio',
                 'g.guia_estado',
