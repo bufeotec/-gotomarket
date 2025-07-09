@@ -185,7 +185,9 @@
                                                                             wire:model="estadoComprobante.{{ $listar_detalle_despacho->id_despacho }}_{{ $ta->id_despacho_venta }}"
                                                                         >
                                                                             <option value="8">Entregado</option>
-                                                                            <option value="11">No entregado</option>
+                                                                            @if(!$listar_detalle_despacho->es_mixto_provincial)
+                                                                                <option value="11">No entregado</option>
+                                                                            @endif
                                                                         </select>
                                                                     @else
                                                                         @php
@@ -698,7 +700,20 @@
                                                 <tr>
                                                     <td>
                                                         @if($des->despacho_estado_aprobacion == 1)
-                                                            <input type="checkbox" wire:model.live="selectedItems" value="{{ $des->id_despacho }}" id="checkbox-{{ $des->id_despacho }}" class="form-check-input">
+                                                            @php
+                                                                $esMixto = $programacionesContador[$r->id_programacion] > 1;
+                                                                $mostrarCheckbox = false;
+                                                                if (!$esMixto) {
+                                                                    // Despacho directo (local o provincial)
+                                                                    $mostrarCheckbox = true;
+                                                                } else {
+                                                                    // Es mixto - solo mostrar si es local
+                                                                    $mostrarCheckbox = $des->id_tipo_servicios == 1;
+                                                                }
+                                                            @endphp
+                                                            @if($mostrarCheckbox)
+                                                                <input type="checkbox" wire:model.live="selectedItems" value="{{ $des->id_despacho }}" id="checkbox-{{ $des->id_despacho }}" class="form-check-input">
+                                                            @endif
                                                         @endif
                                                     </td>
                                                     <td>{{ $conteoGeneral2 }}</td>
@@ -771,9 +786,23 @@
                                                     </td>
                                                     <td>
                                                         @if($des->despacho_estado_aprobacion == 1)
-                                                            <button class="btn btn-sm text-warning" wire:click="cambiarEstadoDespacho({{ $des->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalAprobarProgramacion">
-                                                                <i class="fa fa-car-side"></i>
-                                                            </button>
+                                                            @php
+                                                                $contadorDespachos = count($r->despacho);
+                                                                $esMixto = $contadorDespachos > 1;
+                                                                $mostrarBoton = false;
+                                                                if (!$esMixto) {
+                                                                    // Despacho directo (local o provincial)
+                                                                    $mostrarBoton = true;
+                                                                } else {
+                                                                    // Es mixto - solo mostrar si es local
+                                                                    $mostrarBoton = $des->id_tipo_servicios == 1;
+                                                                }
+                                                            @endphp
+                                                            @if($mostrarBoton)
+                                                                <button class="btn btn-sm text-warning" wire:click="cambiarEstadoDespacho({{ $des->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalAprobarProgramacion">
+                                                                    <i class="fa fa-car-side"></i>
+                                                                </button>
+                                                            @endif
                                                         @endif
                                                         <button class="btn btn-primary btn-sm text-white mb-2" wire:click="listar_informacion_despacho({{ $des->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">
                                                             <i class="fa-solid fa-eye"></i> Despacho

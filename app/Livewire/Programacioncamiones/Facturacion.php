@@ -58,6 +58,9 @@ class Facturacion extends Component
     public $guia_nro_doc;
     public $nombre_usuario;
     public $ids_historial_guia = [];
+    public $estado_actual;
+    public $estado_actual_texto;
+    public $estado_entrega;
 
     public function mount(){
         $this->fecha_desde = date('Y-m-01');
@@ -210,9 +213,12 @@ class Facturacion extends Component
                     }
                 }
                 DB::commit();
+                $this->dispatch('hideModalActualizarDetalle');
                 session()->flash('success', 'Detalle de la Guía Actualizada Correctamente!.');
             }
         }
+        $this->dispatch('hideModalActualizarDetalle');
+        session()->flash('success', 'No se encontraron cambios para actualizar.');
     }
 
     public function cambio_estado($id_guia, $estado_aprobacion){
@@ -231,6 +237,44 @@ class Facturacion extends Component
 
     public function edit_guia($id_guia){
         $this->id_guia = base64_decode($id_guia);
+
+        // Obtener estado de la guía
+        $obtener_estado = DB::table('guias')
+            ->where('id_guia', '=', $this->id_guia)
+            ->first();
+
+        // Obtener estado de entrega desde despacho_ventas
+        $this->estado_entrega = DB::table('despacho_ventas')
+            ->where('id_guia', $this->id_guia)
+            ->value('despacho_detalle_estado_entrega');
+
+        $this->estado_actual = $obtener_estado->guia_estado_aprobacion;
+        $this->estado_actual_texto = $this->getEstadoTexto($obtener_estado->guia_estado_aprobacion, $this->estado_entrega);
+    }
+
+    public function getEstadoTexto($estado, $estado_entrega = null){
+        // Primero verificar si es estado 7 (en tránsito) y tiene estado_entrega 8
+        if($estado == 7 && $estado_entrega == 8) {
+            return 'Guía entregada';
+        }
+
+        $estados = [
+            0 => 'Guía anulada',
+            1 => 'Enviado a Créditos',
+            2 => 'Enviado a Despacho',
+            3 => 'Listo para despacho',
+            4 => 'Pendiente de aprobación de despacho',
+            5 => 'Aceptado por Créditos',
+            6 => 'Estado de facturación',
+            7 => 'Guía en tránsito',
+            8 => 'Guía entregada',
+            9 => 'Despacho aprobado',
+            10 => 'Despacho rechazado',
+            11 => 'Guía no entregada',
+            12 => 'Guía anulada'
+        ];
+
+        return $estados[$estado] ?? 'Estado desconocido';
     }
 
     public function actualizarMensaje()

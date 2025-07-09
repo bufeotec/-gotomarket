@@ -110,63 +110,46 @@
                                         <td>{{$me->guia_vendedor}}</td>
                                         <td>
                                             <span class="d-block tamanhoTablaComproantes">
-                                                @php
-                                                    $count = \App\Models\DespachoVenta::where('id_guia', $me->id_guia)->count();
-                                                    $mostrarEstado = true;
-
-                                                    if($count > 1) {
-                                                        $mostrarEstado = false;
-                                                    }
-                                                @endphp
-
-                                                @if($mostrarEstado)
-                                                    @if($me->guia_estado_aprobacion == 7)
+                                                @switch($me->guia_estado_aprobacion)
+                                                    @case(1)
+                                                        Enviado a Créditos
+                                                        @break
+                                                    @case(2)
+                                                        Enviado a Despacho
+                                                        @break
+                                                    @case(3)
+                                                        Listo para despacho
+                                                        @break
+                                                    @case(4)
+                                                        Pendiente de aprobación de despacho
+                                                        @break
+                                                    @case(5)
+                                                        Aceptado por Créditos
+                                                        @break
+                                                    @case(6)
+                                                        Estado de facturación
+                                                        @break
+                                                    @case(7)
+                                                        Guía en tránsito
+                                                        @break
+                                                    @case(8)
                                                         Guía entregada
-                                                    @else
-                                                        @switch($me->guia_estado_aprobacion)
-                                                            @case(1)
-                                                                Enviado a Créditos
-                                                                @break
-                                                            @case(2)
-                                                                Enviado a Despacho
-                                                                @break
-                                                            @case(3)
-                                                                Listo para despacho
-                                                                @break
-                                                            @case(4)
-                                                                Pendiente de aprobación de despacho
-                                                                @break
-                                                            @case(5)
-                                                                Aceptado por Créditos
-                                                                @break
-                                                            @case(6)
-                                                                Estado de facturación
-                                                                @break
-                                                            @case(7)
-                                                                Guía en tránsito
-                                                                @break
-                                                            @case(8)
-                                                                Guía entregada
-                                                                @break
-                                                            @case(9)
-                                                                Despacho aprobado
-                                                                @break
-                                                            @case(10)
-                                                                Despacho rechazado
-                                                                @break
-                                                            @case(11)
-                                                                Guía no entregada
-                                                                @break
-                                                            @case(12)
-                                                                Guía anulada
-                                                                @break
-                                                            @default
-                                                                Estado desconocido
-                                                        @endswitch
-                                                    @endif
-                                                @else
-                                                    {{-- No muestra nada cuando hay múltiples registros --}}
-                                                @endif
+                                                        @break
+                                                    @case(9)
+                                                        Despacho aprobado
+                                                        @break
+                                                    @case(10)
+                                                        Despacho rechazado
+                                                        @break
+                                                    @case(11)
+                                                        Guía no entregada
+                                                        @break
+                                                    @case(12)
+                                                        Guía anulada
+                                                        @break
+                                                    @default
+                                                        Estado desconocido
+                                                @endswitch
                                             </span>
                                         </td>
                                         <td>

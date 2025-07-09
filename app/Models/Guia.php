@@ -995,4 +995,16 @@ class Guia extends Model
 
         return $result;
     }
+
+    public function listar_guias_registradas(){
+        try {
+            $result = DB::table('guias')
+                ->where('guia_estado_aprobacion','=',13)
+                ->get();
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
 }

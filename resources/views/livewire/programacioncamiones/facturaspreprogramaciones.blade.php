@@ -234,6 +234,62 @@
     </x-modal-general>
 {{--    MODAL FIN DETALLE GUIA--}}
 
+{{--    MODAL ENVIAR CREDITOS / DESPACHOS--}}
+    <x-modal-delete  wire:ignore.self >
+        <x-slot name="id_modal">modalCreditosDespachos</x-slot>
+        <x-slot name="modalContentDelete">
+            <form wire:submit.prevent="enviar_estado_guia">
+                <input type="text" class="d-none" autofocus>
+                <div class="row">
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        <h2 class="deleteTitle">¿Estas seguro de enviar a {{$messagePregunta_cd}} ?</h2>
+                    </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        @if (session()->has('error_modal_credito'))
+                            <div class="alert alert-danger alert-dismissible show fade">
+                                {{ session('error_modal_credito') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        @endif
+                    </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-center">
+                        <button type="button" data-bs-dismiss="modal" class="btn btn-danger btnDelete">No</button>
+                        <button type="submit" class="btn btn-primary text-white btnDelete">SI</button>
+                    </div>
+                </div>
+            </form>
+        </x-slot>
+    </x-modal-delete>
+{{--    FIN MODAL ENVIAR CREDITOS / DESPACHOS--}}
+
+    {{--    MODAL ENVIAR ANULAR NC--}}
+    <x-modal-delete  wire:ignore.self >
+        <x-slot name="id_modal">modalAnularNC</x-slot>
+        <x-slot name="modalContentDelete">
+            <form wire:submit.prevent="enviar_anulado_nc">
+                <input type="text" class="d-none" autofocus>
+                <div class="row">
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        <h2 class="deleteTitle">¿Estas seguro de enviar a {{$messagePregunta_anular}} ?</h2>
+                    </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        @if (session()->has('error_modal_credito'))
+                            <div class="alert alert-danger alert-dismissible show fade">
+                                {{ session('error_modal_credito') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        @endif
+                    </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-center">
+                        <button type="button" data-bs-dismiss="modal" class="btn btn-danger btnDelete">No</button>
+                        <button type="submit" class="btn btn-primary text-white btnDelete">SI</button>
+                    </div>
+                </div>
+            </form>
+        </x-slot>
+    </x-modal-delete>
+    {{--    FIN MODAL ENVIAR ANULAR NC--}}
+
     <div class="row">
         @if (session()->has('success'))
             <div class="col-lg-12 col-md-12 col-sm-12">
@@ -251,246 +307,298 @@
                 </div>
             </div>
         @endif
-            <div class="col-lg-5">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="row mb-2">
-                            <h6>GUÍAS</h6>
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <h6>GUÍAS</h6>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
+                            <input type="date" name="fecha_desde" id="fecha_desde" wire:model="desde" class="form-control" min="2025-01-01">
                         </div>
-                        <div class="row">
-                            <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
-                                <input type="date" name="fecha_desde" id="fecha_desde" wire:model="desde" class="form-control" min="2025-01-01">
-                            </div>
-                            <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
-                                <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model="hasta" class="form-control" min="2025-01-01">
-                            </div>
-                            <div class="col-lg-9 col-md-9 col-sm-12 mb-2">
-                                <div class="position-relative">
-                                    <input type="text" class="form-control bg-dark text-white rounded-pill ps-5 custom-placeholder" placeholder="Buscar guía" wire:model="searchGuia" style="border: none; outline: none;" />
-                                    <i class="fas fa-search position-absolute" style="left: 15px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
-                                </div>
-                            </div>
-                            <div class="col-lg-3 col-md-3 col-sm-12 mb-2">
-                                <button class="btn btn-sm bg-primary text-white w-100" wire:click="buscar_comprobantes">
-                                    <i class="fa fa-search"></i> BUSCAR
-                                </button>
-                            </div>
-                            <div class="col-lg-12 col-md-12 col-sm-12">
-                                <div class="loader mt-2" wire:loading wire:target="buscar_comprobantes"></div>
+                        <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
+                            <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model="hasta" class="form-control" min="2025-01-01">
+                        </div>
+                        <div class="col-lg-9 col-md-9 col-sm-12 mb-2">
+                            <div class="position-relative">
+                                <input type="text" class="form-control bg-dark text-white rounded-pill ps-5 custom-placeholder" placeholder="Buscar guía" wire:model="searchGuia" style="border: none; outline: none;" />
+                                <i class="fas fa-search position-absolute" style="left: 15px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
                             </div>
                         </div>
-                        <div class="row mt-3">
-                            <div class="col-lg-12 col-md-12 col-sm-12">
-                                <div class="contenedor-comprobante" style="max-height: 600px; overflow: auto">
-                                    <x-table-general>
-                                        <x-slot name="thead">
-                                            <tr>
-                                                <th style="font-size: 12px">N° Documento</th>
-                                                <th style="font-size: 12px">Nombre del Cliente</th>
-                                            </tr>
-                                        </x-slot>
-
-                                        <x-slot name="tbody">
-                                            @if(!empty($filteredGuias))
-                                                @php
-                                                    $documentosMostrados = [];
-                                                @endphp
-                                                @foreach($filteredGuias as $guia)
-                                                    @php
-                                                        $NRO_DOC = isset($guia->NRO_DOC) ? $guia->NRO_DOC : null;
-                                                        $comprobanteExiste = collect($this->selectedGuias)->first(function ($facturaVa) use ($NRO_DOC) {
-                                                            return isset($facturaVa['NRO_DOC']) && $facturaVa['NRO_DOC'] === $NRO_DOC;
-                                                        });
-                                                    @endphp
-                                                    @if($NRO_DOC && !$comprobanteExiste && !in_array($NRO_DOC, $documentosMostrados))
-                                                        @php
-                                                            $documentosMostrados[] = $NRO_DOC;
-                                                        @endphp
-                                                        <tr style="cursor: pointer" wire:click="seleccionarGuia('{{ $NRO_DOC }}')">
-                                                            <td colspan="3" style="padding: 0px">
-                                                                <table class="table">
-                                                                    <tbody>
-                                                                    <tr>
-                                                                        <td style="width: 32%">
-                                                                            <span class="tamanhoTablaComprobantes">
-                                                                                <b class="colorBlackComprobantes">
-                                                                                    {{ isset($guia->{'FECHA_EMISION'}) ? $me->obtenerNombreFecha($guia->{'FECHA_EMISION'},'DateTime', 'Date') : 'Sin fecha' }}
-                                                                                </b>
-                                                                            </span>
-                                                                            <span class="d-block tamanhoTablaComprobantes">
-                                                                                GUÍA: {{ $NRO_DOC }}
-                                                                            </span>
-                                                                            @isset($guia->TIPO_DOC_REF)
-                                                                                <span class="d-block tamanhoTablaComprobantes">
-                                                                                    {{ $guia->TIPO_DOC_REF . ': ' . $guia->NRO_DOC_REF}}
-                                                                                </span>
-                                                                                @else
-                                                                                <span class="d-block tamanhoTablaComprobantes">
-                                                                                    Sin Factura Asociada
-                                                                                </span>
-                                                                            @endisset
-                                                                            <span class="d-block tamanhoTablaComprobantes">
-                                                                                {{ $guia->ESTADO}}
-                                                                            </span>
-                                                                        </td>
-                                                                        <td style="width: 37%">
-                                                                            <span class="d-block tamanhoTablaComprobantes">
-                                                                                {{ ($guia->{'NOMBRE_CLIENTE'}) ?? 'Desconocido' }}
-                                                                            </span>
-                                                                        </td>
-                                                                    </tr>
-                                                                    <tr style="border-top: 2px solid transparent;">
-                                                                        <td colspan="3" style="padding-top: 0">
-                                                                            <span class="d-block tamanhoTablaComprobantes">
-                                                                                {{ ($guia->{'DIREC_ENTREGA'}) ?? 'Sin dirección' }} <br>
-                                                                                UBIGEO: <b class="colorBlackComprobantes">
-                                                                                    {{ ($guia->{'DEPARTAMENTO'}) ?? 'N/A' }} -
-                                                                                    {{ ($guia->{'PROVINCIA'} )?? 'N/A' }} -
-                                                                                    {{ ($guia->{'DISTRITO'}) ?? 'N/A' }}
-                                                                                </b>
-                                                                            </span>
-                                                                        </td>
-                                                                    </tr>
-                                                                    @if(isset($filtereddetGuias[$NRO_DOC]))
-                                                                    <tr>
-                                                                        <td colspan="3">
-                                                                            <table class="table table-bordered mt-2">
-                                                                                <thead>
-                                                                                <tr>
-                                                                                    <th>Detalle</th>
-                                                                                    <th>Cantidad</th>
-                                                                                    <th>Precio</th>
-                                                                                </tr>
-                                                                                </thead>
-                                                                                <tbody>
-                                                                                @foreach($filtereddetGuias[$NRO_DOC] as $detalle)
-                                                                                    <tr>
-                                                                                        <td>{{ $detalle->descripcion ?? 'Sin descripción' }}</td>
-                                                                                        <td>{{ $detalle->cantidad ?? '0' }}</td>
-                                                                                        <td>{{ number_format($detalle->precio ?? 0, 2) }}</td>
-                                                                                    </tr>
-                                                                                @endforeach
-                                                                                </tbody>
-                                                                            </table>
-                                                                        </td>
-                                                                    </tr>
-                                                                    @endif
-                                                                    </tbody>
-                                                                </table>
-                                                            </td>
-                                                        </tr>
-                                                    @endif
-                                                @endforeach
-                                            @else
-                                                <tr>
-                                                    <td colspan="3" class="text-center">
-                                                        <p class="mb-0" style="font-size: 12px">No se encontraron documentos.</p>
-                                                    </td>
-                                                </tr>
-                                            @endif
-                                        </x-slot>
-                                    </x-table-general>
-                                </div>
-                            </div>
+                        <div class="col-lg-3 col-md-3 col-sm-12 mb-2">
+                            <button class="btn btn-sm bg-primary text-white w-100" wire:click="buscar_comprobantes">
+                                <i class="fa fa-search"></i> BUSCAR
+                            </button>
+                        </div>
+                        <div class="col-lg-12 col-md-12 col-sm-12">
+                            <div class="loader mt-2" wire:loading wire:target="buscar_comprobantes"></div>
                         </div>
                     </div>
-                </div>
-                <div wire:loading wire:target="seleccionarGuia" class="overlay__eliminar">
-                    <div class="spinner__container__eliminar">
-                        <div class="spinner__eliminar"></div>
+                    <div class="row mt-3">
+                        <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                            <div class="row" style="align-items: center">
+                                <div class="col-lg-6 col-md-6 col-sm-12">
+                                    @if(!empty($filteredGuias) && count($filteredGuias) > 0)
+                                        <input type="checkbox" id="selectAll" wire:click="seleccionar_todas_giuas_intranet" class="form-check-input"/>
+                                        <label class="form-label ms-2" for="selectAll">Seleccionar todo</label>
+                                    @endif
+                                </div>
+                                <div class="col-lg-6 col-md-6 col-sm-12 text-end">
+                                    @if(!empty($selectedGuiasNros) && count($selectedGuiasNros) > 0)
+                                        <button class="btn btn-info btn-group-sm" wire:click="guardar_guias_intranet">
+                                            INICIAR REGISTRO
+                                        </button>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-12 col-md-12 col-sm-12">
+                            <div class="contenedor-comprobante" style="max-height: 600px; overflow: auto">
+                                <x-table-general>
+                                    <x-slot name="thead">
+                                        <tr>
+                                            <th style="font-size: 12px"></th>
+                                            <th style="font-size: 12px">N° Documento</th>
+                                            <th style="font-size: 12px">Nombre del Cliente</th>
+                                        </tr>
+                                    </x-slot>
+
+                                    <x-slot name="tbody">
+                                        @if(!empty($filteredGuias))
+                                            @php
+                                                $documentosMostrados = [];
+                                            @endphp
+                                            @foreach($filteredGuias as $guia)
+                                                @php
+                                                    $NRO_DOC = isset($guia->NRO_DOC) ? $guia->NRO_DOC : null;
+                                                    $comprobanteExiste = collect($this->selectedGuias)->first(function ($facturaVa) use ($NRO_DOC) {
+                                                        return isset($facturaVa['NRO_DOC']) && $facturaVa['NRO_DOC'] === $NRO_DOC;
+                                                    });
+                                                @endphp
+                                                @if($NRO_DOC && !$comprobanteExiste && !in_array($NRO_DOC, $documentosMostrados))
+                                                    @php
+                                                        $documentosMostrados[] = $NRO_DOC;
+                                                    @endphp
+                                                    <tr>
+                                                        <td style="width: 6%">
+                                                            <input type="checkbox"
+                                                                   wire:click="seleccionar_una_guia_intranet"
+                                                                   wire:model="selectedGuiasNros"
+                                                                   value="{{ $NRO_DOC }}"
+                                                                   class="form-check-input"/>
+                                                        </td>
+                                                        <td style="width: 32%">
+                                                            <span class="tamanhoTablaComprobantes">
+                                                                <b class="colorBlackComprobantes">
+                                                                    {{ isset($guia->{'FECHA_EMISION'}) ? $me->obtenerNombreFecha($guia->{'FECHA_EMISION'},'DateTime', 'Date') : 'Sin fecha' }}
+                                                                </b>
+                                                            </span>
+                                                            <span class="d-block tamanhoTablaComprobantes">
+                                                                GUÍA: {{ $NRO_DOC }}
+                                                            </span>
+                                                            @isset($guia->TIPO_DOC_REF)
+                                                                <span class="d-block tamanhoTablaComprobantes">
+                                                                    {{ $guia->TIPO_DOC_REF . ': ' . $guia->NRO_DOC_REF}}
+                                                                </span>
+                                                            @else
+                                                                <span class="d-block tamanhoTablaComprobantes">
+                                                                    Sin Factura Asociada
+                                                                </span>
+                                                            @endisset
+                                                        </td>
+                                                        <td style="width: 37%">
+                                                            <span class="d-block tamanhoTablaComprobantes">
+                                                                {{ ($guia->{'NOMBRE_CLIENTE'}) ?? 'Desconocido' }}
+                                                            </span>
+                                                            <br>
+                                                            <span class="d-block tamanhoTablaComprobantes">
+                                                                {{ ($guia->{'DIREC_ENTREGA'}) ?? 'Sin dirección' }} <br>
+                                                                UBIGEO: <b class="colorBlackComprobantes">
+                                                                    {{ ($guia->{'DEPARTAMENTO'}) ?? 'N/A' }} -
+                                                                    {{ ($guia->{'PROVINCIA'} )?? 'N/A' }} -
+                                                                    {{ ($guia->{'DISTRITO'}) ?? 'N/A' }}
+                                                                </b>
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                @endif
+                                            @endforeach
+                                        @else
+                                            <tr>
+                                                <td colspan="3" class="text-center">
+                                                    <p class="mb-0" style="font-size: 12px">No se encontraron documentos.</p>
+                                                </td>
+                                            </tr>
+                                        @endif
+                                    </x-slot>
+                                </x-table-general>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+            <div wire:loading wire:target="guardar_guias_intranet" class="overlay__eliminar">
+                <div class="spinner__container__eliminar">
+                    <div class="spinner__eliminar"></div>
+                </div>
+            </div>
+        </div>
 
-            <div class="col-lg-7">
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-body table-responsive">
-                                <div class="row">
-                                    <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
-                                        <div class="row align-items-center">
-                                            <div class="col-lg-5 col-md-12 col-sm-12 mb-2">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <h6 class="mb-0">Guías Seleccionados</h6>
+        <div class="col-lg-8">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-body table-responsive">
+                            <div class="row">
+                                <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                                    <div class="row align-items-center">
+                                        <div class="col-lg-5 col-md-12 col-sm-12 mb-2">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <h6 class="mb-0">Guías Seleccionados</h6>
+                                            </div>
+                                        </div>
+                                        @if(count($listar_guias_registradas) > 0)
+                                            <div class="col-lg-7">
+                                                <div class="row">
+                                                    <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                                                        <h6 class="mb-1">Gestionar estados de la guía</h6>
+                                                    </div>
+                                                    <div class="row mb-2">
+                                                        <div class="col-lg-9 col-md-9 col-sm-9 mb-2">
+                                                            <select class="form-select" id="estado_envio" name="estado_envio" wire:model="estado_envio">
+                                                                <option value="">Seleccionar...</option>
+                                                                <option value="1">Créditos</option>
+                                                                <option value="2">Despacho</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-lg-3 col-md-3 col-sm-3 mb-2 w-auto">
+                                                            <a href="#" class="btn bg-info text-white d-flex align-items-center" wire:click="pregunta_modal(1)" data-bs-toggle="modal" data-bs-target="#modalCreditosDespachos">
+                                                                <span>
+                                                                    Enviar<i class="fa-solid fa-right-to-bracket ms-1"></i>
+                                                                </span>
+                                                            </a>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row mb-2">
+                                                        <div class="col-lg-9 col-md-9 col-sm-9 mb-2">
+                                                            <select class="form-select" id="estado_envio_anulado" name="estado_envio_anulado" wire:model="estado_envio_anulado">
+                                                                <option value="">Seleccionar...</option>
+                                                                <option value="14">Anular</option>
+                                                                <option value="15">Pendiente de NC</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-lg-3 col-md-3 col-sm-3 mb-2 w-auto">
+                                                            <a href="#" class="btn bg-warning text-white d-flex align-items-center" wire:click="pregunta_modal(2)" data-bs-toggle="modal" data-bs-target="#modalAnularNC">
+                                                                <span>
+                                                                    Anular <i class="fa-solid fa-right-to-bracket ms-1"></i>
+                                                                </span>
+                                                            </a>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            @if(count($selectedGuias) > 0)
-                                                <div class="col-lg-5 col-md-12 col-sm-12 mb-2">
-                                                    <h6 class="mb-1">Estado de la guía</h6>
-                                                    <select class="form-select" id="estado_envio" name="estado_envio" wire:model="estado_envio">
-                                                        <option value="">Seleccionar...</option>
-                                                        <option value="1">Créditos</option>
-                                                        <option value="2">Despacho</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-lg-2 mt-1">
-                                                    <button href="#" class="btn bg-info text-white d-flex align-items-center" wire:click.prevent="guardarGuias">
-                                                        <span>
-                                                            Enviar
-                                                            <i class="fa-solid fa-right-to-bracket ms-1"></i>
-                                                        </span>
-                                                    </button>
-                                                </div>
-                                            @endif
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
-                                        @if(count($selectedGuias) > 0)
-                                            <x-table-general id="ederTable">
-                                                <x-slot name="thead">
-                                                    <tr>
-                                                        <th>Guía</th>
-                                                        <th>Fecha Emisión</th>
-                                                        <th>Importe Total</th>
-                                                        <th>Nombre Cliente</th>
-                                                        <th>Dirección</th>
-                                                        <th>Acciones</th>
-                                                    </tr>
-                                                </x-slot>
-                                                <x-slot name="tbody">
-                                                    @foreach($selectedGuias as $factura)
-                                                        <tr>
-                                                            <td>{{ $factura['NRO_DOC'] ?? 'No disponible' }}</td>
-                                                            <td>{{ $me->obtenerNombreFecha($factura['FECHA_EMISION'], 'DateTime', 'Date') ?? 'Sin fecha' }}</td>
-                                                            <td>S/ {{ $me->formatoDecimal(($factura['IMPORTE_TOTAL_SIN_IGV'] ?? 0)) }}</td>
-                                                            <td>{{ $factura['NOMBRE_CLIENTE'] ?? 'Desconocido' }}</td>
-                                                            <td>{{ $factura['DIREC_ENTREGA'] ?? 'Sin dirección'}}</td>
-                                                            <td>
-                                                                <a href="#" wire:click.prevent="eliminarFacturaSeleccionada('{{ $factura['NRO_DOC'] }}')" class="btn btn-danger btn-sm text-white m-1">
-                                                                    <i class="fas fa-trash-alt"></i>
-                                                                </a>
-{{--                                                                <a href="#" wire:click.prevent="listar_detallesf('{{ $factura['NRO_DOC'] }}')" class="btn btn-sm btn-primary text-white m-1" data-bs-toggle="modal" data-bs-target="#modalInformacionGuia">--}}
-{{--                                                                    <i class="fas fa-eye"></i> Guía--}}
-{{--                                                                </a>--}}
-
-{{--                                                                <a href="#" wire:click.prevent="detalle_guia('{{ $factura['NRO_DOC'] }}')" class="btn btn-sm btn-warning text-white m-1" data-bs-toggle="modal" data-bs-target="#modalDetalleGuia">--}}
-{{--                                                                    <i class="fas fa-eye"></i> Factura--}}
-{{--                                                                </a>--}}
-                                                            </td>
-                                                        </tr>
-                                                    @endforeach
-                                                </x-slot>
-                                            </x-table-general>
-                                        @else
-                                            <p>No hay documentos seleccionados.</p>
                                         @endif
                                     </div>
-                                    <div wire:loading wire:target="guardarGuias" class="overlay__eliminar">
-                                        <div class="spinner__container__eliminar">
-                                            <div class="spinner__eliminar"></div>
-                                        </div>
-                                    </div>
-                                    <div wire:loading wire:target="eliminarFacturaSeleccionada" class="overlay__eliminar">
-                                        <div class="spinner__container__eliminar">
-                                            <div class="spinner__eliminar"></div>
-                                        </div>
-                                    </div>
+                                </div>
+                                <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                                    @if(count($listar_guias_registradas) > 0)
+                                        <x-table-general id="ederTable">
+                                            <x-slot name="thead">
+                                                <tr>
+                                                    <th><input type="checkbox" id="select_varios" wire:click="seleccionar_varias_guias" class="form-check-input" /> Check - todo</th>
+                                                    <th>Guía</th>
+                                                    <th>Fecha Emisión</th>
+                                                    <th>Factura</th>
+                                                    <th>Importe Total (Sin IGV)</th>
+                                                    <th>Nombre Cliente</th>
+                                                    <th>Ubigeo</th>
+                                                    <th>Forma de pago</th>
+                                                    <th>Estado en Sistema Facturación</th>
+                                                </tr>
+                                            </x-slot>
+                                            <x-slot name="tbody">
+                                                @foreach($listar_guias_registradas as $lgr)
+                                                    <tr>
+                                                        <td>
+                                                            <input type="checkbox"
+{{--                                                                   wire:click="seleccionar_una_guia_cre_des({{ $lgr->id_guia }})"--}}
+                                                                   wire:model="select_todas_guias"
+                                                                   value="{{ $lgr->id_guia }}"
+                                                                   class="form-check-input" />
+                                                        </td>
+                                                        <td>{{$lgr->guia_nro_doc}}</td>
+                                                        <td>{{ $lgr->guia_fecha_emision ? $me->obtenerNombreFecha($lgr->guia_fecha_emision, 'DateTime', 'Date') : '-' }}</td>
+                                                        <td>{{$lgr->guia_nro_doc_ref}}</td>
+                                                        <td>S/ {{$lgr->guia_importe_total_sin_igv}}</td>
+                                                        <td>{{$lgr->guia_nombre_cliente}}</td>
+                                                        <td>
+                                                            {{ $lgr->guia_departamento ?? 'N/A' }} -
+                                                            {{ $lgr->guia_provincia ?? 'N/A' }} -
+                                                            {{ $lgr->guia_destrito ?? 'N/A' }}
+                                                        </td>
+                                                        <td>{{$lgr->guia_forma_pago}}</td>
+                                                        <td>{{$lgr->guia_estado}}</td>
+                                                    </tr>
+                                                @endforeach
+                                            </x-slot>
+                                        </x-table-general>
+                                    @else
+                                        <p>No hay documentos seleccionados.</p>
+                                    @endif
                                 </div>
                             </div>
                         </div>
                     </div>
+                    <div wire:loading wire:target="enviar_estado_guia" class="overlay__eliminar">
+                        <div class="spinner__container__eliminar">
+                            <div class="spinner__eliminar"></div>
+                        </div>
+                    </div>
+
+                    <div wire:loading wire:target="enviar_anulado_nc" class="overlay__eliminar">
+                        <div class="spinner__container__eliminar">
+                            <div class="spinner__eliminar"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
+        </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById('modalCreditosDespachos');
+        modal.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                modal.querySelector('form').requestSubmit();
+            }
+        });
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById('modalAnularNC');
+        modal.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                modal.querySelector('form').requestSubmit();
+            }
+        });
+    });
+</script>
+
+@script
+<script>
+    $wire.on('hideModalCreditosDespachos', () => {
+        $('#modalCreditosDespachos').modal('hide');
+    });
+    $wire.on('hideModalAnularNC', () => {
+        $('#modalAnularNC').modal('hide');
+    });
+</script>
+@endscript
