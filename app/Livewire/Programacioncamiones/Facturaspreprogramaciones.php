@@ -13,7 +13,6 @@ use App\Models\Server;
 use App\Models\Facturaspreprogramacion;
 use App\Models\Historialguia;
 use App\Models\Guiadetalle;
-//use App\Models\Guia;
 use Carbon\Carbon;
 
 class Facturaspreprogramaciones extends Component
@@ -22,18 +21,20 @@ class Facturaspreprogramaciones extends Component
     private $tiposervicio;
     private $server;
     private $facpreprog;
-//    private $guia;
     private $historialguia;
     private $guiadetalle;
+    private $guia;
+
     public function __construct(){
         $this->logs = new Logs();
         $this->tiposervicio = new TipoServicio();
         $this->server = new Server();
-//        $this->guia = new Guia();
         $this->facpreprog = new Facturaspreprogramacion();
         $this->historialguia = new Historialguia();
         $this->guiadetalle = new Guiadetalle();
+        $this->guia = new Guia();
     }
+
     public $selectedGuias = [];
     public $filteredGuias = [];
     public $filtereddetGuias = [];
@@ -46,10 +47,21 @@ class Facturaspreprogramaciones extends Component
     public $hasta;
     public $detalleFactura;
     public $estado_envio = "";
+    public $estado_envio_anulado = "";
     public $errorMessage;
     public $guiaSeleccionada = null;
     public $detallesGuia = [];
     public $isSaving = false;
+
+    public $selectedGuiasNros = [];
+    public $selectAll = false;
+//    NUEVO
+    public $select_varios = false;
+    public $select_todas_guias = [];
+    public $tipo_pregunta = "";
+    public $messagePregunta_cd;
+    public $messagePregunta_anular;
+
     public function mount(){
         $this->desde = date('Y-m-d');
         $this->hasta = date('Y-m-d');
@@ -58,15 +70,15 @@ class Facturaspreprogramaciones extends Component
 
     public function render(){
         $listar_tipo_servicios = $this->tiposervicio->listar_tipo_servicios();
-        return view('livewire.programacioncamiones.facturaspreprogramaciones', compact('listar_tipo_servicios'));
+        $listar_guias_registradas = $this->guia->listar_guias_registradas();
+        return view('livewire.programacioncamiones.facturaspreprogramaciones', compact('listar_tipo_servicios', 'listar_guias_registradas'));
     }
-    public function buscar_comprobantes() {
 
+    public function buscar_comprobantes() {
         if (!Gate::allows('buscar_guias')) {
             session()->flash('error', 'No tiene permisos para buscar guías.');
             return;
         }
-
 
         if (empty($this->desde) && empty($this->hasta) && empty($this->searchGuia)) {
             session()->flash('error', 'Debe ingresar al menos una fecha o un criterio de búsqueda.');
@@ -84,6 +96,10 @@ class Facturaspreprogramaciones extends Component
 
         $this->filteredGuias = $this->server->obtenerDocumentosRemision($this->desde, $this->hasta) ?? [];
 
+        // Resetear selecciones cuando se hace una nueva búsqueda
+        $this->selectedGuiasNros = [];
+        $this->selectAll = false;
+
         $this->filtereddetGuias = [];
         foreach ($this->filteredGuias as $guia) {
             $serie = isset($guia->serie) ? $guia->serie : null;
@@ -95,8 +111,39 @@ class Facturaspreprogramaciones extends Component
             }
         }
     }
-    public function seleccionarGuia($NRO_DOC) {
 
+    public function seleccionar_una_guia_intranet(){
+        // Obtener todos los NRO_DOC únicos disponibles
+        $allAvailableNros = collect($this->filteredGuias)
+            ->pluck('NRO_DOC')
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
+
+        // Verificar si están todos seleccionados
+        $this->selectAll = count($this->selectedGuiasNros) === count($allAvailableNros) &&
+            count($this->selectedGuiasNros) > 0;
+    }
+
+    public function seleccionar_todas_giuas_intranet(){
+        $this->selectAll = !$this->selectAll;
+
+        if ($this->selectAll) {
+            // Seleccionar todos los NRO_DOC únicos disponibles
+            $this->selectedGuiasNros = collect($this->filteredGuias)
+                ->pluck('NRO_DOC')
+                ->filter()
+                ->unique()
+                ->values()
+                ->toArray();
+        } else {
+            // Deseleccionar todos
+            $this->selectedGuiasNros = [];
+        }
+    }
+
+    public function seleccionarGuia($NRO_DOC) {
         if (!Gate::allows('seleccionar_guias')) {
             session()->flash('error', 'No tiene permisos para seleccionar guías.');
             return;
@@ -114,7 +161,7 @@ class Facturaspreprogramaciones extends Component
             // Si ya existe, eliminar de la selección (deseleccionar)
             $this->selectedGuias = collect($this->selectedGuias)->reject(function ($guia) use ($NRO_DOC) {
                 return isset($guia['NRO_DOC']) && $guia['NRO_DOC'] === $NRO_DOC;
-            })->values()->toArray(); // Deselecciona el documento
+            })->values()->toArray();
         } else {
             // Si no existe, agregar a la selección
             $guia = collect($this->filteredGuias)->first(function ($guia_) use ($NRO_DOC) {
@@ -149,15 +196,13 @@ class Facturaspreprogramaciones extends Component
                     'DEPARTAMENTO' => $guia->DEPARTAMENTO,
                     'PROVINCIA' => $guia->PROVINCIA,
                     'DISTRITO' => $guia->DISTRITO,
-                    // Puedes agregar otros campos si los necesitas
                 ];
-                // Elimina la guía de la lista de guías filtradas
-                $this->filteredGuias = collect($this->filteredGuias)->reject(function ($guia_) use ($NRO_DOC) {
-                    return isset($guia_->NRO_DOCUMENTO) && $guia_->NRO_DOCUMENTO === $NRO_DOC;
-                })->values();
+
+                // NO eliminar de filteredGuias aquí - mantener la lista original
             }
         }
     }
+
     public function eliminarFacturaSeleccionada($NRO_DOC) {
         // Encuentra la guía en las seleccionadas
         $guia = collect($this->selectedGuias)->first(function ($f) use ($NRO_DOC) {
@@ -172,137 +217,133 @@ class Facturaspreprogramaciones extends Component
                 })
                 ->values()
                 ->toArray();
+
+            // También remover de selectedGuiasNros
+            $this->selectedGuiasNros = array_values(array_diff($this->selectedGuiasNros, [$NRO_DOC]));
         }
     }
 
     public function listar_detallesf($NRO_DOC) {
-        // Busca la guía seleccionada en la lista de guías seleccionadas
         $guiaSeleccionada = collect($this->selectedGuias)->first(function ($guia) use ($NRO_DOC) {
             return isset($guia['NRO_DOC']) && $guia['NRO_DOC'] === $NRO_DOC;
         });
 
-        // Asigna la guía seleccionada a una propiedad para que esté disponible en la vista del modal
         $this->guiaSeleccionada = $guiaSeleccionada;
     }
 
     public function detalle_guia($NRO_DOC) {
-        // Llama a la API para obtener los detalles de la guía
         $detalles = $this->server->obtenerDetalleRemision($NRO_DOC);
-
-        // Almacena los detalles en la propiedad $detallesGuia
         $this->detallesGuia = $detalles;
     }
 
-    public function guardarGuias() {
-
-        if (!Gate::allows('enviar_guias')) {
+    public function guardar_guias_intranet(){
+        if (!Gate::allows('guardar_guias_intranet')) {
             session()->flash('error', 'No tiene permisos para enviar guías.');
             return;
         }
 
-        $this->filteredGuias = [];
-        $this->isSaving = true; // Activar el estado de guardado
+        if (empty($this->selectedGuiasNros)) {
+            session()->flash('error', 'Debes seleccionar al menos una guía.');
+            return;
+        }
+
+        $this->isSaving = true;
+
         try {
-            // Validar que haya facturas seleccionadas y un estado seleccionado
-            $this->validate([
-                'estado_envio' => 'required|integer',
-                'selectedGuias' => 'required|array|min:1',
-            ], [
-                'estado_envio.required' => 'Debes seleccionar un estado.',
-                'estado_envio.integer' => 'El estado seleccionado no es válido.',
-                'selectedGuias.required' => 'Debes seleccionar al menos una factura.',
-                'selectedGuias.min' => 'Debes seleccionar al menos una factura.',
-            ]);
-
             DB::beginTransaction();
-            foreach ($this->selectedGuias as $factura) {
-                // Verificar si la factura ya existe en la tabla
-                $facturaExistente = Guia::where('guia_nro_doc', $factura['NRO_DOC'])
-                    ->first();
 
-                if ($facturaExistente) {
-                    // Si la factura existe, actualizar el estado
-                    $facturaExistente->guia_estado_aprobacion = $this->estado_envio;
-                    $facturaExistente->guia_estado_registro = 1;
-                    $facturaExistente->guia_fecha = Carbon::now('America/Lima');
-                    $facturaExistente->save();
+            // Obtener las guías completas seleccionadas
+            $guiasParaGuardar = collect($this->filteredGuias)
+                ->whereIn('NRO_DOC', $this->selectedGuiasNros)
+                ->all();
 
-                    // Guardar en la tabla historial guias
+            foreach ($guiasParaGuardar as $guia) {
+                // Verificar si la guía ya existe
+                $guiaExistente = Guia::where('guia_nro_doc', $guia->NRO_DOC)->first();
+
+                if ($guiaExistente) {
+                    // Actualizar guía existente
+                    $guiaExistente->guia_estado_aprobacion = 13;
+                    $guiaExistente->guia_estado_registro = 1;
+                    $guiaExistente->guia_fecha = Carbon::now('America/Lima');
+                    $guiaExistente->save();
+
+                    // Guardar historial
                     $historial = new Historialguia();
                     $historial->id_users = Auth::id();
-                    $historial->id_guia = $facturaExistente->id_guia;
-                    $historial->guia_nro_doc = $facturaExistente->guia_nro_doc;
-                    $historial->historial_guia_estado_aprobacion = $facturaExistente->guia_estado_aprobacion;
+                    $historial->id_guia = $guiaExistente->id_guia;
+                    $historial->guia_nro_doc = $guiaExistente->guia_nro_doc;
+                    $historial->historial_guia_estado_aprobacion = $guiaExistente->guia_estado_aprobacion;
                     $historial->historial_guia_fecha_hora = Carbon::now('America/Lima');
-                    $historial->historial_guia_estado = $facturaExistente->guia_estado_registro;
+                    $historial->historial_guia_estado = $guiaExistente->guia_estado_registro;
                     $historial->save();
                 } else {
-                    // Si no existe, crear un nuevo registro
+                    // Crear nueva guía
                     $nuevaFactura = new Guia();
                     $nuevaFactura->id_users = Auth::id();
-                    $nuevaFactura->guia_almacen_origen = $factura['ALMACEN_ORIGEN'] ?: null;
-                    $nuevaFactura->guia_tipo_doc = $factura['TIPO_DOC'] ?: null;
-                    $nuevaFactura->guia_nro_doc = $factura['NRO_DOC'] ?: null;
-                    $nuevaFactura->guia_fecha_emision = $factura['FECHA_EMISION'] ?: null;
-                    $nuevaFactura->guia_tipo_movimiento = $factura['TIPO_MOVIMIENTO'] ?: null;
-                    $nuevaFactura->guia_tipo_doc_ref = $factura['TIPO_DOC_REF'] ?: null;
-                    $nuevaFactura->guia_nro_doc_ref = $factura['NRO_DOC_REF'] ?: null;
-                    $nuevaFactura->guia_glosa = $factura['GLOSA'] ?: null;
-                    $nuevaFactura->guia_fecha_proceso = $factura['FECHA_DE_PROCESO'] ?: null;
-                    $nuevaFactura->guia_hora_proceso = $factura['HORA_DE_PROCESO'] ?: null;
-                    $nuevaFactura->guia_usuario = $factura['USUARIO'] ?: null;
-                    $nuevaFactura->guia_cod_cliente = $factura['COD_CLIENTE'] ?: null;
-                    $nuevaFactura->guia_ruc_cliente = $factura['RUC_CLIENTE'] ?: null;
-                    $nuevaFactura->guia_nombre_cliente = $factura['NOMBRE_CLIENTE'] ?: null;
-                    $nuevaFactura->guia_forma_pago = $factura['FORMA_DE_PAGO'] ?: null;
-                    $nuevaFactura->guia_vendedor = $factura['VENDEDOR'] ?: null;
-                    $nuevaFactura->guia_moneda = $factura['MONEDA'] ?: null;
-                    $nuevaFactura->guia_tipo_cambio = $factura['TIPO_DE_CAMBIO'] ?: null;
-                    $nuevaFactura->guia_estado = $factura['ESTADO'] ?: null;
-                    $nuevaFactura->guia_direc_entrega = $factura['DIREC_ENTREGA'] ?: null;
-                    $nuevaFactura->guia_nro_pedido = $factura['NRO_PEDIDO'] ?: null;
-                    $nuevaFactura->guia_importe_total = $factura['IMPORTE_TOTAL'] ?: null;
-                    $nuevaFactura->guia_importe_total_sin_igv = $factura['IMPORTE_TOTAL_SIN_IGV'] ?: null;
-                    $nuevaFactura->guia_departamento = $factura['DEPARTAMENTO'] ?: null;
-                    $nuevaFactura->guia_provincia = $factura['PROVINCIA'] ?: null;
-                    $nuevaFactura->guia_destrito = $factura['DISTRITO'] ?: null;
-                    $nuevaFactura->guia_estado_aprobacion = $this->estado_envio;
+                    $nuevaFactura->guia_almacen_origen = $guia->ALMACEN_ORIGEN ?? null;
+                    $nuevaFactura->guia_tipo_doc = $guia->TIPO_DOC ?? null;
+                    $nuevaFactura->guia_nro_doc = $guia->NRO_DOC ?? null;
+                    $nuevaFactura->guia_fecha_emision = $guia->FECHA_EMISION ?? null;
+                    $nuevaFactura->guia_tipo_movimiento = $guia->TIPO_MOVIMIENTO ?? null;
+                    $nuevaFactura->guia_tipo_doc_ref = $guia->TIPO_DOC_REF ?? null;
+                    $nuevaFactura->guia_nro_doc_ref = $guia->NRO_DOC_REF ?? null;
+                    $nuevaFactura->guia_glosa = $guia->GLOSA ?? null;
+                    $nuevaFactura->guia_fecha_proceso = $guia->FECHA_DE_PROCESO ?? null;
+                    $nuevaFactura->guia_hora_proceso = $guia->HORA_DE_PROCESO ?? null;
+                    $nuevaFactura->guia_usuario = $guia->USUARIO ?? null;
+                    $nuevaFactura->guia_cod_cliente = $guia->COD_CLIENTE ?? null;
+                    $nuevaFactura->guia_ruc_cliente = $guia->RUC_CLIENTE ?? null;
+                    $nuevaFactura->guia_nombre_cliente = $guia->NOMBRE_CLIENTE ?? null;
+                    $nuevaFactura->guia_forma_pago = $guia->FORMA_DE_PAGO ?? null;
+                    $nuevaFactura->guia_vendedor = $guia->VENDEDOR ?? null;
+                    $nuevaFactura->guia_moneda = $guia->MONEDA ?? null;
+                    $nuevaFactura->guia_tipo_cambio = $guia->TIPO_DE_CAMBIO ?? null;
+                    $nuevaFactura->guia_estado = $guia->ESTADO ?? null;
+                    $nuevaFactura->guia_direc_entrega = $guia->DIREC_ENTREGA ?? null;
+                    $nuevaFactura->guia_nro_pedido = $guia->NRO_PEDIDO ?? null;
+                    $nuevaFactura->guia_importe_total = $guia->IMPORTE_TOTAL ?? null;
+                    $nuevaFactura->guia_importe_total_sin_igv = $guia->IMPORTE_TOTAL / 1.18 ?? null;
+                    $nuevaFactura->guia_departamento = $guia->DEPARTAMENTO ?? null;
+                    $nuevaFactura->guia_provincia = $guia->PROVINCIA ?? null;
+                    $nuevaFactura->guia_destrito = $guia->DISTRITO ?? null;
+                    $nuevaFactura->guia_estado_aprobacion = 13;
                     $nuevaFactura->guia_estado_registro = 1;
                     $nuevaFactura->guia_fecha = Carbon::now('America/Lima');
                     $nuevaFactura->save();
 
-                    // Obtener los detalles de la guía
-                    $detalles = $this->server->obtenerDetalleRemision($factura['NRO_DOC']);
-                    // Guardar los detalles en la tabla notas_creditos_detalles
+                    // Guardar detalles
+                    $detalles = $this->server->obtenerDetalleRemision($guia->NRO_DOC);
                     foreach ($detalles as $detalle) {
                         $nuevoDetalle = new Guiadetalle();
                         $nuevoDetalle->id_users = Auth::id();
                         $nuevoDetalle->id_guia = $nuevaFactura->id_guia;
-                        $nuevoDetalle->guia_det_almacen_salida = $detalle->ALMACEN_SALIDA ?: null;
-                        $nuevoDetalle->guia_det_fecha_emision = $detalle->FECHA_EMISION ?: null;
-                        $nuevoDetalle->guia_det_estado = $detalle->ESTADO ?: null;
-                        $nuevoDetalle->guia_det_tipo_documento = $detalle->TIPO_DOCUMENTO ?: null;
-                        $nuevoDetalle->guia_det_nro_documento = $detalle->NRO_DOCUMENTO ?: null;
-                        $nuevoDetalle->guia_det_nro_linea = $detalle->NRO_LINEA ?: null;
-                        $nuevoDetalle->guia_det_cod_producto = $detalle->COD_PRODUCTO ?: null;
-                        $nuevoDetalle->guia_det_descripcion_producto = $detalle->DESCRIPCION_PRODUCTO ?: null;
-                        $nuevoDetalle->guia_det_lote = $detalle->LOTE ?: null;
-                        $nuevoDetalle->guia_det_unidad = $detalle->UNIDAD ?: null;
-                        $nuevoDetalle->guia_det_cantidad = $detalle->CANTIDAD ?: null;
-                        $nuevoDetalle->guia_det_precio_unit_final_inc_igv = $detalle->PRECIO_UNIT_FINAL_INC_IGV ?: null;
-                        $nuevoDetalle->guia_det_precio_unit_antes_descuente_inc_igv = $detalle->PRECIO_UNIT_ANTES_DESCUENTO_INC_IGV ?: null;
-                        $nuevoDetalle->guia_det_descuento_total_sin_igv = $detalle->DESCUENTO_TOTAL_SIN_IGV ?: null;
-                        $nuevoDetalle->guia_det_igv_total = $detalle->IGV_TOTAL ?: null;
-                        $nuevoDetalle->guia_det_importe_total_inc_igv = $detalle->IMPORTE_TOTAL_INC_IGV ?: null;
-                        $nuevoDetalle->guia_det_moneda = $detalle->MONEDA ?: null;
-                        $nuevoDetalle->guia_det_tipo_cambio = $detalle->TIPO_CAMBIO ?: null;
-                        $nuevoDetalle->guia_det_peso_gramo = $detalle->PESO_GRAMOS ?: null;
-                        $nuevoDetalle->guia_det_volumen = $detalle->VOLUMEN_CM3 ?: null;
-                        $nuevoDetalle->guia_det_peso_total_gramo = $detalle->PESO_TOTAL_GRAMOS ?: null;
-                        $nuevoDetalle->guia_det_volumen_total = $detalle->VOLUMEN_TOTAL_CM3 ?: null;
+                        $nuevoDetalle->guia_det_almacen_salida = $detalle->ALMACEN_SALIDA ?? null;
+                        $nuevoDetalle->guia_det_fecha_emision = $detalle->FECHA_EMISION ?? null;
+                        $nuevoDetalle->guia_det_estado = $detalle->ESTADO ?? null;
+                        $nuevoDetalle->guia_det_tipo_documento = $detalle->TIPO_DOCUMENTO ?? null;
+                        $nuevoDetalle->guia_det_nro_documento = $detalle->NRO_DOCUMENTO ?? null;
+                        $nuevoDetalle->guia_det_nro_linea = $detalle->NRO_LINEA ?? null;
+                        $nuevoDetalle->guia_det_cod_producto = $detalle->COD_PRODUCTO ?? null;
+                        $nuevoDetalle->guia_det_descripcion_producto = $detalle->DESCRIPCION_PRODUCTO ?? null;
+                        $nuevoDetalle->guia_det_lote = $detalle->LOTE ?? null;
+                        $nuevoDetalle->guia_det_unidad = $detalle->UNIDAD ?? null;
+                        $nuevoDetalle->guia_det_cantidad = $detalle->CANTIDAD ?? null;
+                        $nuevoDetalle->guia_det_precio_unit_final_inc_igv = $detalle->PRECIO_UNIT_FINAL_INC_IGV ?? null;
+                        $nuevoDetalle->guia_det_precio_unit_antes_descuente_inc_igv = $detalle->PRECIO_UNIT_ANTES_DESCUENTO_INC_IGV ?? null;
+                        $nuevoDetalle->guia_det_descuento_total_sin_igv = $detalle->DESCUENTO_TOTAL_SIN_IGV ?? null;
+                        $nuevoDetalle->guia_det_igv_total = $detalle->IGV_TOTAL ?? null;
+                        $nuevoDetalle->guia_det_importe_total_inc_igv = $detalle->IMPORTE_TOTAL_INC_IGV ?? null;
+                        $nuevoDetalle->guia_det_moneda = $detalle->MONEDA ?? null;
+                        $nuevoDetalle->guia_det_tipo_cambio = $detalle->TIPO_CAMBIO ?? null;
+                        $nuevoDetalle->guia_det_peso_gramo = $detalle->PESO_GRAMOS ?? null;
+                        $nuevoDetalle->guia_det_volumen = $detalle->VOLUMEN_CM3 ?? null;
+                        $nuevoDetalle->guia_det_peso_total_gramo = $detalle->PESO_TOTAL_GRAMOS ?? null;
+                        $nuevoDetalle->guia_det_volumen_total = $detalle->VOLUMEN_TOTAL_CM3 ?? null;
                         $nuevoDetalle->save();
                     }
-                    // Guardar en la tabla historial guias
+
+                    // Guardar historial
                     $historial = new Historialguia();
                     $historial->id_users = Auth::id();
                     $historial->id_guia = $nuevaFactura->id_guia;
@@ -311,26 +352,31 @@ class Facturaspreprogramaciones extends Component
                     $historial->historial_guia_fecha_hora = Carbon::now('America/Lima');
                     $historial->historial_guia_estado = $nuevaFactura->guia_estado_registro;
                     $historial->save();
-                }
 
-                // Insertar en facturas_mov
-                if (isset($nuevaFactura)) {
+                    // Insertar en facturas_mov
                     DB::table('facturas_mov')->insert([
-                        'id_guia' => $nuevaFactura->id_guia, // Usar el ID de la nueva factura creada
-                        'fac_envio_valpago' => Carbon::now('America/Lima'), // Establecer la fecha de envío
-                        'id_users_responsable' => Auth::id(), // Asignar el ID del usuario responsable
+                        'id_guia' => $nuevaFactura->id_guia,
+                        'fac_envio_valpago' => Carbon::now('America/Lima'),
+                        'id_users_responsable' => Auth::id(),
                     ]);
                 }
             }
+
             DB::commit();
-            $this->selectedGuias = [];
-            $this->estado_envio = "";
-            session()->flash('success', 'Guías enviadas correctamente.');
+
+            // Limpiar selección
+            $this->selectedGuiasNros = [];
+            $this->filteredGuias = [];
+            $this->selectAll = false;
+
+            session()->flash('success', 'Guías procesadas correctamente.');
+
         } catch (\Exception $e) {
             DB::rollBack();
-            session()->flash('error', 'Ocurrió un error al guardar las facturas: ' . $e->getMessage());
+            session()->flash('error', 'Error al procesar guías: ' . $e->getMessage());
+            \Log::error('Error al guardar guías: ' . $e->getMessage());
         } finally {
-            $this->isSaving = false; // Restablecer el estado de guardado
+            $this->isSaving = false;
         }
     }
 
@@ -340,7 +386,182 @@ class Facturaspreprogramaciones extends Component
             return !($guia->SERIE === $SERIE && $guia->NUMERO === $NUMERO);
         });
 
-        // Convertir el array filtrado en una colección de objetos nuevamente
         $this->selectedGuias = array_values(array_map(fn($guia) => (object) $guia, $this->selectedGuias));
+    }
+
+//    NUEVAS FUNCIONES
+    public function seleccionar_varias_guias(){
+        $this->select_varios = !$this->select_varios;
+
+        if ($this->select_varios) {
+            $this->select_todas_guias = $this->guia->listar_guias_registradas()
+                ->pluck('id_guia')
+                ->toArray();
+        } else {
+            $this->select_todas_guias = [];
+        }
+    }
+
+    public function pregunta_modal($tipo){
+        $tipo_pregunta = $tipo;
+        if ($tipo_pregunta == '1'){
+
+            if (empty($this->estado_envio)) {
+                session()->flash('error_modal_credito', 'Debe seleccionar un estado (Créditos o Despachos).');
+                return;
+            }
+
+            if ($this->estado_envio == '1'){
+                $this->messagePregunta_cd = "Créditos";
+            } elseif ($this->estado_envio == '2'){
+                $this->messagePregunta_cd = "Despachos";
+            }
+        } elseif($tipo_pregunta == '2') {
+
+            if (empty($this->estado_envio_anulado)) {
+                session()->flash('error_modal_credito', 'Debe seleccionar un estado (Anulado o Anulado NC).');
+                return;
+            }
+
+            if ($this->estado_envio_anulado == '14'){
+                $this->messagePregunta_anular = "Anulado";
+            } elseif ($this->estado_envio_anulado == '15'){
+                $this->messagePregunta_anular = "Pendiente de NC";
+            }
+        }
+    }
+
+    public function enviar_estado_guia() {
+        try {
+            // Verifica permisos
+            if (!Gate::allows('enviar_estado_guia')) {
+                session()->flash('error', 'No tiene permisos para aceptar las guías.');
+                return;
+            }
+
+            // Validar que se haya seleccionado un estado
+            if (empty($this->estado_envio)) {
+                session()->flash('error', 'Debe seleccionar un estado (Créditos o Despacho).');
+                return;
+            }
+
+            // Validar que al menos una guía esté seleccionada
+            if (count($this->select_todas_guias) == 0) {
+                session()->flash('error', 'Debe seleccionar al menos una guía.');
+                return;
+            }
+
+            DB::beginTransaction();
+
+            foreach ($this->select_todas_guias as $id_guia) {
+                $guia = Guia::find($id_guia);
+
+                if ($guia) {
+                    // Actualizar estado de la guía
+                    $guia->guia_estado_aprobacion = $this->estado_envio;
+
+                    if ($guia->save()) {
+                        // Registrar en historial de guías
+                        $historial = new Historialguia();
+                        $historial->id_users = Auth::id();
+                        $historial->id_guia = $id_guia;
+                        $historial->guia_nro_doc = $guia->guia_nro_doc;
+                        $historial->historial_guia_estado_aprobacion = $this->estado_envio;
+                        $historial->historial_guia_fecha_hora = Carbon::now('America/Lima');
+                        $historial->historial_guia_estado = 1;
+
+                        if (!$historial->save()) {
+                            DB::rollBack();
+                            session()->flash('error', 'Error al guardar el historial de la guía.');
+                            return;
+                        }
+                    } else {
+                        DB::rollBack();
+                        session()->flash('error', 'Error al actualizar el estado de la guía.');
+                        return;
+                    }
+                }
+            }
+
+            DB::commit();
+            session()->flash('success', 'Estado de las guías actualizado correctamente.');
+            $this->dispatch('hideModalCreditosDespachos');
+            // Limpiar selección después de guardar
+            $this->select_todas_guias = [];
+            $this->select_varios = false;
+            $this->estado_envio = "";
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error al actualizar las guías: ' . $e->getMessage());
+        }
+    }
+
+    public function enviar_anulado_nc() {
+        try {
+            // Verifica permisos
+            if (!Gate::allows('enviar_anulado_nc')) {
+                session()->flash('error', 'No tiene permisos para aceptar las guías.');
+                return;
+            }
+
+            // Validar que se haya seleccionado un estado
+            if (empty($this->estado_envio_anulado)) {
+                session()->flash('error', 'Debe seleccionar un estado (Créditos o Despacho).');
+                return;
+            }
+
+            // Validar que al menos una guía esté seleccionada
+            if (count($this->select_todas_guias) == 0) {
+                session()->flash('error', 'Debe seleccionar al menos una guía.');
+                return;
+            }
+
+            DB::beginTransaction();
+
+            foreach ($this->select_todas_guias as $id_guia) {
+                $guia = Guia::find($id_guia);
+
+                if ($guia) {
+                    // Actualizar estado de la guía
+                    $guia->guia_estado_aprobacion = $this->estado_envio_anulado;
+
+                    if ($guia->save()) {
+                        // Registrar en historial de guías
+                        $historial = new Historialguia();
+                        $historial->id_users = Auth::id();
+                        $historial->id_guia = $id_guia;
+                        $historial->guia_nro_doc = $guia->guia_nro_doc;
+                        $historial->historial_guia_estado_aprobacion = $this->estado_envio_anulado;
+                        $historial->historial_guia_fecha_hora = Carbon::now('America/Lima');
+                        $historial->historial_guia_estado = 1;
+
+                        if (!$historial->save()) {
+                            DB::rollBack();
+                            session()->flash('error', 'Error al guardar el historial de la guía.');
+                            return;
+                        }
+                    } else {
+                        DB::rollBack();
+                        session()->flash('error', 'Error al actualizar el estado de la guía.');
+                        return;
+                    }
+                }
+            }
+
+            DB::commit();
+            session()->flash('success', 'Estado de las guías actualizado correctamente.');
+            $this->dispatch('hideModalAnularNC');
+            // Limpiar selección después de guardar
+            $this->select_todas_guias = [];
+            $this->select_varios = false;
+            $this->estado_envio_anulado = "";
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error al actualizar las guías: ' . $e->getMessage());
+        }
     }
 }

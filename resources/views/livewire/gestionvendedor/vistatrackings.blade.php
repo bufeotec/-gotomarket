@@ -234,7 +234,7 @@
                             <!-- Etapa 5: Guía Entregado -->
                             <div class="col-lg-2 col-md-2 col-sm-12">
                                 @php
-                                    $comprobanteNoEntregado = collect($mensajeEtapa5 ?? [])->contains(fn($mensaje) => str_contains($mensaje, 'Guía no entregado.'));
+                                    $comprobanteNoEntregado = collect($mensajeEtapa5 ?? [])->contains(fn($mensaje) => str_contains($mensaje, 'Guía no entregada.'));
                                 @endphp
 
                                 @if ($comprobanteNoEntregado)

@@ -45,7 +45,7 @@
                     <div class="col-lg-12 col-md-12 col-sm-12">
                         <h2 class="deleteTitle">Cambio de estado de la guía</h2>
                     </div>
-                    <div class="col-lg-12 col-md-12 col-sm-12">
+                    <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
                         @error('guia_estado_aprobacion') <span class="message-error">{{ $message }}</span> @enderror
                         @error('id_guia') <span class="message-error">{{ $message }}</span> @enderror
                         @if (session()->has('error-edit-guia'))
@@ -62,8 +62,12 @@
                         @endif
                     </div>
 
-                    <div class="col-lg-12">
-                        <label for="guia_estado_aprobacion" class="form-label">Estado Guía</label>
+                    <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                        <h5>Estado actual: <strong>{{ $estado_actual_texto }}</strong></h5>
+                    </div>
+
+                    <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                        <label for="guia_estado_aprobacion" class="form-label">Actualizar estado a:</label>
                         <select name="guia_estado_aprobacion" id="guia_estado_aprobacion" wire:model.live="guia_estado_aprobacion" class="form-select">
                             <option value="">Seleccionar...</option>
                             <option value="1">Creditos</option>
@@ -550,6 +554,10 @@
 
     $wire.on('modalEditFechaGuia', () => {
         $('#modalEditCambioFecha').modal('hide');
+    });
+
+    $wire.on('hideModalActualizarDetalle', () => {
+        $('#modalActualizarDetalle').modal('hide');
     });
 
     document.getElementById("btnEditar").addEventListener("click", function() {

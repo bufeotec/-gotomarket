@@ -368,7 +368,7 @@ class HistorialProgramacion extends Component
 
         $roleId = auth()->user()->roles->first()->id ?? null;
 
-        return view('livewire.programacioncamiones.historial-programacion', compact('resultado', 'roleId', 'zonaDespachoData'));
+        return view('livewire.programacioncamiones.historial-programacion', compact('resultado', 'roleId', 'zonaDespachoData', 'programacionesContador'));
     }
 
 
@@ -439,7 +439,17 @@ class HistorialProgramacion extends Component
                 ->first();
 
             if ($this->listar_detalle_despacho) {
-                // Obtener comprobantes con ambos estados
+                // Obtener todos los despachos con el mismo id_programacion
+                $despachosMismoProgramacion = DB::table('despachos')
+                    ->where('id_programacion', $this->listar_detalle_despacho->id_programacion)
+                    ->get();
+
+                // Determinar si es mixto y provincial
+                $this->listar_detalle_despacho->es_mixto = count($despachosMismoProgramacion) > 1;
+                $this->listar_detalle_despacho->es_provincial = $this->listar_detalle_despacho->id_tipo_servicios == 2;
+                $this->listar_detalle_despacho->es_mixto_provincial = $this->listar_detalle_despacho->es_mixto && $this->listar_detalle_despacho->es_provincial;
+
+                // Resto del código existente...
                 $comprobantes = DB::table('despacho_ventas as dv')
                     ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
                     ->where('dv.id_despacho', '=', $id_despacho)
@@ -1877,14 +1887,10 @@ class HistorialProgramacion extends Component
         }
     }
 
-//    CAMBIAR EL ESTADO A EN RUTA
+//    CAMBIAR EL ESTADO A "EN RUTA"
+
     public function cambiarEstadoDespachoFormulario() {
         try {
-
-//            if (!Gate::allows('cambiar_estado_despacho')) {
-//                session()->flash('error_delete', 'No tiene permisos para poder cambiar el estado del despacho.');
-//                return;
-//            }
             if (count($this->selectedItems) > 0) {
                 // Validación para múltiples despachos
                 $this->validate([
@@ -1928,6 +1934,7 @@ class HistorialProgramacion extends Component
             session()->flash('error', 'Ocurrió un error al cambiar el estado del registro. Por favor, inténtelo nuevamente.');
         }
     }
+
     public function procesarCambioEstadoDespacho($idDespacho) {
         $updateDespacho = Despacho::find($idDespacho);
         $updateDespacho->despacho_estado_aprobacion = 2;
@@ -1935,6 +1942,15 @@ class HistorialProgramacion extends Component
         if (!$updateDespacho->save()) {
             session()->flash('error', 'No se pudo cambiar el estado del despacho');
         }
+
+        // Identificar guías duplicadas en esta programación
+        $guiasDuplicadas = DB::table('despacho_ventas as dv')
+            ->join('despachos as d', 'd.id_despacho', '=', 'dv.id_despacho')
+            ->where('d.id_programacion', $updateDespacho->id_programacion)
+            ->groupBy('dv.id_guia')
+            ->havingRaw('COUNT(dv.id_guia) > 1')
+            ->pluck('dv.id_guia')
+            ->toArray();
 
         // Verificar si es una programación mixta
         $esMixta = $this->esProgramacionMixta($updateDespacho->id_programacion);
@@ -1960,11 +1976,14 @@ class HistorialProgramacion extends Component
                 continue;
             }
 
+            // Determinar el estado a asignar (20 para duplicadas, 7 para normales)
+            $estadoGuia = in_array($despachoVenta->id_guia, $guiasDuplicadas) ? 20 : 7;
+
             // Actualizar estado de la guía
             DB::table('guias')
                 ->where('id_guia', $despachoVenta->id_guia)
                 ->update([
-                    'guia_estado_aprobacion' => 7, // "En Ruta"
+                    'guia_estado_aprobacion' => $estadoGuia,
                     'updated_at' => now('America/Lima')
                 ]);
 
@@ -2002,7 +2021,7 @@ class HistorialProgramacion extends Component
                         'id_users' => Auth::id(),
                         'id_guia' => $guia->id_guia,
                         'guia_nro_doc' => $guia->guia_nro_doc,
-                        'historial_guia_estado_aprobacion' => 7,
+                        'historial_guia_estado_aprobacion' => 7, // Siempre 7 para historial
                         'historial_guia_fecha_hora' => Carbon::now('America/Lima'),
                         'historial_guia_estado' => 1,
                         'created_at' => Carbon::now('America/Lima'),
@@ -2021,6 +2040,7 @@ class HistorialProgramacion extends Component
                 ->update(['serv_transpt_estado_aprobacion' => 4]);
         }
     }
+
     public function esProgramacionMixta($idProgramacion) {
         // Contar cuántos despachos diferentes comparten la misma programación
         $countDespachos = DB::table('despachos')
@@ -2029,7 +2049,8 @@ class HistorialProgramacion extends Component
 
         return ($countDespachos > 1);
     }
-//    FIN CAMBIAR EL ESTADO A EN RUTA
+
+//    FIN CAMBIAR EL ESTADO A "EN RUTA"
 
     public function cambiarEstadoProgramacionAprobada(){
         try {
@@ -2069,11 +2090,6 @@ class HistorialProgramacion extends Component
 
     public function cambiarEstadoComprobante() {
         try {
-//            if (!Gate::allows('cambiar_estado_comprobante')) {
-//                session()->flash('errorComprobante', 'No tiene permisos para poder cambiar el estado del comprobante.');
-//                return;
-//            }
-
             DB::beginTransaction();
             $id_despacho = $this->currentDespachoId;
 
@@ -2090,7 +2106,7 @@ class HistorialProgramacion extends Component
 
             // Verificar si es programación mixta
             $esProgramacionMixta = $this->esProgramacionMixta($despachoActual->id_programacion);
-            $esDespachoProvincial = ($despachoActual->id_tipo_servicios == 2);
+            $esDespachoLocal = ($despachoActual->id_tipo_servicios == 1);
 
             // Variables para determinar el estado final del despacho
             $tieneGuias = false;
@@ -2158,8 +2174,8 @@ class HistorialProgramacion extends Component
 
                     if (!$esProgramacionMixta) {
                         $registrarHistorial = true;
-                    } elseif ($esProgramacionMixta) {
-                        // Verificar si la guía también está en un despacho provincial en la misma programación
+                    } elseif ($esProgramacionMixta && $esDespachoLocal) {
+                        // Si es mixto y despacho local, registrar historial solo si la guía no está en provincial
                         $guiaEnDespachoProvincial = DB::table('despacho_ventas')
                             ->join('despachos', 'despacho_ventas.id_despacho', '=', 'despachos.id_despacho')
                             ->where('despacho_ventas.id_guia', $guia->id_guia)
@@ -2167,15 +2183,12 @@ class HistorialProgramacion extends Component
                             ->where('despachos.id_tipo_servicios', 2) // Provincial
                             ->exists();
 
-                        // Si no está en un despacho provincial => registrar historial
                         if (!$guiaEnDespachoProvincial) {
                             $registrarHistorial = true;
                         }
-
-                        // O si el despacho actual es provincial
-                        if ($esDespachoProvincial) {
-                            $registrarHistorial = true;
-                        }
+                    } elseif ($esProgramacionMixta && !$esDespachoLocal) {
+                        // Si es mixto y despacho provincial, siempre registrar historial
+                        $registrarHistorial = true;
                     }
 
                     if ($registrarHistorial) {
@@ -2242,10 +2255,75 @@ class HistorialProgramacion extends Component
                 }
             }
 
-            // Actualizar estado del despacho
+            // Actualizar estado del despacho actual
             DB::table('despachos')
                 ->where('id_despacho', $id_despacho)
                 ->update(['despacho_estado_aprobacion' => $estadoDespacho]);
+
+            // Si es despacho local en programación mixta, actualizar despachos provinciales relacionados
+            if ($esProgramacionMixta && $esDespachoLocal) {
+                // Obtener todas las guías actualizadas en este despacho local
+                $guiasActualizadas = [];
+                foreach ($this->estadoComprobante as $key => $estado) {
+                    $parts = explode('_', $key);
+                    if ($parts[0] != $id_despacho) continue;
+
+                    $id_despacho_venta = $parts[1];
+                    $despachoVenta = DB::table('despacho_ventas')
+                        ->where('id_despacho_venta', $id_despacho_venta)
+                        ->first();
+
+                    if ($despachoVenta) {
+                        $guiasActualizadas[$despachoVenta->id_guia] = (int)$estado;
+                    }
+                }
+
+                // Obtener todos los despachos provinciales de esta programación
+                $despachosProvinciales = DB::table('despachos')
+                    ->where('id_programacion', $despachoActual->id_programacion)
+                    ->where('id_tipo_servicios', 2) // Provincial
+                    ->get();
+
+                foreach ($despachosProvinciales as $despachoProvincial) {
+                    // Obtener todas las guías de este despacho provincial
+                    $guiasProvincial = DB::table('despacho_ventas')
+                        ->where('id_despacho', $despachoProvincial->id_despacho)
+                        ->pluck('id_guia')
+                        ->toArray();
+
+                    // Verificar si alguna de estas guías fue actualizada en el local
+                    $guiasComunes = array_intersect($guiasProvincial, array_keys($guiasActualizadas));
+
+                    if (!empty($guiasComunes)) {
+                        // Determinar el estado para el despacho provincial
+                        $tieneEntregadas = false;
+                        $tieneNoEntregadas = false;
+
+                        foreach ($guiasComunes as $id_guia) {
+                            if ($guiasActualizadas[$id_guia] == 8) {
+                                $tieneEntregadas = true;
+                            } elseif ($guiasActualizadas[$id_guia] == 11) {
+                                $tieneNoEntregadas = true;
+                            }
+                        }
+
+                        // Aplicar reglas para actualizar el despacho provincial
+                        if ($tieneEntregadas || $tieneNoEntregadas) {
+                            $nuevoEstadoProvincial = 2; // En camino (si hay al menos una entregada o mezcla)
+
+                            if ($tieneNoEntregadas && !$tieneEntregadas) {
+                                // Si todas las guías comunes fueron marcadas como no entregadas
+                                $nuevoEstadoProvincial = 4; // Rechazado
+                            }
+
+                            // Actualizar estado del despacho provincial
+                            DB::table('despachos')
+                                ->where('id_despacho', $despachoProvincial->id_despacho)
+                                ->update(['despacho_estado_aprobacion' => $nuevoEstadoProvincial]);
+                        }
+                    }
+                }
+            }
 
             DB::commit();
             session()->flash('successComprobante', 'Los estados fueron actualizados correctamente.');

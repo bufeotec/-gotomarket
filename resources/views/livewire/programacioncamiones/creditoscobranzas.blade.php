@@ -76,6 +76,26 @@
     </x-modal-delete>
     {{--    FIN MODAL ENVIAR A FACTURAS POR APROBAR --}}
 
+    {{--    MODAL ANULAR GUÍA --}}
+    <x-modal-delete wire:ignore.self style="z-index: 1056;">
+        <x-slot name="id_modal">modalAnularNC</x-slot>
+        <x-slot name="modalContentDelete">
+            <form wire:submit.prevent="guia_anular_nc">
+                <div class="row">
+                    @error('selectedGuiaIds') <span class="message-error">{{ $message }}</span> @enderror
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        <h2 class="deleteTitle">¿Está seguro que desea anular esta operación con una NC?</h2>
+                    </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-center">
+                        <button type="submit" class="btn btn-success text-white btnDelete">SI</button>
+                        <button type="button" class="btn btn-danger btnDelete" id="btnEdit">NO</button>
+                    </div>
+                </div>
+            </form>
+        </x-slot>
+    </x-modal-delete>
+    {{--    FIN MODAL ANULAR GUÍA --}}
+
     <div class="row">
         @if (session()->has('success'))
             <div class="col-lg-12 col-md-12 col-sm-12">
@@ -146,17 +166,17 @@
                                                                 <td>
                                                                     <input type="checkbox" wire:model.live="selectedGuiaIds" value="{{ $guia->id_guia }}" id="checkbox-{{ $guia->id_guia }}" class="form-check-input cursoPointer">
                                                                 </td>
-                                                                <td style="width: 39.6%">
+                                                                <td style="width: 20.6%">
                                                                     <span class="d-block tamanhoTablaComprobantes">
                                                                         {{ $guia->guia_nro_doc }} - {{ $guia->guia_nro_doc_ref }}
                                                                     </span>
                                                                 </td>
-                                                                <td style="width: 32.2%">
+                                                                <td style="width: 25.2%">
                                                                     <span class="d-block tamanhoTablaComprobantes">
                                                                         {{ $me->obtenerNombreFecha($guia->guia_fecha_emision, 'DateTime', 'Date') }}
                                                                     </span>
                                                                 </td>
-                                                                <td style="width: 32.2%">
+                                                                <td style="width: 27.2%">
                                                                     <span class="d-block tamanhoTablaComprobantes">
                                                                         {{ $me->formatoDecimal(($guia->guia_importe_total_sin_igv ?? 0)) }}
                                                                     </span>
@@ -199,12 +219,21 @@
                             @if(count($selectedGuiaIds) > 0)
                                 <div class="col-lg-12 col-md-12 col-sm-12 mb-2 text-end">
                                     <button
-                                        class="btn text-white bg-warning mt-4"
+                                        class="btn text-white bg-info mt-4"
                                         data-bs-toggle="modal"
                                         data-bs-target="#modalMotCre"
                                         wire:click="pre_mot_cre()"
                                     >
                                         Aceptar Guías ({{ count($selectedGuiaIds) }})
+                                    </button>
+
+                                    <button
+                                        class="btn text-white bg-warning mt-4"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#modalAnularNC"
+                                        wire:click="pre_mot_cre()"
+                                    >
+                                        Anular ({{ count($selectedGuiaIds) }})
                                     </button>
                                 </div>
                             @endif
