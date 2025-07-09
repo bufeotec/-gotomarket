@@ -107,7 +107,7 @@
                                         <td>{{ $general->obtenerNombreFecha($me->guia_fecha_emision,'DateTime','Date') }}</td>
                                         <td>S/ {{$general->formatoDecimal($me->guia_importe_total_sin_igv) ?? 0 }}</td>
                                         <td>S/ {{ $general->formatoDecimal($me->guia_importe_total_sin_igv * 1.18) ?? 0 }}</td>
-                                        <td>VENDEDOR: {{$me->guia_vendedor}}</td>
+                                        <td>{{$me->guia_vendedor}}</td>
                                         <td>
                                             <span class="d-block tamanhoTablaComproantes">
                                                 @php
