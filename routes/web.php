@@ -96,6 +96,7 @@ Route::prefix('Programacioncamion')->middleware(['auth', 'canMenu:Programacionca
     route::get('/reporte_tiempos', [ProgramacioncamionController::class, 'reporte_tiempos'])->name('Programacioncamion.reporte_tiempos')->middleware('verifyUserStatus')->middleware('can:reporte_tiempos');
     route::get('/reporte_indicadores_valor', [ProgramacioncamionController::class, 'reporte_indicadores_valor'])->name('Programacioncamion.reporte_indicadores_valor')->middleware('verifyUserStatus')->middleware('can:reporte_indicadores_valor');
     route::get('/reporte_indicadores_peso', [ProgramacioncamionController::class, 'reporte_indicadores_peso'])->name('Programacioncamion.reporte_indicadores_peso')->middleware('verifyUserStatus')->middleware('can:reporte_indicadores_peso');
+    route::get('/gestionar_nota_credito', [ProgramacioncamionController::class, 'gestionar_nota_credito'])->name('Programacioncamion.gestionar_nota_credito')->middleware('verifyUserStatus')->middleware('can:gestionar_nota_credito');
 });
 Route::prefix('Liquidacionflete')->middleware(['auth', 'canMenu:Liquidacionflete'])->group(function () {
     /* LIQUIDACION */
