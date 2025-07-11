@@ -162,7 +162,7 @@
         <x-slot name="tama">modal-xl</x-slot>
         <x-slot name="titleModal">Gestionar Nota de Credito</x-slot>
         <x-slot name="modalContent">
-            <form wire:submit.prevent="saveNotaCredito">
+            <form wire:submit.prevent="save_nota_credito">
                 <div class="row">
                     <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
                         <small class="text-primary">Información de la nota de credito</small>
@@ -357,19 +357,19 @@
 
 {{--    MODAL CAMBIAR ESTADO APROBACION--}}
     <x-modal-delete  wire:ignore.self >
-        <x-slot name="id_modal">modalCambioEstado</x-slot>
+        <x-slot name="id_modal">modalCodigoMotivo</x-slot>
         <x-slot name="modalContentDelete">
-            <form wire:submit.prevent="cambiar_estado_aprobacion">
+            <form wire:submit.prevent="cambiar_estado_codigo_motivo">
                 <div class="row">
                     <div class="col-lg-12 col-md-12 col-sm-12">
-                        <h2 class="deleteTitle">{{$messageNotCret}}</h2>
+                        <h2 class="deleteTitle">¿Desea Registrar las Notas de Crédito?</h2>
                     </div>
                     <div class="col-lg-12 col-md-12 col-sm-12">
                         @error('id_nota_credito') <span class="message-error">{{ $message }}</span> @enderror
 
-                        @if (session()->has('error_pre_pro'))
+                        @if (session()->has('error_codigo_nc'))
                             <div class="alert alert-danger alert-dismissible show fade">
-                                {{ session('error_pre_pro') }}
+                                {{ session('error_codigo_nc') }}
                                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                             </div>
                         @endif
@@ -384,20 +384,48 @@
     </x-modal-delete>
 {{--    MODAL FIN CAMBIAR ESTADO APROBACION--}}
 
-    <div class="row">
-        <div class="col-lg-6 col-md-6 col-sm-12 d-flex align-items-center mb-2">
-            <input type="text" class="form-control w-50 me-4"  wire:model.live="search_nota_credito" placeholder="Buscar">
-            <x-select-filter wire:model.live="pagination_nota_credito" />
-        </div>
-        <div class="col-lg-6 col-md-6 col-sm-12 text-end">
-            <x-btn-export wire:click="clear_form_nota_credito" class="bg-success text-white" data-bs-toggle="modal" data-bs-target="#modalNotaCredito" >
-                <x-slot name="icons">
-                    fa-solid fa-plus
-                </x-slot>
-                Agregar Nota credito
-            </x-btn-export>
-        </div>
-    </div>
+{{--    MODAL ANULAR GUIA--}}
+    <x-modal-delete  wire:ignore.self >
+        <x-slot name="id_modal">modalAnularGuia</x-slot>
+        <x-slot name="modalContentDelete">
+            <form wire:submit.prevent="cambiar_guia_anuladas">
+                <input type="text" class="d-none" autofocus>
+                <div class="row">
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        <h2 class="deleteTitle">¿Estas seguro de anular estas guías ?</h2>
+                    </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        @if (session()->has('error_modal_anular_guia'))
+                            <div class="alert alert-danger alert-dismissible show fade">
+                                {{ session('error_modal_anular_guia') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        @endif
+                    </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-center">
+                        <button type="button" data-bs-dismiss="modal" class="btn btn-danger btnDelete">No</button>
+                        <button type="submit" class="btn btn-primary text-white btnDelete">SI</button>
+                    </div>
+                </div>
+            </form>
+        </x-slot>
+    </x-modal-delete>
+{{--    FIN MODAL ANULAR GUIA--}}
+
+{{--    <div class="row">--}}
+{{--        <div class="col-lg-6 col-md-6 col-sm-12 d-flex align-items-center mb-2">--}}
+{{--            <input type="text" class="form-control w-50 me-4"  wire:model.live="search_nota_credito" placeholder="Buscar">--}}
+{{--            <x-select-filter wire:model.live="pagination_nota_credito" />--}}
+{{--        </div>--}}
+{{--        <div class="col-lg-6 col-md-6 col-sm-12 text-end">--}}
+{{--            <x-btn-export wire:click="clear_form_nota_credito" class="bg-success text-white" data-bs-toggle="modal" data-bs-target="#modalNotaCredito" >--}}
+{{--                <x-slot name="icons">--}}
+{{--                    fa-solid fa-plus--}}
+{{--                </x-slot>--}}
+{{--                Agregar Nota credito--}}
+{{--            </x-btn-export>--}}
+{{--        </div>--}}
+{{--    </div>--}}
 
     @if (session()->has('success'))
         <div class="alert alert-success alert-dismissible show fade mt-2">
@@ -414,95 +442,318 @@
         </div>
     @endif
 
-    <x-card-general-view>
-        <x-slot name="content">
-            <div class="row">
-                <div class="col-lg-12 col-md-12 col-sm-12">
-                    <x-table-general>
-                        <x-slot name="thead">
-                            <tr>
-                                <th>N°</th>
-                                <th>Número Documento</th>
-                                <th>Motivo</th>
-                                <th>Motivo descripción</th>
-                                <th>Factura</th>
-                                <th>Fecha de emision</th>
-                                <th>RUC</th>
-                                <th>Nombre del cliente</th>
-                                <th>Forma de pago</th>
-                                <th>Moneda</th>
-                                <th>Tipo de cambio</th>
-                                <th>Importe total</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </x-slot>
+    <div class="row">
+        <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
+                            <input type="date" name="fecha_desde" id="fecha_desde" wire:model="desde" class="form-control" min="2025-01-01">
+                        </div>
+                        <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
+                            <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model="hasta" class="form-control" min="2025-01-01">
+                        </div>
+                        <div class="col-lg-9 col-md-9 col-sm-12 mb-2">
+                            <div class="position-relative">
+                                <input type="text" class="form-control bg-dark text-white rounded-pill ps-5 custom-placeholder" placeholder="Buscar guía" wire:model="searchGuia" style="border: none; outline: none;" />
+                                <i class="fas fa-search position-absolute" style="left: 15px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-12 mb-2">
+                            <button class="btn btn-sm bg-primary text-white w-100" wire:click="buscar_comprobantes" >
+                                <i class="fa fa-search"></i> BUSCAR
+                            </button>
+                        </div>
+                        <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                            <div class="loader mt-2" wire:loading wire:target="buscar_comprobantes"></div>
+                        </div>
 
-                        <x-slot name="tbody">
-                            @if(count($listar_nota_credito) > 0)
-                                @php $conteo = 1; @endphp
-                                @foreach($listar_nota_credito as $lnc)
-                                    <tr>
-                                        <td>{{$conteo}}</td>
-                                        <td>{{$lnc->not_cred_nro_doc}}</td>
-                                        <td>
-                                            {{ [
-                                                1 => '1 - Devolución',
-                                                2 => '2 - Calidad',
-                                                3 => '3 - Cobranza',
-                                                4 => '4 - Error de facturación',
-                                                5 => '5 - Otros comercial'
-                                            ][$lnc->not_cred_motivo] ?? 'No definido' }}
-                                        </td>
-                                        <td>{{$lnc->not_cred_motivo_descripcion}}</td>
-                                        <td>{{$lnc->not_cred_nro_doc_ref}}</td>
-                                        <td>{{$general->obtenerNombreFecha($lnc->not_cred_fecha_emision,'DateTime', 'Date')}}</td>
-                                        <td>{{$lnc->not_cred_ruc_cliente}}</td>
-                                        <td>{{$lnc->not_cred_nombre_cliente}}</td>
-                                        <td>{{$lnc->not_cred_forma_pago}}</td>
-                                        <td>{{$lnc->not_cred_moneda}}</td>
-                                        <td>{{$general->formatoDecimal($lnc->not_cred_tipo_cambio)}}</td>
-                                        <td>S/ {{$general->formatoDecimal($lnc->not_cred_importe_total)}}</td>
-                                        <td>{{$lnc->not_cred_estado}}</td>
-                                        <td>
-                                            <a href="#" class="btn-ver m-3" data-bs-toggle="modal" data-bs-target="#modalDetalleNotaCredito" wire:click="modal_nota_credito_detalle({{ $lnc->id_not_cred }})">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
+                        <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                            <div class="row" style="align-items: center">
+                                <div class="col-lg-6 col-md-6 col-sm-12">
+                                    @if(!empty($filteredGuias) && count($filteredGuias) > 0)
+                                        <input type="checkbox" id="selectAll" wire:click="seleccionar_todas_nc_intranet" class="form-check-input"/>
+                                        <label class="form-label ms-2" for="selectAll">Seleccionar todo</label>
+                                    @endif
+                                </div>
+                                <div class="col-lg-6 col-md-6 col-sm-12 text-end">
+                                    @if(!empty($seleccionarNCS) && count($seleccionarNCS) > 0)
+                                        <button class="btn btn-info btn-group-sm" wire:click="save_nota_credito">
+                                            INICIAR REGISTRO
+                                        </button>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
 
-                                            @php
-                                                // Busca el registro en la tabla 'guias'
-                                                $nota = \Illuminate\Support\Facades\DB::table('guias')
-                                                    ->where('guia_nro_doc_ref', '=', $lnc->not_cred_nro_doc_ref)
-                                                    ->first();
-                                            @endphp
-                                            <span class="font-bold badge {{ $nota ? 'bg-label-success' : 'bg-label-danger' }}">
-                                                {{ $nota ? 'Factura registrada en intranet' : 'Factura no registrada en intranet' }}
-                                            </span>
-                                            @if($nota)
-                                                <button wire:click="verDetallesGuia('{{ $nota->id_guia }}')" class="btn text-warning ms-3" data-bs-toggle="modal" data-bs-target="#modalDetalleFactura">
-                                                    <i class="fas fa-eye"></i>
-                                                </button>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                    @php $conteo++; @endphp
-                                @endforeach
-                            @else
-                                <tr class="odd">
-                                    <td valign="top" colspan="9" class="dataTables_empty text-center">
-                                        No se han encontrado resultados.
-                                    </td>
-                                </tr>
-                            @endif
-                        </x-slot>
-                    </x-table-general>
+                        <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                            <div class="contenedor-comprobante" style="max-height: 360px; overflow: auto">
+                                <x-table-general>
+                                    <x-slot name="thead">
+                                        <tr>
+                                            <th style="font-size: 12px">Check box</th>
+                                            <th style="font-size: 11px">N° Documento NC</th>
+                                            <th style="font-size: 12px">Nombre del cliente</th>
+                                        </tr>
+                                    </x-slot>
+
+                                    <x-slot name="tbody">
+                                        @if(!empty($filteredGuias))
+                                            @foreach($filteredGuias as $factura)
+                                                @php
+                                                    $NRO_DOCUMENTO = $factura->NRO_DOCUMENTO;
+                                                    $comprobanteExiste = collect($this->selectedGuias)->first(function ($facturaVa) use ($NRO_DOCUMENTO) {
+                                                        return $facturaVa['NRO_DOCUMENTO'] === $NRO_DOCUMENTO;
+                                                    });
+                                                @endphp
+                                                @if(!$comprobanteExiste)
+                                                    <tr>
+                                                        <td style="width: 6%">
+                                                            <input type="checkbox"
+                                                                   wire:click="seleccionar_una_nc_intranet"
+                                                                   wire:model="seleccionarNCS"
+                                                                   value="{{$NRO_DOCUMENTO}}"
+                                                                   class="form-check-input" />
+                                                        </td>
+                                                        <td style="width: 32%">
+                                                            <span class="tamanhoTablaComprobantes">
+                                                                <b class="colorBlackComprobantes">
+                                                                    {{ isset($factura->FECHA_EMISION) ? $general->obtenerNombreFecha($factura->FECHA_EMISION,'DateTime', 'Date') : 'Sin fecha' }}
+                                                                </b>
+                                                            </span>
+                                                            <span class="d-block tamanhoTablaComprobantes">
+                                                                N° NC: {{ $factura->NRO_DOCUMENTO }}
+                                                            </span>
+                                                            <span class="d-block tamanhoTablaComprobantes">
+                                                                N° Factura: {{ $factura->NRO_DOCUMENTO_REF }}
+                                                            </span>
+                                                        </td>
+                                                        <td style="width: 37%">
+                                                            <span class="d-block tamanhoTablaComprobantes">
+                                                                <b class="colorBlackComprobantes">
+                                                                    {{ $factura->NOMBRE_CLIENTE }}
+                                                                </b>
+                                                            </span>
+                                                            <span class="d-block tamanhoTablaComprobantes">
+                                                                S/ {{ number_format($factura->IMPORTE_TOTAL, 2) }}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                @endif
+                                            @endforeach
+                                        @else
+                                            <tr>
+                                                <td colspan="3" class="text-center">
+                                                    <p class="mb-0" style="font-size: 12px">No se encontraron resultados.</p>
+                                                </td>
+                                            </tr>
+                                        @endif
+                                    </x-slot>
+                                </x-table-general>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </x-slot>
-    </x-card-general-view>
-    {{ $listar_nota_credito->links(data: ['scrollTo' => false]) }}
+            <div wire:loading wire:target="save_nota_credito" class="overlay__eliminar">
+                <div class="spinner__container__eliminar">
+                    <div class="spinner__eliminar"></div>
+                </div>
+            </div>
+        </div>
 
+        <div class="col-lg-8">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-body table-responsive">
+                            <div class="row">
+                                <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                                    <div class="row align-items-center">
+                                        @if(count($listar_nota_credito) > 0)
+                                            <div class="col-lg-12">
+                                                <div class="row mb-2">
+                                                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                                        <h6>Código motivo</h6>
+                                                        <select class="form-select" name="not_cred_motivo" id="not_cred_motivo" wire:model="not_cred_motivo">
+                                                            <option value="">Seleccionar...</option>
+                                                            <option value="1">1 - Devolución</option>
+                                                            <option value="2">2 - Calidad</option>
+                                                            <option value="3">3 - Cobranza</option>
+                                                            <option value="4">4 - Anulación de la Operación</option>
+                                                            <option value="5">5 - Otros comercial</option>
+                                                        </select>
+                                                        @error('not_cred_motivo')<span class="message-error">{{ $message }}</span>@enderror
+                                                    </div>
+
+                                                    <div class="col-lg-6 col-md-5 col-sm-12 mb-3">
+                                                        <h6>Motivo descripción</h6>
+                                                        <textarea class="form-control" rows="3" id="not_cred_motivo_descripcion" name="not_cred_motivo_descripcion" wire:model="not_cred_motivo_descripcion"></textarea>
+                                                        @error('not_cred_motivo_descripcion')<span class="message-error">{{ $message }}</span>@enderror
+                                                    </div>
+
+                                                    <div class="col-lg-2 col-md-2 col-sm-12 mb-2 w-auto align-content-center">
+                                                        <a href="#" class="btn bg-info text-white d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalCodigoMotivo">
+                                                            <span>
+                                                                Registrar<i class="fa-solid fa-right-to-bracket ms-1"></i>
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                                    @if(count($listar_nota_credito) > 0)
+                                        <x-table-general id="ederTable">
+                                            <x-slot name="thead">
+                                                <tr>
+                                                    <th><input type="checkbox" id="select_varios" wire:click="seleccionar_varias_nc_codigo" class="form-check-input" /> Check - todo</th>
+                                                    <th>N° de Nota de Crédito</th>
+                                                    <th>Fecha Emisión</th>
+                                                    <th>Nombre del cliente</th>
+                                                    <th>Importe Total (Sin IGV)</th>
+                                                    <th>Motivo Contable</th>
+                                                    <th>Documentos Vinculados</th>
+                                                    <th>Estado NC en Sistema Facturación</th>
+                                                </tr>
+                                            </x-slot>
+                                            <x-slot name="tbody">
+                                                @foreach($listar_nota_credito as $lnc)
+                                                    <tr>
+                                                        <td>
+                                                            <input type="checkbox"
+                                                                   wire:model="select_todas_nc"
+                                                                   value="{{ $lnc->id_not_cred }}"
+                                                                   class="form-check-input" />
+                                                        </td>
+                                                        <td>{{$lnc->not_cred_nro_doc}}</td>
+                                                        <td>{{ $lnc->not_cred_fecha_emision ? $general->obtenerNombreFecha($lnc->not_cred_fecha_emision, 'DateTime', 'Date') : '-' }}</td>
+                                                        <td>{{$lnc->not_cred_nombre_cliente}}</td>
+                                                        <td>S/ {{number_format($lnc->not_cred_importe_total / 1.18, 2)}}</td>
+                                                        <td>{{$lnc->not_cred_tipo_movimiento}}</td>
+                                                        <td>{{$lnc->not_cred_nro_doc_ref}}</td>
+                                                        <td>{{ $lnc->not_cred_estado_aprobacion == 1 ? 'Registrado en el sistema' : $lnc->not_cred_estado_aprobacion }}</td>
+                                                    </tr>
+                                                @endforeach
+                                            </x-slot>
+                                        </x-table-general>
+                                    @else
+                                        <p>No hay documentos seleccionados.</p>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div wire:loading wire:target="cambiar_estado_codigo_motivo" class="overlay__eliminar">
+                        <div class="spinner__container__eliminar">
+                            <div class="spinner__eliminar"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                            <div class="row" style="align-items: center">
+                                <div class="col-lg-6"></div>
+                                <div class="col-lg-6 col-md-6 col-sm-12 text-end">
+                                    <a class="btn btn-info btn-group-sm" data-bs-toggle="modal" data-bs-target="#modalAnularGuia">
+                                        Anular Sin NC
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                            <div class="contenedor-comprobante" style="max-height: 360px; overflow: auto">
+                                @if(count($listar_guias_pendientes_nc) > 0)
+                                    <x-table-general>
+                                        <x-slot name="thead">
+                                            <tr>
+                                                <th style="font-size: 15px"><input type="checkbox" id="select_varias_guias" wire:click="seleccionar_varias_guias_anuladas" class="form-check-input" /> Check box</th>
+                                                <th style="font-size: 15px">N° Documento</th>
+                                                <th style="font-size: 15px">Nombre del cliente</th>
+                                                <th style="font-size: 15px">Acciones</th>
+                                            </tr>
+                                        </x-slot>
+
+                                        <x-slot name="tbody">
+                                            @foreach($listar_guias_pendientes_nc as $lgpnc)
+                                                <tr>
+                                                    <td style="width: 6%">
+                                                        <input type="checkbox"
+                                                               wire:model="select_todas_guias"
+                                                               value="{{ $lgpnc->id_guia }}"
+                                                               class="form-check-input" />
+                                                    </td>
+                                                    <td style="width: 32%">
+                                                        <span class="tamanhoTablaComprobantes">
+                                                            <b class="colorBlackComprobantes">
+                                                                {{ isset($lgpnc->guia_fecha_emision) ? $general->obtenerNombreFecha($lgpnc->guia_fecha_emision,'DateTime', 'Date') : 'Sin fecha' }}
+                                                            </b>
+                                                        </span>
+                                                        <span class="d-block tamanhoTablaComprobantes">
+                                                            N° NC: {{ $lgpnc->guia_nro_doc }}
+                                                        </span>
+                                                        <span class="d-block tamanhoTablaComprobantes">
+                                                            N° Factura: {{ $lgpnc->guia_nro_doc_ref }}
+                                                        </span>
+                                                    </td>
+                                                    <td style="width: 37%">
+                                                        <span class="d-block tamanhoTablaComprobantes">
+                                                            <b class="colorBlackComprobantes">
+                                                                {{ $lgpnc->guia_nombre_cliente }}
+                                                            </b>
+                                                        </span>
+                                                        <span class="d-block tamanhoTablaComprobantes">
+                                                            ESTADO STARSOFT: <b class="colorBlackComprobantes">{{ $lgpnc->guia_estado }}</b>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <a data-bs-toggle="modal" data-bs-target="#modalActualizarDetalle" style="cursor:pointer;" class="btn btn-sm btn-warning text-white">
+                                                            <i class="fa fa-refresh"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </x-slot>
+                                    </x-table-general>
+                                @else
+                                    <h6 class="mb-0">No se encontraron resultados.</h6>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div wire:loading wire:target="save_nota_credito" class="overlay__eliminar">
+                <div class="spinner__container__eliminar">
+                    <div class="spinner__eliminar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById('modalCodigoMotivo');
+        modal.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                modal.querySelector('form').requestSubmit();
+            }
+        });
+    });
+</script>
 
 @script
 <script>
@@ -511,6 +762,12 @@
     });
     $wire.on('hideModalDelete', () => {
         $('#modalCambioEstado').modal('hide');
+    });
+    $wire.on('hideModalCodigo', () => {
+        $('#modalCodigoMotivo').modal('hide');
+    });
+    $wire.on('hideModalAnularGuia', () => {
+        $('#modalAnularGuia').modal('hide');
     });
 </script>
 @endscript

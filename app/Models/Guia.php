@@ -1007,4 +1007,16 @@ class Guia extends Model
         }
         return $result;
     }
+
+    public function litar_guias_pendientes_nc(){
+        try {
+            $result = DB::table('guias')
+                ->where('guia_estado_aprobacion','=',15)
+                ->get();
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
 }

@@ -79,6 +79,30 @@ class Notacredito extends Model
         return $result;
     }
 
+    public function listar_nota_credito_intranet(){
+        try {
+            $result = DB::table('notas_creditos')
+                ->where('not_cred_estado_aprobacion','=',1)
+                ->get();
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
+
+    public function listar_nc_registradas(){
+        try {
+            $result = DB::table('notas_creditos')
+                ->where('not_cred_estado_aprobacion','=',1)
+                ->get();
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
+
     public function listar_nota_credito_detalle($id) {
         try {
             $result = DB::table('notas_creditos as nc')
