@@ -373,6 +373,18 @@
     </div>
 </div>
 
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById('modalConfirmarEditarCredtio');
+        modal.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                modal.querySelector('form').requestSubmit();
+            }
+        });
+    });
+</script>
+
 @script
 <script>
     $wire.on('hideModalConfirmacionNota', () => {
