@@ -510,7 +510,7 @@ class Notascreditos extends Component
         try {
             // Verifica permisos
             if (!Gate::allows('cambiar_guia_anuladas')) {
-                session()->flash('error', 'No tiene permisos para aceptar las guías.');
+                session()->flash('error', 'No tiene permisos para anular las guías sin NC.');
                 return;
             }
 
@@ -524,8 +524,17 @@ class Notascreditos extends Component
 
             foreach ($this->select_todas_guias as $id_guia) {
                 $nota_credito = Guia::find($id_guia);
+                $estado_a = DB::table('guias')
+                    ->where('id_guia','=',$id_guia)
+                    ->first();
 
                 if ($nota_credito) {
+
+                    if($estado_a->guia_estado != "ANULADA"){
+                        session()->flash('error', 'Las guías deben estar Anuladas.');
+                        return;
+                    }
+
                     $nota_credito->guia_estado_aprobacion = 14;
 
                     if(!$nota_credito->save()){

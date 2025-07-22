@@ -237,8 +237,8 @@ class Facturaspreprogramaciones extends Component
     }
 
     public function guardar_guias_intranet(){
-        if (!Gate::allows('guardar_guias_intranet')) {
-            session()->flash('error', 'No tiene permisos para enviar guías.');
+        if (!Gate::allows('iniciar_registro_rd')) {
+            session()->flash('error', 'No tiene permisos para iniciar el registro de guías.');
             return;
         }
 
