@@ -53,6 +53,18 @@ class Guia extends Model
 
         return $result;
     }
+    public function listar_guia_x_num_doc($numdoc){
+        try {
+            $result = DB::table('guias')
+                ->where('guia_nro_doc','=',$numdoc)
+                ->first();
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+
+        return $result;
+    }
     public function eliminar_guia_detalle($numdoc){
         try {
             $result = DB::table('guias_detalles')

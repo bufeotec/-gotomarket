@@ -15,6 +15,7 @@ use App\Models\Logs;
 use App\Models\General;
 use App\Models\Notacredito;
 use App\Models\Notacreditodetalle;
+use App\Models\Server;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
@@ -24,11 +25,13 @@ class Gestionarnotascreditos extends Component{
     private $notacredito;
     private $general;
     private $notacreditodetalle;
+    private $server;
     public function __construct(){
         $this->logs = new Logs();
         $this->notacredito = new Notacredito();
         $this->general = new General();
         $this->notacreditodetalle = new Notacreditodetalle();
+        $this->server = new Server();
     }
     public $fecha_desde = "";
     public $fecha_hasta = "";
@@ -427,6 +430,69 @@ class Gestionarnotascreditos extends Component{
             $this->logs->insertarLog($e);
             session()->flash('error', 'Ocurrió un error al generar el Excel. Por favor, inténtelo nuevamente.');
             return;
+        }
+    }
+
+    // ACTUALIZAR EL ESTADO DE LA NOTA DE CRÉDITO:
+    public function actualizar_estado_nc($num_doc, $id){
+        try {
+            if (!Gate::allows('actualizar_estado_nc')) {
+                session()->flash('error_nc_guia', 'No tiene permisos para cambiar los estados de este registro.');
+                return;
+            }
+
+            $id_ = base64_decode($id);
+
+            // Obtener la guía actual de la base de datos local
+            $nc_local = $this->notacredito->listar_nc_x_num_doc($num_doc);
+
+            // Obtener los datos actualizados del servidor externo (devuelve una colección)
+            $nc_servidor = $this->server->obtenerNCxNumDoc($num_doc);
+
+            if (!$nc_local) {
+                session()->flash('error_nc_guia', 'No se encontró la nota de crédito en la base de datos local.');
+                return;
+            }
+
+            if ($nc_servidor->isEmpty()) {
+                session()->flash('error_nc_guia', 'No se pudo obtener información actualizada del servidor.');
+                return;
+            }
+
+            // Tomar el primer elemento de la colección (asumiendo que solo hay una guía)
+            $nc_servidor = $nc_servidor->first();
+
+            if (!is_object($nc_servidor)) {
+                session()->flash('error_nc_guia', 'La información del servidor no tiene el formato esperado.');
+                return;
+            }
+
+            // Verificar si el estado es diferente
+            if ($nc_local->not_cred_estado != $nc_servidor->ESTADO) {
+                DB::beginTransaction();
+
+                // Actualizar solo el campo guia_estado
+                $actualizado = DB::table('notas_creditos')
+                    ->where('id_not_cred', $id_)
+                    ->update(['not_cred_estado' => $nc_servidor->ESTADO]);
+
+                if ($actualizado) {
+                    DB::commit();
+                    session()->flash('success', 'El estado de la nota de crédito se actualizó correctamente.');
+                } else {
+                    DB::rollBack();
+                    session()->flash('error_nc_guia', 'No se pudo actualizar el estado de la guía.');
+                }
+            } else {
+                session()->flash('success', 'El estado de la nota de crédito ya está actualizado.');
+            }
+
+            $this->dispatch('hideModalActualizarNC');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logs->insertarLog($e);
+            session()->flash('error_nc_guia', 'Ocurrió un error al actualizar el estado: ' . $e->getMessage());
         }
     }
 }

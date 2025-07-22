@@ -116,4 +116,17 @@ class Notacredito extends Model
         return $result;
     }
 
+    public function listar_nc_x_num_doc($numdoc){
+        try {
+            $result = DB::table('notas_creditos')
+                ->where('not_cred_nro_doc','=',$numdoc)
+                ->first();
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+
+        return $result;
+    }
+
 }

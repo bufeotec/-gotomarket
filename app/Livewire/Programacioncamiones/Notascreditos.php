@@ -558,4 +558,67 @@ class Notascreditos extends Component
             session()->flash('error_codigo_nc', 'Ocurrió un error al actualizar las guías: ' . $e->getMessage());
         }
     }
+
+    // ACTUALIZAR ESTADO DE LA GUÍA
+    public function actualizar_estado_guia($num_doc, $id){
+        try {
+            if (!Gate::allows('actualizar_estado_guia')) {
+                session()->flash('error_estado_guia', 'No tiene permisos para cambiar los estados de este registro.');
+                return;
+            }
+
+            $id_ = base64_decode($id);
+
+            // Obtener la guía actual de la base de datos local
+            $guia_local = $this->guia->listar_guia_x_num_doc($num_doc);
+
+            // Obtener los datos actualizados del servidor externo (devuelve una colección)
+            $guias_servidor = $this->server->obtenerGuia_x_numdoc($num_doc);
+
+            if (!$guia_local) {
+                session()->flash('error_estado_guia', 'No se encontró la guía en la base de datos local.');
+                return;
+            }
+
+            if ($guias_servidor->isEmpty()) {
+                session()->flash('error_estado_guia', 'No se pudo obtener información actualizada del servidor.');
+                return;
+            }
+
+            // Tomar el primer elemento de la colección (asumiendo que solo hay una guía)
+            $guia_servidor = $guias_servidor->first();
+
+            if (!is_object($guia_servidor)) {
+                session()->flash('error_estado_guia', 'La información del servidor no tiene el formato esperado.');
+                return;
+            }
+
+            // Verificar si el estado es diferente
+            if ($guia_local->guia_estado != $guia_servidor->ESTADO) {
+                DB::beginTransaction();
+
+                // Actualizar solo el campo guia_estado
+                $actualizado = DB::table('guias')
+                    ->where('id_guia', $id_)
+                    ->update(['guia_estado' => $guia_servidor->ESTADO]);
+
+                if ($actualizado) {
+                    DB::commit();
+                    session()->flash('success', 'El estado de la guía se actualizó correctamente.');
+                } else {
+                    DB::rollBack();
+                    session()->flash('error_estado_guia', 'No se pudo actualizar el estado de la guía.');
+                }
+            } else {
+                session()->flash('success', 'El estado de la guía ya está actualizado.');
+            }
+
+            $this->dispatch('hideModalActualizarGuia');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logs->insertarLog($e);
+            session()->flash('error_estado_guia', 'Ocurrió un error al actualizar el estado: ' . $e->getMessage());
+        }
+    }
 }

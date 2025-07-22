@@ -228,6 +228,38 @@
         </x-modal-delete>
 {{--        FIN MODAL CONFIRMAR EDITAR--}}
 
+        {{--    MODAL ACTUALIZAR ESTADO DE LA NOTA DE CRÉDITO--}}
+        <x-modal-delete wire:ignore.self>
+            <x-slot name="id_modal">modalActualizarNC</x-slot>
+            <x-slot name="modalContentDelete">
+                <div class="row">
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        <h2 class="deleteTitle">Actualizando estado de la nota de crédito</h2>
+                    </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        <div class="loader mt-2" wire:loading wire:target="actualizar_estado_nc"></div>
+                    </div>
+                    @if (session()->has('success'))
+                        <div class="col-lg-12 col-md-12 col-sm-12">
+                            <div class="alert alert-success alert-dismissible show fade mt-2">
+                                {{ session('success') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        </div>
+                    @endif
+                    @if (session()->has('error_nc_guia'))
+                        <div class="col-lg-12 col-md-12 col-sm-12">
+                            <div class="alert alert-danger alert-dismissible show fade mt-2">
+                                {{ session('error_nc_guia') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            </x-slot>
+        </x-modal-delete>
+        {{--    FIN MODAL ACTUALIZAR ESTADO DE LA NOTA DE CRÉDITO--}}
+
 
     <div class="row">
         <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
@@ -353,7 +385,8 @@
                                                     </a>
                                                 </td>
                                                 <td>
-                                                    <a data-bs-toggle="modal" data-bs-target="#modalActualizarDetalle" style="cursor:pointer;" class="btn text-warning">
+                                                    <a data-bs-toggle="modal" data-bs-target="#modalActualizarNC" wire:click="actualizar_estado_nc('{{ $lnc->not_cred_nro_doc }}',
+                                                            '{{ base64_encode($lnc->id_not_cred) }}')" style="cursor:pointer;" class="btn text-warning">
                                                         <i class="fa fa-refresh"></i>
                                                     </a>
 
@@ -393,6 +426,10 @@
 <script>
     $wire.on('hideModalConfirmacionNota', () => {
         $('#modalConfirmarEditarCredtio').modal('hide');
+    });
+
+    $wire.on('hideModalActualizarNC', () => {
+        $('#modalActualizarNC').modal('hide');
     });
 </script>
 @endscript

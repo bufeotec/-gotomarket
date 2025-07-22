@@ -412,6 +412,39 @@
     </x-modal-delete>
 {{--    FIN MODAL ANULAR GUIA--}}
 
+
+{{--    MODAL ACTUALIZAR ESTADO DE LA GUÍA--}}
+    <x-modal-delete wire:ignore.self>
+        <x-slot name="id_modal">modalActualizarGuia</x-slot>
+        <x-slot name="modalContentDelete">
+            <div class="row">
+                <div class="col-lg-12 col-md-12 col-sm-12">
+                    <h2 class="deleteTitle">Actualizando estado de la guía</h2>
+                </div>
+                <div class="col-lg-12 col-md-12 col-sm-12">
+                    <div class="loader mt-2" wire:loading wire:target="actualizar_estado_guia"></div>
+                </div>
+                @if (session()->has('success'))
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        <div class="alert alert-success alert-dismissible show fade mt-2">
+                            {{ session('success') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    </div>
+                @endif
+                @if (session()->has('error_estado_guia'))
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        <div class="alert alert-danger alert-dismissible show fade mt-2">
+                            {{ session('error_estado_guia') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </x-slot>
+    </x-modal-delete>
+{{--    FIN MODAL ACTUALIZAR ESTADO DE LA GUÍA--}}
+
 {{--    <div class="row">--}}
 {{--        <div class="col-lg-6 col-md-6 col-sm-12 d-flex align-items-center mb-2">--}}
 {{--            <input type="text" class="form-control w-50 me-4"  wire:model.live="search_nota_credito" placeholder="Buscar">--}}
@@ -720,7 +753,8 @@
                                                         </span>
                                                     </td>
                                                     <td>
-                                                        <a data-bs-toggle="modal" data-bs-target="#modalActualizarDetalle" style="cursor:pointer;" class="btn btn-sm btn-warning text-white">
+                                                        <a data-bs-toggle="modal" data-bs-target="#modalActualizarGuia" wire:click="actualizar_estado_guia('{{ $lgpnc->guia_nro_doc }}',
+                                                            '{{ base64_encode($lgpnc->id_guia) }}')" style="cursor:pointer;" class="btn btn-sm btn-warning text-white">
                                                             <i class="fa fa-refresh"></i>
                                                         </a>
                                                     </td>
@@ -770,6 +804,9 @@
     });
     $wire.on('hideModalAnularGuia', () => {
         $('#modalAnularGuia').modal('hide');
+    });
+    $wire.on('hideModalActualizarGuia', () => {
+        $('#modalActualizarGuia').modal('hide');
     });
 </script>
 @endscript
