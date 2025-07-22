@@ -233,7 +233,7 @@
                                         data-bs-target="#modalAnularNC"
                                         wire:click="pre_mot_cre()"
                                     >
-                                        Anular ({{ count($selectedGuiaIds) }})
+                                        Enviar a NC ({{ count($selectedGuiaIds) }})
                                     </button>
                                 </div>
                             @endif
@@ -369,6 +369,10 @@
 
     $wire.on('hidemodalFacApro', () => {
         $('#modalFacApro').modal('hide');
+    });
+
+    $wire.on('hide_guia_anular_nc', () => {
+        $('#modalAnularNC').modal('hide');
     });
     document.getElementById("btnEdit").addEventListener("click", function() {
         let container = document.getElementById("fechaHoraContainer3");
