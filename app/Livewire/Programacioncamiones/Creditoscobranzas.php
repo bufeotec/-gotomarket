@@ -324,8 +324,8 @@ class Creditoscobranzas extends Component
     public function guia_anular_nc(){
         try {
             // Verifica permisos
-            if (!Gate::allows('guia_anular_nc')) {
-                session()->flash('error', 'No tiene permisos para aceptar las guías.');
+            if (!Gate::allows('enviar_nc_desde_vpa')) {
+                session()->flash('error', 'No tiene permisos para enviar las guías a pendientes de NC.');
                 return;
             }
 

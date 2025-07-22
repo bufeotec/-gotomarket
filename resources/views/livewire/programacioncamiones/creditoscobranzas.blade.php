@@ -233,7 +233,7 @@
                                         data-bs-target="#modalAnularNC"
                                         wire:click="pre_mot_cre()"
                                     >
-                                        Enviar a NC ({{ count($selectedGuiaIds) }})
+                                        Enviar a Pendientes de NC ({{ count($selectedGuiaIds) }})
                                     </button>
                                 </div>
                             @endif
