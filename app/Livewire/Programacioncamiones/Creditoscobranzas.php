@@ -321,4 +321,121 @@ class Creditoscobranzas extends Component
         $this->selectAll = count($this->selectedItems) === $this->facturasCreditoAprobadas->count();
     }
 
+    public function guia_anular_nc(){
+        try {
+            // Verifica permisos
+            if (!Gate::allows('guia_anular_nc')) {
+                session()->flash('error', 'No tiene permisos para aceptar las guías.');
+                return;
+            }
+
+            if (count($this->selectedGuiaIds) > 0) {
+                // Validar que al menos un checkbox esté seleccionado
+                $this->validate([
+                    'selectedGuiaIds' => 'required|array|min:1',
+                ], [
+                    'selectedGuiaIds.required' => 'Debe seleccionar al menos una opción.',
+                    'selectedGuiaIds.array'    => 'La selección debe ser válida.',
+                    'selectedGuiaIds.min'      => 'Debe seleccionar al menos una opción.',
+                ]);
+                DB::beginTransaction();
+                foreach ($this->selectedGuiaIds as $select) {
+                    $facturaPreprogramada = Guia::find($select);
+                    $facturaPreprogramada->guia_estado_aprobacion = 15;
+                    if ($facturaPreprogramada->save()) {
+                        // Registrar en historial guias
+                        $historial = new Historialguia();
+                        $historial->id_users = Auth::id();
+                        $historial->id_guia = $select;
+                        $historial->guia_nro_doc = $facturaPreprogramada->guia_nro_doc;
+                        $historial->historial_guia_estado_aprobacion = 15;
+                        $historial->historial_guia_fecha_hora = now('America/Lima');
+                        $historial->historial_guia_estado = 1;
+                        $historial->save();
+
+                        // Registrar el movimiento en facturas_mov
+                        $facturaMov = DB::table('facturas_mov')
+                            ->where('id_guia', $select)
+                            ->first();
+
+                        $data = [
+                            'fac_acept_valpago' => $this->fechaHoraManual3 ? Carbon::parse($this->fechaHoraManual3, 'America/Lima') : Carbon::now('America/Lima'),
+                            'id_users_responsable' => Auth::id(),
+                        ];
+
+                        if ($facturaMov) {
+                            // Si existe, actualizar los campos
+                            DB::table('facturas_mov')->where('id_guia', $select)->update($data);
+                        } else {
+                            // Si no existe, crear un nuevo registro
+                            DB::table('facturas_mov')->insert(array_merge(['id_guia' => $select], $data));
+                        }
+                    } else {
+                        DB::rollBack();
+                        session()->flash('error', 'No se pudo actualizar el estado de la guía pre programada.');
+                        return;
+                    }
+                }
+                DB::commit();
+                $this->selectedGuiaIds = [];
+                $this->select_guias_all = false;
+                $this->dispatch('hide_guia_anular_nc');
+                session()->flash('success', 'Guías enviadas a NC.');
+                $this->buscar_comprobantes();
+            } else {
+                $this->validate([
+                    'id_guia' => 'required|integer',
+                ], [
+                    'id_guia.required' => 'El identificador es obligatorio.',
+                    'id_guia.integer' => 'El identificador debe ser un número entero.',
+                ]);
+
+                DB::beginTransaction();
+                $updateDespacho = Guia::find($this->id_guia);
+                $updateDespacho->guia_estado_aprobacion = 15;
+                if ($updateDespacho->save()) {
+                    // Registrar en historial guias
+                    $historial = new Historialguia();
+                    $historial->id_users = Auth::id();
+                    $historial->id_guia = $this->id_guia;
+                    $historial->guia_nro_doc = $updateDespacho->guia_nro_doc;
+                    $historial->historial_guia_estado_aprobacion = 15;
+                    $historial->historial_guia_fecha_hora = now('America/Lima');
+                    $historial->historial_guia_estado = 1;
+                    $historial->save();
+
+                    // Registrar el movimiento en facturas_mov
+                    $facturaMov = DB::table('facturas_mov')
+                        ->where('id_guia', $this->id_guia)
+                        ->first();
+
+                    $data = [
+                        'fac_acept_valpago' => $this->fechaHoraManual3 ? Carbon::parse($this->fechaHoraManual3, 'America/Lima') : Carbon::now('America/Lima'),
+                        'id_users_responsable' => Auth::id(),
+                    ];
+
+                    if ($facturaMov) {
+                        // Si existe, actualizar los campos
+                        DB::table('facturas_mov')->where('id_guia', $this->id_guia)->update($data);
+                    } else {
+                        // Si no existe, crear un nuevo registro
+                        DB::table('facturas_mov')->insert(array_merge(['id_guia' => $this->id_guia], $data));
+                    }
+                } else {
+                    DB::rollBack();
+                    session()->flash('error', 'No se pudo actualizar el estado de la guía pre programada.');
+                    return;
+                }
+                DB::commit();
+                $this->id_guia = "";
+                $this->dispatch('hide_guia_anular_nc');
+                session()->flash('success', 'Guia enviada a NC.');
+                $this->buscar_comprobantes();
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error al aprobar las guía pre programadas: ' . $e->getMessage());
+        }
+    }
 }
