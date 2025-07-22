@@ -353,6 +353,10 @@
                                                     </a>
                                                 </td>
                                                 <td>
+                                                    <a data-bs-toggle="modal" data-bs-target="#modalActualizarDetalle" style="cursor:pointer;" class="btn text-warning">
+                                                        <i class="fa fa-refresh"></i>
+                                                    </a>
+
                                                     <a href="#" class="btn text-primary" wire:click="modal_info_nota_credito('{{base64_encode($lnc->id_not_cred)}}')" data-bs-toggle="modal" data-bs-target="#modalEditarNotaCredito">
                                                         <i class="fa-solid fa-pen-to-square"></i>
                                                     </a>

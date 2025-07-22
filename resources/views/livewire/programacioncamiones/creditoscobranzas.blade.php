@@ -96,6 +96,26 @@
     </x-modal-delete>
     {{--    FIN MODAL ANULAR GUÍA --}}
 
+    {{--    MODAL NUEVO DE LA DERECHA PARA ENVIO A NC--}}
+    <x-modal-delete wire:ignore.self style="z-index: 1056;">
+        <x-slot name="id_modal">modalConfirmarNC</x-slot>
+        <x-slot name="modalContentDelete">
+            <form wire:submit.prevent="recepcionado_confirmar_envio_nc">
+                <div class="row">
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        <h2 class="deleteTitle">¿Confirmar envió a NC?</h2>
+                    </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-center">
+                        <button type="submit" class="btn btn-primary text-white btnDelete">ENVIAR</button>
+                        <button type="button" class="btn btn-danger btnDelete" id="btnEditar" data-bs-dismiss="modal">CANCELAR</button>
+                    </div>
+                </div>
+            </form>
+        </x-slot>
+    </x-modal-delete>
+    {{--    FIN MODAL NUEVO DE LA DERECHA PARA ENVIO A NC--}}
+
+
     <div class="row">
         @if (session()->has('success'))
             <div class="col-lg-12 col-md-12 col-sm-12">
@@ -218,23 +238,21 @@
                             </div>
                             @if(count($selectedGuiaIds) > 0)
                                 <div class="col-lg-12 col-md-12 col-sm-12 mb-2 text-end">
-                                    <button
-                                        class="btn text-white bg-info mt-4"
+                                    <a class="btn text-white bg-info mt-4"
                                         data-bs-toggle="modal"
                                         data-bs-target="#modalMotCre"
                                         wire:click="pre_mot_cre()"
                                     >
                                         Aceptar Guías ({{ count($selectedGuiaIds) }})
-                                    </button>
+                                    </a>
 
-                                    <button
-                                        class="btn text-white bg-warning mt-4"
+                                    <a class="btn text-white bg-warning mt-4"
                                         data-bs-toggle="modal"
                                         data-bs-target="#modalAnularNC"
                                         wire:click="pre_mot_cre()"
                                     >
                                         Enviar a NC ({{ count($selectedGuiaIds) }})
-                                    </button>
+                                    </a>
                                 </div>
                             @endif
                         </div>
@@ -260,9 +278,13 @@
                                             <h6 class="mb-0">Guías Recepcionadas</h6>
                                         </div>
                                         <div class="col-lg-6 col-md-6 col-sm-12 mb-2 text-end">
-                                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalFacApro" id="sendButton" disabled>
-                                                Enviar
-                                            </button>
+                                            <a class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalFacApro" id="sendButton" disabled>
+                                                Enviar a despacho
+                                            </a>
+
+                                            <a class="btn text-white bg-warning ms-3" data-bs-toggle="modal" data-bs-target="#modalConfirmarNC">
+                                                Enviar a NC
+                                            </a>
                                         </div>
                                     </div>
                                 </div>
@@ -373,6 +395,10 @@
 
     $wire.on('hide_guia_anular_nc', () => {
         $('#modalAnularNC').modal('hide');
+    });
+
+    $wire.on('hide_modal_confirmar_nc', () => {
+        $('#modalConfirmarNC').modal('hide');
     });
     document.getElementById("btnEdit").addEventListener("click", function() {
         let container = document.getElementById("fechaHoraContainer3");

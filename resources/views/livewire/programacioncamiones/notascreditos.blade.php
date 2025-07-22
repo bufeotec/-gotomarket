@@ -675,7 +675,7 @@
                         </div>
 
                         <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
-                            <div class="contenedor-comprobante" style="max-height: 360px; overflow: auto">
+                            <div class="contenedor-comprobante" style="max-height: 460px; overflow: auto">
                                 @if(count($listar_guias_pendientes_nc) > 0)
                                     <x-table-general>
                                         <x-slot name="thead">

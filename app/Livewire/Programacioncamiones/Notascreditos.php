@@ -383,11 +383,13 @@ class Notascreditos extends Component
 
             DB::beginTransaction();
 
+            $guiasActualizadas = 0;
+
             foreach ($this->select_todas_nc as $id_nc) {
                 $nota_credito = Notacredito::find($id_nc);
 
                 if ($nota_credito) {
-                    // Actualizar estado de la guía
+                    // Actualizar estado de la nota de crédito
                     $nota_credito->not_cred_motivo = $this->not_cred_motivo;
                     $nota_credito->not_cred_motivo_descripcion = $this->not_cred_motivo_descripcion;
                     $nota_credito->not_cred_estado_aprobacion = 2;
@@ -397,11 +399,28 @@ class Notascreditos extends Component
                         session()->flash('error', 'Error al actualizar el estado de la nota de crédito.');
                         return;
                     }
+
+                    // Verificar si hay guías vinculadas
+                    $guias = Guia::where('guia_nro_doc_ref', $nota_credito->not_cred_nro_doc_ref)->get();
+
+                    foreach ($guias as $guia) {
+                        $guia->guia_estado_aprobacion = 14;
+                        if($guia->save()) {
+                            $guiasActualizadas++;
+                        }
+                    }
                 }
             }
 
             DB::commit();
-            session()->flash('success', 'Estado de las notas de crédito se actualizaron correctamente.');
+
+            // Mensaje según si hubo guías actualizadas o no
+            $mensaje = 'Estado de las notas de crédito se actualizaron correctamente.';
+            if ($guiasActualizadas > 0) {
+                $mensaje .= ' ' . $guiasActualizadas . ' guía(s) vinculada(s) se le cambiaron el estado.';
+            }
+
+            session()->flash('success', $mensaje);
             $this->dispatch('hideModalCodigo');
             // Limpiar selección después de guardar
             $this->select_todas_nc = [];
@@ -412,7 +431,7 @@ class Notascreditos extends Component
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logs->insertarLog($e);
-            session()->flash('error_codigo_nc', 'Ocurrió un error al actualizar las noats de crédito: ' . $e->getMessage());
+            session()->flash('error_codigo_nc', 'Ocurrió un error al actualizar las notas de crédito: ' . $e->getMessage());
         }
     }
 

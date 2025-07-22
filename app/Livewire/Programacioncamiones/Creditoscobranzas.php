@@ -173,7 +173,7 @@ class Creditoscobranzas extends Component
                         }
                     } else {
                         DB::rollBack();
-                        session()->flash('error', 'No se pudo actualizar el estado de la factura preprogramada.');
+                        session()->flash('error', 'No se pudo actualizar el estado de la guía pre programada.');
                         return;
                     }
                 }
@@ -236,7 +236,7 @@ class Creditoscobranzas extends Component
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logs->insertarLog($e);
-            session()->flash('error', 'Ocurrió un error al aprobar las facturas preprogramadas: ' . $e->getMessage());
+            session()->flash('error', 'Ocurrió un error al aprobar las guía pre programadas: ' . $e->getMessage());
         }
     }
     public function actualizarMensaje2(){
@@ -303,11 +303,11 @@ class Creditoscobranzas extends Component
             DB::commit();
             session()->flash('success', 'Guías enviadas a validar recibido por despachos.');
             $this->dispatch('hidemodalFacApro');
-            $this->reset(['selectedItems', 'selectAll']); // Limpiar selecciones
+            $this->reset(['selectedItems', 'selectAll']);
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logs->insertarLog($e);
-            session()->flash('error', 'Ocurrió un error al enviar las facturas. Detalles: ' . $e->getMessage());
+            session()->flash('error', 'Ocurrió un error al enviar las guía. Detalles: ' . $e->getMessage());
         }
     }
     public function updatedSelectAll($value){
@@ -436,6 +436,61 @@ class Creditoscobranzas extends Component
             DB::rollBack();
             $this->logs->insertarLog($e);
             session()->flash('error', 'Ocurrió un error al aprobar las guía pre programadas: ' . $e->getMessage());
+        }
+    }
+
+    public function recepcionado_confirmar_envio_nc(){
+        try {
+
+            if (!Gate::allows('recepcionado_confirmar_envio_nc')) {
+                session()->flash('error', 'No tiene permisos para enviar las guías.');
+                return;
+            }
+
+            if (empty($this->selectedItems)) {
+                session()->flash('error', 'Debes seleccionar al menos una guía.');
+                return;
+            }
+
+            DB::beginTransaction();
+            foreach ($this->selectedItems as $id_guia) {
+                $factura = Guia::find($id_guia);
+
+                if ($factura) {
+                    // Actualizar el estado de la factura
+                    $factura->guia_estado_aprobacion = 15;
+                    $factura->save();
+
+                    // Registrar en historial guias
+                    $historial = new Historialguia();
+                    $historial->id_users = Auth::id();
+                    $historial->id_guia = $id_guia;
+                    $historial->guia_nro_doc = $factura->guia_nro_doc;
+                    $historial->historial_guia_estado_aprobacion = 15;
+                    $historial->historial_guia_fecha_hora = Carbon::now('America/Lima');
+                    $historial->historial_guia_estado = 1;
+                    $historial->save();
+
+                    // Registrar en facturas_mov
+                    DB::table('facturas_mov')->updateOrInsert(
+                        ['id_guia' => $id_guia],
+                        [
+                            'fac_acept_val_rec' => Carbon::now('America/Lima'),
+                            'fac_env_ges_fac' => Carbon::now('America/Lima'),
+                            'id_users_responsable' => Auth::id(),
+                        ]
+                    );
+                }
+            }
+
+            DB::commit();
+            session()->flash('success', 'Guías enviadas a NC.');
+            $this->dispatch('hide_modal_confirmar_nc');
+            $this->reset(['selectedItems', 'selectAll']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error al enviar las guías. Detalles: ' . $e->getMessage());
         }
     }
 }
