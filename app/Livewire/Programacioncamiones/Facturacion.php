@@ -649,10 +649,10 @@ class Facturacion extends Component
 
     public function cambio_fecha_edit_guia() {
         try {
-            if (!Gate::allows('cambiar_fecha_historial')) {
+            /*if (!Gate::allows('cambiar_fecha_historial')) {
                 session()->flash('error_fecha_guia', 'No tiene permisos para aprobar o rechazar este servicio de transporte.');
                 return;
-            }
+            }*/
 
             // Validar que los comentarios estén presentes cuando se cambia la fecha
             $errores = [];

@@ -491,6 +491,15 @@
                                                                 @case(12)
                                                                     Guía anulada
                                                                     @break
+                                                                @case(13)
+                                                                    Registrada en Intranet
+                                                                    @break
+                                                                @case(14)
+                                                                    Guía anulada por NC
+                                                                    @break
+                                                                @case(15)
+                                                                    Pendiente de NC
+                                                                    @break
                                                                 @default
                                                                     Estado desconocido
                                                             @endswitch

@@ -1,6 +1,6 @@
 <div>
     @php
-        $general = new \App\Models\General();
+        use Illuminate\Support\Facades\DB;$general = new \App\Models\General();
     @endphp
 
     @if (session()->has('success'))
@@ -17,16 +17,20 @@
     @endif
     <div class="row">
         <div class="col-lg-2 col-md-6 col-sm-12 mb-3 position-relative">
-            <x-input-general type="text" class="form-control w-100 me-4 ps-5 rounded-pill" wire:model="buscar_numero_guia" placeholder="Ej: T0123456789" />
-            <i class="fas fa-search position-absolute" style="left: 30px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
+            <x-input-general type="text" class="form-control w-100 me-4 ps-5 rounded-pill"
+                             wire:model="buscar_numero_guia" placeholder="Ej: T0123456789"/>
+            <i class="fas fa-search position-absolute"
+               style="left: 30px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
         </div>
         <div class="col-lg-2 col-md-6 col-sm-12 mb-3 position-relative">
-            <x-input-general type="text" class="form-control w-100 me-4 ps-5 rounded-pill"  wire:model="buscar_ruc_nombre" placeholder="RUC – Nombre de Cliente" />
+            <x-input-general type="text" class="form-control w-100 me-4 ps-5 rounded-pill"
+                             wire:model="buscar_ruc_nombre" placeholder="RUC – Nombre de Cliente"/>
             <i class="fas fa-search position-absolute"
                style="left: 30px; top: 50%; transform: translateY(-50%); color: #bbb;"></i>
         </div>
         <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-            <select name="guia_estado_aprobacion" id="guia_estado_aprobacion" wire:model="buscar_estado" class="form-select">
+            <select name="guia_estado_aprobacion" id="guia_estado_aprobacion" wire:model="buscar_estado"
+                    class="form-select">
                 <option value="">Seleccionar estado...</option>
                 <option value="1">Creditos</option>
                 <option value="2">Despacho</option>
@@ -44,7 +48,8 @@
             <input type="date" name="hasta" id="hasta" wire:model="hasta" class="form-control" min="2025-01-01">
         </div>
         <div class="col-lg-2 col-md-3 col-sm-12 mb-2 mt-1">
-            <button class="btn btn-sm bg-primary text-white w-75" wire:click="buscar_comprobantes" wire:loading.attr="disabled">
+            <button class="btn btn-sm bg-primary text-white w-75" wire:click="buscar_comprobantes"
+                    wire:loading.attr="disabled">
                 <i class="fa fa-search"></i>
                 <spanc class="ms-1" wire:loading.remove wire:target="buscar_comprobantes">BUSCAR</spanc>
                 <spanc class="ms-1" wire:loading wire:target="buscar_comprobantes">BUSCANDO...</spanc>
@@ -69,46 +74,48 @@
     </div>
 
     @if($listar_comprobantes)
-    <x-card-general-view>
-        <x-slot name="content">
-            <div class="row">
-                <div class="col-lg-12 col-md-12 col-sm-12">
-                    <x-table-general>
-                        <x-slot name="thead">
-                            <tr>
-                                <th>N°</th>
-                                <th>Nombre del cliente</th>
-                                <th>RUC</th>
-                                <th>Numero documento</th>
-                                <th>Factura</th>
-                                <th>Fecha de emision</th>
-                                <th>Monto sin IGV</th>
-                                <th>Monto con IGV</th>
-                                <th>Vendedor</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </x-slot>
+        <x-card-general-view>
+            <x-slot name="content">
+                <div class="row">
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        <x-table-general>
+                            <x-slot name="thead">
+                                <tr>
+                                    <th>N°</th>
+                                    <th>Nombre del cliente</th>
+                                    <th>RUC</th>
+                                    <th>Numero documento</th>
+                                    <th>Factura</th>
+                                    <th>Fecha de emision</th>
+                                    <th>Monto sin IGV</th>
+                                    <th>Monto con IGV</th>
+                                    <th>Vendedor</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </x-slot>
 
-                        <x-slot name="tbody">
-                            @if(count($listar_comprobantes) > 0)
-                                @php $conteo = 1; @endphp
-                                @foreach($listar_comprobantes as $me)
-                                    <tr>
-                                        <td>
-                                            {{$conteo}}
-                                            {{--VENDEDOR: {{$me->guia_vendedor}}
-                                            CODIGO: {{$me->guia_vendedor_codigo}}--}}
-                                        </td>
-                                        <td>{{$me->guia_nombre_cliente}}</td>
-                                        <td>{{$me->guia_ruc_cliente}}</td>
-                                        <td>{{$me->guia_nro_doc}}</td>
-                                        <td>{{$me->guia_nro_doc_ref}}</td>
-                                        <td>{{ $general->obtenerNombreFecha($me->guia_fecha_emision,'DateTime','Date') }}</td>
-                                        <td>S/ {{$general->formatoDecimal($me->guia_importe_total_sin_igv) ?? 0 }}</td>
-                                        <td>S/ {{ $general->formatoDecimal($me->guia_importe_total_sin_igv * 1.18) ?? 0 }}</td>
-                                        <td>{{$me->guia_vendedor}}</td>
-                                        <td>
+                            <x-slot name="tbody">
+                                @if(count($listar_comprobantes) > 0)
+                                    @php $conteo = 1; @endphp
+                                    @foreach($listar_comprobantes as $me)
+                                        <tr>
+                                            <td>
+                                                {{$conteo}}
+                                                {{--VENDEDOR: {{$me->guia_vendedor}}
+                                                CODIGO: {{$me->guia_vendedor_codigo}}--}}
+                                            </td>
+                                            <td>{{$me->guia_nombre_cliente}}</td>
+                                            <td>{{$me->guia_ruc_cliente}}</td>
+                                            <td>{{$me->guia_nro_doc}}</td>
+                                            <td>{{$me->guia_nro_doc_ref}}</td>
+                                            <td>{{ $general->obtenerNombreFecha($me->guia_fecha_emision,'DateTime','Date') }}</td>
+                                            <td>
+                                                S/ {{$general->formatoDecimal($me->guia_importe_total_sin_igv) ?? 0 }}</td>
+                                            <td>
+                                                S/ {{ $general->formatoDecimal($me->guia_importe_total_sin_igv * 1.18) ?? 0 }}</td>
+                                            <td>{{$me->guia_vendedor}}</td>
+                                            <td>
                                             <span class="d-block tamanhoTablaComproantes">
                                                 @switch($me->guia_estado_aprobacion)
                                                     @case(1)
@@ -147,34 +154,75 @@
                                                     @case(12)
                                                         Guía anulada
                                                         @break
+                                                    @case(13)
+                                                        Registrada en Intranet
+                                                        @break
+                                                    @case(14)
+                                                        Guía anulada por NC
+                                                        @break
+                                                    @case(15)
+                                                        Pendiente de NC
+                                                        @break
+                                                    @case(20)
+                                                        @php
+                                                            $despacho_ventas_l = DB::table('despacho_ventas as dv')
+                                                            ->join('despachos as d','dv.id_despacho','=','d.id_despacho')
+                                                            ->where('dv.id_guia','=',$me->id_guia)
+                                                            ->where('d.id_tipo_servicios','=',1)
+                                                            ->first();
+
+                                                            $despacho_ventas_p = DB::table('despacho_ventas as dv')
+                                                            ->join('despachos as d','dv.id_despacho','=','d.id_despacho')
+                                                            ->where('dv.id_guia','=',$me->id_guia)
+                                                            ->where('d.id_tipo_servicios','=',2)
+                                                            ->first();
+
+                                                            if($despacho_ventas_l->despacho_detalle_estado_entrega == 0 && $despacho_ventas_p->despacho_detalle_estado_entrega == 0
+                                                            && $despacho_ventas_l->despacho_estado_aprobacion == 1 && $despacho_ventas_p->despacho_estado_aprobacion == 1
+                                                            ){
+                                                                echo 'Despacho aprobado';
+                                                            }else if($despacho_ventas_l->despacho_detalle_estado_entrega == 0 && $despacho_ventas_p->despacho_detalle_estado_entrega == 0
+                                                             && $despacho_ventas_l->despacho_estado_aprobacion == 2 && $despacho_ventas_p->despacho_estado_aprobacion == 1
+                                                            ){
+                                                                echo 'Guía en tránsito';
+                                                            }else if($despacho_ventas_l->despacho_detalle_estado_entrega == 8 && $despacho_ventas_p->despacho_detalle_estado_entrega == 0
+                                                            && $despacho_ventas_l->despacho_estado_aprobacion == 3 && $despacho_ventas_p->despacho_estado_aprobacion == 2
+                                                            ){
+                                                                echo 'Guía en tránsito';
+                                                            }else if($despacho_ventas_l->despacho_detalle_estado_entrega == 8 && $despacho_ventas_p->despacho_detalle_estado_entrega == 8
+                                                             && $despacho_ventas_l->despacho_estado_aprobacion == 3 && $despacho_ventas_p->despacho_estado_aprobacion == 3){
+                                                                echo 'Guía entregada';
+                                                            }
+                                                        @endphp
+                                                        @break
                                                     @default
                                                         Estado desconocido
                                                 @endswitch
                                             </span>
-                                        </td>
-                                        <td>
-                                            <a href="{{ route('Programacioncamion.vistatracking', ['data' => base64_encode(json_encode(['id' => $me->id_guia, 'numdoc' => $me->guia_nro_doc, 'nombre' => $me->guia_nombre_cliente]))]) }}"
-                                               target="_blank"
-                                               class="btn text-primary">
-                                                <i class="fa-solid fa-eye"></i>
-                                            </a>
+                                            </td>
+                                            <td>
+                                                <a href="{{ route('Programacioncamion.vistatracking', ['data' => base64_encode(json_encode(['id' => $me->id_guia, 'numdoc' => $me->guia_nro_doc, 'nombre' => $me->guia_nombre_cliente]))]) }}"
+                                                   target="_blank"
+                                                   class="btn text-primary">
+                                                    <i class="fa-solid fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        @php $conteo++; @endphp
+                                    @endforeach
+                                @else
+                                    <tr class="odd">
+                                        <td valign="top" colspan="9" class="dataTables_empty text-center">
+                                            No se han encontrado resultados.
                                         </td>
                                     </tr>
-                                    @php $conteo++; @endphp
-                                @endforeach
-                            @else
-                                <tr class="odd">
-                                    <td valign="top" colspan="9" class="dataTables_empty text-center">
-                                        No se han encontrado resultados.
-                                    </td>
-                                </tr>
-                            @endif
-                        </x-slot>
-                    </x-table-general>
+                                @endif
+                            </x-slot>
+                        </x-table-general>
+                    </div>
                 </div>
-            </div>
-        </x-slot>
-    </x-card-general-view>
+            </x-slot>
+        </x-card-general-view>
     @endif
 
     <style>
@@ -230,7 +278,7 @@
             width: 20px;
             height: 4px;
             border-radius: 50%;
-            background-color: rgba(0,0,0,0.9);
+            background-color: rgba(0, 0, 0, 0.9);
             position: absolute;
             top: 62px;
             transform-origin: 50%;

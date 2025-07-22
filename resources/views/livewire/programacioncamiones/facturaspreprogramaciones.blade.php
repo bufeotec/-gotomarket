@@ -485,7 +485,7 @@
                                                         <div class="col-lg-9 col-md-9 col-sm-9 mb-2">
                                                             <select class="form-select" id="estado_envio_anulado" name="estado_envio_anulado" wire:model="estado_envio_anulado">
                                                                 <option value="">Seleccionar...</option>
-                                                                <option value="14">Anular</option>
+                                                                {{--<option value="14">Anular</option>--}}
                                                                 <option value="15">Pendiente de NC</option>
                                                             </select>
                                                         </div>
