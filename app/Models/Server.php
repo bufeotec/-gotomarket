@@ -419,4 +419,35 @@ class  Server extends Model
 
         return $result;
     }
+    public function obtenerNCxNumDoc($num_doc){
+        try {
+            $result = array();
+            $client = new \GuzzleHttp\Client();
+//            $url = "http://127.0.0.1/api_goto/public/api/v1/list_nc_x_numdoc";
+//            $url = "http://161.132.173.106:8081/api_goto/public/api/v1/list_nc_x_numdoc";
+            $url = "http://161.132.73.129:8081/api_goto/public/api/v1/list_nc_x_numdoc";
+//            // Enviar solicitud GET sin parámetros
+
+            $response = $client->post($url, [
+                'form_params' => [
+                    'num_doc' => $num_doc,
+                ],
+            ]);
+
+            // Procesar la respuesta
+            $body = $response->getBody()->getContents();
+            $responseData = json_decode($body);
+
+            if ($responseData->code === 200){
+                $result = collect($responseData->data);
+
+            }
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+
+        return $result;
+    }
 }
