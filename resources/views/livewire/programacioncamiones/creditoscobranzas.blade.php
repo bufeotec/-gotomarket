@@ -278,9 +278,13 @@
                                             <h6 class="mb-0">Guías Recepcionadas</h6>
                                         </div>
                                         <div class="col-lg-6 col-md-6 col-sm-12 mb-2 text-end">
-                                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalFacApro" id="sendButton" disabled>
-                                                Enviar
-                                            </button>
+                                            <a class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalFacApro" id="sendButton" disabled>
+                                                Enviar a despacho
+                                            </a>
+
+                                            <a class="btn text-white bg-warning ms-3" data-bs-toggle="modal" data-bs-target="#modalConfirmarNC">
+                                                Enviar a NC
+                                            </a>
                                         </div>
                                     </div>
                                 </div>
@@ -391,6 +395,10 @@
 
     $wire.on('hide_guia_anular_nc', () => {
         $('#modalAnularNC').modal('hide');
+    });
+
+    $wire.on('hide_modal_confirmar_nc', () => {
+        $('#modalConfirmarNC').modal('hide');
     });
     document.getElementById("btnEdit").addEventListener("click", function() {
         let container = document.getElementById("fechaHoraContainer3");
