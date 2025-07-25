@@ -24,8 +24,8 @@
 
                 <div class="col-lg-3 col-md-3 col-sm-12 mb-2">
                     <div class="d-flex align-items-center {{$estadoTabs == 4 ? 'activeType' : 'bg-white'}}" style="cursor:pointer;border-radius: 20px;" wire:click="$set('estadoTabs', 4)">
-                        <img src="{{asset('guia_entregada.png')}}" class="tamaIm me-2" alt="">
-                        <h5 class="mb-0 {{$estadoTabs == 4 ? 'text-white' : 'text-dark'}}">Entregada</h5>
+                        <img src="{{asset('guia_entregada.png')}}" class="tamaIm me-2 ms-3" alt="">
+                        <h5 class="mb-0 {{$estadoTabs == 4 ? 'text-white' : 'text-dark'}}">Entregado en Almacén</h5>
                     </div>
                 </div>
             </div>

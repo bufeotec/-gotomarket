@@ -298,8 +298,18 @@
                     <label for="despacho_monto_modificado" class="form-label">Nuevo monto</label>
                     <input type="text" class="form-control" id="despacho_monto_modificado" name="despacho_monto_modificado" wire:input="calcularCostoTotal" wire:model.live="tarifaMontoSeleccionado">
                 </div>
+            </div>
+        </x-slot>
+    </x-modal-general>
+
+    {{--    MODAL REGISTRAR COMENTARIO--}}
+    <x-modal-general  wire:ignore.self >
+        <x-slot name="id_modal">modalRegistrarComentario</x-slot>
+        <x-slot name="titleModal">Registrar Comentario</x-slot>
+        <x-slot name="modalContent">
+            <div class="row">
                 <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                    <label for="despacho_descripcion_modificado" class="form-label">Descripción</label>
+                    <label for="despacho_descripcion_modificado" class="form-label">Comentario</label>
                     <textarea id="despacho_descripcion_modificado" class="form-control" name="despacho_descripcion_modificado" wire:model.live="despacho_descripcion_modificado"></textarea>
                     @error('despacho_descripcion_modificado')
                     <span class="message-error">{{ $message }}</span>
@@ -308,6 +318,7 @@
             </div>
         </x-slot>
     </x-modal-general>
+    {{--    FIN MODAL REGISTRAR COMENTARIO--}}
 
     <div class="row">
         @if (session()->has('success'))
@@ -561,11 +572,22 @@
                             </div>
                             @if($tarifaMontoSeleccionado > 0)
                                 <div class="col-lg-8 col-md-8 col-sm-12 mb-2">
-                                    <p class="text-end mb-0">Monto de la tarifa del vehículo seleccionado:
-                                        <span class="font-bold badge bg-label-success curso-pointer" data-bs-toggle="modal" data-bs-target="#modalMontoModificado" >
-                                                S/ {{ $me->formatoDecimal($tarifaMontoSeleccionado) }}
-                                            </span>
-                                    </p>
+                                    <div class="row">
+                                        <div class="col-lg-12 col-lg-12 text-end mb-2">
+                                            <p class="text-end mb-0">Monto de la tarifa del vehículo seleccionado:
+                                                <span class="font-bold badge bg-label-success curso-pointer" data-bs-toggle="modal" data-bs-target="#modalMontoModificado" >
+                                                    S/ {{ $me->formatoDecimal($tarifaMontoSeleccionado) }}
+                                                </span>
+                                            </p>
+                                        </div>
+                                        @if($tarifaMontoSeleccionado != $montoOriginal)
+                                            <div class="col-lg-12 col-md-12 mb-2 d-flex justify-content-end">
+                                                <a class="btn btn-success text-white btn-sm" data-bs-toggle="modal" data-bs-target="#modalRegistrarComentario">
+                                                    Comentario
+                                                </a>
+                                            </div>
+                                        @endif
+                                    </div>
                                 </div>
                             @endif
                         </div>

@@ -1093,6 +1093,13 @@ class Mixto extends Component
                 return;
             }
 
+            // VALIDAR COMENTARIO
+            if ($this->tarifaMontoSeleccionado != $this->montoOriginal && empty($this->despacho_descripcion_modificado)) {
+                session()->flash('error', "La descripción por modificar el monto es obligatorio cuando se cambia el valor original.");
+                DB::rollBack();
+                return;
+            }
+
             // Verificar si hay al menos un comprobante provincial seleccionado
             $comprobantesProvinciales = $this->clientes_provinciales;
 
@@ -1224,6 +1231,13 @@ class Mixto extends Component
                 if (empty($cliente['id_transportista'])) {
                     DB::rollBack();
                     session()->flash('error', "Debe seleccionar un transportista para el cliente: ".$cliente['nombreCliente'].' '.$cliente['ubiDepar'].' - '.$cliente['ubiPro'].' - '.$cliente['ubiDis']);
+                    return;
+                }
+
+                // VALIDAR COMENTARIO
+                if ($cliente['montoOriginal'] != $cliente['montoSeleccionado'] && empty($cliente['montoSeleccionadoDescripcion'])) {
+                    session()->flash('error', "La descripción por modificar el monto de la tarifa provincial es obligatorio cuando se cambia el valor original.");
+                    DB::rollBack();
                     return;
                 }
 

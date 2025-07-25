@@ -1,5 +1,5 @@
 @extends('layouts.dashboard_template')
-@section('title','Programaciones Pendientes')
+@section('title','Gestionar Despacho')
 @section('content')
 
     <link rel="stylesheet" href="{{asset('js/select2/dist/css/select2.min.css')}}">

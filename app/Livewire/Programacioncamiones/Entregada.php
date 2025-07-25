@@ -2,7 +2,10 @@
 
 namespace App\Livewire\Programacioncamiones;
 
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use App\Models\Guia;
 use App\Models\Logs;
@@ -23,9 +26,9 @@ class Entregada extends Component{
     public $importeTotalVenta = 0;
     public $pesoTotal = 0;
     public $volumenTotal = 0;
-    public $programacion_fecha = '';
+    public $guia_fecha_despacho;
     public function mount(){
-        $this->programacion_fecha = now()->format('Y-m-d');
+        $this->guia_fecha_despacho = now()->addDay()->format('Y-m-d');
     }
 
     public function render(){
@@ -149,5 +152,169 @@ class Entregada extends Component{
         $importes = $factura->guia_importe_total_sin_igv;
         $importe = floatval($importes);
         $this->importeTotalVenta += $importe;
+    }
+
+    public function eliminarFacturaSeleccionada($id_guia) {
+        // Convertir id_guia a string para evitar problemas con bigint
+        $id_guia = (string)$id_guia;
+
+        // Encuentra la factura en las seleccionadas
+        $factura = collect($this->selectedFacturas)->first(function ($f) use ($id_guia) {
+            return (string)$f['id_guia'] === $id_guia; // Convertir a string para comparar
+        });
+
+        if ($factura) {
+            // Elimina la factura de la lista seleccionada
+            $this->selectedFacturas = collect($this->selectedFacturas)
+                ->reject(function ($f) use ($id_guia) {
+                    return (string)$f['id_guia'] === $id_guia; // Convertir a string para comparar
+                }) ->values()
+                ->toArray();
+
+            $GuiaUpEstate = Guia::find($id_guia);
+            $GuiaUpEstate->guia_estado_aprobacion = 11;
+            $GuiaUpEstate->save();
+
+            // Actualiza los totales
+            $this->pesoTotal -= $factura['peso_total'];
+            $this->volumenTotal -= $factura['volumen_total'];
+            $this->importeTotalVenta -= floatval($factura['guia_importe_total_sin_igv']);
+
+            // Verifica si no quedan facturas ni servicios de transporte seleccionados
+            if (empty($this->selectedFacturas) && empty($this->selectedServTrns)) {
+                $this->pesoTotal = 0;
+                $this->volumenTotal = 0;
+                $this->importeTotalVenta = 0;
+            }
+
+        } else {
+            \Log::warning("No se encontró la guía con id_guia: $id_guia");
+        }
+    }
+
+    public function guardar_despacho_entrega()
+    {
+        try {
+            // Validar permisos
+            if (!Gate::allows('guardar_despacho_entrega')) {
+                session()->flash('error', 'No tiene permisos para guardar los registros.');
+                return;
+            }
+
+            // Validar que se haya seleccionado al menos una guía
+            if (empty($this->selectedFacturas) || count($this->selectedFacturas) == 0) {
+                session()->flash('error', 'Debe seleccionar al menos una guía para guardar el despacho.');
+                return;
+            }
+
+            // Validar datos de entrada
+            $this->validate([
+                'selectedFacturas' => 'required|array|min:1',
+                'selectedFacturas.*.id_guia' => 'required|integer|exists:guias,id_guia',
+                'guia_fecha_despacho' => 'required|date',
+            ]);
+
+            // Validación de rango de fechas (3 días antes y 3 días después)
+            $fechaDespacho = Carbon::parse($this->guia_fecha_despacho);
+            $fechaActual = Carbon::now('America/Lima')->startOfDay();
+
+            // Calculamos los límites de fecha
+            $fechaLimiteInferior = $fechaActual->copy()->subDays(3);
+            $fechaLimiteSuperior = $fechaActual->copy()->addDays(3);
+
+            // Verificamos si la fecha está fuera del rango permitido
+            if ($fechaDespacho->lt($fechaLimiteInferior) || $fechaDespacho->gt($fechaLimiteSuperior)) {
+                session()->flash('error', 'Fecha no válida. Solo se permiten fechas entre ' .
+                    $fechaLimiteInferior->format('d-m-Y') . ' y ' .
+                    $fechaLimiteSuperior->format('d-m-Y') . '.');
+                return;
+            }
+
+            $contadorError = 0;
+            DB::beginTransaction();
+
+            // Validar duplicidad para las facturas seleccionadas
+            foreach ($this->selectedFacturas as $factura) {
+                $existe = DB::table('despacho_ventas as dv')
+                    ->join('despachos as d', 'd.id_despacho', '=', 'dv.id_despacho')
+                    ->join('guias as g', 'dv.id_guia', '=', 'g.id_guia')
+                    ->where('d.despacho_estado_aprobacion', '<>', 4)
+                    ->where('dv.id_guia', $factura['id_guia'])
+                    ->whereIn('g.guia_estado_aprobacion', [7, 8])
+                    ->orderBy('dv.id_despacho_venta', 'desc')
+                    ->exists();
+
+                if ($existe) {
+                    $contadorError++;
+                }
+            }
+
+            if ($contadorError > 0) {
+                session()->flash('error', "Se encontraron {$contadorError} guía(s) duplicada(s). Por favor, verifique.");
+                DB::rollBack();
+                return;
+            }
+
+            // Obtener IDs de guías para actualización
+            $idsGuias = array_column($this->selectedFacturas, 'id_guia');
+
+            // Actualizar el estado de las guías a 8
+            DB::table('guias')
+                ->whereIn('id_guia', $idsGuias)
+                ->update([
+                    'guia_estado_aprobacion' => 8,
+                    'guia_fecha_despacho' => $this->guia_fecha_despacho,
+                    'updated_at' => now('America/Lima')
+                ]);
+
+            // Guardar en historial_guias
+            $guias = DB::table('guias')
+                ->whereIn('id_guia', $idsGuias)
+                ->get()
+                ->keyBy('id_guia');
+
+            $historialData = [];
+            foreach ($this->selectedFacturas as $factura) {
+                if (isset($guias[$factura['id_guia']])) {
+                    $guia = $guias[$factura['id_guia']];
+
+                    $historialData[] = [
+                        'id_users' => Auth::id(),
+                        'id_guia' => $factura['id_guia'],
+                        'guia_nro_doc' => $guia->guia_nro_doc,
+                        'historial_guia_estado_aprobacion' => 8,
+                        'historial_guia_fecha_hora' => $this->guia_fecha_despacho,
+                        'historial_guia_estado' => 1,
+                        'created_at' => Carbon::now('America/Lima'),
+                        'updated_at' => Carbon::now('America/Lima'),
+                    ];
+                }
+            }
+
+            // Insertar en lote el historial
+            DB::table('historial_guias')->insert($historialData);
+
+            DB::commit();
+
+            session()->flash('success', 'Registro guardado correctamente. ' . count($this->selectedFacturas) . ' guía(s) procesada(s).');
+            $this->reiniciar_campos();
+            $this->dispatch('hide_modal_confirmar_despacho');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            $this->setErrorBag($e->validator->errors());
+            session()->flash('error', 'Error de validación: ' . $e->getMessage());
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error inesperado. Por favor, inténtelo nuevamente. ' . $e->getMessage());
+        }
+    }
+
+    public function reiniciar_campos(){
+        $this->guia_fecha_despacho = now()->addDay()->format('Y-m-d');
+        $this->selectedFacturas = [];
+        $this->pesoTotal = 0;
+        $this->volumenTotal = 0;
     }
 }

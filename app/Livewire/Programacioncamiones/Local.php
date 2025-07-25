@@ -658,7 +658,7 @@ class Local extends Component
                 'despacho_ayudante' => 'nullable|regex:/^[0-9]+(\.[0-9]+)?$/',
                 'despacho_gasto_otros' => 'nullable|regex:/^[0-9]+(\.[0-9]+)?$/',
                 'despacho_descripcion_otros' => $this->despacho_gasto_otros > 0 ? 'required|string' : 'nullable|string',
-                'despacho_descripcion_modificado' => $this->tarifaMontoSeleccionado !== $this->montoOriginal ? 'required|string' : 'nullable|string',
+//                'despacho_descripcion_modificado' => $this->tarifaMontoSeleccionado !== $this->montoOriginal ? 'required|string' : 'nullable|string',
             ], [
                 'selectedVehiculo.required' => 'Debes seleccionar un vehículo.',
                 'selectedVehiculo.integer' => 'El vehículo debe ser un número entero.',
@@ -672,7 +672,7 @@ class Local extends Component
                 'despacho_descripcion_otros.required' => 'La descripción de gastos adicionales es requerida cuando se ingresa un monto.',
                 'despacho_descripcion_otros.string' => 'La descripción debe ser una cadena de texto.',
 
-                'despacho_descripcion_modificado.required' => 'La descripción por modificar el monto es obligatorio.',
+//                'despacho_descripcion_modificado.required' => 'La descripción por modificar el monto es obligatorio.',
             ]);
             $contadorError = 0;
             DB::beginTransaction();
@@ -717,6 +717,14 @@ class Local extends Component
                 DB::rollBack();
                 return;
             }
+
+            // VALIDAR COMENTARIO
+            if ($this->tarifaMontoSeleccionado != $this->montoOriginal && empty($this->despacho_descripcion_modificado)) {
+                session()->flash('error', "La descripción por modificar el monto es obligatorio cuando se cambia el valor original.");
+                DB::rollBack();
+                return;
+            }
+
             // Guardar en la tabla Programaciones
             if ($this->id_programacion_edit && $this->id_despacho_edit){
                 // se va a eliminar los comprobantes del anterior registro
