@@ -20,6 +20,25 @@
         </div>
     @endif
 
+{{--    MODAL CONFIRMAR GUARDAR DESPACHO--}}
+    <x-modal-delete wire:ignore.self style="z-index: 1056;">
+        <x-slot name="id_modal">modalConfirmarDespacho</x-slot>
+        <x-slot name="modalContentDelete">
+            <form wire:submit.prevent="guardar_despacho_entrega">
+                <div class="row">
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        <h2 class="deleteTitle">¿Confirmar despacho?</h2>
+                    </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-center">
+                        <button type="submit" class="btn btn-primary text-white btnDelete">SI</button>
+                        <button type="button" class="btn btn-danger btnDelete" id="btnEditar" data-bs-dismiss="modal">CANCELAR</button>
+                    </div>
+                </div>
+            </form>
+        </x-slot>
+    </x-modal-delete>
+{{--    FIN MODAL CONFIRMAR GUARDAR DESPACHO--}}
+
     <div class="row">
         <div class="col-lg-5">
             <div class="card">
@@ -126,15 +145,20 @@
                     </div>
                 </div>
             </div>
+            <div wire:loading wire:target="seleccionarFactura" class="overlay__eliminar">
+                <div class="spinner__container__eliminar">
+                    <div class="spinner__eliminar"></div>
+                </div>
+            </div>
         </div>
 
         <div class="col-lg-7">
             <div class="row">
                 <div class="col-lg-6 col-md-6 col-sm-12">
-                    <div class="card ">
+                    <div class="card">
                         <div class="card-body">
                             <h6>Fecha de despacho</h6>
-                            <input type="date" class="form-control" id="programacion_fecha" name="programacion_fecha" wire:model="programacion_fecha" />
+                            <input type="date" class="form-control" id="guia_fecha_despacho" name="guia_fecha_despacho" wire:model="guia_fecha_despacho"/>
                         </div>
                     </div>
                 </div>
@@ -243,14 +267,37 @@
                             </div>
                         </div>
                     </div>
+                    <div wire:loading wire:target="eliminarFacturaSeleccionada" class="overlay__eliminar">
+                        <div class="spinner__container__eliminar">
+                            <div class="spinner__eliminar"></div>
+                        </div>
+                    </div>
+                    <div class="col-lg-12">
+                        <div class="row">
+                            @if(count($selectedFacturas) > 0)
+                                <div class="text-center d-flex justify-content-end">
+                                    <a href="#" data-bs-toggle="modal" data-bs-target="#modalConfirmarDespacho" class="btn text-white" style="background: #e51821">
+                                        Guardar Despacho
+                                    </a>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                    <div wire:loading wire:target="guardar_despacho_entrega" class="overlay__eliminar" style="z-index: 1058">
+                        <div class="spinner__container__eliminar">
+                            <div class="spinner__eliminar"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
-
-
-
-
-
 </div>
+
+@script
+<script>
+    $wire.on('hide_modal_confirmar_despacho', () => {
+        $('#modalConfirmarDespacho').modal('hide');
+    });
+</script>
+@endscript
