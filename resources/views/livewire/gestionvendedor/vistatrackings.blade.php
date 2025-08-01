@@ -227,7 +227,7 @@
 
                             <!-- Etapa 4: En Ruta -->
                             <div class="col-lg-2 col-md-2 col-sm-12">
-                                <img src="{{ asset('assets/images/tracking/comprobante_en_camino.png') }}" alt="Despacho Entregado" class="tracking-img">
+                                <img src="{{ asset('assets/images/tracking/comprobante_en_camino.png') }}" alt="Despacho En Ruta" class="tracking-img">
                                 <p class="fw-bold {{ $etapaActual >= 4 ? 'text-dark' : 'text-muted' }}">EN RUTA</p>
                             </div>
 

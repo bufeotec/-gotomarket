@@ -29,18 +29,26 @@ class Programacion extends Model
         }
         return $result;
     }
-    public function listar_programaciones_realizadas_x_fechas_x_estado($desde,$hasta,$estado){
+    public function listar_programaciones_realizadas_x_fechas_x_estado($desde, $hasta, $estado) {
         try {
-            $result = DB::table('programaciones')
-                ->whereBetween('programacion_fecha',[$desde,$hasta])
-                ->where('programacion_estado_aprobacion','=',$estado)
-                ->orderBy('id_programacion','desc')
-                ->paginate(20);
-        }catch (\Exception $e){
+            $query = DB::table('programaciones')
+                ->whereBetween('programacion_fecha', [$desde, $hasta])
+                ->orderBy('id_programacion', 'desc');
+
+            // Solo aplicar filtro de estado si no está vacío
+            if ($estado !== '' && $estado !== null) {
+                // Para estado diferente de 2 (Tránsito), filtramos por programacion_estado_aprobacion
+                if ($estado != 2) {
+                    $query->where('programacion_estado_aprobacion', '=', $estado);
+                }
+                // Para estado 2 (Tránsito), no filtramos aquí (se filtra después en el despacho)
+            }
+
+            return $query->get();
+        } catch (\Exception $e) {
             $this->logs->insertarLog($e);
-            $result = [];
+            return [];
         }
-        return $result;
     }
     public function listar_ultima_aprobacion(){
         try {

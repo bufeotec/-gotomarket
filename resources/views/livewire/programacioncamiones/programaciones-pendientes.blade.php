@@ -13,10 +13,19 @@
                     <div class="row">
                         <div class="col-lg-12 col-md-12 col-sm-12">
                             <div class="row">
-                                <div class="col-lg-12 col-md-12 col-sm-12">
-                                    <h6>Información Adicional del Despacho</h6>
-                                    <hr>
+                                <div class="col-lg-6 col-md-6 col-sm-12">
+                                    <h6>Información General de OS</h6>
                                 </div>
+                                <div class="col-lg-4 col-md-4 col-sm-12 d-flex align-items-center">
+                                    @if($listar_detalle_despacho->despacho_estado_aprobacion == 2 || $listar_detalle_despacho->despacho_estado_aprobacion == 3)
+                                        <strong class="colorgotomarket mb-2">N° OS: </strong>
+                                        <h6 class="ms-2">{{ $listar_detalle_despacho->despacho_numero_correlativo }}</h6>
+                                    @endif
+                                </div>
+                                <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
+                                    <a class="btn btn-sm bg-success text-white">Gestionar OS</a>
+                                </div>
+                                <hr>
                                 <div class="col-lg-2 col-md-3 col-sm-4 mb-3">
                                     <strong class="colorgotomarket mb-2">Usuario de Registro</strong>
                                     <p>{{ $listar_detalle_despacho->name }}</p>
@@ -99,68 +108,10 @@
                         </div>
 
                         <div class="col-lg-12 col-md-12 col-sm-12 mb-4">
-                            <div class="row">
-                                <div class="col-lg-12 col-md-12 col-sm-12">
-                                    <h6>Información de la guía</h6>
-                                    <hr>
-                                </div>
-                                <div class="col-lg-12 col-md-12 col-sm-12">
-                                    <x-table-general>
-                                        <x-slot name="thead">
-                                            <tr>
-                                                <th>N°</th>
-                                                <th>Guía</th>
-                                                <th>Nombre cliente</th>
-{{--                                                <th>Almacén de Origen</th>--}}
-                                                <th>Tipo Documento</th>
-                                                <th>Fecha Emisión</th>
-                                                <th>Tipo de Movimiento</th>
-                                                <th>Documento Referencial</th>
-                                                <th>Glosa</th>
-                                                <th>Importe Total sin IGV</th>
-                                                <th>Dirección de Entrega</th>
-                                                <th>UBIGEO</th>
-                                            </tr>
-                                        </x-slot>
-
-                                        <x-slot name="tbody">
-                                            @if(count($listar_detalle_despacho->comprobantes) > 0)
-                                                @php $conteo = 1; @endphp
-                                                @foreach($listar_detalle_despacho->comprobantes as $ta)
-                                                    <tr>
-                                                        <td>{{$conteo}}</td>
-                                                        <td>{{ $ta->guia_nro_doc }}</td>
-                                                        <td>{{ $ta->guia_nombre_cliente }}</td>
-{{--                                                        <td>{{ $ta->guia_almacen_origen }}</td>--}}
-                                                        <td>{{ $ta->guia_tipo_doc }}</td>
-                                                        <td>{{ $ta->guia_fecha_emision ? $general->obtenerNombreFecha($ta->guia_fecha_emision, 'DateTime', 'Date') : '-' }}</td>
-                                                        <td>{{ $ta->guia_tipo_movimiento }}</td>
-                                                        <td>{{ $ta->guia_nro_doc_ref }}</td>
-                                                        <td>{{ $ta->guia_glosa }}</td>
-                                                        <td>S/ {{ $general->formatoDecimal($ta->guia_importe_total_sin_igv ?? 0) }}</td>
-                                                        <td>{{ $ta->guia_direc_entrega }}</td>
-                                                        <td>{{ $ta->guia_departamento }} - {{ $ta->guia_provincia }} - {{ $ta->guia_destrito }}</td>
-                                                    </tr>
-                                                    @php $conteo++; @endphp
-                                                @endforeach
-                                            @else
-                                                <tr class="odd">
-                                                    <td valign="top" colspan="7" class="dataTables_empty text-center">
-                                                        No se han encontrado resultados.
-                                                    </td>
-                                                </tr>
-                                            @endif
-                                        </x-slot>
-                                    </x-table-general>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Información del servicio transporte -->
-                        @if(count($listar_detalle_despacho->servicios_transportes) > 0)
-                            <div class="col-lg-12 col-md-12 col-sm-12">
-                                <div class="row">
+                            <form wire:submit.prevent="cambiarEstadoComprobante">
+                                <div class="row mb-3">
                                     <div class="col-lg-12 col-md-12 col-sm-12">
-                                        <h6>Información del servicio transporte</h6>
+                                        <h6>Información de la guía</h6>
                                         <hr>
                                     </div>
                                     <div class="col-lg-12 col-md-12 col-sm-12">
@@ -168,63 +119,172 @@
                                             <x-slot name="thead">
                                                 <tr>
                                                     <th>N°</th>
-                                                    <th>Codigo</th>
-                                                    <th>Motivo</th>
-                                                    <th>Detalle del Motivo</th>
-                                                    <th>Remitente</th>
-                                                    <th>Destinatario</th>
-                                                    <th>Ubigeo</th>
-                                                    <th>Documento</th>
-{{--                                                    <th>Peso</th>--}}
-{{--                                                    <th>Volumen</th>--}}
+                                                    <th>Guía</th>
+                                                    <th>Nombre cliente</th>
+                                                    <th>Fecha Emisión</th>
+                                                    <th>Factura</th>
+                                                    <th>Venta Despachada (sin IGV)</th>
+                                                    <th>Dirección de Entrega</th>
+                                                    <th>UBIGEO</th>
+                                                    @if($listar_detalle_despacho->despacho_estado_aprobacion == 2 || $listar_detalle_despacho->despacho_estado_aprobacion == 3)
+                                                        <th>Estado del comprobante</th>
+                                                    @endif
+                                                    @if($listar_detalle_despacho->despacho_estado_aprobacion == 3 && !$this->verificarAprobacion($listar_detalle_despacho->id_despacho))
+                                                        <th>Cambio de estado</th>
+                                                    @endif
                                                 </tr>
                                             </x-slot>
-
                                             <x-slot name="tbody">
-                                                @php $a = 1; @endphp
-                                                @foreach($listar_detalle_despacho->servicios_transportes as $st)
-                                                    <tr>
-                                                        <td>{{$a}}</td>
-                                                        <td>{{ $st->serv_transpt_codigo }}</td>
-                                                        <td>{{ $st->serv_transpt_motivo }}</td>
-                                                        <td>{{ $st->serv_transpt_detalle_motivo }}</td>
-                                                        <td>
-                                                            {{ $st->serv_transpt_remitente_ruc }} <br>
-                                                            {{ $st->serv_transpt_remitente_razon_social }} <br>
-                                                            {{ $st->serv_transpt_remitente_direccion }}
+                                                @if(count($listar_detalle_despacho->comprobantes) > 0)
+                                                    @php $conteo = 1; @endphp
+                                                    @foreach($listar_detalle_despacho->comprobantes as $indexComprobantes => $ta)
+                                                        <tr>
+                                                            <td>{{$conteo}}</td>
+                                                            <td>{{ $ta->guia_nro_doc }}</td>
+                                                            <td>{{ $ta->guia_nombre_cliente }}</td>
+                                                            <td>{{ $ta->guia_fecha_emision ? $general->obtenerNombreFecha($ta->guia_fecha_emision, 'DateTime', 'Date') : '-' }}</td>
+                                                            <td>{{ $ta->guia_nro_doc_ref }}</td>
+                                                            <td>S/ {{ $general->formatoDecimal($ta->guia_importe_total_sin_igv ?? 0) }}</td>
+                                                            <td>{{ $ta->guia_direc_entrega }}</td>
+                                                            <td>{{ $ta->guia_departamento }} - {{ $ta->guia_provincia }} - {{ $ta->guia_destrito }}</td>
+                                                            @if($listar_detalle_despacho->despacho_estado_aprobacion == 2 || $listar_detalle_despacho->despacho_estado_aprobacion == 3)
+                                                                <td>
+                                                                    @if($listar_detalle_despacho->despacho_estado_aprobacion == 2 && !in_array($ta->guia_estado_aprobacion, [8, 11, 12]) )
+                                                                        <select
+                                                                            name="estadoComprobante[{{ $indexComprobantes }}]"
+                                                                            class="form-control form-select"
+                                                                            wire:model="estadoComprobante.{{ $listar_detalle_despacho->id_despacho }}_{{ $ta->id_despacho_venta }}"
+                                                                        >
+                                                                            <option value="8">Entregado</option>
+                                                                            @if(!$listar_detalle_despacho->es_mixto_provincial)
+                                                                                <option value="11">No entregado</option>
+                                                                            @endif
+                                                                        </select>
+                                                                    @else
+                                                                        @php
+                                                                            $estadoMostrar = $ta->guia_estado_aprobacion;
+
+                                                                            if (isset($ta->despacho_detalle_estado_entrega)) {
+                                                                                if ($ta->despacho_detalle_estado_entrega == 0) {
+                                                                                    $estadoMostrar = $ta->guia_estado_aprobacion;
+                                                                                } elseif (in_array($ta->despacho_detalle_estado_entrega, [8, 11])) {
+                                                                                    $estadoMostrar = $ta->despacho_detalle_estado_entrega;
+                                                                                }
+                                                                            }
+                                                                        @endphp
+
+                                                                        <span class="font-bold badge {{$estadoMostrar == 8 ? 'bg-label-success' : 'bg-label-danger'}}">
+                                                                            {{$estadoMostrar == 8 ? 'ENTREGADO' : 'NO ENTREGADO'}}
+                                                                        </span>
+                                                                    @endif
+                                                                </td>
+                                                            @endif
+                                                            @if($listar_detalle_despacho->despacho_estado_aprobacion == 3)
+                                                                <td>
+                                                                    <select
+                                                                        name="estadoComprobante[{{ $indexComprobantes }}]"
+                                                                        class="form-control form-select"
+                                                                        wire:model="estadoComprobante.{{ $listar_detalle_despacho->id_despacho }}_{{ $ta->id_despacho_venta }}"
+                                                                    >
+                                                                        <option value="8">Entregado</option>
+                                                                        <option value="11">No entregado</option>
+                                                                    </select>
+                                                                </td>
+                                                            @endif
+                                                        </tr>
+                                                        @php $conteo++; @endphp
+                                                    @endforeach
+                                                @else
+                                                    <tr class="odd">
+                                                        <td valign="top" colspan="7" class="dataTables_empty text-center">
+                                                            No se han encontrado resultados.
                                                         </td>
-                                                        <td>
-                                                            {{ $st->serv_transpt_destinatario_ruc }} <br>
-                                                            {{ $st->serv_transpt_destinatario_razon_social }} <br>
-                                                            {{ $st->serv_transpt_destinatario_direccion }}
-                                                        </td>
-                                                        <td>
-                                                            @php
-                                                                $departamento = \Illuminate\Support\Facades\DB::table('departamentos')
-                                                                ->where('id_departamento','=',$st->id_departamento)->first();
-                                                                $provincia = \Illuminate\Support\Facades\DB::table('provincias')
-                                                                ->where('id_provincia','=',$st->id_provincia)->first();
-                                                                $distrito = \Illuminate\Support\Facades\DB::table('distritos')
-                                                                ->where('id_distrito','=',$st->id_distrito)->first();
-                                                            @endphp
-                                                            {{ $departamento ? $departamento->departamento_nombre : '' }} - {{ $provincia ? $provincia->provincia_nombre : '' }} - {{ $distrito ? $distrito->distrito_nombre : 'TODOS LOS DISTRITOS' }}
-                                                        </td>
-                                                        <td>
-                                                            <a class="btn text-success" href="{{ asset($st->serv_transpt_documento) }}" target="_blank">
-                                                                <i class="fa-solid fa-file-lines"></i>
-                                                            </a>
-                                                        </td>
-{{--                                                        <td>{{ $general->formatoDecimal($st->serv_transpt_peso) }} kg</td>--}}
-{{--                                                        <td>{{ $general->formatoDecimal($st->serv_transpt_volumen) }} cm³</td>--}}
                                                     </tr>
-                                                    @php $a++; @endphp
-                                                @endforeach
+                                                @endif
                                             </x-slot>
                                         </x-table-general>
                                     </div>
                                 </div>
-                            </div>
-                        @endif
+
+                                <!-- Información del servicio transporte -->
+                                @if(count($listar_detalle_despacho->servicios_transportes) > 0)
+                                    <div class="row mb-3">
+                                        <div class="col-lg-12 col-md-12 col-sm-12">
+                                            <h6>Información del servicio transporte</h6>
+                                            <hr>
+                                        </div>
+                                        <div class="col-lg-12 col-md-12 col-sm-12">
+                                            <x-table-general>
+                                                <x-slot name="thead">
+                                                    <tr>
+                                                        <th>N°</th>
+                                                        <th>Codigo</th>
+                                                        <th>Motivo</th>
+                                                        <th>Detalle del Motivo</th>
+                                                        <th>Remitente</th>
+                                                        <th>Destinatario</th>
+                                                        <th>Ubigeo</th>
+                                                        <th>Documento</th>
+                                                        {{--                                                    <th>Peso</th>--}}
+                                                        {{--                                                    <th>Volumen</th>--}}
+                                                    </tr>
+                                                </x-slot>
+
+                                                <x-slot name="tbody">
+                                                    @php $a = 1; @endphp
+                                                    @foreach($listar_detalle_despacho->servicios_transportes as $st)
+                                                        <tr>
+                                                            <td>{{$a}}</td>
+                                                            <td>{{ $st->serv_transpt_codigo }}</td>
+                                                            <td>{{ $st->serv_transpt_motivo }}</td>
+                                                            <td>{{ $st->serv_transpt_detalle_motivo }}</td>
+                                                            <td>
+                                                                {{ $st->serv_transpt_remitente_ruc }} <br>
+                                                                {{ $st->serv_transpt_remitente_razon_social }} <br>
+                                                                {{ $st->serv_transpt_remitente_direccion }}
+                                                            </td>
+                                                            <td>
+                                                                {{ $st->serv_transpt_destinatario_ruc }} <br>
+                                                                {{ $st->serv_transpt_destinatario_razon_social }} <br>
+                                                                {{ $st->serv_transpt_destinatario_direccion }}
+                                                            </td>
+                                                            <td>
+                                                                @php
+                                                                    $departamento = \Illuminate\Support\Facades\DB::table('departamentos')
+                                                                    ->where('id_departamento','=',$st->id_departamento)->first();
+                                                                    $provincia = \Illuminate\Support\Facades\DB::table('provincias')
+                                                                    ->where('id_provincia','=',$st->id_provincia)->first();
+                                                                    $distrito = \Illuminate\Support\Facades\DB::table('distritos')
+                                                                    ->where('id_distrito','=',$st->id_distrito)->first();
+                                                                @endphp
+                                                                {{ $departamento ? $departamento->departamento_nombre : '' }} - {{ $provincia ? $provincia->provincia_nombre : '' }} - {{ $distrito ? $distrito->distrito_nombre : 'TODOS LOS DISTRITOS' }}
+                                                            </td>
+                                                            <td>
+                                                                <a class="btn text-success" href="{{ asset($st->serv_transpt_documento) }}" target="_blank">
+                                                                    <i class="fa-solid fa-file-lines"></i>
+                                                                </a>
+                                                            </td>
+                                                            {{--                                                        <td>{{ $general->formatoDecimal($st->serv_transpt_peso) }} kg</td>--}}
+                                                            {{--                                                        <td>{{ $general->formatoDecimal($st->serv_transpt_volumen) }} cm³</td>--}}
+                                                        </tr>
+                                                        @php $a++; @endphp
+                                                    @endforeach
+                                                </x-slot>
+                                            </x-table-general>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <!-- BOTON CAMBIO DE COMPROBANTE -->
+                                @if($listar_detalle_despacho->despacho_estado_aprobacion == 2 || $listar_detalle_despacho->despacho_estado_aprobacion == 3)
+                                    <div class="row">
+                                        <div class="col-lg-12 col-md-12 col-sm-12 mb-2 text-end">
+                                            <button class="btn  text-white bg-primary" type="submit">Guardar Estados de Comprobantes</button>
+                                        </div>
+                                    </div>
+                                @endif
+                            </form>
+                        </div>
                     </div>
                 </div>
             @endif
@@ -233,23 +293,20 @@
 {{--    MODAL FIN DETALLES DEL DESPACHO--}}
 
 {{--    MODAL APROBAR / RECHAZAR PROGRAMACIÓN--}}
-    <x-modal-delete  wire:ignore.self >
+    <x-modal-delete wire:ignore.self>
         <x-slot name="id_modal">modalAprobarProgramacion</x-slot>
         <x-slot name="modalContentDelete">
             <form wire:submit.prevent="cambiarEstadoProgramacionFormulario">
                 <div class="row">
                     <div class="col-lg-12 col-md-12 col-sm-12">
-                        @if($estadoPro == 1)
-                            <h2 class="deleteTitle">¿Está seguro de aprobar esta programación?</h2>
+                        @if($actionType == 1)
+                            <h2 class="deleteTitle">¿Está seguro de aprobar los despachos seleccionados?</h2>
                         @else
-                            <h2 class="deleteTitle">¿Está seguro de rechazar esta programación?</h2>
+                            <h2 class="deleteTitle">¿Está seguro de rechazar los despachos seleccionados?</h2>
                         @endif
                     </div>
                     <div class="col-lg-12 col-md-12 col-sm-12">
-                        @error('id_progr') <span class="message-error">{{ $message }}</span> @enderror
-
-                        @error('estadoPro') <span class="message-error">{{ $message }}</span> @enderror
-
+                        @error('selectedDespachos') <span class="message-error">{{ $message }}</span> @enderror
                         @if (session()->has('error_delete'))
                             <div class="alert alert-danger alert-dismissible show fade">
                                 {{ session('error_delete') }}
@@ -343,8 +400,36 @@
     </x-modal-general>
     {{--    MODAL FIN DETALLE GUIA--}}
 
+{{--    MODAL EN CAMINO--}}
+    <x-modal-delete wire:ignore.self>
+        <x-slot name="id_modal">modalEnCamino</x-slot>
+        <x-slot name="modalContentDelete">
+            <form wire:submit.prevent="cambiarEstadoEnCamino">
+                <div class="row">
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        <h2 class="deleteTitle">¿Confirma cambiar a estado "En Camino"?</h2>
+                    </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-center">
+                        <button type="submit" class="btn btn-primary text-white btnDelete">Confirmar</button>
+                        <button type="button" data-bs-dismiss="modal" class="btn btn-danger btnDelete">Cancelar</button>
+                    </div>
+                </div>
+            </form>
+        </x-slot>
+    </x-modal-delete>
+{{--    FIN MODAL EN CAMINO--}}
+
 
     <div class="row align-items-center mt-2">
+        <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
+            <label class="form-label">Estado de Programación</label>
+            <select class="form-select" wire:model="estado_programacion">
+                <option value="">Seleccionar...</option>
+                <option value="0">Emitido</option>
+                <option value="1">Aprobado</option>
+                <option value="2">Tránsito</option>
+            </select>
+        </div>
         <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
             <label for="fecha_desde" class="form-label">Desde</label>
             <input type="date" name="fecha_desde" id="fecha_desde" wire:model.live="desde" class="form-control">
@@ -353,7 +438,15 @@
             <label for="fecha_hasta" class="form-label">Hasta</label>
             <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model.live="hasta" class="form-control">
         </div>
+        <div class="col-lg-2 col-md-2 col-sm-12 mt-3">
+            <a class="btn btnsm btn-primary text-white" wire:click="buscar_programacion"> <i class="fa-solid fa-magnifying-glass"></i> Buscar</a>
+        </div>
+
         <div class="col-lg-12 col-md-12 col-sm-12">
+            <div class="loader mt-2" wire:loading wire:target="buscar_programacion"></div>
+        </div>
+
+        <div class="col-lg-12 col-md-12 col-sm-12 mt-2">
             <p>Actualmente, hay <b class="colorgotomarket">{{$conteoProgramacionesPend}}</b> programaciones pendientes.</p>
         </div>
     </div>
@@ -364,21 +457,62 @@
         </div>
     @endif
 
-    @if(count($resultado) > 0)
+    @if (session()->has('error'))
+        <div class="alert alert-danger alert-dismissible show fade mt-2">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if(count($resultados) > 0)
         <div class="row mt-3">
-            <div class="col-lg col-md-3 col-sm-3 mb-1">
+            <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
                 <h6 class="m-0">FD : Fecha de Despacho</h6>
             </div>
-            <div class="col-lg col-md-3 col-sm-3 mb-1">
+            <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
                 <h6 class="m-0">UR : Usuario de Registro</h6>
             </div>
-            <div class="col-lg col-md-3 col-sm-3 mb-1">
-                <h6 class="m-0">FC : Fecha de Creación</h6>
+            <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
+                <h6 class="m-0">FE : Fecha de Emisión</h6>
             </div>
-            <div class="col-lg col-md-3 col-sm-3 mb-1">
-                <h6 class="m-0">E : Estado</h6>
+            <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
+                <h6 class="m-0">FE : Fecha de Aprobación</h6>
             </div>
-            <div class="col-lg-12 mt-4">
+            <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
+                <h6 class="m-0">N° C : Número Correlativo</h6>
+            </div>
+            <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
+                <h6 class="m-0">OS : Orden de Servicio</h6>
+            </div>
+        </div>
+    @endif
+
+    @if(count($resultados) > 0)
+        <div class="row">
+            <div class="col-lg-12 col-md-12 col-sm-12 mb-3 mt-2 text-end">
+                @php
+                    $user = \Illuminate\Support\Facades\Auth::user(); // Obtiene el usuario autenticado
+                    // Obtén el primer rol del usuario y su ID
+                    $roleId = $user->roles->first()->id ?? null;
+                @endphp
+                {{--                                @if($roleId == 1 || $roleId == 2)--}}
+                <a class="btn btn-sm text-white bg-warning" wire:click="confirmar_encamino" data-bs-toggle="modal" data-bs-target="#modalEnCamino">
+                    Cambiar a "En Camino"
+                </a>
+                <button class="btn btn-sm text-white bg-success" wire:click="prepareAction(1)" data-bs-toggle="modal" data-bs-target="#modalAprobarProgramacion">
+                    <i class="fa-solid fa-check"></i> APROBAR
+                </button>
+                <button class="btn btn-sm text-white bg-danger" wire:click="prepareAction(4)" data-bs-toggle="modal" data-bs-target="#modalAprobarProgramacion">
+                    <i class="fa fa-x"></i> RECHAZAR
+                </button>
+                {{--                                @endif--}}
+            </div>
+        </div>
+    @endif
+
+    @if(count($resultados) > 0)
+        <div class="row">
+            <div class="col-lg-12 mt-2">
                 <h5>Programación de despacho: </h5>
             </div>
         </div>
@@ -386,7 +520,7 @@
 
     <div class="accordion mt-3" id="accordionExample" >
         @php $conteoGeneral = 1; @endphp
-        @foreach($resultado as $index => $r)
+        @foreach($resultados as $index => $r)
             @php
                 $usuarios = "-";
                 $usuarios2 = "-";
@@ -404,49 +538,62 @@
                 }
                 $fe = $general->obtenerNombreFecha($r->programacion_fecha,'Date','Date');
                 $fc = $general->obtenerNombreFecha($r->created_at,'DateTime','DateTime');
+                $fa = $general->obtenerNombreFecha($r->programacion_fecha_aprobacion,'DateTime','Date');
+
+                $estado_despacho = "Desconocido";
+                if(count($r->despacho) > 0) {
+                    $primerDespacho = $r->despacho[0];
+                    switch($primerDespacho->despacho_estado_aprobacion) {
+                        case 0: $estado_despacho = "Pendiente"; break;
+                        case 1: $estado_despacho = "Aprobado"; break;
+                        case 2: $estado_despacho = "Transito"; break;
+                        case 3: $estado_despacho = "Culminado"; break;
+                        case 4: $estado_despacho = "Rechazado"; break;
+                    }
+                }
+
+                $mostrarBotonEditar = false;
+                if(count($r->despacho) > 0) {
+                    $primerDespacho = $r->despacho[0];
+                    $mostrarBotonEditar = ($primerDespacho->despacho_estado_aprobacion == 0);
+                }
             @endphp
 {{--            {{route('Programacioncamion.detalle_programacion',['data'=>base64_encode($r->id_programacion) ])}}--}}
             <div class="accordion-item" >
-                <h2 class="accordion-header">
-                    <button class="accordion-button {{$index == 0 ? '' : 'collapsed'}}" wire:ignore.self type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne_{{$index}}" aria-expanded="true" aria-controls="collapseOne_{{$index}}">
-                        #{{$conteoGeneral}} | FD : {{$fe}} | UR : {{$usuarios}} | FC : {{$fc}} | E : {{$r->programacion_estado == 1 ? 'ACTIVO' : 'DESHABILITADO'}}
+                <h2 class="accordion-header d-flex justify-content-between align-items-center">
+                    <button class="accordion-button {{$index == 0 ? '' : 'collapsed'}} flex-grow-1" wire:ignore.self type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne_{{$index}}" aria-expanded="true" aria-controls="collapseOne_{{$index}}">
+                        #{{$conteoGeneral}} | FD : {{$fe}} | UR : {{$usuarios}}
+                        @if(!empty($fa)) | FA : {{$fa}} @endif
+                        @if(!empty($r->programacion_numero_correlativo)) | N° C : {{$r->programacion_numero_correlativo}} @endif
+                        | ED : {{$estado_despacho}}
                     </button>
                 </h2>
                 <div id="collapseOne_{{$index}}" class="accordion-collapse collapse {{$index == 0 ? 'show' : ''}}" data-bs-parent="#accordionExample" wire:ignore.self >
                     <div class="accordion-body" >
                         <div class="row">
-                            <div class="col-lg-12 col-md-12 col-sm-12 mb-3 text-end">
-                                @php
-                                    $user = \Illuminate\Support\Facades\Auth::user(); // Obtiene el usuario autenticado
-                                    // Obtén el primer rol del usuario y su ID
-                                    $roleId = $user->roles->first()->id ?? null;
-                                @endphp
-{{--                                @if($roleId == 1 || $roleId == 2)--}}
-                                    <button class="btn btn-sm text-white bg-success" wire:click="cambiarEstadoProgramacion({{$r->id_programacion}},1)" data-bs-toggle="modal" data-bs-target="#modalAprobarProgramacion"><i class="fa-solid fa-check"></i> APROBAR</button>
-                                    <button class="btn btn-sm text-white bg-danger" wire:click="cambiarEstadoProgramacion({{$r->id_programacion}},4)" data-bs-toggle="modal" data-bs-target="#modalAprobarProgramacion"><i class="fa fa-x"></i> RECHAZAR</button>
-{{--                                @endif--}}
-                                @php
-                                        if(Gate::allows('editar_aprobar_programacion')) {
-                                        @endphp
-                                <a class="btn btn-sm text-white bg-primary" href="{{route('Despachotransporte.editar_programaciones',['data'=>base64_encode($r->id_programacion)])}}"><i class="fa-solid fa-pencil"></i> EDITAR</a>
-
-                                @php
-                                        }
-                                @endphp
+                            <div class="col-lg-12 col-md-12 col-sm-12 text-end mb-3">
+                                @if($mostrarBotonEditar && Gate::allows('editar_aprobar_programacion'))
+                                    <a class="btn btn-sm text-white bg-info me-2" href="{{route('Despachotransporte.editar_programaciones',['data'=>base64_encode($r->id_programacion)])}}">
+                                        <i class="fa-solid fa-pencil"></i> EDITAR
+                                    </a>
+                                @endif
                             </div>
                             <div class="col-lg-12 col-md-12 col-sm-12 table-responsive">
                                 <table class="table">
                                     <thead>
                                     <tr style="background: #f5f5f9">
+                                        <th>Check Box</th>
                                         <th>N°</th>
-                                        <th>Servicio</th>
+                                        <th>Tipo Servicio</th>
+                                        <th>OS</th>
                                         <th>Proveedor</th>
-                                        <th>Importe Total</th>
-                                        <th>Peso</th>
-                                        <th>Llenado en Peso</th>
-                                        <th>Cambio de Tarifa</th>
-                                        <th>Coso Flete</th>
+                                        <th>Venta Despachada(sin IGV)</th>
+                                        <th>Cambio Tarifa</th>
+                                        <th>Tarifa</th>
+                                        <th>Flete Total</th>
                                         <th>Flete / Venta</th>
+                                        <th>Peso(kg)</th>
+                                        <th>Llenado en Peso</th>
                                         <th>Flete / Peso</th>
                                         <th>Acciones</th>
                                     </tr>
@@ -456,24 +603,36 @@
                                         @php $conteoGeneral2 = 1; @endphp
                                         @foreach($r->despacho as $des)
                                             <tr>
+                                                <td>
+                                                    @php
+                                                        $esMixto = $programacionesContador[$r->id_programacion] > 1;
+                                                        $mostrarCheckbox = false;
+
+                                                        // Mostrar checkbox si no está en estados 2,3,4
+                                                        if (!in_array($des->despacho_estado_aprobacion, [2, 3, 4])) {
+                                                            // Si es estado 0 (Pendiente), mostrar siempre
+                                                            if ($des->despacho_estado_aprobacion == 0) {
+                                                                $mostrarCheckbox = true;
+                                                            }
+                                                            // Si es estado 1 (Aprobado)
+                                                            elseif ($des->despacho_estado_aprobacion == 1) {
+                                                                // Si NO es mixto o (es mixto y es servicio local - id_tipo_servicios == 1)
+                                                                if (!$esMixto || ($esMixto && $des->id_tipo_servicios == 1)) {
+                                                                    $mostrarCheckbox = true;
+                                                                }
+                                                            }
+                                                        }
+                                                    @endphp
+
+                                                    @if($mostrarCheckbox)
+                                                        <input type="checkbox" class="form-check-input" wire:model="selectedDespachos" value="{{ $des->id_despacho }}"/>
+                                                    @endif
+                                                </td>
                                                 <td>{{$conteoGeneral2}}</td>
                                                 <td>{{$des->tipo_servicio_concepto}}</td>
+                                                <td>{{$des->despacho_numero_correlativo ?? '-'}}</td>
                                                 <td>{{$des->transportista_nom_comercial}}</td>
                                                 <td>S/ {{$general->formatoDecimal($des->totalVentaDespacho)}}</td>
-                                                <td>{{$general->formatoDecimal($des->despacho_peso)}} kg</td>
-
-                                                @php
-                                                    $indi = "";
-                                                    if ($des->id_vehiculo){
-                                                        $vehi = \Illuminate\Support\Facades\DB::table('vehiculos')->where('id_vehiculo','=',$des->id_vehiculo)->first();
-                                                        $indi = ($des->despacho_peso / $vehi->vehiculo_capacidad_peso) * 100;
-                                                        $indi = $general->formatoDecimal($indi);
-                                                    }else{
-                                                        $indi = "-";
-                                                    }
-                                                @endphp
-                                                <td style="color: {{$general->obtenerColorPorPorcentaje($indi)}}">{{ $indi > 0 ? $indi.'%' : '-' }}</td>
-
                                                 @php
                                                     $styleColor = "text-danger";
                                                     if ($des->despacho_estado_modificado == 1){
@@ -481,6 +640,8 @@
                                                     }
                                                 @endphp
                                                 <td><b class="{{$styleColor}}">{{$des->despacho_estado_modificado == 1 ? 'SI' : 'NO'}}</b></td>
+                                                <td>S/ {{$des->despacho_flete}}</td>
+{{--                                                <td>S/ {{$des->despacho_costo_total}}</td>--}}
                                                 <td>
                                                     <span class="{{$des->despacho_estado_modificado == 1 ? 'text-danger' : ''}}">S/ {{$des->despacho_flete}}</span>
                                                     <b class="{{$styleColor}}">
@@ -495,6 +656,18 @@
                                                     }
                                                 @endphp
                                                 <td>{{$ra}} %</td>
+                                                <td>{{$general->formatoDecimal($des->despacho_peso)}} kg</td>
+                                                @php
+                                                    $indi = "";
+                                                    if ($des->id_vehiculo){
+                                                        $vehi = \Illuminate\Support\Facades\DB::table('vehiculos')->where('id_vehiculo','=',$des->id_vehiculo)->first();
+                                                        $indi = ($des->despacho_peso / $vehi->vehiculo_capacidad_peso) * 100;
+                                                        $indi = $general->formatoDecimal($indi);
+                                                    }else{
+                                                        $indi = "-";
+                                                    }
+                                                @endphp
+                                                <td style="color: {{$general->obtenerColorPorPorcentaje($indi)}}">{{ $indi > 0 ? $indi.'%' : '-' }}</td>
                                                 @php
                                                     $ra2 = 0;
                                                     // Verificar que despacho_peso no sea 0 antes de dividir
@@ -537,7 +710,7 @@
         @endforeach
     </div>
 
-    {{ $resultado->links(data: ['scrollTo' => false]) }}
+{{--    {{ $resultados->links(data: ['scrollTo' => false]) }}--}}
 
     <style>
         .select2-container--default .select2-selection--single {
@@ -563,6 +736,10 @@
 
     $wire.on('hideModalDelete', () => {
         $('#modalAprobarProgramacion').modal('hide');
+    });
+
+    $wire.on('hideModalEnCamino', () => {
+        $('#modalEnCamino').modal('hide');
     });
 </script>
 @endscript
