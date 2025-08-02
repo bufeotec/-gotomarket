@@ -77,6 +77,7 @@
                             <option value="7">En ruta</option>
                             <option value="12">Anulado</option>
                             <option value="8">Entregado</option>
+                            <option value="15">Pendiente de NC</option>
                         </select>
                     </div>
 

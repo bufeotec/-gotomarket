@@ -27,8 +27,22 @@ class Entregada extends Component{
     public $pesoTotal = 0;
     public $volumenTotal = 0;
     public $guia_fecha_despacho;
-    public function mount(){
-        $this->guia_fecha_despacho = now()->addDay()->format('Y-m-d');
+    public $fecha_mostrar_modal;
+    public function mount() {
+        // Inicializar con la fecha actual (solo fecha)
+        $this->guia_fecha_despacho = now()->format('Y-m-d');
+        $this->actualizarFechaModal();
+    }
+
+    public function updatedGuiaFechaDespacho() {
+        // Cada vez que cambie la fecha, actualizamos el texto para el modal
+        $this->actualizarFechaModal();
+    }
+
+    public function actualizarFechaModal() {
+        // Formatear la fecha para mostrar en el modal (día/mes/año hora:minutos)
+        $this->fecha_mostrar_modal = Carbon::parse($this->guia_fecha_despacho)
+                ->format('d/m/Y') . ' a las ' . now()->format('H:i');
     }
 
     public function render(){
@@ -192,8 +206,7 @@ class Entregada extends Component{
         }
     }
 
-    public function guardar_despacho_entrega()
-    {
+    public function guardar_despacho_entrega(){
         try {
             // Validar permisos
             if (!Gate::allows('guardar_despacho_entrega')) {
@@ -258,12 +271,14 @@ class Entregada extends Component{
             // Obtener IDs de guías para actualización
             $idsGuias = array_column($this->selectedFacturas, 'id_guia');
 
+            $fechaDespacho = Carbon::createFromFormat('Y-m-d', $this->guia_fecha_despacho)
+                ->setTime(now()->hour, now()->minute);
             // Actualizar el estado de las guías a 8
             DB::table('guias')
                 ->whereIn('id_guia', $idsGuias)
                 ->update([
                     'guia_estado_aprobacion' => 8,
-                    'guia_fecha_despacho' => $this->guia_fecha_despacho,
+                    'guia_fecha_despacho' => $fechaDespacho,
                     'updated_at' => now('America/Lima')
                 ]);
 

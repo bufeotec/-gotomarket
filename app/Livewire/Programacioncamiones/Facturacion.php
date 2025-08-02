@@ -271,7 +271,10 @@ class Facturacion extends Component
             9 => 'Despacho aprobado',
             10 => 'Despacho rechazado',
             11 => 'Guía no entregada',
-            12 => 'Guía anulada'
+            12 => 'Guía anulada',
+            13 => 'Registrado en intranet(bufeo)',
+            14 => 'Guía anulada por NC',
+            15 => 'Pendiente de NC'
         ];
 
         return $estados[$estado] ?? 'Estado desconocido';
@@ -452,7 +455,7 @@ class Facturacion extends Component
 
             $this->validate([
                 'id_guia' => 'required|integer',
-                'guia_estado_aprobacion' => 'required|in:1,2,3,4,5,7,12,8,9',
+                'guia_estado_aprobacion' => 'required|in:1,2,3,4,5,7,12,8,9,15',
             ], [
                 'id_guia.required' => 'El identificador es obligatorio.',
                 'id_guia.integer' => 'El identificador debe ser un número entero.',

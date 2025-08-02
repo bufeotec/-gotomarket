@@ -38,6 +38,7 @@ class ProgramacionesPendientes extends Component
     public $actionType = '';
     public $selectedItems = [];
     public $programacionesContador = [];
+    public $selectedProgramaciones = [];
     /* ---------------------------------------- */
     private $logs;
     private $programacion;
@@ -110,7 +111,7 @@ class ProgramacionesPendientes extends Component
     }
 
     public function buscar_programacion() {
-        $this->selectedDespachos = [];
+        $this->selectedProgramaciones = [];
 
         $this->resultados = $this->programacion->listar_programaciones_realizadas_x_fechas_x_estado($this->desde, $this->hasta, $this->estado_programacion);
         $this->programacionesContador = [];
@@ -240,13 +241,12 @@ class ProgramacionesPendientes extends Component
 
     public function cambiarEstadoProgramacionFormulario() {
         try {
+            // Validación
             $this->validate([
-                'selectedDespachos' => 'required|array|min:1',
-                'selectedDespachos.*' => 'integer|exists:despachos,id_despacho',
-                'actionType' => 'required|in:1,4'
+                'selectedProgramaciones' => 'required|array|min:1',
+                'selectedProgramaciones.*' => 'integer|exists:programaciones,id_programacion',
+                'actionType' => 'required|in:1,4' // 1=Aprobar, 4=Rechazar
             ]);
-
-            DB::beginTransaction();
 
             // Verificar permisos
             $permisoRequerido = $this->actionType == 1 ? 'aprobar_programacion' : 'rechazar_programacion';
@@ -255,126 +255,119 @@ class ProgramacionesPendientes extends Component
                 return;
             }
 
-            // Obtener todos los despachos seleccionados con sus programaciones
-            $despachosSeleccionados = Despacho::whereIn('id_despacho', $this->selectedDespachos)
-                ->select('id_despacho', 'id_programacion', 'despacho_estado_aprobacion')
+            // Validación de programaciones pendientes
+            $programacionesSeleccionadas = Programacion::whereIn('id_programacion', $this->selectedProgramaciones)
+                ->select('id_programacion', 'programacion_estado_aprobacion')
                 ->get();
 
-            // 1. Validar que todos los despachos seleccionados estén en estado 0 (Pendiente)
-            $despachosInvalidos = $despachosSeleccionados->where('despacho_estado_aprobacion', '!=', 0);
-            if ($despachosInvalidos->isNotEmpty()) {
-                session()->flash('error', 'Algunos despachos seleccionados no están en estado Pendiente.');
+            $programacionesInvalidas = $programacionesSeleccionadas->where('programacion_estado_aprobacion', '!=', 0);
+            if ($programacionesInvalidas->isNotEmpty()) {
+                session()->flash('error', 'Algunas programaciones seleccionadas no están en estado Pendiente.');
                 return;
             }
 
-            // 2. Validar programaciones mixtas (que tengan más de un despacho)
-            $programaciones = $despachosSeleccionados->groupBy('id_programacion');
+            DB::beginTransaction();
 
-            foreach ($programaciones as $id_programacion => $despachos) {
-                // Obtener el total de despachos para esta programación
-                $totalDespachosProgramacion = Despacho::where('id_programacion', $id_programacion)
-                    ->where('despacho_estado_aprobacion', 0) // Solo contar los pendientes
-                    ->count();
+            // Solo para aprobación
+            if ($this->actionType == 1) {
+                // Obtener el último correlativo de la base de datos
+                $ultimoCorrelativo = $this->programacion->listar_ultima_aprobacion();
 
-                // Si es programación mixta (más de un despacho) y no seleccionó todos
-                if ($totalDespachosProgramacion > 1 && $despachos->count() < $totalDespachosProgramacion) {
-                    $programacion = DB::table('programaciones')
-                        ->where('id_programacion', $id_programacion)
-                        ->first();
-
-                    $fechaProgramacion = $programacion ? date('d/m/Y', strtotime($programacion->programacion_fecha)) : 'N/A';
-
-                    session()->flash('error', "La programación del $fechaProgramacion tiene despachos sin seleccionar. Debe seleccionar todos los despachos de esta programación.");
-                    return;
-                }
+                // Extraer el número secuencial
+                $partes = explode('-', $ultimoCorrelativo);
+                $numeroSecuencial = (int) end($partes);
             }
 
-            // Procesar cada despacho seleccionado
-            foreach ($this->selectedDespachos as $id_despacho) {
-                // Obtener el despacho sin relaciones
-                $despacho = Despacho::findOrFail($id_despacho);
+            // Ordenar las programaciones por fecha para asignar correlativos en orden cronológico
+            $programacionesOrdenadas = Programacion::whereIn('id_programacion', $this->selectedProgramaciones)
+                ->orderBy('programacion_fecha', 'asc')
+                ->get();
 
-                // Verificación adicional
-                if ($despacho->despacho_estado_aprobacion != 0) {
+            // Procesar cada programación seleccionada en orden cronológico
+            foreach ($programacionesOrdenadas as $index => $programacion) {
+                $programacionUpdate = Programacion::find($programacion->id_programacion);
+
+                // Validar que la programación esté pendiente
+                if ($programacionUpdate->programacion_estado_aprobacion != 0) {
                     continue;
                 }
 
-                // 1. Actualizar despacho
-                $despacho->id_users_programacion = Auth::id();
-                $despacho->despacho_estado_aprobacion = $this->actionType;
-                $despacho->despacho_fecha_aprobacion = now();
+                $programacionUpdate->id_users_programacion = Auth::id();
+                $programacionUpdate->programacion_fecha_aprobacion = now();
+                $programacionUpdate->programacion_estado_aprobacion = $this->actionType == 1 ? 1 : 2;
 
-                if ($this->actionType == 1) { // Solo para aprobación
-                    $correlativo = $this->despacho->listar_ultima_aprobacion_despacho();
-                    $despacho->despacho_numero_correlativo = $correlativo;
+                if ($this->actionType == 1) {
+                    $correlaApro = $this->programacion->listar_ultima_aprobacion();
+                    $programacionUpdate->programacion_numero_correlativo = $correlaApro;
+                }
 
-                    // Obtener la programación asociada al despacho
-                    $programacion = DB::table('programaciones')
-                        ->where('id_programacion', $despacho->id_programacion)
-                        ->first();
+                if ($programacionUpdate->save()) {
+                    // Listar despachos realizados
+                    $despachos = DB::table('despachos')->where('id_programacion', $programacion->id_programacion)->get();
 
-                    // Actualizar programación si no está aprobada
-                    if ($programacion && $programacion->programacion_estado_aprobacion != 1) {
-                        $correlaProg = $this->programacion->listar_ultima_aprobacion();
-                        DB::table('programaciones')
-                            ->where('id_programacion', $despacho->id_programacion)
-                            ->update([
-                                'id_users_programacion' => Auth::id(),
-                                'programacion_fecha_aprobacion' => now(),
-                                'programacion_estado_aprobacion' => 1,
-                                'programacion_numero_correlativo' => $correlaProg
+                    foreach ($despachos as $des) {
+                        $updateDespacho = Despacho::find($des->id_despacho);
+                        $updateDespacho->id_users_programacion = Auth::id();
+                        $updateDespacho->despacho_estado_aprobacion = $this->actionType;
+
+                        if ($this->actionType == 1) {
+                            $correlaDespacho = $this->despacho->listar_ultima_aprobacion_despacho();
+                            $updateDespacho->despacho_numero_correlativo = $correlaDespacho;
+                        }
+
+                        $updateDespacho->despacho_fecha_aprobacion = now();
+                        $updateDespacho->save();
+
+                        // Actualizar guías relacionadas
+                        $guias = DB::table('despacho_ventas')
+                            ->where('id_despacho', $des->id_despacho)
+                            ->pluck('id_guia')
+                            ->unique();
+
+                        $estadoGuia = $this->actionType == 1 ? 9 : 10;
+
+                        foreach ($guias as $id_guia) {
+                            DB::table('guias')
+                                ->where('id_guia', $id_guia)
+                                ->update(['guia_estado_aprobacion' => $estadoGuia]);
+
+                            $guia = DB::table('guias')->where('id_guia', $id_guia)->first();
+
+                            DB::table('historial_guias')->insert([
+                                'id_users' => Auth::id(),
+                                'id_guia' => $id_guia,
+                                'guia_nro_doc' => $guia->guia_nro_doc,
+                                'historial_guia_estado_aprobacion' => $estadoGuia,
+                                'historial_guia_fecha_hora' => now('America/Lima'),
+                                'historial_guia_descripcion' => null,
+                                'historial_guia_estado' => 1,
+                                'created_at' => Carbon::now('America/Lima'),
+                                'updated_at' => Carbon::now('America/Lima'),
                             ]);
+                        }
+
+                        // Actualizar servicios de transporte
+                        $estadoServicio = $this->actionType == 1 ? 2 : 3;
+                        DB::table('servicios_transportes')
+                            ->whereIn('id_serv_transpt', function($query) use ($des) {
+                                $query->select('id_serv_transpt')
+                                    ->from('despacho_ventas')
+                                    ->where('id_despacho', $des->id_despacho);
+                            })
+                            ->update(['serv_transpt_estado_aprobacion' => $estadoServicio]);
                     }
                 }
-                $despacho->save();
-
-                // 2. Actualizar guías relacionadas
-                $guias = DB::table('despacho_ventas')
-                    ->where('id_despacho', $id_despacho)
-                    ->pluck('id_guia')
-                    ->unique();
-
-                $estadoGuia = $this->actionType == 1 ? 9 : 10; // 9=Aprobado, 10=Rechazado
-
-                foreach ($guias as $id_guia) {
-                    DB::table('guias')
-                        ->where('id_guia', $id_guia)
-                        ->update(['guia_estado_aprobacion' => $estadoGuia]);
-
-                    $guia = DB::table('guias')->where('id_guia', $id_guia)->first();
-
-                    DB::table('historial_guias')->insert([
-                        'id_users' => Auth::id(),
-                        'id_guia' => $id_guia,
-                        'guia_nro_doc' => $guia->guia_nro_doc,
-                        'historial_guia_estado_aprobacion' => $estadoGuia,
-                        'historial_guia_fecha_hora' => now('America/Lima'),
-                        'historial_guia_descripcion' => null,
-                        'historial_guia_estado' => 1,
-                        'created_at' => Carbon::now('America/Lima'),
-                        'updated_at' => Carbon::now('America/Lima'),
-                    ]);
-                }
-
-                // 3. Actualizar servicios de transporte
-                $estadoServicio = $this->actionType == 1 ? 2 : 3; // 2=Aprobado, 3=Rechazado
-                DB::table('servicios_transportes')
-                    ->whereIn('id_serv_transpt', function($query) use ($id_despacho) {
-                        $query->select('id_serv_transpt')
-                            ->from('despacho_ventas')
-                            ->where('id_despacho', $id_despacho);
-                    })
-                    ->update(['serv_transpt_estado_aprobacion' => $estadoServicio]);
             }
 
             DB::commit();
 
             $this->dispatch('hideModalDelete');
-            $this->selectedDespachos = [];
+            $this->selectedProgramaciones = [];
             $this->buscar_programacion();
+
             $message = $this->actionType == 1 ?
-                'Despachos aprobados correctamente.' :
-                'Despachos rechazados correctamente.';
+                'Programaciones aprobadas correctamente.' :
+                'Programaciones rechazadas correctamente.';
 
             session()->flash('success', $message);
 
@@ -392,112 +385,156 @@ class ProgramacionesPendientes extends Component
 
     // Función para preparar la acción "En Camino"
 
-    public function confirmar_encamino(){
+    public function confirmar_encamino() {
         // Validación inicial
-        if (empty($this->selectedDespachos)) {
-            session()->flash('error', 'Debe seleccionar al menos un despacho.');
+        if (empty($this->selectedProgramaciones)) {
+            session()->flash('error', 'Debe seleccionar al menos una programación.');
             return;
         }
     }
-    public function cambiarEstadoEnCamino(){
+
+    public function cambiarEstadoEnCamino() {
         try {
             $this->validate([
-                'selectedDespachos' => 'required|array|min:1',
-                'selectedDespachos.*' => 'integer|exists:despachos,id_despacho',
+                'selectedProgramaciones' => 'required|array|min:1',
+                'selectedProgramaciones.*' => 'integer|exists:programaciones,id_programacion',
             ]);
 
-            // 1. Validar que todos estén en estado Aprobado (1)
-            $despachosInvalidos = Despacho::whereIn('id_despacho', $this->selectedDespachos)
+            // Validar que todos los despachos de las programaciones estén en estado Aprobado (1)
+            $despachosInvalidos = Despacho::whereIn('id_programacion', $this->selectedProgramaciones)
                 ->where('despacho_estado_aprobacion', '!=', 1)
-                ->pluck('id_despacho')
-                ->toArray();
+                ->exists();
 
-            if (!empty($despachosInvalidos)) {
-                session()->flash('error', 'Algunos despachos seleccionados no están en estado Aprobado.');
+            if ($despachosInvalidos) {
+                session()->flash('error', 'Algunos despachos de las programaciones seleccionadas no están en estado Aprobado.');
                 return;
             }
 
-//            // 2. Validar programaciones mixtas (que tengan más de un despacho)
-//            $despachosSeleccionados = Despacho::whereIn('id_despacho', $this->selectedDespachos)
-//                ->select('id_despacho', 'id_programacion')
-//                ->get();
-
-            // Agrupar por programación
-//            $programaciones = $despachosSeleccionados->groupBy('id_programacion');
-//
-//            foreach ($programaciones as $id_programacion => $despachos) {
-//                // Obtener el total de despachos aprobados para esta programación
-//                $totalDespachosProgramacion = Despacho::where('id_programacion', $id_programacion)
-//                    ->where('despacho_estado_aprobacion', 1) // Solo contar los aprobados
-//                    ->count();
-//
-//                // Si es programación mixta (más de un despacho) y no seleccionó todos
-//                if ($totalDespachosProgramacion > 1 && $despachos->count() < $totalDespachosProgramacion) {
-//                    $programacion = DB::table('programaciones')
-//                        ->where('id_programacion', $id_programacion)
-//                        ->first();
-//
-//                    $fechaProgramacion = $programacion ? date('d/m/Y', strtotime($programacion->programacion_fecha)) : 'N/A';
-//
-//                    session()->flash('error', "La programación del $fechaProgramacion tiene despachos sin seleccionar. Debe seleccionar todos los despachos de esta programación.");
-//                    return;
-//                }
-//            }
-
             DB::beginTransaction();
 
-            // Procesar todos los despachos seleccionados
-            $despachos = Despacho::whereIn('id_despacho', $this->selectedDespachos)->get();
+            // Procesar todas las programaciones seleccionadas
+            foreach ($this->selectedProgramaciones as $id_programacion) {
+                // Verificar si la programación es mixta (tiene tanto local como provincial)
+                $tiposDespacho = DB::table('despachos')
+                    ->where('id_programacion', $id_programacion)
+                    ->pluck('id_tipo_servicios')
+                    ->unique();
 
-            foreach ($despachos as $despacho) {
-                // Actualizar estado del despacho
-                $despacho->despacho_estado_aprobacion = 2;
-                $despacho->save();
+                $esMixta = $tiposDespacho->contains(1) && $tiposDespacho->contains(2); // 1=local, 2=provincial
 
-                // Obtener guías relacionadas
-                $guias = DB::table('despacho_ventas')
-                    ->where('id_despacho', $despacho->id_despacho)
-                    ->join('guias', 'guias.id_guia', '=', 'despacho_ventas.id_guia')
-                    ->select('guias.id_guia', 'guias.guia_nro_doc')
-                    ->get();
+                // Obtener todos los despachos de la programación
+                $despachos = Despacho::where('id_programacion', $id_programacion)->get();
 
-                // Actualizar estado de las guías (7 = En Camino)
-                DB::table('guias')
-                    ->whereIn('id_guia', $guias->pluck('id_guia'))
-                    ->update(['guia_estado_aprobacion' => 7]);
+                // Si es mixta, obtener guías del despacho local para identificar duplicadas
+                $guiasLocales = collect();
+                $guiasProvinciales = collect();
 
-                // Insertar en historial de guías
-                $historialGuias = $guias->map(function ($guia) {
-                    return [
-                        'id_users' => Auth::id(),
-                        'id_guia' => $guia->id_guia,
-                        'guia_nro_doc' => $guia->guia_nro_doc,
-                        'historial_guia_estado_aprobacion' => 7,
-                        'historial_guia_fecha_hora' => now('America/Lima'),
-                        'historial_guia_descripcion' => null,
-                        'historial_guia_estado' => 1,
-                        'created_at' => Carbon::now('America/Lima'),
-                        'updated_at' => Carbon::now('America/Lima'),
-                    ];
-                })->toArray();
+                if ($esMixta) {
+                    // Obtener guías del despacho local
+                    $despachoLocal = $despachos->where('id_tipo_servicios', 1)->first();
+                    if ($despachoLocal) {
+                        $guiasLocales = DB::table('despacho_ventas')
+                            ->where('id_despacho', $despachoLocal->id_despacho)
+                            ->pluck('id_guia');
+                    }
 
-                DB::table('historial_guias')->insert($historialGuias);
+                    // Obtener todas las guías de despachos provinciales
+                    $despachosProvinciales = $despachos->where('id_tipo_servicios', 2);
+                    foreach ($despachosProvinciales as $despachoProvincial) {
+                        $guiasDeEsteDespacho = DB::table('despacho_ventas')
+                            ->where('id_despacho', $despachoProvincial->id_despacho)
+                            ->pluck('id_guia');
+                        $guiasProvinciales = $guiasProvinciales->merge($guiasDeEsteDespacho);
+                    }
+                }
 
-                // Actualizar servicios de transporte (4 = En Camino)
-                DB::table('servicios_transportes')
-                    ->whereIn('id_serv_transpt', function($query) use ($despacho) {
-                        $query->select('id_serv_transpt')
-                            ->from('despacho_ventas')
-                            ->where('id_despacho', $despacho->id_despacho);
-                    })
-                    ->update(['serv_transpt_estado_aprobacion' => 4]);
+                foreach ($despachos as $despacho) {
+                    // Para programaciones mixtas, solo cambiar estado a "En Camino" (2) si es despacho local
+                    if ($esMixta && $despacho->id_tipo_servicios == 1) {
+                        $despacho->despacho_estado_aprobacion = 2;
+                    } elseif (!$esMixta) {
+                        // Si no es mixta, cambiar estado normalmente
+                        $despacho->despacho_estado_aprobacion = 2;
+                    }
+                    $despacho->save();
+
+                    // Obtener guías relacionadas al despacho actual
+                    $guias = DB::table('despacho_ventas')
+                        ->where('id_despacho', $despacho->id_despacho)
+                        ->join('guias', 'guias.id_guia', '=', 'despacho_ventas.id_guia')
+                        ->select('guias.id_guia', 'guias.guia_nro_doc')
+                        ->get();
+
+                    if ($esMixta) {
+                        // Lógica especial para programaciones mixtas
+                        foreach ($guias as $guia) {
+                            $estadoGuia = 7; // Por defecto En Camino
+
+                            // Si la guía está en despachos provinciales y también existe en local = duplicada
+                            if ($despacho->id_tipo_servicios == 2 && $guiasLocales->contains($guia->id_guia)) {
+                                $estadoGuia = 20; // Guía duplicada
+                            }
+                            // Si la guía está solo en local y no se duplicó en provinciales
+                            elseif ($despacho->id_tipo_servicios == 1 && !$guiasProvinciales->contains($guia->id_guia)) {
+                                $estadoGuia = 7; // Guía no duplicada (mantiene estado 7)
+                            }
+
+                            // Actualizar estado de la guía
+                            DB::table('guias')
+                                ->where('id_guia', $guia->id_guia)
+                                ->update(['guia_estado_aprobacion' => $estadoGuia]);
+                        }
+                    } else {
+                        // Para programaciones no mixtas, actualizar normalmente (7 = En Camino)
+                        DB::table('guias')
+                            ->whereIn('id_guia', $guias->pluck('id_guia'))
+                            ->update(['guia_estado_aprobacion' => 7]);
+                    }
+
+                    // Insertar en historial de guías
+                    $historialGuias = $guias->map(function ($guia) use ($esMixta, $despacho, $guiasLocales, $guiasProvinciales) {
+                        $estadoHistorial = 7; // Por defecto
+
+                        if ($esMixta) {
+                            // Determinar el estado para el historial según la lógica mixta
+                            if ($despacho->id_tipo_servicios == 2 && $guiasLocales->contains($guia->id_guia)) {
+                                $estadoHistorial = 20; // Guía duplicada
+                            } elseif ($despacho->id_tipo_servicios == 1 && !$guiasProvinciales->contains($guia->id_guia)) {
+                                $estadoHistorial = 7; // Guía no duplicada
+                            }
+                        }
+
+                        return [
+                            'id_users' => Auth::id(),
+                            'id_guia' => $guia->id_guia,
+                            'guia_nro_doc' => $guia->guia_nro_doc,
+                            'historial_guia_estado_aprobacion' => $estadoHistorial,
+                            'historial_guia_fecha_hora' => now('America/Lima'),
+                            'historial_guia_descripcion' => null,
+                            'historial_guia_estado' => 1,
+                            'created_at' => Carbon::now('America/Lima'),
+                            'updated_at' => Carbon::now('America/Lima'),
+                        ];
+                    })->toArray();
+
+                    DB::table('historial_guias')->insert($historialGuias);
+
+                    // Actualizar servicios de transporte (4 = En Camino)
+                    DB::table('servicios_transportes')
+                        ->whereIn('id_serv_transpt', function($query) use ($despacho) {
+                            $query->select('id_serv_transpt')
+                                ->from('despacho_ventas')
+                                ->where('id_despacho', $despacho->id_despacho);
+                        })
+                        ->update(['serv_transpt_estado_aprobacion' => 4]);
+                }
             }
 
             DB::commit();
 
-            session()->flash('success', 'Despachos marcados como "En Camino" correctamente.');
+            session()->flash('success', 'Programaciones marcadas como "En Camino" correctamente.');
             $this->dispatch('hideModalEnCamino');
-            $this->selectedDespachos = [];
+            $this->selectedProgramaciones = [];
             $this->buscar_programacion();
 
         } catch (\Exception $e) {
@@ -578,7 +615,7 @@ class ProgramacionesPendientes extends Component
         }
     }
 
-    public function cambiarEstadoComprobante(){
+    public function cambiarEstadoComprobante() {
         try {
             DB::beginTransaction();
             $id_despacho = $this->currentDespachoId;
@@ -595,11 +632,42 @@ class ProgramacionesPendientes extends Component
             }
 
             // Verificar si es programación mixta
-            $esProgramacionMixta = DB::table('despachos')
-                    ->where('id_programacion', $despachoActual->id_programacion)
-                    ->count() > 1;
-
+            $esProgramacionMixta = $this->esProgramacionMixta($despachoActual->id_programacion);
             $esDespachoLocal = ($despachoActual->id_tipo_servicios == 1);
+
+            // Variables para control de guías en programaciones mixtas
+            $guiasLocales = collect();
+            $guiasProvinciales = collect();
+            $estadoDespachoLocal = null;
+
+            if ($esProgramacionMixta) {
+                // Obtener despacho local de la programación
+                $despachoLocal = DB::table('despachos')
+                    ->where('id_programacion', $despachoActual->id_programacion)
+                    ->where('id_tipo_servicios', 1)
+                    ->first();
+
+                if ($despachoLocal) {
+                    $estadoDespachoLocal = $despachoLocal->despacho_estado_aprobacion;
+
+                    // Obtener guías del despacho local
+                    $guiasLocales = DB::table('despacho_ventas')
+                        ->where('id_despacho', $despachoLocal->id_despacho)
+                        ->pluck('id_guia');
+                }
+
+                // Obtener guías de despachos provinciales
+                $despachosProvinciales = DB::table('despachos')
+                    ->where('id_programacion', $despachoActual->id_programacion)
+                    ->where('id_tipo_servicios', 2)
+                    ->pluck('id_despacho');
+
+                if ($despachosProvinciales->isNotEmpty()) {
+                    $guiasProvinciales = DB::table('despacho_ventas')
+                        ->whereIn('id_despacho', $despachosProvinciales)
+                        ->pluck('id_guia');
+                }
+            }
 
             // Variables para estados
             $tieneGuias = false;
@@ -655,8 +723,22 @@ class ProgramacionesPendientes extends Component
                         'updated_at' => now('America/Lima')
                     ]);
 
-                // Actualizar guías (excepto para despachos locales en mixtos)
-                if (!($esProgramacionMixta && $esDespachoLocal)) {
+                // Lógica para actualizar estado de guías en programaciones mixtas
+                if ($esProgramacionMixta && $esDespachoLocal) {
+                    // Verificar si la guía NO está duplicada en despachos provinciales
+                    $esGuiaNoDuplicada = !$guiasProvinciales->contains($despachoVenta->id_guia);
+
+                    if ($esGuiaNoDuplicada) {
+                        // Actualizar solo las guías no duplicadas a estado 8
+                        DB::table('guias')
+                            ->where('id_guia', $despachoVenta->id_guia)
+                            ->update([
+                                'guia_estado_aprobacion' => 8,
+                                'updated_at' => now('America/Lima')
+                            ]);
+                    }
+                } elseif (!($esProgramacionMixta && $esDespachoLocal)) {
+                    // Actualización normal para casos no mixtos
                     DB::table('guias')
                         ->where('id_guia', $despachoVenta->id_guia)
                         ->update([
@@ -665,17 +747,40 @@ class ProgramacionesPendientes extends Component
                         ]);
                 }
 
-                // Registrar en historial
-                DB::table('historial_guias')->insert([
-                    'id_users' => Auth::id(),
-                    'id_guia' => $despachoVenta->id_guia,
-                    'guia_nro_doc' => DB::table('guias')->where('id_guia', $despachoVenta->id_guia)->value('guia_nro_doc'),
-                    'historial_guia_estado_aprobacion' => $es,
-                    'historial_guia_fecha_hora' => now('America/Lima'),
-                    'historial_guia_estado' => 1,
-                    'created_at' => now('America/Lima'),
-                    'updated_at' => now('America/Lima')
-                ]);
+                // Lógica para registrar en historial según programación mixta
+                $debeGuardarEnHistorial = true;
+
+                if ($esProgramacionMixta) {
+                    if ($estadoDespachoLocal != 3) {
+                        // Si despacho local NO está en estado 3, solo guardar guías locales que NO se duplican
+                        if ($esDespachoLocal) {
+                            $debeGuardarEnHistorial = !$guiasProvinciales->contains($despachoVenta->id_guia);
+                        } else {
+                            $debeGuardarEnHistorial = false;
+                        }
+                    } else {
+                        // Si despacho local está en estado 3, solo guardar guías que SÍ se duplican (provinciales)
+                        if (!$esDespachoLocal) {
+                            $debeGuardarEnHistorial = $guiasLocales->contains($despachoVenta->id_guia);
+                        } else {
+                            $debeGuardarEnHistorial = false;
+                        }
+                    }
+                }
+
+                // Registrar en historial solo si debe hacerlo
+                if ($debeGuardarEnHistorial) {
+                    DB::table('historial_guias')->insert([
+                        'id_users' => Auth::id(),
+                        'id_guia' => $despachoVenta->id_guia,
+                        'guia_nro_doc' => DB::table('guias')->where('id_guia', $despachoVenta->id_guia)->value('guia_nro_doc'),
+                        'historial_guia_estado_aprobacion' => $es,
+                        'historial_guia_fecha_hora' => now('America/Lima'),
+                        'historial_guia_estado' => 1,
+                        'created_at' => now('America/Lima'),
+                        'updated_at' => now('America/Lima')
+                    ]);
+                }
 
                 // Evaluar estados
                 $tieneGuias = true;

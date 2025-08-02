@@ -27,7 +27,7 @@
             <form wire:submit.prevent="guardar_despacho_entrega">
                 <div class="row">
                     <div class="col-lg-12 col-md-12 col-sm-12">
-                        <h2 class="deleteTitle">¿Confirmar despacho?</h2>
+                        <h2 class="deleteTitle">¿Registrar Entrega con Fecha y hora: {{ $fecha_mostrar_modal }}?</h2>
                     </div>
                     <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-center">
                         <button type="submit" class="btn btn-primary text-white btnDelete">SI</button>
@@ -158,7 +158,7 @@
                     <div class="card">
                         <div class="card-body">
                             <h6>Fecha de despacho</h6>
-                            <input type="date" class="form-control" id="guia_fecha_despacho" name="guia_fecha_despacho" wire:model="guia_fecha_despacho"/>
+                            <input type="date" class="form-control" id="guia_fecha_despacho" name="guia_fecha_despacho" wire:model.live="guia_fecha_despacho"/>
                         </div>
                     </div>
                 </div>

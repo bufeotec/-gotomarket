@@ -300,13 +300,13 @@
                 <div class="row">
                     <div class="col-lg-12 col-md-12 col-sm-12">
                         @if($actionType == 1)
-                            <h2 class="deleteTitle">¿Está seguro de aprobar los despachos seleccionados?</h2>
+                            <h2 class="deleteTitle">¿Está seguro de aprobar las {{ count($selectedProgramaciones) }} programaciones seleccionadas?</h2>
                         @else
-                            <h2 class="deleteTitle">¿Está seguro de rechazar los despachos seleccionados?</h2>
+                            <h2 class="deleteTitle">¿Está seguro de rechazar las {{ count($selectedProgramaciones) }} programaciones seleccionadas?</h2>
                         @endif
                     </div>
                     <div class="col-lg-12 col-md-12 col-sm-12">
-                        @error('selectedDespachos') <span class="message-error">{{ $message }}</span> @enderror
+                        @error('selectedProgramaciones') <span class="message-error">{{ $message }}</span> @enderror
                         @if (session()->has('error_delete'))
                             <div class="alert alert-danger alert-dismissible show fade">
                                 {{ session('error_delete') }}
@@ -497,7 +497,7 @@
                 @endphp
                 {{--                                @if($roleId == 1 || $roleId == 2)--}}
                 <a class="btn btn-sm text-white bg-warning" wire:click="confirmar_encamino" data-bs-toggle="modal" data-bs-target="#modalEnCamino">
-                    Cambiar a "En Camino"
+                    Iniciar Tránsito
                 </a>
                 <button class="btn btn-sm text-white bg-success" wire:click="prepareAction(1)" data-bs-toggle="modal" data-bs-target="#modalAprobarProgramacion">
                     <i class="fa-solid fa-check"></i> APROBAR
@@ -561,6 +561,18 @@
 {{--            {{route('Programacioncamion.detalle_programacion',['data'=>base64_encode($r->id_programacion) ])}}--}}
             <div class="accordion-item" >
                 <h2 class="accordion-header d-flex justify-content-between align-items-center">
+                    <!-- PRIMER CHECK BOX DEL BOTON DEL ACORDION -->
+                    @if(count($r->despacho) > 0 && in_array($r->despacho[0]->despacho_estado_aprobacion, [0, 1]))
+                        <div style="display: flex; padding: 12px" class="checkbox-container {{$index == 0 ? 'active' : ''}}" data-accordion-target="collapseOne_{{$index}}">
+                            <input
+                                style="font-size: 20px"
+                                type="checkbox"
+                                class="form-check-input programacion-checkbox"
+                                wire:model="selectedProgramaciones"
+                                value="{{$r->id_programacion}}"
+                            />
+                        </div>
+                    @endif
                     <button class="accordion-button {{$index == 0 ? '' : 'collapsed'}} flex-grow-1" wire:ignore.self type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne_{{$index}}" aria-expanded="true" aria-controls="collapseOne_{{$index}}">
                         #{{$conteoGeneral}} | FD : {{$fe}} | UR : {{$usuarios}}
                         @if(!empty($fa)) | FA : {{$fa}} @endif
@@ -582,7 +594,16 @@
                                 <table class="table">
                                     <thead>
                                     <tr style="background: #f5f5f9">
-                                        <th>Check Box</th>
+                                        <th>
+                                            @if(count($r->despacho) > 0 && in_array($r->despacho[0]->despacho_estado_aprobacion, [0, 1]))
+                                                <input
+                                                    type="checkbox"
+                                                    class="form-check-input programacion-checkbox"
+                                                    wire:model="selectedProgramaciones"
+                                                    value="{{$r->id_programacion}}"
+                                                />
+                                            @endif
+                                        </th>
                                         <th>N°</th>
                                         <th>Tipo Servicio</th>
                                         <th>OS</th>
@@ -603,31 +624,7 @@
                                         @php $conteoGeneral2 = 1; @endphp
                                         @foreach($r->despacho as $des)
                                             <tr>
-                                                <td>
-                                                    @php
-                                                        $esMixto = $programacionesContador[$r->id_programacion] > 1;
-                                                        $mostrarCheckbox = false;
-
-                                                        // Mostrar checkbox si no está en estados 2,3,4
-                                                        if (!in_array($des->despacho_estado_aprobacion, [2, 3, 4])) {
-                                                            // Si es estado 0 (Pendiente), mostrar siempre
-                                                            if ($des->despacho_estado_aprobacion == 0) {
-                                                                $mostrarCheckbox = true;
-                                                            }
-                                                            // Si es estado 1 (Aprobado)
-                                                            elseif ($des->despacho_estado_aprobacion == 1) {
-                                                                // Si NO es mixto o (es mixto y es servicio local - id_tipo_servicios == 1)
-                                                                if (!$esMixto || ($esMixto && $des->id_tipo_servicios == 1)) {
-                                                                    $mostrarCheckbox = true;
-                                                                }
-                                                            }
-                                                        }
-                                                    @endphp
-
-                                                    @if($mostrarCheckbox)
-                                                        <input type="checkbox" class="form-check-input" wire:model="selectedDespachos" value="{{ $des->id_despacho }}"/>
-                                                    @endif
-                                                </td>
+                                                <td></td>
                                                 <td>{{$conteoGeneral2}}</td>
                                                 <td>{{$des->tipo_servicio_concepto}}</td>
                                                 <td>{{$des->despacho_numero_correlativo ?? '-'}}</td>
@@ -682,7 +679,7 @@
                                                 <td>{{ $ra2 }}</td>
                                                 <td>
                                                     <button class="btn btn-primary btn-sm text-white mb-2" wire:click="listar_informacion_despacho({{$des->id_despacho}})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">
-                                                        <i class="fa-solid fa-eye"></i> Despacho
+                                                        <i class="fa-solid fa-eye"></i> Detalle OS
                                                     </button>
 
 {{--                                                    <button class="btn btn-warning btn-sm text-white mb-2" wire:click="listar_detalle_guia({{$des->id_despacho}})" data-bs-toggle="modal" data-bs-target="#modalDetalleGuia">--}}
@@ -729,7 +726,40 @@
             transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
         }
 
+        .checkbox-container.active {
+            background: #e7f1ff !important;
+        }
     </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const accordionElement = document.getElementById('accordionExample');
+
+            // Escuchar eventos de mostrar/ocultar del acordeón
+            accordionElement.addEventListener('show.bs.collapse', function (event) {
+                // Remover la clase active de todos los checkboxes
+                document.querySelectorAll('.checkbox-container').forEach(container => {
+                    container.classList.remove('active');
+                });
+
+                // Agregar la clase active al checkbox del acordeón que se está abriendo
+                const targetId = event.target.id;
+                const checkboxContainer = document.querySelector(`[data-accordion-target="${targetId}"]`);
+                if (checkboxContainer) {
+                    checkboxContainer.classList.add('active');
+                }
+            });
+
+            accordionElement.addEventListener('hide.bs.collapse', function (event) {
+                // Remover la clase active del checkbox del acordeón que se está cerrando
+                const targetId = event.target.id;
+                const checkboxContainer = document.querySelector(`[data-accordion-target="${targetId}"]`);
+                if (checkboxContainer) {
+                    checkboxContainer.classList.remove('active');
+                }
+            });
+        });
+    </script>
 </div>
 @script
 <script>

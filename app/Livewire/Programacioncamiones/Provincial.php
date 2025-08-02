@@ -933,6 +933,23 @@ class Provincial extends Component
 
 //                'despacho_descripcion_modificado.required' => 'La descripción por modificar el monto es obligatorio.',
             ]);
+
+            // Validación de rango de fechas (3 días antes y 3 días después)
+            $fechaDespacho = Carbon::parse($this->programacion_fecha);
+            $fechaActual = Carbon::now('America/Lima')->startOfDay();
+
+            // Calculamos los límites de fecha
+            $fechaLimiteInferior = $fechaActual->copy()->subDays(3);
+            $fechaLimiteSuperior = $fechaActual->copy()->addDays(3);
+
+            // Verificamos si la fecha está fuera del rango permitido
+            if ($fechaDespacho->lt($fechaLimiteInferior) || $fechaDespacho->gt($fechaLimiteSuperior)) {
+                session()->flash('error', 'Fecha no válida. Solo se permiten fechas entre ' .
+                    $fechaLimiteInferior->format('d-m-Y') . ' y ' .
+                    $fechaLimiteSuperior->format('d-m-Y') . '.');
+                return;
+            }
+
             $contadorError = 0;
             DB::beginTransaction();
             if ($this->id_programacion_edit && $this->id_despacho_edit){
@@ -1031,7 +1048,8 @@ class Provincial extends Component
             $despacho->despacho_descripcion_otros = $this->despacho_gasto_otros > 0 ? $this->despacho_descripcion_otros : null;
             $despacho->despacho_monto_modificado = $this->tarifaMontoSeleccionado ?: null;
             $despacho->despacho_estado_modificado = $this->tarifaMontoSeleccionado != $this->montoOriginal ? 1 : 0;
-            $despacho->despacho_descripcion_modificado = ($this->tarifaMontoSeleccionado != $this->montoOriginal) ? $this->despacho_descripcion_modificado : null;            $despacho->despacho_estado = 1;
+            $despacho->despacho_descripcion_modificado = !empty($this->despacho_descripcion_modificado) ? $this->despacho_descripcion_modificado : null;
+            $despacho->despacho_estado = 1;
             $despacho->despacho_microtime = $microtimeCread;
 
             $existecap = DB::table('tarifarios')

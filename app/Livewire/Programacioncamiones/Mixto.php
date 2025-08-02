@@ -1029,6 +1029,23 @@ class Mixto extends Component
                 'despacho_gasto_otros.regex' => 'El gasto en otros debe ser un número válido.',
             ]);
 
+
+            // Validación de rango de fechas (3 días antes y 3 días después)
+            $fechaDespacho = Carbon::parse($this->programacion_fecha);
+            $fechaActual = Carbon::now('America/Lima')->startOfDay();
+
+            // Calculamos los límites de fecha
+            $fechaLimiteInferior = $fechaActual->copy()->subDays(3);
+            $fechaLimiteSuperior = $fechaActual->copy()->addDays(3);
+
+            // Verificamos si la fecha está fuera del rango permitido
+            if ($fechaDespacho->lt($fechaLimiteInferior) || $fechaDespacho->gt($fechaLimiteSuperior)) {
+                session()->flash('error', 'Fecha no válida. Solo se permiten fechas entre ' .
+                    $fechaLimiteInferior->format('d-m-Y') . ' y ' .
+                    $fechaLimiteSuperior->format('d-m-Y') . '.');
+                return;
+            }
+
             DB::beginTransaction();
             if ($this->id_programacion_edit && $this->id_despacho_edit){
                 // Se va a eliminar los comprobantes del anterior registro local
@@ -1165,7 +1182,7 @@ class Mixto extends Component
             $despachoLocal->despacho_descripcion_otros = $this->despacho_descripcion_otros;
             $despachoLocal->despacho_monto_modificado = ($this->tarifaMontoSeleccionado ?: 0);
             $despachoLocal->despacho_estado_modificado = $costoOriginalFlete->tarifa_monto !=  $this->tarifaMontoSeleccionado ? 1 : 0;
-            $despachoLocal->despacho_descripcion_modificado = $this->despacho_descripcion_modificado;
+            $despachoLocal->despacho_descripcion_modificado = !empty($this->despacho_descripcion_modificado) ? $this->despacho_descripcion_modificado : null;
 
             $despachoLocal->despacho_estado = 1;
             $despachoLocal->despacho_microtime = $microLocal;
@@ -1261,7 +1278,7 @@ class Mixto extends Component
                 $despacho->despacho_descripcion_otros = $cliente['otrosDescripcion'];
                 $despacho->despacho_monto_modificado = ($cliente['montoSeleccionado'] ?: 0);
                 $despacho->despacho_estado_modificado = $cliente['montoOriginal'] != $cliente['montoSeleccionado'] ? 1 : 0;
-                $despacho->despacho_descripcion_modificado = $cliente['montoSeleccionadoDescripcion'];
+                $despacho->despacho_descripcion_modificado = !empty($cliente['montoSeleccionadoDescripcion']) ? $cliente['montoSeleccionadoDescripcion'] : null;
                 $despacho->despacho_estado = 1;
                 $despacho->despacho_microtime = $micro;
 

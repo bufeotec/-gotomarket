@@ -596,13 +596,12 @@
                                                     </span>
                                                 </p>
                                             </div>
-                                            @if($tarifaMontoSeleccionado != $montoOriginal)
-                                                <div class="col-lg-12 col-md-12 mb-2 d-flex justify-content-end">
-                                                    <a class="btn btn-success text-white btn-sm" data-bs-toggle="modal" data-bs-target="#modalRegistrarComentario">
-                                                        Comentario
-                                                    </a>
-                                                </div>
-                                            @endif
+                                            <!-- DISQUE COMENTARIO PA LA OS -->
+                                            <div class="col-lg-12 col-md-12 mb-2 d-flex justify-content-end">
+                                                <a class="btn btn-success text-white btn-sm" data-bs-toggle="modal" data-bs-target="#modalRegistrarComentario">
+                                                    Comentario
+                                                </a>
+                                            </div>
                                         </div>
                                     </div>
                                 @endif
