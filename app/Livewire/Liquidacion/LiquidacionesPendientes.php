@@ -13,9 +13,12 @@ use App\Models\Despacho;
 use App\Models\Liquidacion;
 use App\Models\General;
 use Livewire\WithFileUploads;
+use Livewire\WithoutUrlPagination;
+use Livewire\WithPagination;
 
 class LiquidacionesPendientes extends Component
 {
+    use WithPagination, WithoutUrlPagination;
     use WithFileUploads;
     private $logs;
     private $despacho;
@@ -43,13 +46,17 @@ class LiquidacionesPendientes extends Component
     /* ----------------------------------------------- */
     public $id_liquidacion_observacion = '';
     public $liquidacion_observacion = '';
+
+
+    public $search_liqui;
+    public $pagination_liqui = 10;
     /* ----------------------------------------------- */
     public function mount(){
         $this->desde = date('Y-m-d');
         $this->hasta = date('Y-m-d');
     }
     public function render(){
-        $resultado = $this->liquidacion->listar_liquidacion_pendientes($this->search,$this->desde, $this->hasta);
+        $resultado = $this->liquidacion->listar_liquidacion_pendientes($this->search,$this->desde, $this->hasta, $this->pagination_liqui);
 
         $conteoLiquidacionPend = DB::table('liquidaciones')->where('liquidacion_estado_aprobacion', '=', 0)->count();
         return view('livewire.liquidacion.liquidaciones-pendientes', compact('resultado', 'conteoLiquidacionPend'));

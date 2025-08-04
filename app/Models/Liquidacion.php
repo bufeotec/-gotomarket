@@ -22,67 +22,78 @@ class Liquidacion extends Model
     {
         return $this->hasMany(LiquidacionDetalles::class, 'id_liquidacion');
     }
-    public function listar_liquidacion_pendientes($search,$desde, $hasta)
+    public function listar_liquidacion_pendientes($search, $desde, $hasta, $pagination)
     {
         try {
-            $result = DB::table('liquidaciones as li')
+            $query = DB::table('liquidaciones as li')
                 ->select('li.*','tr.transportista_razon_social','u.name','u.last_name','li.created_at as creacion_liquidacion')
                 ->join('transportistas as tr', 'li.id_transportistas', '=', 'tr.id_transportistas')
                 ->join('users as u', 'li.id_users', '=', 'u.id_users')
                 ->where('li.liquidacion_estado', '=', 1)
                 ->where('li.liquidacion_estado_aprobacion', '=', 0);
-                if ($desde && $hasta){
-                    $result->whereBetween(DB::raw('DATE(li.created_at)'), [$desde, $hasta]);
-                }
-                if ($search) {
-                    $result->where(function ($q) use ($search) {
-                        $q->where('li.liquidacion_serie', 'like', '%' . $search . '%')
-                            ->orWhere('li.liquidacion_correlativo', 'like', '%' . $search . '%')
-                            ->orWhere('tr.transportista_ruc', 'like', '%' . $search . '%')
-                            ->orWhere('tr.transportista_razon_social', 'like', '%' . $search . '%')
-                            ->orWhere('tr.transportista_nom_comercial', 'like', '%' . $search . '%')
-                            ->orWhere('tr.transportista_direccion', 'like', '%' . $search . '%')
-                            ->orWhere('u.name', 'like', '%' . $search . '%')
-                            ->orWhere('u.last_name', 'like', '%' . $search . '%');
-                    });
-                }
-                $result = $result->orderBy('li.id_liquidacion','desc')->get();
-                foreach ($result as $re){
-                    $re->detalles = DB::table('liquidacion_detalles as ld')
-                        ->join('despachos as d','d.id_despacho','=','ld.id_despacho')
-                        ->join('programaciones as pr','pr.id_programacion','=','d.id_programacion')
-                        ->join('tipo_servicios as ts','ts.id_tipo_servicios','=','d.id_tipo_servicios')
-                        ->where('ld.id_liquidacion','=',$re->id_liquidacion)
-                        ->orderBy('pr.programacion_fecha', 'desc')->get();
 
-                    foreach ($re->detalles as $des){
-                        $des->comprobantes = DB::table('despacho_ventas as dv')
-                            ->join('guias as g','dv.id_guia','=','g.id_guia')
-                            ->where('dv.id_despacho', '=', $des->id_despacho)
-                            ->get();
-                        $totalVenta = 0;
-                        $totalVentaRestar = 0;
-                        $totalPesoRestar = 0;
-                        foreach ($des->comprobantes as $com) {
-                            $precio = floatval($com->guia_importe_total_sin_igv);
-                            $pesoMenos = $com->despacho_venta_total_kg;
-                            $totalVenta += $precio;
-                            if ($com->despacho_detalle_estado_entrega == 3){
-                                $totalVentaRestar += $precio;
-                                $totalPesoRestar += $pesoMenos;
-                            }
+            if ($desde && $hasta) {
+                $query->whereBetween(DB::raw('DATE(li.created_at)'), [$desde, $hasta]);
+            }
+
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('li.liquidacion_serie', 'like', '%' . $search . '%')
+                        ->orWhere('li.liquidacion_correlativo', 'like', '%' . $search . '%')
+                        ->orWhere('tr.transportista_ruc', 'like', '%' . $search . '%')
+                        ->orWhere('tr.transportista_razon_social', 'like', '%' . $search . '%')
+                        ->orWhere('tr.transportista_nom_comercial', 'like', '%' . $search . '%')
+                        ->orWhere('tr.transportista_direccion', 'like', '%' . $search . '%')
+                        ->orWhere('u.name', 'like', '%' . $search . '%')
+                        ->orWhere('u.last_name', 'like', '%' . $search . '%');
+                });
+            }
+
+            // Primero paginar los resultados principales
+            $result = $query->orderBy('li.id_liquidacion', 'desc')->paginate($pagination);
+
+            // Luego agregar los detalles a cada item paginado
+            foreach ($result as $re) {
+                $re->detalles = DB::table('liquidacion_detalles as ld')
+                    ->join('despachos as d','d.id_despacho','=','ld.id_despacho')
+                    ->join('programaciones as pr','pr.id_programacion','=','d.id_programacion')
+                    ->join('tipo_servicios as ts','ts.id_tipo_servicios','=','d.id_tipo_servicios')
+                    ->where('ld.id_liquidacion','=',$re->id_liquidacion)
+                    ->orderBy('pr.programacion_fecha', 'desc')
+                    ->get();
+
+                foreach ($re->detalles as $des) {
+                    $des->comprobantes = DB::table('despacho_ventas as dv')
+                        ->join('guias as g','dv.id_guia','=','g.id_guia')
+                        ->where('dv.id_despacho', '=', $des->id_despacho)
+                        ->get();
+
+                    $totalVenta = 0;
+                    $totalVentaRestar = 0;
+                    $totalPesoRestar = 0;
+
+                    foreach ($des->comprobantes as $com) {
+                        $precio = floatval($com->guia_importe_total_sin_igv);
+                        $pesoMenos = $com->despacho_venta_total_kg;
+                        $totalVenta += $precio;
+                        if ($com->despacho_detalle_estado_entrega == 3) {
+                            $totalVentaRestar += $precio;
+                            $totalPesoRestar += $pesoMenos;
                         }
-                        $des->totalVentaDespacho = $totalVenta;
-                        $des->totalVentaNoEntregado = $totalVentaRestar;
-                        $des->totalPesoNoEntregado = $totalPesoRestar;
                     }
+
+                    $des->totalVentaDespacho = $totalVenta;
+                    $des->totalVentaNoEntregado = $totalVentaRestar;
+                    $des->totalPesoNoEntregado = $totalPesoRestar;
                 }
+            }
+
+            return $result;
 
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);
-            $result = [];
+            return collect()->paginate($pagination); // Retorna una paginación vacía en caso de error
         }
-        return $result;
     }
 //
 //    public function listar_liquidacion_aprobadas_excel($search,$desde, $hasta)

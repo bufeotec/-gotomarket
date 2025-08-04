@@ -468,6 +468,9 @@
             <label for="fecha_hasta" class="form-label">Hasta</label>
             <x-input-general  type="date" id="fecha_hasta" wire:model.live="hasta" />
         </div>
+        <div class="col-lg-2 col-md-2 col-sm-12 mt-3">
+            <x-select-filter wire:model.live="pagination_liqui" />
+        </div>
     </div>
 
     <div class="col-lg-12 col-md-12 col-sm-12">
@@ -695,13 +698,15 @@
                             </div>
                         </div>
                     </div>
-                    @php $conteoGeneral++; @endphp
-                    @endforeach
-                    @else
-                        <p class="text-center"> Registros Insuficientes</p>
-                    @endif
                 </div>
+            @php $conteoGeneral++; @endphp
+            @endforeach
+        @else
+            <p class="text-center"> Registros Insuficientes</p>
+        @endif
     </div>
+
+    {{ $resultado->links(data: ['scrollTo' => false]) }}
 </div>
 @script
 <script>
