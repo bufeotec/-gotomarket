@@ -157,6 +157,7 @@ class Facturacion extends Component
                 'g.guia_departamento',
                 'g.guia_provincia',
                 'g.guia_destrito',
+                'g.guia_fecha_despacho',
                 'g.guia_estado_aprobacion',
                 'g.guia_estado_registro',
                 'g.guia_fecha',
