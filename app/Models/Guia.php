@@ -647,6 +647,7 @@ class Guia extends Model
                     'guias.guia_departamento',
                     'guias.guia_provincia',
                     'guias.guia_destrito',
+                    'guias.guia_fecha_despacho',
                     'guias.guia_estado_aprobacion',
                     'guias.guia_estado_registro',
                     'guias.guia_fecha',
