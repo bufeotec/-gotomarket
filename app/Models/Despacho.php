@@ -133,5 +133,33 @@ class Despacho extends Model
         return $result;
     }
 
+    public function listar_despacho_x_id($id){
+        try {
+            $result = DB::table('despachos')
+                ->where('id_despacho','=',$id)
+                ->first();
+
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
+
+    public function listar_info_por_id($id){
+        try {
+            $result = DB::table('despachos as d')
+                ->join('transportistas as t', 'd.id_transportistas', 't.id_transportistas')
+                ->join('tipo_servicios as ts', 'd.id_tipo_servicios', 'ts.id_tipo_servicios')
+                ->join('tarifarios as tar', 'd.id_tarifario', 'tar.id_tarifario')
+                ->where('d.id_despacho','=',$id)
+                ->first();
+
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
 
 }

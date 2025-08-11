@@ -50,6 +50,65 @@ class Programacion extends Model
             return [];
         }
     }
+
+    public function listar_programaciones_realizadas_x_fechas_x_estado_new($desde, $hasta, $estados) {
+        try {
+            $query = DB::table('programaciones')
+                ->whereBetween('programacion_fecha', [$desde, $hasta])
+                ->orderBy('id_programacion', 'desc');
+
+            // Si $estados es un array y tiene elementos, aplicar filtro
+            if (is_array($estados) && count($estados) > 0) {
+                // Verificar si algún estado es 2 (Tránsito)
+                $tieneTransito = in_array('2', $estados);
+                $estadosSinTransito = array_filter($estados, function($estado) {
+                    return $estado != '2';
+                });
+
+                // Si solo hay estados diferentes de tránsito
+                if (count($estadosSinTransito) > 0 && !$tieneTransito) {
+                    $query->whereIn('programacion_estado_aprobacion', $estadosSinTransito);
+                }
+                // Si hay tránsito y otros estados, no filtramos aquí (se filtra en el despacho)
+                // Si solo hay tránsito, tampoco filtramos aquí
+                else if (count($estadosSinTransito) > 0 && $tieneTransito) {
+                    // Caso mixto: se maneja en la consulta de despacho
+                }
+            }
+            // Si $estados es un string (compatibilidad con código anterior)
+            else if (is_string($estados) && $estados !== '' && $estados !== null) {
+                if ($estados != '2') {
+                    $query->where('programacion_estado_aprobacion', '=', $estados);
+                }
+            }
+
+            return $query->get();
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            return collect([]); // Retornar colección vacía en caso de error
+        }
+    }
+
+    public function listar_programaciones_realizadas_x_fechas_guias($desde, $hasta) {
+        try {
+            // Para búsqueda por guías, obtenemos las programaciones que tienen
+            // despachos relacionados con guías en el rango de fechas
+            $query = DB::table('programaciones as p')
+                ->join('despachos as d', 'd.id_programacion', '=', 'p.id_programacion')
+                ->join('despacho_ventas as dv', 'dv.id_despacho', '=', 'd.id_despacho')
+                ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
+                ->whereBetween('g.guia_fecha_emision', [$desde, $hasta])
+                ->select('p.*')
+                ->distinct()
+                ->orderBy('p.id_programacion', 'desc');
+
+            return $query->get();
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            return [];
+        }
+    }
+
     public function listar_ultima_aprobacion(){
         try {
             // Obtener los últimos dos dígitos del año actual

@@ -153,7 +153,7 @@
                                                     @if($listar_detalle_despacho->despacho_estado_aprobacion == 2 || $listar_detalle_despacho->despacho_estado_aprobacion == 3)
                                                         <th>Estado del comprobante</th>
                                                     @endif
-                                                    @if($listar_detalle_despacho->despacho_estado_aprobacion == 3 && !$this->verificarAprobacion($listar_detalle_despacho->id_despacho))
+                                                    @if($listar_detalle_despacho->despacho_estado_aprobacion == 3)
                                                         <th>Cambio de estado</th>
                                                     @endif
                                                 </tr>
