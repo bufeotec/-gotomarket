@@ -2,7 +2,8 @@
     @php
         $general = new \App\Models\General();
     @endphp
-{{--    MODAL DETALLES DEL DESPACHO--}}
+
+    {{--    MODAL DETALLES DEL DESPACHO--}}
     <x-modal-general  wire:ignore.self >
         <x-slot name="tama">modal-xl</x-slot>
         <x-slot name="id_modal">modalDetalleDespacho</x-slot>
@@ -45,6 +46,19 @@
                                 @endif
 
                                 @if($listar_detalle_despacho->id_tipo_servicios == 2)
+                                    @php
+                                        $departamento = \Illuminate\Support\Facades\DB::table('departamentos')
+                                        ->where('id_departamento','=',$listar_detalle_despacho->id_departamento)->first();
+                                        $provincia = \Illuminate\Support\Facades\DB::table('provincias')
+                                        ->where('id_provincia','=',$listar_detalle_despacho->id_provincia)->first();
+                                        $distrito = \Illuminate\Support\Facades\DB::table('distritos')
+                                        ->where('id_distrito','=',$listar_detalle_despacho->id_distrito)->first();
+                                    @endphp
+                                    <div class="col-lg-5 col-md-3 col-sm-4 mb-3">
+                                        <strong class="colorgotomarket mb-2">Ubigeo Seleccionado en el Despacho:</strong>
+                                        <p>{{ $departamento ? $departamento->departamento_nombre : '' }} - {{ $provincia ? $provincia->provincia_nombre : '' }} - {{ $distrito ? $distrito->distrito_nombre : 'TODOS LOS DISTRITOS' }}</p>
+                                    </div>
+                                @endif@if($listar_detalle_despacho->id_tipo_servicios == 2)
                                     @php
                                         $departamento = \Illuminate\Support\Facades\DB::table('departamentos')
                                         ->where('id_departamento','=',$listar_detalle_despacho->id_departamento)->first();
@@ -290,166 +304,134 @@
             @endif
         </x-slot>
     </x-modal-general>
-{{--    MODAL FIN DETALLES DEL DESPACHO--}}
+    {{--    MODAL FIN DETALLES DEL DESPACHO--}}
 
-{{--    MODAL APROBAR / RECHAZAR PROGRAMACIÓN--}}
-    <x-modal-delete wire:ignore.self>
-        <x-slot name="id_modal">modalAprobarProgramacion</x-slot>
-        <x-slot name="modalContentDelete">
-            <form wire:submit.prevent="cambiarEstadoProgramacionFormulario">
-                <div class="row">
-                    <div class="col-lg-12 col-md-12 col-sm-12">
-                        @if($actionType == 1)
-                            <h2 class="deleteTitle">¿Está seguro de aprobar las {{ count($selectedProgramaciones) }} programaciones seleccionadas?</h2>
-                        @else
-                            <h2 class="deleteTitle">¿Está seguro de rechazar las {{ count($selectedProgramaciones) }} programaciones seleccionadas?</h2>
-                        @endif
-                    </div>
-                    <div class="col-lg-12 col-md-12 col-sm-12">
-                        @error('selectedProgramaciones') <span class="message-error">{{ $message }}</span> @enderror
-                        @if (session()->has('error_delete'))
-                            <div class="alert alert-danger alert-dismissible show fade">
-                                {{ session('error_delete') }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        @endif
-                    </div>
-                    <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-center">
-                        <button type="submit" class="btn btn-primary text-white btnDelete">SI</button>
-                        <button type="button" data-bs-dismiss="modal" class="btn btn-danger btnDelete">No</button>
-                    </div>
+    <div class="card">
+        <div class="card-body">
+            <div class="row align-items-center mt-2">
+                <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
+                    <label for="select_tipo" class="form-label">Seleccione tipo</label>
+                    <select class="form-select" wire:model.live="select_tipo" wire:change="limpiar_tipo_select">
+                        <option value="">Seleccionar...</option>
+                        <option value="1">Orden de servicio</option>
+                        <option value="2">Guía / Clientes</option>
+                    </select>
                 </div>
-            </form>
-        </x-slot>
-    </x-modal-delete>
-{{--    MODAL FIN APROBAR / RECHAZAR PROGRAMACIÓN--}}
-
-{{--    MODAL APROBAR / RECHAZAR SERVICIO TRANSPORTE--}}
-
-    {{--    MODAL DETALLE GUIA--}}
-    <x-modal-general wire:ignore.self>
-        <x-slot name="tama">modal-xl</x-slot>
-        <x-slot name="id_modal">modalDetalleGuia</x-slot>
-        <x-slot name="titleModal">Detalles de la guía</x-slot>
-        <x-slot name="modalContent">
-            <div class="modal-body">
-                <h6>Detalles de la Guía</h6>
-                <hr>
-                @if(!empty($guia_detalle))
-                    <x-table-general>
-                        <x-slot name="thead">
-                            <tr>
-                                <th>Almacén Salida</th>
-                                <th>Fecha Emisión</th>
-                                <th>Estado</th>
-                                <th>Tipo Documento</th>
-                                <th>Nro Documento</th>
-                                <th>Nro Línea</th>
-                                <th>Cód Producto</th>
-                                <th>Descripción Producto</th>
-                                <th>Lote</th>
-                                <th>Unidad</th>
-                                <th>Cantidad</th>
-                                <th>Precio Unit Final Inc IGV</th>
-                                <th>Precio Unit Antes Descuento Inc IGV</th>
-                                <th>Descuento Total Sin IGV</th>
-                                <th>IGV Total</th>
-                                <th>Importe Total Inc IGV</th>
-                                <th>Moneda</th>
-                                <th>Tipo Cambio</th>
-                                <th>Peso Gramos</th>
-                                <th>Volumen CM3</th>
-                                <th>Peso Total Gramos</th>
-                                <th>Volumen Total CM3</th>
-                            </tr>
-                        </x-slot>
-                        <x-slot name="tbody">
-                            @foreach($guia_detalle as $detalle)
-                                <tr>
-                                    <td>{{ $detalle->guia_det_almacen_salida ?? '-' }}</td>
-                                    <td>{{ $detalle->guia_det_fecha_emision ? $general->obtenerNombreFecha($detalle->guia_det_fecha_emision, 'DateTime', 'Date') : '-' }}</td>
-                                    <td>{{ $detalle->guia_det_estado ?? '-'}}</td>
-                                    <td>{{ $detalle->guia_det_tipo_documento ?? '-' }}</td>
-                                    <td>{{ $detalle->guia_det_nro_documento ?? '-'}}</td>
-                                    <td>{{ $detalle->guia_det_nro_linea ?? '-'}}</td>
-                                    <td>{{ $detalle->guia_det_cod_producto ?? '-'}}</td>
-                                    <td>{{ $detalle->guia_det_descripcion_producto ?? '-'}}</td>
-                                    <td>{{ $detalle->guia_det_lote ?? '-'}}</td>
-                                    <td>{{ $detalle->guia_det_unidad ?? '-'}}</td>
-                                    <td>{{ $detalle->guia_det_cantidad ?? '-'}}</td>
-                                    <td>{{ $general->formatoDecimal($detalle->guia_det_precio_unit_final_inc_igv ?? 0)}}</td>
-                                    <td>{{ $general->formatoDecimal($detalle->guia_det_precio_unit_antes_descuente_inc_igv ?? 0)}}</td>
-                                    <td>{{ $general->formatoDecimal($detalle->guia_det_descuento_total_sin_igv ?? 0)}}</td>
-                                    <td>{{ $general->formatoDecimal($detalle->guia_det_igv_total ?? 0)}}</td>
-                                    <td>{{ $general->formatoDecimal($detalle->guia_det_importe_total_inc_igv ?? 0) }}</td>
-                                    <td>{{ $detalle->guia_det_moneda ?? '-'}}</td>
-                                    <td>{{ $general->formatoDecimal($detalle->guia_det_tipo_cambio ?? 0)}}</td>
-                                    <td>{{ $general->formatoDecimal($detalle->guia_det_peso_gramo ?? 0)}}</td>
-                                    <td>{{ $general->formatoDecimal($detalle->guia_det_volumen ?? 0)}}</td>
-                                    <td>{{ $general->formatoDecimal($detalle->guia_det_peso_total_gramo ?? 0)}}</td>
-                                    <td>{{ $general->formatoDecimal($detalle->guia_det_volumen_total ?? 0)}}</td>
-                                </tr>
-                            @endforeach
-                        </x-slot>
-                    </x-table-general>
-                @else
-                    <p>No hay detalles disponibles para mostrar.</p>
-                @endif
             </div>
-        </x-slot>
-    </x-modal-general>
-    {{--    MODAL FIN DETALLE GUIA--}}
 
-{{--    MODAL EN CAMINO--}}
-    <x-modal-delete wire:ignore.self>
-        <x-slot name="id_modal">modalEnCamino</x-slot>
-        <x-slot name="modalContentDelete">
-            <form wire:submit.prevent="cambiarEstadoEnCamino">
-                <div class="row">
-                    <div class="col-lg-12 col-md-12 col-sm-12">
-                        <h2 class="deleteTitle">¿Confirma cambiar a estado "En Camino"?</h2>
+            @if($select_tipo == 1)
+                <div class="row align-items-center mt-2">
+                    <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
+                        <label for="estado_os" class="form-label">Estado de OS</label>
+                        <select class="form-select" wire:model.live="estado_os_temp" wire:change="agregarEstado">
+                            <option value="">Seleccionar...</option>
+                            <option value="0">Emitido</option>
+                            <option value="1">Aprobado</option>
+                            <option value="2">En Ejecución</option>
+                        </select>
                     </div>
-                    <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-center">
-                        <button type="submit" class="btn btn-primary text-white btnDelete">Confirmar</button>
-                        <button type="button" data-bs-dismiss="modal" class="btn btn-danger btnDelete">Cancelar</button>
+                    <div class="col-lg-2">
+                        <label for="codigo_os" class="form-label">OS</label>
+                        <input type="text" name="codigo_os" id="codigo_os" wire:model.live="codigo_os" placeholder="Ej: OS25-01234" class="form-control">
+                    </div>
+                    <div class="col-lg-2">
+                        <label for="id_tipo_servicios" class="form-label">Tipo de OS</label>
+                        <select class="form-select" name="id_tipo_servicios" id="id_tipo_servicios" wire:model="id_tipo_servicios">
+                            <option value="">Seleccionar...</option>
+                            @foreach($listar_tipo_servicio as $lts)
+                                <option value="{{ $lts->id_tipo_servicios }}">{{ $lts->tipo_servicio_concepto }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-lg-2">
+                        <label for="fecha_desde_os" class="form-label">Desde</label>
+                        <input type="date" name="fecha_desde_os" id="fecha_desde_os" wire:model.live="fecha_desde_os" class="form-control">
+                    </div>
+                    <div class="col-lg-2">
+                        <label for="fecha_hasta_os" class="form-label">Hasta</label>
+                        <input type="date" name="fecha_hasta_os" id="fecha_hasta_os" wire:model.live="fecha_hasta_os" class="form-control">
+                    </div>
+                    <div class="col-lg-2 col-md-2 col-sm-12 mt-3">
+                        <a class="btn btn-sm btn-primary text-white" wire:click="buscar_orden_servicio"> <i class="fa-solid fa-magnifying-glass"></i> Buscar</a>
+                    </div>
+                    <div class="col-lg-3 col-md-4 col-sm-12 mt-1">
+                        @if(count($estadosSeleccionados) > 0)
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Estados Seleccionados ({{ count($estadosSeleccionados) }})</h6>
+                                </div>
+                                <div class="card-body">
+                                    @foreach($estadosSeleccionados as $index => $estado)
+                                        <div class="d-flex align-items-center justify-content-between mb-2 p-2 border rounded">
+                                            <div class="d-flex align-items-center">
+                                                <span class="badge bg-primary me-2">{{ $index + 1 }}</span>
+                                                <span>{{ $estado['nombre'] }}</span>
+                                            </div>
+                                            <a class="btn btn-sm btn-outline-danger"
+                                               wire:click="eliminarEstado({{ $index }})"
+                                               title="Eliminar estado">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @else
+                            <p class="mt-1">
+                                No hay estados seleccionados.
+                            </p>
+                        @endif
                     </div>
                 </div>
-            </form>
-        </x-slot>
-    </x-modal-delete>
-{{--    FIN MODAL EN CAMINO--}}
+            @elseif($select_tipo == 2)
+                <div class="row align-items-center mt-2">
+                    <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
+                        <label for="ruc_cliente" class="form-label">RUC - Nombre del cliente</label>
+                        <input type="text" name="ruc_cliente" id="ruc_cliente" wire:model.live="ruc_cliente" class="form-control">
+                    </div>
+                    <div class="col-lg-2">
+                        <label for="codigo_guia" class="form-label">Guía</label>
+                        <input type="text" name="codigo_guia" id="codigo_guia" wire:model.live="codigo_guia" placeholder="Ej: T0123456789" class="form-control">
+                    </div>
+                    <div class="col-lg-2">
+                        <label for="estado_guia" class="form-label">Estado de guía</label>
+                        <select class="form-select" name="estado_guia" id="estado_guia" wire:model="estado_guia">
+                            <option value="">Seleccionar...</option>
+                            <option value="4">Programado</option>
+                            <option value="7">Guía en tránsito</option>
+                            <option value="8">Guía entregada</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2">
+                        <label for="fecha_desde_guia" class="form-label">Desde</label>
+                        <input type="date" name="fecha_desde_guia" id="fecha_desde_guia" wire:model.live="fecha_desde_guia" class="form-control">
+                    </div>
+                    <div class="col-lg-2">
+                        <label for="fecha_hasta_guia" class="form-label">Hasta</label>
+                        <input type="date" name="fecha_hasta_guia" id="fecha_hasta_guia" wire:model.live="fecha_hasta_guia" class="form-control">
+                    </div>
+                    <div class="col-lg-2 col-md-2 col-sm-12 mt-3">
+                        <a class="btn btn-sm btn-primary text-white" wire:click="buscar_guia_cliente"> <i class="fa-solid fa-magnifying-glass"></i> Buscar</a>
+                    </div>
+                </div>
+            @endif
+        </div>
+    </div>
 
-
-    <div class="row align-items-center mt-2">
-        <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-            <label class="form-label">Estado de Programación</label>
-            <select class="form-select" wire:model="estado_programacion">
-                <option value="">Seleccionar...</option>
-                <option value="0">Emitido</option>
-                <option value="1">Aprobado</option>
-                <option value="2">Tránsito</option>
-            </select>
-        </div>
-        <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-            <label for="fecha_desde" class="form-label">Desde</label>
-            <input type="date" name="fecha_desde" id="fecha_desde" wire:model.live="desde" class="form-control">
-        </div>
-        <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-            <label for="fecha_hasta" class="form-label">Hasta</label>
-            <input type="date" name="fecha_hasta" id="fecha_hasta" wire:model.live="hasta" class="form-control">
-        </div>
-        <div class="col-lg-2 col-md-2 col-sm-12 mt-3">
-            <a class="btn btnsm btn-primary text-white" wire:click="buscar_programacion"> <i class="fa-solid fa-magnifying-glass"></i> Buscar</a>
+    <div class="row">
+        <div class="col-lg-12 col-md-12 col-sm-12">
+            <div class="loader mt-2" wire:loading wire:target="buscar_orden_servicio"></div>
         </div>
 
         <div class="col-lg-12 col-md-12 col-sm-12">
-            <div class="loader mt-2" wire:loading wire:target="buscar_programacion"></div>
+            <div class="loader mt-2" wire:loading wire:target="buscar_guia_cliente"></div>
         </div>
 
         <div class="col-lg-12 col-md-12 col-sm-12 mt-2">
             <p>Actualmente, hay <b class="colorgotomarket">{{$conteoProgramacionesPend}}</b> programaciones pendientes.</p>
         </div>
     </div>
+
     @if (session()->has('success'))
         <div class="alert alert-success alert-dismissible show fade mt-2">
             {{ session('success') }}
@@ -476,7 +458,7 @@
                 <h6 class="m-0">FE : Fecha de Emisión</h6>
             </div>
             <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-                <h6 class="m-0">FE : Fecha de Aprobación</h6>
+                <h6 class="m-0">FA : Fecha de Aprobación</h6>
             </div>
             <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
                 <h6 class="m-0">N° C : Número Correlativo</h6>
@@ -489,36 +471,13 @@
 
     @if(count($resultados) > 0)
         <div class="row">
-            <div class="col-lg-12 col-md-12 col-sm-12 mb-3 mt-2 text-end">
-                @php
-                    $user = \Illuminate\Support\Facades\Auth::user(); // Obtiene el usuario autenticado
-                    // Obtén el primer rol del usuario y su ID
-                    $roleId = $user->roles->first()->id ?? null;
-                @endphp
-                {{--                                @if($roleId == 1 || $roleId == 2)--}}
-                <a class="btn btn-sm text-white bg-warning" wire:click="confirmar_encamino" data-bs-toggle="modal" data-bs-target="#modalEnCamino">
-                    Iniciar Tránsito
-                </a>
-                <button class="btn btn-sm text-white bg-success" wire:click="prepareAction(1)" data-bs-toggle="modal" data-bs-target="#modalAprobarProgramacion">
-                    <i class="fa-solid fa-check"></i> APROBAR
-                </button>
-                <button class="btn btn-sm text-white bg-danger" wire:click="prepareAction(4)" data-bs-toggle="modal" data-bs-target="#modalAprobarProgramacion">
-                    <i class="fa fa-x"></i> RECHAZAR
-                </button>
-                {{--                                @endif--}}
-            </div>
-        </div>
-    @endif
-
-    @if(count($resultados) > 0)
-        <div class="row">
             <div class="col-lg-12 mt-2">
                 <h5>Programación de despacho: </h5>
             </div>
         </div>
     @endif
 
-    <div class="accordion mt-3" id="accordionExample" >
+    <div class="accordion mt-3" id="accordionExample">
         @php $conteoGeneral = 1; @endphp
         @foreach($resultados as $index => $r)
             @php
@@ -558,21 +517,8 @@
                     $mostrarBotonEditar = ($primerDespacho->despacho_estado_aprobacion == 0);
                 }
             @endphp
-{{--            {{route('Programacioncamion.detalle_programacion',['data'=>base64_encode($r->id_programacion) ])}}--}}
             <div class="accordion-item" >
                 <h2 class="accordion-header d-flex justify-content-between align-items-center">
-                    <!-- PRIMER CHECK BOX DEL BOTON DEL ACORDION -->
-                    @if(count($r->despacho) > 0 && in_array($r->despacho[0]->despacho_estado_aprobacion, [0, 1]))
-                        <div style="display: flex; padding: 12px" class="checkbox-container {{$index == 0 ? 'active' : ''}}" data-accordion-target="collapseOne_{{$index}}">
-                            <input
-                                style="font-size: 20px"
-                                type="checkbox"
-                                class="form-check-input programacion-checkbox"
-                                wire:model="selectedProgramaciones"
-                                value="{{$r->id_programacion}}"
-                            />
-                        </div>
-                    @endif
                     <button class="accordion-button {{$index == 0 ? '' : 'collapsed'}} flex-grow-1" wire:ignore.self type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne_{{$index}}" aria-expanded="true" aria-controls="collapseOne_{{$index}}">
                         #{{$conteoGeneral}} | FD : {{$fe}} | UR : {{$usuarios}}
                         @if(!empty($fa)) | FA : {{$fa}} @endif
@@ -583,40 +529,25 @@
                 <div id="collapseOne_{{$index}}" class="accordion-collapse collapse {{$index == 0 ? 'show' : ''}}" data-bs-parent="#accordionExample" wire:ignore.self >
                     <div class="accordion-body" >
                         <div class="row">
-                            <div class="col-lg-12 col-md-12 col-sm-12 text-end mb-3">
-                                @if($mostrarBotonEditar && Gate::allows('editar_aprobar_programacion'))
-                                    <a class="btn btn-sm text-white bg-info me-2" href="{{route('Despachotransporte.editar_programaciones',['data'=>base64_encode($r->id_programacion)])}}">
-                                        <i class="fa-solid fa-pencil"></i> EDITAR
-                                    </a>
-                                @endif
-                            </div>
                             <div class="col-lg-12 col-md-12 col-sm-12 table-responsive">
                                 <table class="table">
                                     <thead>
                                     <tr style="background: #f5f5f9">
-                                        <th>
-                                            @if(count($r->despacho) > 0 && in_array($r->despacho[0]->despacho_estado_aprobacion, [0, 1]))
-                                                <input
-                                                    type="checkbox"
-                                                    class="form-check-input programacion-checkbox"
-                                                    wire:model="selectedProgramaciones"
-                                                    value="{{$r->id_programacion}}"
-                                                />
-                                            @endif
-                                        </th>
                                         <th>N°</th>
-                                        <th>Tipo Servicio</th>
                                         <th>OS</th>
                                         <th>Proveedor</th>
-                                        <th>Venta Despachada(sin IGV)</th>
+                                        <th>Tipo Servicio</th>
+                                        <th>Guías Asociadas</th>
                                         <th>Cambio Tarifa</th>
                                         <th>Tarifa</th>
+                                        <th>Venta Despachada(sin IGV)</th>
                                         <th>Flete Total</th>
                                         <th>Flete / Venta</th>
-                                        <th>Peso(kg)</th>
-                                        <th>Llenado en Peso</th>
                                         <th>Flete / Peso</th>
-                                        <th>Acciones</th>
+                                        <th>Estado de OS</th>
+                                        <th>OS EDITADA</th>
+                                        <th style="background: #e7f1ff">Acciones</th>
+                                        <th style="background: #e7f1ff">Gestionar OS</th>
                                     </tr>
                                     </thead>
                                     <tbody>
@@ -624,21 +555,37 @@
                                         @php $conteoGeneral2 = 1; @endphp
                                         @foreach($r->despacho as $des)
                                             <tr>
-                                                <td></td>
                                                 <td>{{$conteoGeneral2}}</td>
-                                                <td>{{$des->tipo_servicio_concepto}}</td>
                                                 <td>{{$des->despacho_numero_correlativo ?? '-'}}</td>
                                                 <td>{{$des->transportista_nom_comercial}}</td>
-                                                <td>S/ {{$general->formatoDecimal($des->totalVentaDespacho)}}</td>
-                                                @php
-                                                    $styleColor = "text-danger";
-                                                    if ($des->despacho_estado_modificado == 1){
-                                                        $styleColor = "text-success";
-                                                    }
-                                                @endphp
-                                                <td><b class="{{$styleColor}}">{{$des->despacho_estado_modificado == 1 ? 'SI' : 'NO'}}</b></td>
+                                                <td>{{$des->tipo_servicio_concepto}}</td>
+                                                <td>
+                                                    @php
+                                                        $guiasComprobante = \Illuminate\Support\Facades\DB::table('despacho_ventas as dv')->join('guias as g','dv.id_guia','=','g.id_guia')->where('dv.id_despacho', '=', $des->id_despacho)->get();
+                                                        $totalGuias = count($guiasComprobante); // Contamos las guías
+                                                    @endphp
+                                                    @foreach($guiasComprobante as $indexGuias => $g)
+                                                        @if($indexGuias <= 2)
+                                                            {{ $general->formatearCodigo($g->guia_nro_doc) }}
+                                                            @if($indexGuias < 2 && $indexGuias < $totalGuias - 1)
+                                                                , <!-- Mostrar la coma solo si no es el último elemento que se va a mostrar -->
+                                                            @elseif($indexGuias == 2 && $totalGuias > 3)
+                                                                ... <!-- Mostrar "..." si hay más guías después de las tres primeras -->
+                                                            @endif
+                                                        @endif
+                                                    @endforeach
+                                                </td>
+                                                <td>
+                                                    @php
+                                                        $styleColor = "text-danger";
+                                                        if ($des->despacho_estado_modificado == 1){
+                                                            $styleColor = "text-success";
+                                                        }
+                                                    @endphp
+                                                    <b class="{{$styleColor}}">{{$des->despacho_estado_modificado == 1 ? 'SI' : 'NO'}}</b>
+                                                </td>
                                                 <td>S/ {{$des->despacho_flete}}</td>
-{{--                                                <td>S/ {{$des->despacho_costo_total}}</td>--}}
+                                                <td>S/ {{$general->formatoDecimal($des->totalVentaDespacho)}}</td>
                                                 <td>
                                                     <span class="{{$des->despacho_estado_modificado == 1 ? 'text-danger' : ''}}">S/ {{$des->despacho_flete}}</span>
                                                     <b class="{{$styleColor}}">
@@ -653,18 +600,6 @@
                                                     }
                                                 @endphp
                                                 <td>{{$ra}} %</td>
-                                                <td>{{$general->formatoDecimal($des->despacho_peso)}} kg</td>
-                                                @php
-                                                    $indi = "";
-                                                    if ($des->id_vehiculo){
-                                                        $vehi = \Illuminate\Support\Facades\DB::table('vehiculos')->where('id_vehiculo','=',$des->id_vehiculo)->first();
-                                                        $indi = ($des->despacho_peso / $vehi->vehiculo_capacidad_peso) * 100;
-                                                        $indi = $general->formatoDecimal($indi);
-                                                    }else{
-                                                        $indi = "-";
-                                                    }
-                                                @endphp
-                                                <td style="color: {{$general->obtenerColorPorPorcentaje($indi)}}">{{ $indi > 0 ? $indi.'%' : '-' }}</td>
                                                 @php
                                                     $ra2 = 0;
                                                     // Verificar que despacho_peso no sea 0 antes de dividir
@@ -676,15 +611,32 @@
                                                         $ra2 = 'N/A'; // O cualquier valor que quieras mostrar en este caso
                                                     }
                                                 @endphp
-                                                <td>{{ $ra2 }}</td>
+                                                <td>S/ {{ $ra2 }}</td>
                                                 <td>
-                                                    <button class="btn btn-primary btn-sm text-white mb-2" wire:click="listar_informacion_despacho({{$des->id_despacho}})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">
+                                                    @if($des->despacho_estado_aprobacion == 0)
+                                                        Pendiente
+                                                    @elseif($des->despacho_estado_aprobacion == 1)
+                                                        Aprobado
+                                                    @elseif($des->despacho_estado_aprobacion == 2)
+                                                        En camino
+                                                    @elseif($des->despacho_estado_aprobacion == 3)
+                                                        Culminado
+                                                    @elseif($des->despacho_estado_aprobacion == 4)
+                                                        Rechazado
+                                                    @else
+                                                        Estado desconocido
+                                                    @endif
+                                                </td>
+                                                <td></td>
+                                                <td>
+                                                    <a class="btn btn-primary btn-sm text-white mb-2" wire:click="listar_informacion_despacho({{$des->id_despacho}})" data-bs-toggle="modal" data-bs-target="#modalDetalleDespacho">
                                                         <i class="fa-solid fa-eye"></i> Detalle OS
-                                                    </button>
-
-{{--                                                    <button class="btn btn-warning btn-sm text-white mb-2" wire:click="listar_detalle_guia({{$des->id_despacho}})" data-bs-toggle="modal" data-bs-target="#modalDetalleGuia">--}}
-{{--                                                        <i class="fa-solid fa-eye"></i> Facturas--}}
-{{--                                                    </button>--}}
+                                                    </a>
+                                                </td>
+                                                <td>
+                                                    <a class="btn btn-primary btn-sm text-white mb-2" target="_blank" href="{{route('Despachotransporte.gestionar_os_detalle',['id_despacho'=>base64_encode($des->id_despacho)])}}">
+                                                        <i class="fa-solid fa-eye"></i> Gestionar OS
+                                                    </a>
                                                 </td>
                                             </tr>
                                             @php $conteoGeneral2++; @endphp
@@ -707,71 +659,4 @@
         @endforeach
     </div>
 
-{{--    {{ $resultados->links(data: ['scrollTo' => false]) }}--}}
-
-    <style>
-        .select2-container--default .select2-selection--single {
-            display: block;
-            width: 100%;
-            height: calc(1.5em + .75rem + 2px);
-            padding: .375rem .75rem;
-            font-size: 1rem;
-            font-weight: 400;
-            line-height: 1.5;
-            color: #6e707e;
-            background-color: #fff;
-            background-clip: padding-box;
-            border: 1px solid #d1d3e2;
-            border-radius: .35rem;
-            transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
-        }
-
-        .checkbox-container.active {
-            background: #e7f1ff !important;
-        }
-    </style>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const accordionElement = document.getElementById('accordionExample');
-
-            // Escuchar eventos de mostrar/ocultar del acordeón
-            accordionElement.addEventListener('show.bs.collapse', function (event) {
-                // Remover la clase active de todos los checkboxes
-                document.querySelectorAll('.checkbox-container').forEach(container => {
-                    container.classList.remove('active');
-                });
-
-                // Agregar la clase active al checkbox del acordeón que se está abriendo
-                const targetId = event.target.id;
-                const checkboxContainer = document.querySelector(`[data-accordion-target="${targetId}"]`);
-                if (checkboxContainer) {
-                    checkboxContainer.classList.add('active');
-                }
-            });
-
-            accordionElement.addEventListener('hide.bs.collapse', function (event) {
-                // Remover la clase active del checkbox del acordeón que se está cerrando
-                const targetId = event.target.id;
-                const checkboxContainer = document.querySelector(`[data-accordion-target="${targetId}"]`);
-                if (checkboxContainer) {
-                    checkboxContainer.classList.remove('active');
-                }
-            });
-        });
-    </script>
 </div>
-@script
-<script>
-
-    $wire.on('hideModalDelete', () => {
-        $('#modalAprobarProgramacion').modal('hide');
-    });
-
-    $wire.on('hideModalEnCamino', () => {
-        $('#modalEnCamino').modal('hide');
-    });
-</script>
-@endscript
-
-

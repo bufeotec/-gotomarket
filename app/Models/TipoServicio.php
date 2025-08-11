@@ -43,4 +43,16 @@ class TipoServicio extends Model
         }
         return $result;
     }
+
+    public function listar_tipo_servicios_os(){
+        try {
+            $result = DB::table('tipo_servicios')
+                ->where('tipo_servicio_estado', '=', 1)
+                ->get();
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
 }

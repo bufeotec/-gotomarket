@@ -145,4 +145,8 @@ Route::prefix('Despachotransporte')->middleware(['auth', 'canMenu:Despachotransp
     route::get('/editar_programaciones',[DespachotransporteController::class ,'editar_programaciones'])->name('Despachotransporte.editar_programaciones')->middleware('verifyUserStatus')->middleware('can:editar_programaciones');
     route::get('/guias_antiguas',[DespachotransporteController::class ,'guias_antiguas'])->name('Despachotransporte.guias_antiguas')->middleware('verifyUserStatus')->middleware('can:guias_antiguas');
     route::get('/reporte_despacho_transporte',[DespachotransporteController::class ,'reporte_despacho_transporte'])->name('Despachotransporte.reporte_despacho_transporte')->middleware('verifyUserStatus')->middleware('can:reporte_despacho_transporte');
+    route::get('/gestionar_orden_servicio',[DespachotransporteController::class ,'gestionar_orden_servicio'])->name('Despachotransporte.gestionar_orden_servicio')->middleware('verifyUserStatus')->middleware('can:gestionar_orden_servicio');
+    route::get('/gestionar_os_detalle',[DespachotransporteController::class ,'gestionar_os_detalle'])->name('Despachotransporte.gestionar_os_detalle')->middleware('verifyUserStatus')->middleware('can:gestionar_os_detalle');
+
+    route::get('/generar_pdf_os', [DespachotransporteController::class, 'generar_pdf_os'])->name('Despachotransporte.generar_pdf_os')->middleware('verifyUserStatus')->middleware('can:generar_pdf_os');
 });
