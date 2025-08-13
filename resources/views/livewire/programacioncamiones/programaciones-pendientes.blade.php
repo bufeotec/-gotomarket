@@ -638,13 +638,13 @@
                                                 @endphp
                                                 <td><b class="{{$styleColor}}">{{$des->despacho_estado_modificado == 1 ? 'SI' : 'NO'}}</b></td>
                                                 <td>S/ {{$des->despacho_flete}}</td>
-{{--                                                <td>S/ {{$des->despacho_costo_total}}</td>--}}
-                                                <td>
-                                                    <span class="{{$des->despacho_estado_modificado == 1 ? 'text-danger' : ''}}">S/ {{$des->despacho_flete}}</span>
-                                                    <b class="{{$styleColor}}">
-                                                        {{$des->despacho_estado_modificado == 1 ? '=> S/ '.$des->despacho_monto_modificado : ''}}
-                                                    </b>
-                                                </td>
+                                                <td>S/ {{$des->despacho_costo_total}}</td>
+{{--                                                <td>--}}
+{{--                                                    <span class="{{$des->despacho_estado_modificado == 1 ? 'text-danger' : ''}}">S/ {{$des->despacho_flete}}</span>--}}
+{{--                                                    <b class="{{$styleColor}}">--}}
+{{--                                                        {{$des->despacho_estado_modificado == 1 ? '=> S/ '.$des->despacho_monto_modificado : ''}}--}}
+{{--                                                    </b>--}}
+{{--                                                </td>--}}
                                                 @php
                                                     $ra = 0;
                                                     if ($des->despacho_costo_total && $des->totalVentaDespacho > 0) {
