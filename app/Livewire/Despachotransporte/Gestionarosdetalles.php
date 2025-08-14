@@ -71,6 +71,11 @@ class Gestionarosdetalles extends Component
     }
 
     public function editar_gestionar_os(){
+        if (!Gate::allows('editar_gestionar_os')) {
+            session()->flash('error', 'No tiene permisos para editar esta OS.');
+            return;
+        }
+
         if (!$this->editando) {
             // Al activar el modo edición, recargar el transportista actual del despacho
             $despachoInfo = $this->despacho->listar_info_por_id($this->id_despacho);
