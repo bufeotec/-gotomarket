@@ -9,6 +9,13 @@
         </div>
     @endif
 
+    @if (session()->has('error'))
+        <div class="alert alert-danger alert-dismissible show fade mt-2">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
 {{--    MODAL ANULAR OS--}}
     <x-modal-delete  wire:ignore.self >
         <x-slot name="id_modal">modal_anular_os</x-slot>
