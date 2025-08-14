@@ -420,10 +420,15 @@ class LiquidacionFlete extends Component
                 ->where('liquidacion_estado', '=', 1)
                 ->where('liquidacion_estado_aprobacion', '=', 1)
                 ->where('liquidacion_serie', '=', $this->liquidacion_serie)
+                ->where('id_transportistas', '=', $this->id_transportistas)
                 ->where('liquidacion_correlativo', '=', $this->liquidacion_correlativo);
                 if ($this->id_liquidacion_edit){
                     $validar->where('id_liquidacion', '<>', $this->id_liquidacion_edit);
                 }
+            if ($validar->count() > 0) {
+                session()->flash('error', '¡Error! La combinación serie-correlativo ya existe para este transportista.');
+                return;
+            }
             $validar = $validar->exists();
             if (!$validar){
                 if ($this->id_liquidacion_edit){
