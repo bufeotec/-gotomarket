@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Helpers\PdfReporte;
+//use App\Helpers\PdfReporte;
 use Illuminate\Http\Request;
 use App\Livewire\Gestiontransporte\Vehiculos;
 use App\Models\Logs;
@@ -265,7 +265,7 @@ class DespachotransporteController extends Controller
         // Configuración inicial del PDF
         $pdf->SetCreator('Go To Market');
         $pdf->SetAuthor('Go To Market');
-        $pdf->SetTitle('Orden de Servicio N° ' . ($listar_info->despacho_numero_correlativo ?? '-'));
+        $pdf->SetTitle(utf8_decode('Orden de Servicio N° ' . ($listar_info->despacho_numero_correlativo ?? '-')));
         $pdf->SetMargins(10, 10, 10);
         $pdf->SetAutoPageBreak(TRUE, 15);
         $pdf->AddPage();
@@ -275,304 +275,430 @@ class DespachotransporteController extends Controller
         $pdf->Image($logoPath, 10, 10, 20, 0, 'PNG');
         $pdf->SetFont('helvetica', 'B', 16);
 //        $pdf->Cell(0, 10, 'Go To Market', 0, 1, 'L');
-        $pdf->SetFont('helvetica', 'B', 14);
+        $pdf->SetFont('helvetica', 'B', 12);
         $pdf->Cell(0, 10, utf8_decode('ORDEN DE SERVICIO DE TRANSPORTE DE MERCADERÍA'), 0, 1, 'C');
         $pdf->SetFont('helvetica', 'B', 12);
         $pdf->Cell(0, 10, utf8_decode('N° ' . ($listar_info->despacho_numero_correlativo ?? '-')), 0, 1, 'R');
         $pdf->Ln(10);
 
-        // Datos Solicitante - Datos de la OS
-        $pdf->SetLeftMargin(16);
-        $pdf->SetRightMargin(10);
-        $marginL = 10;
-        $gutter = 10;
-        $usableW = $pdf->GetPageWidth() - 2*$marginL;
-        $colW = ($usableW - $gutter) / 2;
-        $yTop = $pdf->GetY();
-        $headerH = 16;
-        $padX = 6;
-        $padY = 2; // un poco más de aire
-        // Datos
-        $solicitante_nombre = 'GO TO MARKET SAC';
-        $solicitante_ruc    = 'RUC 20537638045';
-        $solicitante_dir    = 'CAL.CALLE 1 MZA. X LOTE. 4V INT. C COO. LAS VERTIENTES DE TABLADA DE LURÍN LIMA - LIMA - VILLA EL SALVADOR';
 
-        $fechaAprobacion = $listar_info->despacho_fecha_aprobacion
-            ? $general->obtenerNombreFecha($listar_info->despacho_fecha_aprobacion, 'Date', 'Date') : '-';
-        $fechaInicio = $listar_info->despacho_fecha_aprobacion
-            ? $general->obtenerNombreFecha($listar_info->despacho_fecha_aprobacion, 'Date', 'Date') : '-';
 
-        // Colores
-        $celeste    = [231,239,252];
-        $textoMuted = [91,105,120];
-        $borde      = [225,231,239];
 
-// ---------- Coordenadas base ----------
-        $xL = $marginL;
-        $yL = $yTop;
-        $xR = $marginL + $colW + $gutter; $yR = $yTop;
-// ---------- Cabeceras ----------
-        $pdf->SetFillColor($celeste[0], $celeste[1], $celeste[2]);
-        $pdf->Rect($xL, $yL, $colW, $headerH, 'F');
-        $pdf->Rect($xR, $yR, $colW, $headerH, 'F');
 
-        $pdf->SetFont('helvetica','B',12);
-        $pdf->SetTextColor(0);
-        $pdf->SetXY($xL + $padX, $yL + 5);
-        $pdf->Cell($colW - 2*$padX, 6, utf8_decode('Datos Solicitante'), 0, 1, 'L');
 
-        $pdf->SetXY($xR + $padX, $yR + 5);
-        $pdf->Cell($colW - 2*$padX, 6, utf8_decode('Datos de la OS'), 0, 1, 'L');
 
-// ---------- Panel izquierdo: contenido ----------
-        $pdf->SetXY($xL + $padX, $yL + $headerH + $padY);
-        $pdf->SetFont('helvetica','',9);
-        $pdf->SetTextColor(0);
 
-        $yStartBodyL = $pdf->GetY();
-        $pdf->MultiCell($colW - 2*$padX, 7, utf8_decode($solicitante_nombre), 0, 'L');
 
-        $pdf->SetTextColor(0);
-        $pdf->MultiCell($colW - 2*$padX, 7, utf8_decode($solicitante_ruc), 0, 'L');
+        // Configuración inicial
+        $pdf->SetFont('helvetica', '', 10);
+        $startY = $pdf->GetY(); // Guardamos la posición Y inicial
 
-        $pdf->SetTextColor(0);
-        $pdf->MultiCell($colW - 2*$padX, 6, utf8_decode($solicitante_dir), 0, 'L');
+        // --- ENCABEZADOS SUPERIORES ---
+        $pdf->SetFont('helvetica', 'B', 10);
+        // Encabezado izquierdo
+        $pdf->SetXY(10, $startY);
+        $pdf->Cell(90, 7, 'Datos Solicitante', 1, 1, 'C'); // Marco alrededor del título
+        // Encabezado derecho
+        $pdf->SetXY(110, $startY);
+        $pdf->Cell(90, 7, 'Datos de la OS', 1, 1, 'C');
 
-        $yEndBodyL = $pdf->GetY();
-        $panelHL   = ($yEndBodyL - $yStartBodyL) + $headerH + 2*$padY;
+        // Ajustamos la posición Y para los cuadros de datos
+        $dataStartY = $startY + 7;
 
-// ---------- Panel derecho: contenido en dos columnas con wrap ----------
-        $pdf->SetFont('helvetica','',9);
-        $pdf->SetTextColor(0);
+        // --- PRIMER CUADRO: Datos Solicitante (izquierda) ---
+        $pdf->Rect(10, $dataStartY, 90, 25); // Cuadro de datos
 
-        $wInner = $colW - 2*$padX;
-        $wHalf = $wInner / 2;
-        $lineH = 6;
+        $pdf->SetFont('helvetica', '', 8);
+        $pdf->SetXY(12, $dataStartY + 2); // Pequeño margen interno
+        $pdf->MultiCell(86, 5, utf8_decode('GO TO MARKET SAC'), 0, 'L');
+        $pdf->SetX(12);
+        $pdf->MultiCell(86, 5, utf8_decode('RUC 20537638045'), 0, 'L');
+        $pdf->SetX(12);
+        $pdf->MultiCell(86, 5, utf8_decode('CAL.CALLE 1 MZA. X LOTE. 4V INT. C COO. LAS VERTIENTES DE TABLADA DE LURÍN LIMA - LIMA - VILLA EL SALVADOR'), 0, 'L');
 
-        $rows = [
-            [utf8_decode('Fecha de Aprobación: ').$fechaAprobacion, utf8_decode('Fecha de Inicio de Servicio: ').$fechaInicio],
-            [utf8_decode('Plazo de Entrega: 2 días hábiles'),       utf8_decode('Fecha de Entrega Esperada: ').$fechaInicio],
-        ];
+        // --- SEGUNDO CUADRO: Datos de la OS (derecha) ---
+        $pdf->Rect(110, $dataStartY, 90, 30); // Cuadro de datos
 
-        $yBodyR = $yR + $headerH + $padY;
-        $yCursor = $yBodyR;
+        $fechaAprobacion = $listar_info->despacho_fecha_aprobacion ? $general->obtenerNombreFecha($listar_info->despacho_fecha_aprobacion, 'Date', 'Date') : '-';
+        $fechaInicio = $listar_info->despacho_fecha_aprobacion ? $general->obtenerNombreFecha($listar_info->despacho_fecha_aprobacion, 'Date', 'Date') : '-';
 
-        foreach ($rows as $row) {
-            // Col 1
-            $pdf->SetXY($xR + $padX, $yCursor);
-            $pdf->MultiCell($wHalf - 1, $lineH, $row[0], 0, 'L'); // -2 para evitar tocar el borde
-            $yAfterCol1 = $pdf->GetY();
+        $pdf->SetXY(112, $dataStartY + 2); // Pequeño margen interno
+        $pdf->MultiCell(86, 7, utf8_decode('Fecha de Aprobación: ' . $fechaAprobacion), 0, 'L');
+        $pdf->SetX(112);
+        $pdf->MultiCell(86, 7, utf8_decode('Fecha de Inicio: ' . $fechaInicio), 0, 'L');
+        $pdf->SetX(112);
+        $pdf->MultiCell(86, 7, utf8_decode('Plazo de Entrega: 2 dias hábiles'), 0, 'L');
+        $pdf->SetX(112);
+        $pdf->MultiCell(86, 7, utf8_decode('Fecha Entrega Esperada: ' . $fechaInicio), 0, 'L');
 
-            // Col 2 (misma fila, misma Y inicial)
-            $pdf->SetXY($xR + $padX + $wHalf, $yCursor);
-            $pdf->MultiCell($wHalf - 1, $lineH, $row[1], 0, 'L');
-            $yAfterCol2 = $pdf->GetY();
-
-            // Avanza a la mayor Y de ambas columnas
-            $yCursor = max($yAfterCol1, $yAfterCol2);
-        }
-
-        $panelHR = ($yCursor - $yBodyR) + $headerH + 2*$padY;
-// ---------- Bordes y normalización de alturas ----------
-        $panelH = max($panelHL, $panelHR);
-        $pdf->SetDrawColor($borde[0], $borde[1], $borde[2]);
-        $pdf->Rect($xL, $yL, $colW, $panelH);
-        $pdf->Rect($xR, $yR, $colW, $panelH);
-        // Cursor debajo
-        $pdf->SetY($yTop + $panelH + 8);
+        $pdf->Ln(3); // Espacio después de los cuadros
         // FIN Datos Solicitante - Datos de la OS
 
 
-        $marginL = 10;
-        $gutter = 10;
-        $usableW = $pdf->GetPageWidth() - 2*$marginL;
-        $colW = ($usableW - $gutter) / 2;
-        $headerH = 16;
-        $padX = 6;
-        $padY = 6;
-
-        $xL = $marginL;
-        $xR = $marginL + $colW + $gutter;
-        $yTop = $pdf->GetY();
-
-        // Cabeceras
-        $pdf->SetFillColor($celeste[0], $celeste[1], $celeste[2]);
-        $pdf->Rect($xL, $yTop, $colW, $headerH, 'F');
-        $pdf->Rect($xR, $yTop, $colW, $headerH, 'F');
-
-        $pdf->SetFont('helvetica','B',12);
-        $pdf->SetTextColor(0);
-        $pdf->SetXY($xL + $padX, $yTop + 5);
-        $pdf->Cell($colW - 2*$padX, 6, utf8_decode('Datos del Proveedor'), 0, 1, 'L');
-        $pdf->SetXY($xR + $padX, $yTop + 5);
-        $pdf->Cell($colW - 2*$padX, 6, utf8_decode('Acuerdos Comerciales de la OS'), 0, 1, 'L');
-
-        // Panel izquierdo
-        $prov_nombre = $listar_info->transportista_razon_social ?: '-';
-        $prov_ruc    = 'RUC ' . ($listar_info->transportista_ruc ?: '-');
-        $prov_dir    = 'CAL.CALLE 1 MZA. X LOTE. 4V INT. C COO. LAS VERTIENTES DE TABLADA DE LURÍN LIMA - LIMA - VILLA EL SALVADOR';
-
-        $pdf->SetFont('helvetica','',10);
-        $pdf->SetTextColor(0);
-        $pdf->SetXY($xL + $padX, $yTop + $headerH + $padY);
-        $yStartL = $pdf->GetY();
-        $pdf->MultiCell($colW - 2*$padX, 6, utf8_decode($prov_nombre), 0, 'L');
-        $pdf->SetTextColor(0);
-        $pdf->MultiCell($colW - 2*$padX, 6, utf8_decode($prov_ruc), 0, 'L');
-        $pdf->SetTextColor(0);
-        $pdf->MultiCell($colW - 2*$padX, 6, utf8_decode($prov_dir), 0, 'L');
-        $yEndL  = $pdf->GetY();
-        $panelHL = ($yEndL - $yStartL) + $headerH + 2*$padY;
-
-        // Panel derecho (FIX: reponer X antes de CADA MultiCell)
-        $acuerdos = [
-            'Referencia: Cotización N° 123456',
-            'Presentado: Por Correo Electrónico e-mail absa@gmail.com',
-            'Contacto Comercial: Josue Pomachua',
-            'Conformidad de Factura: Después de Entrega',
-            'Modo de Pago: Crédito a 15 días de presentación de factura',
-            'Garantías del Servicio: 100% de pérdida. Retorno gratuito por deterioro',
-        ];
-
-        $pdf->SetFont('helvetica','',10);
-        $pdf->SetTextColor(0);
-
-        $yStartR = $yTop + $headerH + $padY;
-        $pdf->SetXY($xR + $padX, $yStartR);
-
-        foreach ($acuerdos as $linea) {
-            // IMPORTANTÍSIMO: recolocar X en la columna derecha ANTES de cada MultiCell
-            $pdf->SetX($xR + $padX);
-            $pdf->MultiCell($colW - 2*$padX, 6, utf8_decode($linea), 0, 'L');
-        }
-
-        $yEndR   = $pdf->GetY();
-        $panelHR = ($yEndR - $yStartR) + $headerH + 2*$padY;
-
-        // Bordes y cursor final
-        $panelH = max($panelHL, $panelHR);
-        $pdf->SetDrawColor($borde[0], $borde[1], $borde[2]);
-        $pdf->Rect($xL, $yTop, $colW, $panelH);
-        $pdf->Rect($xR, $yTop, $colW, $panelH);
-        $pdf->SetY($yTop + $panelH + 8);
 
 
 
 
 
 
-        // Resumen General de la OS
-        $pdf->SetFont('helvetica', 'B', 12);
-        $pdf->Cell(0, 10, 'Resumen General de la OS', 0, 1, 'L');
+
+
+
+
+        // Configuración inicial
         $pdf->SetFont('helvetica', '', 10);
+        $startY = $pdf->GetY(); // Guardamos la posición - inicial
 
-        $pdf->Cell(40, 7, 'Tipo de Servicio:', 0, 0, 'L');
-        $pdf->Cell(0, 7, $listar_info->tipo_servicio_concepto, 0, 1, 'L');
+        // --- ENCABEZADOS SUPERIORES ---
+        $pdf->SetFont('helvetica', 'B', 10);
+        // Encabezado izquierdo
+        $pdf->SetXY(10, $startY);
+        $pdf->Cell(90, 7, 'Datos del Proveedor', 1, 1, 'C', false);
+        // Encabezado derecho
+        $pdf->SetXY(110, $startY);
+        $pdf->Cell(90, 7, 'Acuerdos Comerciales de la OS', 1, 1, 'C', false);
 
-        if ($listar_info->id_tipo_servicios == 2) {
-            $departamento = DB::table('departamentos')->where('id_departamento', $listar_info->id_departamento)->first();
-            $provincia = DB::table('provincias')->where('id_provincia', $listar_info->id_provincia)->first();
-            $distrito = DB::table('distritos')->where('id_distrito', $listar_info->id_distrito)->first();
+        // Ajustamos la posición Y para los cuadros de datos
+        $dataStartY = $startY + 7;
 
-            $pdf->Cell(40, 7, 'Ubigeo del Servicio:', 0, 0, 'L');
-            $pdf->Cell(0, 7, ($departamento ? $departamento->departamento_nombre : '') . ' - ' .
-                ($provincia ? $provincia->provincia_nombre : '') . ' - ' .
-                ($distrito ? $distrito->distrito_nombre : 'TODOS LOS DISTRITOS'), 0, 1, 'L');
-        }
+        // --- PRIMER CUADRO: Datos del Proveedor (izquierda) ---
+        $pdf->Rect(10, $dataStartY, 90, 25); // Cuadro de datos (ajustar altura según necesidad)
 
-        if ($listar_info->id_vehiculo) {
-            $vehiculo = DB::table('vehiculos')->where('id_vehiculo', $listar_info->id_vehiculo)->first();
-            $pdf->Cell(40, 7, 'Capacidad del Vehículo:', 0, 0, 'L');
-            $pdf->Cell(0, 7, $general->formatoDecimal($vehiculo->vehiculo_capacidad_peso) . ' Kg', 0, 1, 'L');
-        }
+        $pdf->SetFont('helvetica', '', 8);
+        $pdf->SetXY(12, $dataStartY + 3); // Margen interno
+        $pdf->MultiCell(86, 5, utf8_decode($listar_info->transportista_razon_social), 0, 'L');
+        $pdf->SetX(12);
+        $pdf->MultiCell(86, 5, utf8_decode('RUC ' . $listar_info->transportista_ruc), 0, 'L');
+        $pdf->SetX(12);
+        $pdf->MultiCell(86, 5, utf8_decode($listar_info->transportista_direccion), 0, 'L');
 
-        if ($listar_info->id_tarifario) {
-            $pdf->Cell(40, 7, 'Capacidad de la Tarifa:', 0, 0, 'L');
-            $pdf->Cell(0, 7, 'Min: ' . $general->formatoDecimal($listar_info->despacho_cap_min) . ' Kg - Max: ' .
-                $general->formatoDecimal($listar_info->despacho_cap_max) . ' Kg', 0, 1, 'L');
-        }
+        // --- SEGUNDO CUADRO: Acuerdos Comerciales (derecha) ---
+        $pdf->Rect(110, $dataStartY, 90, 38); // Misma altura que el primero
 
-        $pdf->Cell(40, 7, 'Peso Despacho:', 0, 0, 'L');
-        $pdf->Cell(0, 7, $general->formatoDecimal($listar_info->despacho_peso) . ' Kg', 0, 1, 'L');
+        $pdf->SetXY(112, $dataStartY + 2); // Margen interno
+        $pdf->MultiCell(86, 5, utf8_decode('Referencia: Cotización N° 123456'), 0, 'L');
+        $pdf->SetX(112);
+        $pdf->MultiCell(86, 5, utf8_decode('Presentado: Por Correo Electrónico e-mail absa@gmail.com'), 0, 'L');
+        $pdf->SetX(112);
+        $pdf->MultiCell(86, 5, utf8_decode('Contacto Comercial: Josue Pomachua'), 0, 'L');
+        $pdf->SetX(112);
+        $pdf->MultiCell(86, 5, utf8_decode('Conformidad de Factura: Después de Entrega'), 0, 'L');
+        $pdf->SetX(112);
+        $pdf->MultiCell(86, 5, utf8_decode('Modo de Pago: Crédito a 15 días de presentación de factura'), 0, 'L');
+        $pdf->SetX(112);
+        $pdf->MultiCell(86, 5, utf8_decode('Garantías del Servicio: 100% de pérdida. Retorno gratuito por deterioro'), 0, 'L');
 
-        $pdf->Cell(40, 7, 'Volumen Despacho:', 0, 0, 'L');
-        $pdf->Cell(0, 7, $general->formatoDecimal($listar_info->despacho_volumen) . ' m³', 0, 1, 'L');
+        $pdf->Ln(3); // Espacio después de los cuadros
 
-        $pdf->Cell(40, 7, 'Monto de la Tarifa:', 0, 0, 'L');
-        $pdf->Cell(0, 7, 'S/ ' . $general->formatoDecimal($listar_info->despacho_flete), 0, 1, 'L');
 
-        $pdf->Cell(40, 7, 'Otros Gastos:', 0, 0, 'L');
-        $pdf->Cell(0, 7, 'S/ ' . $general->formatoDecimal($listar_info->despacho_gasto_otros), 0, 1, 'L');
 
-        if ($listar_info->id_tipo_servicios == 1) {
-            $pdf->Cell(40, 7, 'Mano de Obra:', 0, 0, 'L');
-            $pdf->Cell(0, 7, 'S/ ' . $general->formatoDecimal($listar_info->despacho_ayudante), 0, 1, 'L');
-        }
 
-        $pdf->Cell(40, 7, 'Total del Servicio sin IGV:', 0, 0, 'L');
-        $pdf->Cell(0, 7, 'S/ ' . $general->formatoDecimal($listar_info->despacho_costo_total), 0, 1, 'L');
 
-        $pdf->Cell(40, 7, 'Total del Servicio con IGV:', 0, 0, 'L');
-        $pdf->Cell(0, 7, 'S/ ' . $general->formatoDecimal($listar_info->despacho_costo_total), 0, 1, 'L');
-        $pdf->Ln(10);
 
-        // Detalle del Servicio (Tabla de guías)
+
+
+
+
+
+
+        // Resumen General de la OS - Estilo de cuadro con datos en 2 líneas de 5
+        $pdf->SetFont('helvetica', '', 10);
+        $startY = $pdf->GetY();
+
+        $pdf->SetFont('helvetica', 'B', 10);
+        // Encabezado izquierdo
+        $pdf->SetXY(10, $startY);
+        $pdf->Cell(190, 7, 'Resumen General de la OS', 1, 1, 'C', false);
+
+        // Dibujar el cuadro contenedor principal
+        $startY = $pdf->GetY();
+        $pdf->Rect(10, $startY, 190, 33); // Ajusta la altura según necesidad
+
+        $pdf->SetFont('helvetica', '', 8);
+
+        // Primera línea horizontal (5 datos)
+        $line1Y = $startY + 3;
+        $colWidth = 26; // Ancho por columna (190mm/5)
+
+        // Data 1: Tipo de Servicio
+        $pdf->SetXY(10, $line1Y);
+        $pdf->Cell($colWidth, 2, utf8_decode('Tipo de Servicio:'), 0, 0, 'L');
+        $pdf->Cell($colWidth, 2, utf8_decode($listar_info->tipo_servicio_concepto), 0, 0, 'L');
+
+        // Data 2: Capacidad Vehículo
+        $vehiculo_capacidad = $listar_info->id_vehiculo ? DB::table('vehiculos')->where('id_vehiculo', $listar_info->id_vehiculo)->first()->vehiculo_capacidad_peso : 'N/A';
+        $pdf->Cell($colWidth, 2, utf8_decode('Capac. Vehículo:'), 0, 0, 'L');
+        $pdf->Cell($colWidth, 2, utf8_decode($general->formatoDecimal($vehiculo_capacidad).' Kg'), 0, 0, 'L');
+
+        // Data 3: Capacidad Tarifa
+        $pdf->Cell($colWidth, 2, utf8_decode('Capac. Tarifa:'), 0, 0, 'L');
+        $pdf->Cell($colWidth, 2, utf8_decode('Min:'.$general->formatoDecimal($listar_info->despacho_cap_min).'Kg - Max:'.$general->formatoDecimal($listar_info->despacho_cap_max)), 0, 1, 'L');
+
+        // Segunda línea horizontal (5 datos)
+        $line2Y = $line1Y + 8;
+
+        // Data 4: Peso Despacho
+        $pdf->SetXY(10, $line2Y);
+        $pdf->Cell($colWidth, 2, utf8_decode('Peso Despacho:'), 0, 0, 'L');
+        $pdf->Cell($colWidth, 2, utf8_decode($general->formatoDecimal($listar_info->despacho_peso).' Kg'), 0, 0, 'L');
+
+        // Data 5: Volumen Despacho
+        $pdf->Cell($colWidth, 2, utf8_decode('Vol. Despacho:'), 0, 0, 'L');
+        $pdf->Cell($colWidth, 2, utf8_decode($general->formatoDecimal($listar_info->despacho_volumen).' m³'), 0, 0, 'L');
+
+        // Data 6: Monto Tarifa
+        $pdf->Cell($colWidth, 2, utf8_decode('Monto Tarifa:'), 0, 0, 'L');
+        $pdf->Cell($colWidth, 2, utf8_decode('S/'.$general->formatoDecimal($listar_info->despacho_flete)), 0, 1, 'L');
+
+        // Tercera línea horizontal (5 datos restantes)
+        $line3Y = $line2Y + 8;
+
+        // Data 7: Otros Gastos
+        $pdf->SetXY(10, $line3Y);
+        $pdf->Cell($colWidth, 2, utf8_decode('Otros Gastos:'), 0, 0, 'L');
+        $pdf->Cell($colWidth, 2, utf8_decode('S/'.$general->formatoDecimal($listar_info->despacho_gasto_otros)), 0, 0, 'L');
+
+        // Data 8: Mano de Obra
+        $mano_obra = ($listar_info->id_tipo_servicios == 1) ? 'S/'.$general->formatoDecimal($listar_info->despacho_ayudante) : 'S/0';
+        $pdf->Cell($colWidth, 2, utf8_decode('Mano de Obra:'), 0, 0, 'L');
+        $pdf->Cell($colWidth, 2, utf8_decode($mano_obra), 0, 0, 'L');
+
+        // Data 9: Total sin IGV
+        $pdf->Cell($colWidth, 2, utf8_decode('Total s/IGV:'), 0, 0, 'L');
+        $pdf->Cell($colWidth, 2, utf8_decode('S/'.$general->formatoDecimal($listar_info->despacho_costo_total)), 0, 1, 'L');
+
+        // Cuarta línea horizontal
+        $line4Y = $line3Y + 8;
+        $pdf->SetXY(10, $line4Y);
+        // Data 9: Total con IGV
+        $pdf->Cell($colWidth, 2, utf8_decode('Total c/IGV:'), 0, 0, 'L');
+        $pdf->Cell($colWidth, 2, utf8_decode('S/'.$general->formatoDecimal($listar_info->despacho_costo_total)), 0, 1, 'L');
+
+        $pdf->Ln(3); // Espacio después del cuadro
+
+
+
+
+
+
+        // Márgenes y salto automático (ajusta 15 si quieres más pie de página)
+        $margenInferior = 15;
+
+        // ===== Título =====
         $pdf->SetFont('helvetica', 'B', 12);
         $pdf->Cell(0, 10, 'Detalle del Servicio', 0, 1, 'L');
-        $pdf->SetFont('helvetica', 'B', 10);
 
-        // Cabecera de la tabla
-        $pdf->Cell(10, 7, 'N°', 1, 0, 'C');
-        $pdf->Cell(30, 7, 'Guía o Doc.', 1, 0, 'C');
-        $pdf->Cell(25, 7, 'RUC Dest.', 1, 0, 'C');
-        $pdf->Cell(40, 7, 'Nombre Dest.', 1, 0, 'C');
-        $pdf->Cell(30, 7, 'Factura/Doc.', 1, 0, 'C');
-        $pdf->Cell(40, 7, 'Dirección Entrega', 1, 0, 'C');
-        $pdf->Cell(30, 7, 'Ubigeo', 1, 0, 'C');
-        $pdf->Cell(20, 7, 'Peso (kg)', 1, 0, 'C');
-        $pdf->Cell(20, 7, 'Volumen (m³)', 1, 1, 'C');
+        // Anchos
+        $anchos = [10,20,20,40,20,30,20,15,15];
 
-        // Contenido de la tabla
+        // ===== función inline de cabecera (SIN declarar función) =====
+        $pdf->SetFont('helvetica', 'B', 9);
+        $headers = ['N°','Guía o Doc.','RUC Dest.','Nombre Dest.','Factura/Doc.','Dirección Entrega','Ubigeo','Peso (kg)','Volumen (m³)'];
+        $hRow = 10;
+        $x0 = $pdf->GetX(); $y0 = $pdf->GetY();
+        // escribir textos de cabecera
+        for ($i=0; $i<count($headers); $i++) {
+            $x = $pdf->GetX(); $y = $pdf->GetY();
+            $pdf->MultiCell($anchos[$i], 5, utf8_decode($headers[$i]), 0, 'C');
+            $pdf->SetXY($x + $anchos[$i], $y);
+        }
+        // dibujar rectángulos
+        $x = $x0;
+        for ($i=0; $i<count($anchos); $i++) {
+            $pdf->Rect($x, $y0, $anchos[$i], $hRow);
+            $x += $anchos[$i];
+        }
+        $pdf->SetXY($x0, $y0 + $hRow);
+
+        // ===== Contenido =====
         $pdf->SetFont('helvetica', '', 8);
         $conteo = 1;
+        $altoLinea = 5;
+
         foreach ($listar_info->guias as $guia) {
-            $pdf->Cell(10, 7, $conteo, 1, 0, 'C');
-            $pdf->Cell(30, 7, $guia->guia_nro_doc, 1, 0, 'L');
-            $pdf->Cell(25, 7, $guia->guia_ruc_cliente, 1, 0, 'L');
-            $pdf->Cell(40, 7, $guia->guia_nombre_cliente, 1, 0, 'L');
-            $pdf->Cell(30, 7, $guia->guia_nro_doc_ref, 1, 0, 'L');
-            $pdf->Cell(40, 7, $guia->guia_direc_entrega, 1, 0, 'L');
-            $pdf->Cell(30, 7, $guia->guia_departamento . ' - ' . $guia->guia_provincia . ' - ' . ($guia->guia_destrito ?? ''), 1, 0, 'L');
-            $pdf->Cell(20, 7, $general->formatoDecimal($guia->pesoTotalKilos), 1, 0, 'R');
-            $pdf->Cell(20, 7, $general->formatoDecimal($guia->volumenTotal), 1, 1, 'R');
+            // Preparar textos
+            $txtNro       = (string)$conteo;
+            $txtGuia      = (string)$guia->guia_nro_doc;
+            $txtRuc       = (string)$guia->guia_ruc_cliente;
+            $txtNombre    = utf8_decode((string)$guia->guia_nombre_cliente);
+            $txtFactura   = (string)$guia->guia_nro_doc_ref;
+            $txtDireccion = utf8_decode((string)$guia->guia_direc_entrega);
+            $txtUbigeo    = utf8_decode((string)$guia->guia_departamento).' - '
+                . utf8_decode((string)$guia->guia_provincia).' - '
+                . utf8_decode((string)($guia->guia_destrito ?? ''));
+            $txtPeso      = $general->formatoDecimal($guia->pesoTotalKilos);
+            $txtVolumen   = $general->formatoDecimal($guia->volumenTotal);
+
+            // Estimar altura de la fila
+            $lineasEstim = 1;
+            $lineasEstim = max($lineasEstim, ceil($pdf->GetStringWidth($txtNombre)    / $anchos[3]));
+            $lineasEstim = max($lineasEstim, ceil($pdf->GetStringWidth($txtDireccion) / $anchos[5]));
+            $lineasEstim = max($lineasEstim, ceil($pdf->GetStringWidth($txtUbigeo)    / $anchos[6]));
+            $lineasEstim = max($lineasEstim, ceil($pdf->GetStringWidth($txtGuia)      / $anchos[1]));
+            $lineasEstim = max($lineasEstim, ceil($pdf->GetStringWidth($txtRuc)       / $anchos[2]));
+            $lineasEstim = max($lineasEstim, ceil($pdf->GetStringWidth($txtFactura)   / $anchos[4]));
+
+            $rowH_est = $altoLinea * $lineasEstim;
+            $limITE   = $pdf->GetPageHeight() - $margenInferior;
+
+            // Salto de página si no entra
+            if ($pdf->GetY() + $rowH_est > $limITE) {
+                $pdf->AddPage();
+
+                // Redibujar cabecera
+                $pdf->SetFont('helvetica', 'B', 9);
+                $x0 = $pdf->GetX(); $y0 = $pdf->GetY();
+                for ($i=0; $i<count($headers); $i++) {
+                    $x = $pdf->GetX(); $y = $pdf->GetY();
+                    $pdf->MultiCell($anchos[$i], 5, utf8_decode($headers[$i]), 0, 'C');
+                    $pdf->SetXY($x + $anchos[$i], $y);
+                }
+                $x = $x0;
+                for ($i=0; $i<count($anchos); $i++) {
+                    $pdf->Rect($x, $y0, $anchos[$i], $hRow);
+                    $x += $anchos[$i];
+                }
+                $pdf->SetXY($x0, $y0 + $hRow);
+                $pdf->SetFont('helvetica', '', 8);
+            }
+
+            // --- Escribir fila (igual que ya tienes) ---
+            $xFila = $pdf->GetX(); $yFila = $pdf->GetY(); $yMax = $yFila;
+
+            // N°
+            $x = $pdf->GetX(); $y = $pdf->GetY();
+            $pdf->MultiCell($anchos[0], $altoLinea, $txtNro, 0, 'C');
+            $yMax = max($yMax, $pdf->GetY()); $pdf->SetXY($x + $anchos[0], $y);
+
+            // Guía
+            $x = $pdf->GetX(); $y = $pdf->GetY();
+            $pdf->MultiCell($anchos[1], $altoLinea, $txtGuia, 0, 'L');
+            $yMax = max($yMax, $pdf->GetY()); $pdf->SetXY($x + $anchos[1], $y);
+
+            // RUC
+            $x = $pdf->GetX(); $y = $pdf->GetY();
+            $pdf->MultiCell($anchos[2], $altoLinea, $txtRuc, 0, 'L');
+            $yMax = max($yMax, $pdf->GetY()); $pdf->SetXY($x + $anchos[2], $y);
+
+            // Nombre
+            $x = $pdf->GetX(); $y = $pdf->GetY();
+            $pdf->MultiCell($anchos[3], $altoLinea, $txtNombre, 0, 'L');
+            $yMax = max($yMax, $pdf->GetY()); $pdf->SetXY($x + $anchos[3], $y);
+
+            // Factura
+            $x = $pdf->GetX(); $y = $pdf->GetY();
+            $pdf->MultiCell($anchos[4], $altoLinea, $txtFactura, 0, 'L');
+            $yMax = max($yMax, $pdf->GetY()); $pdf->SetXY($x + $anchos[4], $y);
+
+            // Dirección
+            $x = $pdf->GetX(); $y = $pdf->GetY();
+            $pdf->MultiCell($anchos[5], $altoLinea, $txtDireccion, 0, 'L');
+            $yMax = max($yMax, $pdf->GetY()); $pdf->SetXY($x + $anchos[5], $y);
+
+            // Ubigeo
+            $x = $pdf->GetX(); $y = $pdf->GetY();
+            $pdf->MultiCell($anchos[6], $altoLinea, $txtUbigeo, 0, 'L');
+            $yMax = max($yMax, $pdf->GetY()); $pdf->SetXY($x + $anchos[6], $y);
+
+            // Peso
+            $x = $pdf->GetX(); $y = $pdf->GetY();
+            $pdf->MultiCell($anchos[7], $altoLinea, $txtPeso, 0, 'R');
+            $yMax = max($yMax, $pdf->GetY()); $pdf->SetXY($x + $anchos[7], $y);
+
+            // Volumen
+            $x = $pdf->GetX(); $y = $pdf->GetY();
+            $pdf->MultiCell($anchos[8], $altoLinea, $txtVolumen, 0, 'R');
+            $yMax = max($yMax, $pdf->GetY()); $pdf->SetXY($x + $anchos[8], $y);
+
+            // Bordes
+            $rowH = $yMax - $yFila;
+            $x = $xFila;
+            for ($i=0; $i<count($anchos); $i++) {
+                $pdf->Rect($x, $yFila, $anchos[$i], $rowH);
+                $x += $anchos[$i];
+            }
+            $pdf->SetXY($xFila, $yFila + $rowH);
+
             $conteo++;
         }
 
-        // Notas y firmas
-        $pdf->Ln(10);
-        $pdf->SetFont('helvetica', 'B', 12);
-        $pdf->Cell(0, 10, 'Nota:', 0, 1, 'L');
-        $pdf->SetFont('helvetica', '', 10);
-        $pdf->MultiCell(0, 7, '1. El Proveedor debe emitir su factura según lo especificado en la Orden de Servicio; donde cada ítem de la factura es una OS o, en su defecto, emitir una factura por OS', 0, 'L');
-        $pdf->MultiCell(0, 7, '2. El Proveedor debe indicar el número de OS en el detalle de su Factura y las guías de remisión o documento solicitante', 0, 'L');
-        $pdf->MultiCell(0, 7, '3. El Proveedor debe entregar los cargos de entrega en un plazo de 7 días hábiles', 0, 'L');
-        $pdf->MultiCell(0, 7, '4. El Proveedor puede enviar su Factura electrónica al correo electrónico: operaciones@gotomarket.com.pe', 0, 'L');
 
-        // Firmas
-        $pdf->Ln(10);
-        $pdf->SetFont('helvetica', 'B', 12);
-        $pdf->Cell(95, 10, 'Firma del Solicitante', 0, 0, 'L');
-        $pdf->Cell(95, 10, 'Firma del Proveedor', 0, 1, 'L');
-        $pdf->SetFont('helvetica', '', 10);
-        $pdf->Cell(95, 7, 'Autorizado con Usuario y contraseña:', 0, 0, 'L');
-        $pdf->Cell(95, 7, '', 0, 1, 'L');
-        $pdf->Cell(95, 7, 'Antonio Angulo Casanova', 0, 0, 'L');
-        $pdf->Cell(95, 7, '', 0, 1, 'L');
-        $pdf->Cell(95, 7, 'Gerente de Operaciones', 0, 0, 'L');
-        $pdf->Cell(95, 7, '', 0, 1, 'L');
+
+
+
+
+
+        // Notas y firmas
+        $pdf->Ln(3);
+
+        // Anchos (deben sumar <= ancho imprimible, típicamente 190)
+        $col1_width = 80; // Notas
+        $col2_width = 50; // Firma solicitante
+        $col3_width = 60; // Firma proveedor
+
+        $row_height = 5;
+
+        // Títulos (sin bordes)
+        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->Cell($col1_width, 7, utf8_decode('Notas:'), 0, 0, 'L');
+        $pdf->Cell($col2_width, 7, utf8_decode('Firma del Solicitante'), 0, 0, 'L');
+        $pdf->Cell($col3_width, 7, utf8_decode(''), 0, 1, 'L');
+
+        $pdf->SetFont('helvetica', '', 8);
+
+        // Guarda la posición inicial del bloque
+        $xStart = $pdf->GetX();           // normalmente margen izquierdo
+        $yStart = $pdf->GetY();
+
+        // Calcula X de cada columna (sin “gaps” adicionales)
+        $x1 = $xStart;
+        $x2 = $xStart + $col1_width;
+        $x3 = $x2 + $col2_width;
+
+        // Contenidos
+        $txtNotas =
+            "1. El Proveedor debe emitir su factura según lo especificado en la Orden de Servicio; donde cada ítem de la factura es una OS o, en su defecto, emitir una factura por OS
+
+2. El Proveedor debe indicar el número de OS en el detalle de su Factura y las guías de remisión o documento solicitante
+
+3. El Proveedor debe entregar los cargos de entrega en un plazo de 7 días hábiles
+
+4. El Proveedor puede enviar su Factura electrónica al correo electrónico: operaciones@gotomarket.com.pe";
+
+        $txtSolicitante =
+            "Autorizado con Usuario y contraseña:
+Antonio Angulo Casanova
+Gerente de Operaciones";
+
+        $txtProveedor =
+            "
+            ______________________________
+                          Firma del Proveedor";
+
+        // Helper para imprimir MultiCell en una posición fija y devolver la Y final
+        $printCol = function($x, $y, $w, $text) use ($pdf, $row_height) {
+            $pdf->SetXY($x, $y);
+            $pdf->MultiCell($w, $row_height, utf8_decode($text), 0, 'L');
+            return $pdf->GetY();
+        };
+
+        // Imprime las tres columnas arrancando al mismo Y
+        $yEnd1 = $printCol($x1, $yStart, $col1_width, $txtNotas);
+        $yEnd2 = $printCol($x2, $yStart, $col2_width, $txtSolicitante);
+        $yEnd3 = $printCol($x3, $yStart, $col3_width, $txtProveedor);
+
+        // Coloca el cursor al final del bloque (debajo de la columna más alta)
+        $pdf->SetXY($xStart, max($yEnd1, $yEnd2, $yEnd3) + 2);
+
+
+
+
+
+
+
 
         // Generar el PDF
-        $pdf->Output('I', utf8_decode('OrdenServicio_' . ($listar_info->despacho_numero_correlativo ?? '')) . '.pdf');
+        $pdf->Output('I', utf8_decode('OrdenServicio_' . utf8_decode($listar_info->despacho_numero_correlativo ?? ''))) . '.pdf';
         exit;
     }
 }

@@ -306,6 +306,65 @@
     </x-modal-general>
     {{--    MODAL FIN DETALLES DEL DESPACHO--}}
 
+{{--    MODAL GUÍAS ASOCIADAS--}}
+    <x-modal-general  wire:ignore.self >
+        <x-slot name="tama">modal-xl</x-slot>
+        <x-slot name="id_modal">modalDetalleGuias</x-slot>
+        <x-slot name="titleModal">Guías Relacionadas</x-slot>
+        <x-slot name="modalContent">
+            @if($guiasAsociadasDespachos)
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12">
+                            <x-table-general>
+                                <x-slot name="thead">
+                                    <tr>
+                                        <th>N°</th>
+                                        <th>Guía</th>
+                                        <th>F. Emision</th>
+                                        <th>Cliente</th>
+                                        <th>Comprobante</th>
+                                        <th>Importe</th>
+                                        <th>F. Despacho</th>
+                                        <th>Peso</th>
+                                    </tr>
+                                </x-slot>
+
+                                <x-slot name="tbody">
+                                    @if(count($guiasAsociadasDespachos) > 0)
+                                        @php $conteo = 1; @endphp
+                                        @foreach($guiasAsociadasDespachos as $ta)
+                                            <tr>
+                                                <td>{{$conteo}}</td>
+                                                <td>{{$general->formatearCodigo($ta->guia_nro_doc)}}</td>
+                                                <td>
+                                                    {{date('d-m-Y',strtotime($ta->guia_fecha_emision))}}
+                                                </td>
+                                                <td>{{$ta->guia_nombre_cliente}}</td>
+                                                <td>{{$ta->guia_nro_doc_ref}}</td>
+                                                <td>S/ {{$general->formatoDecimal($ta->guia_importe_total_sin_igv)}}</td>
+                                                <td>{{ date('d-m-Y',strtotime($ta->programacion_fecha)) }}</td>
+                                                <td>{{$general->formatoDecimal($ta->peso_total)}} Kg</td>
+                                            </tr>
+                                            @php $conteo++; @endphp
+                                        @endforeach
+                                    @else
+                                        <tr class="odd">
+                                            <td valign="top" colspan="7" class="dataTables_empty text-center">
+                                                No se han encontrado resultados.
+                                            </td>
+                                        </tr>
+                                    @endif
+                                </x-slot>
+                            </x-table-general>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        </x-slot>
+    </x-modal-general>
+{{--    FIN MODAL GUÍAS ASOCIADAS--}}
+
     <div class="card">
         <div class="card-body">
             <div class="row align-items-center mt-2">
@@ -566,7 +625,9 @@
                                                     @endphp
                                                     @foreach($guiasComprobante as $indexGuias => $g)
                                                         @if($indexGuias <= 2)
-                                                            {{ $general->formatearCodigo($g->guia_nro_doc) }}
+                                                            <a wire:click="listar_guias_despachos({{ $des->id_despacho }})" data-bs-toggle="modal" data-bs-target="#modalDetalleGuias" class="cursoPointer text-primary">
+                                                                {{ $g->guia_nro_doc }}
+                                                            </a>
                                                             @if($indexGuias < 2 && $indexGuias < $totalGuias - 1)
                                                                 , <!-- Mostrar la coma solo si no es el último elemento que se va a mostrar -->
                                                             @elseif($indexGuias == 2 && $totalGuias > 3)
@@ -586,12 +647,13 @@
                                                 </td>
                                                 <td>S/ {{$des->despacho_flete}}</td>
                                                 <td>S/ {{$general->formatoDecimal($des->totalVentaDespacho)}}</td>
-                                                <td>
-                                                    <span class="{{$des->despacho_estado_modificado == 1 ? 'text-danger' : ''}}">S/ {{$des->despacho_flete}}</span>
-                                                    <b class="{{$styleColor}}">
-                                                        {{$des->despacho_estado_modificado == 1 ? '=> S/ '.$des->despacho_monto_modificado : ''}}
-                                                    </b>
-                                                </td>
+{{--                                                <td>--}}
+{{--                                                    <span class="{{$des->despacho_estado_modificado == 1 ? 'text-danger' : ''}}">S/ {{$des->despacho_flete}}</span>--}}
+{{--                                                    <b class="{{$styleColor}}">--}}
+{{--                                                        {{$des->despacho_estado_modificado == 1 ? '=> S/ '.$des->despacho_monto_modificado : ''}}--}}
+{{--                                                    </b>--}}
+{{--                                                </td>--}}
+                                                <td>S/ {{$des->despacho_costo_total}}</td>
                                                 @php
                                                     $ra = 0;
                                                     if ($des->despacho_costo_total && $des->totalVentaDespacho > 0) {
