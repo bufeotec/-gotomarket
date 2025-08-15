@@ -137,12 +137,12 @@
                                 <h5>Acuerdos Comerciales de la OS</h5>
                             </div>
                             <div class="card-body mt-3">
-                                <p>Referencia: <b>Cotización N° 123456</b></p>
-                                <p>Presentado: <b>Por Correo Electrónico e-mail absa@gmail.com</b></p>
-                                <p>Contacto Comercial: <b>Josue Pomachua</b></p>
-                                <p>Conformidad de Factura: <b>Después de Entrega</b></p>
-                                <p>Modo de Pago: <b>Crédito a 15 días de presentación de factura</b></p>
-                                <p>Garantías del Servicio: <b>100% de pérdida. Retorno gratuito por deterioro</b></p>
+{{--                                <p>Referencia: <b>Cotización N° 123456</b></p>--}}
+{{--                                <p>Presentado: <b>Por Correo Electrónico e-mail absa@gmail.com</b></p>--}}
+{{--                                <p>Contacto Comercial: <b>Josue Pomachua</b></p>--}}
+{{--                                <p>Conformidad de Factura: <b>Después de Entrega</b></p>--}}
+{{--                                <p>Modo de Pago: <b>Crédito a 15 días de presentación de factura</b></p>--}}
+{{--                                <p>Garantías del Servicio: <b>100% de pérdida. Retorno gratuito por deterioro</b></p>--}}
                             </div>
                         </div>
                     </div>

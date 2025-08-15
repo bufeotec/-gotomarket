@@ -375,20 +375,20 @@ class DespachotransporteController extends Controller
         // --- SEGUNDO CUADRO: Acuerdos Comerciales (derecha) ---
         $pdf->Rect(110, $dataStartY, 90, 38); // Misma altura que el primero
 
-        $pdf->SetXY(112, $dataStartY + 2); // Margen interno
-        $pdf->MultiCell(86, 5, utf8_decode('Referencia: Cotización N° 123456'), 0, 'L');
-        $pdf->SetX(112);
-        $pdf->MultiCell(86, 5, utf8_decode('Presentado: Por Correo Electrónico e-mail absa@gmail.com'), 0, 'L');
-        $pdf->SetX(112);
-        $pdf->MultiCell(86, 5, utf8_decode('Contacto Comercial: Josue Pomachua'), 0, 'L');
-        $pdf->SetX(112);
-        $pdf->MultiCell(86, 5, utf8_decode('Conformidad de Factura: Después de Entrega'), 0, 'L');
-        $pdf->SetX(112);
-        $pdf->MultiCell(86, 5, utf8_decode('Modo de Pago: Crédito a 15 días de presentación de factura'), 0, 'L');
-        $pdf->SetX(112);
-        $pdf->MultiCell(86, 5, utf8_decode('Garantías del Servicio: 100% de pérdida. Retorno gratuito por deterioro'), 0, 'L');
+//        $pdf->SetXY(112, $dataStartY + 2); // Margen interno
+//        $pdf->MultiCell(86, 5, utf8_decode('Referencia: Cotización N° 123456'), 0, 'L');
+//        $pdf->SetX(112);
+//        $pdf->MultiCell(86, 5, utf8_decode('Presentado: Por Correo Electrónico e-mail absa@gmail.com'), 0, 'L');
+//        $pdf->SetX(112);
+//        $pdf->MultiCell(86, 5, utf8_decode('Contacto Comercial: Josue Pomachua'), 0, 'L');
+//        $pdf->SetX(112);
+//        $pdf->MultiCell(86, 5, utf8_decode('Conformidad de Factura: Después de Entrega'), 0, 'L');
+//        $pdf->SetX(112);
+//        $pdf->MultiCell(86, 5, utf8_decode('Modo de Pago: Crédito a 15 días de presentación de factura'), 0, 'L');
+//        $pdf->SetX(112);
+//        $pdf->MultiCell(86, 5, utf8_decode('Garantías del Servicio: 100% de pérdida. Retorno gratuito por deterioro'), 0, 'L');
 
-        $pdf->Ln(3); // Espacio después de los cuadros
+        $pdf->Ln(18); // Espacio después de los cuadros
 
 
 
