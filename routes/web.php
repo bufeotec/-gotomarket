@@ -15,6 +15,7 @@ use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\PdfExportController;
 use App\Http\Controllers\TarifamovilController;
 use App\Http\Controllers\GestionvendedorController;
+use App\Http\Controllers\CRMController;
 //use App\Http\Controllers\TarifamovilController;
 use App\Http\Controllers\PedidoController;
 use App\Http\Controllers\DespachotransporteController;
@@ -149,4 +150,14 @@ Route::prefix('Despachotransporte')->middleware(['auth', 'canMenu:Despachotransp
     route::get('/gestionar_os_detalle',[DespachotransporteController::class ,'gestionar_os_detalle'])->name('Despachotransporte.gestionar_os_detalle')->middleware('verifyUserStatus')->middleware('can:gestionar_os_detalle');
 
     route::get('/generar_pdf_os', [DespachotransporteController::class, 'generar_pdf_os'])->name('Despachotransporte.generar_pdf_os')->middleware('verifyUserStatus')->middleware('can:generar_pdf_os');
+});
+
+Route::prefix('CRM')->middleware(['auth', 'canMenu:CRM'])->group(function () {
+    /* CRM */
+    route::get('/sistema_puntos_vendedor_cliente',[CRMController::class ,'sistema_puntos_vendedor_cliente'])->name('CRM.sistema_puntos_vendedor_cliente')->middleware('verifyUserStatus')->middleware('can:sistema_puntos_vendedor_cliente');
+    route::get('/gestion_vendedores',[CRMController::class ,'gestion_vendedores'])->name('CRM.gestion_vendedores')->middleware('verifyUserStatus')->middleware('can:gestion_vendedores');
+    route::get('/gestion_campañas',[CRMController::class ,'gestion_campañas'])->name('CRM.gestion_campañas')->middleware('verifyUserStatus')->middleware('can:gestion_campañas');
+    route::get('/gestion_premios',[CRMController::class ,'gestion_premios'])->name('CRM.gestion_premios')->middleware('verifyUserStatus')->middleware('can:gestion_premios');
+    route::get('/gestion_puntos',[CRMController::class ,'gestion_puntos'])->name('CRM.gestion_puntos')->middleware('verifyUserStatus')->middleware('can:gestion_puntos');
+    route::get('/seleccionar_premios',[CRMController::class ,'seleccionar_premios'])->name('CRM.seleccionar_premios')->middleware('verifyUserStatus')->middleware('can:seleccionar_premios');
 });
