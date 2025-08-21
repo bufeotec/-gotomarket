@@ -12,9 +12,9 @@ use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
 use App\Models\Logs;
 use App\Models\Premio;
-use App\Models\Campaña;
+use App\Models\Campania;
 use App\Models\General;
-use App\Models\Campañaprecio;
+use App\Models\Campaniaprecio;
 
 class Gestionarpremios extends Component{
     use WithPagination, WithoutUrlPagination;
@@ -27,9 +27,9 @@ class Gestionarpremios extends Component{
     public function __construct(){
         $this->logs = new Logs();
         $this->premio = new Premio();
-        $this->campania = new Campaña();
+        $this->campania = new Campania();
         $this->general = new General();
-        $this->campañaprecio = new Campañaprecio();
+        $this->campañaprecio = new Campaniaprecio();
     }
     // PREMIOS
     public $search_premios;
@@ -312,7 +312,7 @@ class Gestionarpremios extends Component{
 
             // Agregar los premios a la tabla campaña_premio
             foreach ($this->premios_seleccionados as $id_premio) {
-                $campaniaPremio = new Campañaprecio();
+                $campaniaPremio = new Campaniaprecio();
                 $campaniaPremio->id_users = Auth::id();
                 $campaniaPremio->id_campania = $this->id_campania;
                 $campaniaPremio->id_premio = $id_premio;

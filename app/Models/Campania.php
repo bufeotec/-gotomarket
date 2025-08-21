@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
-class Campaña extends Model{
+class Campania extends Model{
     use HasFactory;
     protected $table = "campanias";
     protected $primaryKey = "id_campania";
@@ -17,7 +17,7 @@ class Campaña extends Model{
         $this->logs = new Logs();
     }
 
-    public function listar_campañas($search,$pagination,$order = 'desc'){
+    public function listar_campanias($search,$pagination,$order = 'desc'){
         try {
             $query = DB::table('campanias')
                 ->where(function($q) use ($search) {

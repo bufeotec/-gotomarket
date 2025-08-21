@@ -5,10 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Campañaprecio extends Model{
+class Campaniadocumento extends Model{
     use HasFactory;
-    protected $table = "campanias_premios";
-    protected $primaryKey = "id_campaña_premio";
+    protected $table = "campanias_documentos";
+    protected $primaryKey = "id_campania_documento";
     private $logs;
 
     public function __construct(){

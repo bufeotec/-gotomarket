@@ -11,23 +11,23 @@ use Livewire\WithFileUploads;
 use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
 use App\Models\Logs;
-use App\Models\Campaña;
-use App\Models\Campañadocumento;
+use App\Models\Campania;
+use App\Models\Campaniadocumento;
 use App\Models\General;
 use Illuminate\Support\Facades\Storage;
 
-class Gestioncampañas extends Component{
+class Gestioncampanias extends Component{
     use WithPagination, WithoutUrlPagination;
     use WithFileUploads;
     private $logs;
-    private $campaña;
-    private $campañadocumento;
+    private $campania;
+    private $campaniadocumento;
     private $general;
 
     public function __construct(){
         $this->logs = new Logs();
-        $this->campaña = new Campaña();
-        $this->campañadocumento = new Campañadocumento();
+        $this->campania = new Campania();
+        $this->campaniadocumento = new Campaniadocumento();
         $this->general = new General();
     }
     public $search_campania;
@@ -44,8 +44,8 @@ class Gestioncampañas extends Component{
     public $archivosAEliminar = [];
 
     public function render(){
-        $listar_campañas = $this->campaña->listar_campañas($this->search_campania, $this->pagination_campania);
-        return view('livewire.crm.gestioncampañas', compact('listar_campañas'));
+        $listar_campanias = $this->campania->listar_campanias($this->search_campania, $this->pagination_campania);
+        return view('livewire.crm.gestioncampanias', compact('listar_campanias'));
     }
 
     public function updatedArchivosNuevos(){
@@ -91,7 +91,7 @@ class Gestioncampañas extends Component{
 
     public function edit_data($id)
     {
-        $campania_edit = Campaña::find(base64_decode($id));
+        $campania_edit = Campania::find(base64_decode($id));
         if ($campania_edit) {
             $this->campania_nombre = $campania_edit->campania_nombre;
             $this->campania_fecha_inicio = $campania_edit->campania_fecha_inicio;
@@ -100,7 +100,7 @@ class Gestioncampañas extends Component{
             $this->id_campania = $campania_edit->id_campania;
 
             // Cargar archivos existentes como array de strings (rutas)
-            $this->archivos = Campañadocumento::where('id_campania', $this->id_campania)
+            $this->archivos = Campaniadocumento::where('id_campania', $this->id_campania)
                 ->where('campania_documento_estado', 1)
                 ->pluck('campania_documento_adjunto')
                 ->toArray();
@@ -121,9 +121,9 @@ class Gestioncampañas extends Component{
         }
     }
 
-    public function disable_campaña(){
+    public function disable_campania(){
         try {
-            if (!Gate::allows('disable_campaña')) {
+            if (!Gate::allows('disable_campania')) {
                 session()->flash('error_delete', 'No tiene permisos para cambiar los estados de la campaña.');
                 return;
             }
@@ -140,11 +140,11 @@ class Gestioncampañas extends Component{
             ]);
 
             DB::beginTransaction();
-            $campania_delete = Campaña::find($this->id_campania);
+            $campania_delete = Campania::find($this->id_campania);
             $campania_delete->campania_estado = $this->campania_estado;
             if ($campania_delete->save()) {
                 DB::commit();
-                $this->dispatch('hide_modal_delete_campaña');
+                $this->dispatch('hide_modal_delete_campania');
                 if ($this->campania_estado == 0){
                     session()->flash('success', 'Registro deshabilitado correctamente.');
                 }else{
@@ -165,13 +165,13 @@ class Gestioncampañas extends Component{
         }
     }
 
-    public function save_campaña(){
+    public function save_campania(){
         try {
             $this->validate([
                 'campania_nombre' => 'required|string',
                 'campania_estado_ejecucion' => 'required|integer',
                 'campania_fecha_inicio' => 'required|date',
-                'campania_fecha_fin' => 'required|date|after_or_equal:campaña_fecha_inicio',
+                'campania_fecha_fin' => 'required|date|after_or_equal:campania_fecha_inicio',
                 'archivos' => 'required|array|min:1',
             ], [
                 'campania_nombre.required' => 'El nombre de la campaña es obligatorio.',
@@ -218,12 +218,12 @@ class Gestioncampañas extends Component{
             }
 
             if (!$this->id_campania) { // INSERT
-                if (!Gate::allows('create_campaña')) {
+                if (!Gate::allows('create_campania')) {
                     session()->flash('error', 'No tiene permisos para crear la campaña.');
                     return;
                 }
 
-                $save_campania = new Campaña();
+                $save_campania = new Campania();
                 $save_campania->id_users = Auth::id();
                 $save_campania->campania_nombre = $this->campania_nombre;
                 $save_campania->campania_fecha_inicio = $this->campania_fecha_inicio;
@@ -235,11 +235,11 @@ class Gestioncampañas extends Component{
                 if ($save_campania->save()) {
                     // Guardar los archivos adjuntos
                     foreach ($this->archivos as $archivo) {
-                        $documento = new Campañadocumento();
+                        $documento = new Campaniadocumento();
                         $documento->id_users = Auth::id();
                         $documento->id_campania = $save_campania->id_campania;
                         // Guardar el archivo usando la función del helper
-                        $documento->campania_documento_adjunto = $this->general->save_files($archivo, 'campañas/documentos');
+                        $documento->campania_documento_adjunto = $this->general->save_files($archivo, 'campanias/documentos');
                         $documento->campania_documento_microtime = $microtime;
                         $documento->campania_documento_estado = 1;
 
@@ -250,20 +250,20 @@ class Gestioncampañas extends Component{
                     }
 
                     DB::commit();
-                    $this->dispatch('hide_modal_campaña');
-                    session()->flash('success', 'Campaña y documentos guardados correctamente.');
+                    $this->dispatch('hide_modal_campania');
+                    session()->flash('success', 'Campania y documentos guardados correctamente.');
                     $this->clear_form();
                 } else {
                     DB::rollBack();
                     session()->flash('error', 'Ocurrió un error al guardar la campaña.');
                 }
             } else { // UPDATE
-                if (!Gate::allows('update_campaña')) {
+                if (!Gate::allows('update_campania')) {
                     session()->flash('error', 'No tiene permisos para actualizar campañas.');
                     return;
                 }
 
-                $update_campania = Campaña::findOrFail($this->id_campania);
+                $update_campania = Campania::findOrFail($this->id_campania);
                 $update_campania->campania_nombre = $this->campania_nombre;
                 $update_campania->campania_fecha_inicio = $this->campania_fecha_inicio;
                 $update_campania->campania_fecha_fin = $this->campania_fecha_fin;
@@ -272,7 +272,7 @@ class Gestioncampañas extends Component{
                 if ($update_campania->save()) {
                     // Eliminar archivos marcados (soft delete)
                     if (!empty($this->archivosAEliminar)) {
-                        Campañadocumento::where('id_campania', $this->id_campania)
+                        Campaniadocumento::where('id_campania', $this->id_campania)
                             ->whereIn('campania_documento_adjunto', $this->archivosAEliminar)
                             ->update(['campania_documento_estado' => 0]);
                     }
@@ -280,18 +280,18 @@ class Gestioncampañas extends Component{
                     // Guardar nuevos archivos (solo los que son objetos UploadedFile)
                     foreach ($this->archivos as $archivo) {
                         if (is_object($archivo) && method_exists($archivo, 'getClientOriginalName')) {
-                            $documento = new Campañadocumento();
+                            $documento = new Campaniadocumento();
                             $documento->id_users = Auth::id();
                             $documento->id_campania = $this->id_campania;
-                            $documento->campania_documento_adjunto = $this->general->save_files($archivo, 'campañas/documentos');
+                            $documento->campania_documento_adjunto = $this->general->save_files($archivo, 'campanias/documentos');
                             $documento->campania_documento_microtime = microtime(true);
                             $documento->campania_documento_estado = 1;
                             $documento->save();
                         }
                     }
                     DB::commit();
-                    $this->dispatch('hide_modal_campaña');
-                    session()->flash('success', 'Campaña actualizada correctamente.');
+                    $this->dispatch('hide_modal_campania');
+                    session()->flash('success', 'Campania actualizada correctamente.');
                     $this->clear_form();
                 } else {
                     DB::rollBack();

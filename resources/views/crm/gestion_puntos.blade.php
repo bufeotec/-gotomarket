@@ -5,9 +5,9 @@
 
 
     <div class="page-heading">
-        <x-navegation-view text="Lista de menús activos registrados en el sistema." />
+        <x-navegation-view text="Lista de Puntos de Vendedores por Cliente y Campaña." />
 
-{{--        @livewire('configuracion.menus')--}}
+        @livewire('crm.gestionpuntos')
 
     </div>
 

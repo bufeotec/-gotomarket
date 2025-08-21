@@ -98,8 +98,8 @@
                                         <p class="ms-2">Fecha de Inicio de Servicio: <b>{{ $listar_info->despacho_fecha_aprobacion ? $general->obtenerNombreFecha($listar_info->despacho_fecha_aprobacion, 'Date', 'Date') : '-' }}</b></p>
                                     </div>
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <p class="ms-2">Plazo de Entrega: <b>2 dias hábiles</b></p>
-                                        <p class="ms-2">Fecha de Entrega Esperada: <b>{{ $listar_info->despacho_fecha_aprobacion ? $general->obtenerNombreFecha($listar_info->despacho_fecha_aprobacion, 'Date', 'Date') : '-' }}</b></p>
+                                        <p class="ms-2">Plazo de Entrega: - </p>
+                                        <p class="ms-2">Fecha de Entrega Esperada: - </p>
                                     </div>
                                 </div>
                             </div>

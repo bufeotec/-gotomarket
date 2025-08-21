@@ -7,7 +7,7 @@
     <div class="page-heading">
         <x-navegation-view text="Lista de campañas registrados en el sistema." />
 
-        @livewire('crm.gestioncampañas')
+        @livewire('crm.gestioncampanias')
 
     </div>
 
