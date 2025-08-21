@@ -5,11 +5,11 @@
 
 {{--    MODAL AGREGAR / EDITAR CAMPAÑA--}}
     <x-modal-general  wire:ignore.self >
-        <x-slot name="id_modal">modal_campaña</x-slot>
+        <x-slot name="id_modal">modal_campania</x-slot>
         <x-slot name="titleModal">Gestionar Campaña</x-slot>
         <x-slot name="tama">modal-lg</x-slot>
         <x-slot name="modalContent">
-            <form wire:submit.prevent="save_campaña">
+            <form wire:submit.prevent="save_campania">
                 <div class="row">
                     <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
                         <label for="campania_nombre" class="form-label">Nombre de la campaña <b class="text-danger">(*)</b></label>
@@ -75,11 +75,11 @@
                                             }
 
                                             $icon = match(true) {
-                                                $ext === 'pdf' => asset('assets/images/gestion_campaña/pdf.png'),
-                                                in_array($ext, ['xlsx','xls']) => asset('assets/images/gestion_campaña/xlsx.png'),
-                                                in_array($ext, ['ppt','pptx']) => asset('assets/images/gestion_campaña/pptx.png'),
-                                                in_array($ext, ['jpg','jpeg','png']) => asset('assets/images/gestion_campaña/jpg.png'),
-                                                default => asset('assets/images/gestion_campaña/jpg.png'),
+                                                $ext === 'pdf' => asset('assets/images/gestion_campania/pdf.png'),
+                                                in_array($ext, ['xlsx','xls']) => asset('assets/images/gestion_campania/xlsx.png'),
+                                                in_array($ext, ['ppt','pptx']) => asset('assets/images/gestion_campania/pptx.png'),
+                                                in_array($ext, ['jpg','jpeg','png']) => asset('assets/images/gestion_campania/jpg.png'),
+                                                default => asset('assets/images/gestion_campania/jpg.png'),
                                             };
                                         @endphp
 
@@ -126,9 +126,9 @@
 
 {{--    MODAL DESHABILITAR CAMPAÑA--}}
     <x-modal-delete  wire:ignore.self >
-        <x-slot name="id_modal">modal_delete_campaña</x-slot>
+        <x-slot name="id_modal">modal_delete_campania</x-slot>
         <x-slot name="modalContentDelete">
-            <form wire:submit.prevent="disable_campaña">
+            <form wire:submit.prevent="disable_campania">
                 <div class="row">
                     <div class="col-lg-12 col-md-12 col-sm-12">
                         <h2 class="deleteTitle">{{$messageDelete}}</h2>
@@ -162,7 +162,7 @@
             <x-select-filter wire:model.live="pagination_campania" />
         </div>
         <div class="col-lg-6 col-md-6 col-sm-12 text-end">
-            <x-btn-export wire:click="clear_form" class="bg-success text-white" data-bs-toggle="modal" data-bs-target="#modal_campaña" >
+            <x-btn-export wire:click="clear_form" class="bg-success text-white" data-bs-toggle="modal" data-bs-target="#modal_campania" >
                 <x-slot name="icons">
                     fa-solid fa-plus
                 </x-slot>
@@ -202,9 +202,9 @@
                         </x-slot>
 
                         <x-slot name="tbody">
-                            @if(count($listar_campañas) > 0)
+                            @if(count($listar_campanias) > 0)
                                 @php $conteo = 1; @endphp
-                                @foreach($listar_campañas as $lc)
+                                @foreach($listar_campanias as $lc)
                                     <tr>
                                         <td>{{$conteo}}</td>
                                         <td>{{$lc->campania_nombre}}</td>
@@ -254,20 +254,20 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <x-btn-accion class=" text-primary"  wire:click="edit_data('{{ base64_encode($lc->id_campania) }}')" data-bs-toggle="modal" data-bs-target="#modal_campaña">
+                                            <x-btn-accion class=" text-primary"  wire:click="edit_data('{{ base64_encode($lc->id_campania) }}')" data-bs-toggle="modal" data-bs-target="#modal_campania">
                                                 <x-slot name="message">
                                                     <i class="fa-solid fa-pen-to-square"></i>
                                                 </x-slot>
                                             </x-btn-accion>
 
                                             @if($lc->campania_estado == 1)
-                                                <x-btn-accion class=" text-danger" wire:click="btn_disable('{{ base64_encode($lc->id_campania) }}',0)" data-bs-toggle="modal" data-bs-target="#modal_delete_campaña">
+                                                <x-btn-accion class=" text-danger" wire:click="btn_disable('{{ base64_encode($lc->id_campania) }}',0)" data-bs-toggle="modal" data-bs-target="#modal_delete_campania">
                                                     <x-slot name="message">
                                                         <i class="fa-solid fa-ban"></i>
                                                     </x-slot>
                                                 </x-btn-accion>
                                             @else
-                                                <x-btn-accion class=" text-success" wire:click="btn_disable('{{ base64_encode($lc->id_campania) }}',1)" data-bs-toggle="modal" data-bs-target="#modal_delete_campaña">
+                                                <x-btn-accion class=" text-success" wire:click="btn_disable('{{ base64_encode($lc->id_campania) }}',1)" data-bs-toggle="modal" data-bs-target="#modal_delete_campania">
                                                     <x-slot name="message">
                                                         <i class="fa-solid fa-check"></i>
                                                     </x-slot>
@@ -290,16 +290,16 @@
             </div>
         </x-slot>
     </x-card-general-view>
-    {{ $listar_campañas->links(data: ['scrollTo' => false]) }}
+    {{ $listar_campanias->links(data: ['scrollTo' => false]) }}
 </div>
 
 @script
 <script>
-    $wire.on('hide_modal_campaña', () => {
-        $('#modal_campaña').modal('hide');
+    $wire.on('hide_modal_campania', () => {
+        $('#modal_campania').modal('hide');
     });
-    $wire.on('hide_modal_delete_campaña', () => {
-        $('#modal_delete_campaña').modal('hide');
+    $wire.on('hide_modal_delete_campania', () => {
+        $('#modal_delete_campania').modal('hide');
     });
 </script>
 @endscript

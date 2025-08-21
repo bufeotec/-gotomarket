@@ -31,10 +31,10 @@ class CRMController extends Controller{
         }
     }
 
-    public function gestion_campañas(){
+    public function gestion_campanias(){
         try {
 
-            return view('crm.gestion_campañas');
+            return view('crm.gestion_campanias');
         }catch (\Exception $e){
             $this->logs->insertarLog($e);
             return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');

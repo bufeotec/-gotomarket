@@ -156,7 +156,7 @@ Route::prefix('CRM')->middleware(['auth', 'canMenu:CRM'])->group(function () {
     /* CRM */
     route::get('/sistema_puntos_vendedor_cliente',[CRMController::class ,'sistema_puntos_vendedor_cliente'])->name('CRM.sistema_puntos_vendedor_cliente')->middleware('verifyUserStatus')->middleware('can:sistema_puntos_vendedor_cliente');
     route::get('/gestion_vendedores',[CRMController::class ,'gestion_vendedores'])->name('CRM.gestion_vendedores')->middleware('verifyUserStatus')->middleware('can:gestion_vendedores');
-    route::get('/gestion_campañas',[CRMController::class ,'gestion_campañas'])->name('CRM.gestion_campañas')->middleware('verifyUserStatus')->middleware('can:gestion_campañas');
+    route::get('/gestion_campanias',[CRMController::class ,'gestion_campanias'])->name('CRM.gestion_campanias')->middleware('verifyUserStatus')->middleware('can:gestion_campanias');
     route::get('/gestion_premios',[CRMController::class ,'gestion_premios'])->name('CRM.gestion_premios')->middleware('verifyUserStatus')->middleware('can:gestion_premios');
     route::get('/gestion_puntos',[CRMController::class ,'gestion_puntos'])->name('CRM.gestion_puntos')->middleware('verifyUserStatus')->middleware('can:gestion_puntos');
     route::get('/seleccionar_premios',[CRMController::class ,'seleccionar_premios'])->name('CRM.seleccionar_premios')->middleware('verifyUserStatus')->middleware('can:seleccionar_premios');

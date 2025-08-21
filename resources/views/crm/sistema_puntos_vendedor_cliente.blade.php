@@ -29,7 +29,7 @@
                 </div>
                 <div class="card-body">
                     <div class="d-flex justify-content-end">
-                        <a href="{{route('CRM.gestion_campañas')}}" class="btn btn-success">Ingresar</a>
+                        <a href="{{route('CRM.gestion_campanias')}}" class="btn btn-success">Ingresar</a>
                     </div>
                 </div>
             </div>
