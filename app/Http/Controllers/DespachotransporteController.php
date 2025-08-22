@@ -504,7 +504,7 @@ class DespachotransporteController extends Controller
 
         // ===== función inline de cabecera (SIN declarar función) =====
         $pdf->SetFont('helvetica', 'B', 8);
-        $headers = ['N°','Guía o Doc.','RUC Dest.','Nombre Dest.','Factura/Doc.','Dirección Entrega','Ubigeo','Peso (kg)','Volumen (m³)'];
+        $headers = ['N°','Guía o Doc.','RUC Dest.','Nombre Dest.','Factura/Doc.','Dirección Entrega','Ubigeo','Peso (kg)','Volumen (cm³)'];
         $hRow = 9;
         $x0 = $pdf->GetX(); $y0 = $pdf->GetY();
         // escribir textos de cabecera
