@@ -329,7 +329,7 @@
                                             <th>Dirección de Entrega</th>
                                             <th>Ubigeo</th>
                                             <th>Peso (kg)</th>
-                                            <th>Volumen (m³)</th>
+                                            <th>Volumen (cm³)</th>
                                         </tr>
                                     </x-slot>
                                     <x-slot name="tbody">
