@@ -474,7 +474,7 @@
                 </div>
                 <div class="row">
                     <div class="col-lg-5">
-                        <div class="card">
+                        <div class="card h-100">
                             <div class="card-header" style="background: #e7f1ff">
                                 <h5>Nota:</h5>
                             </div>
@@ -489,7 +489,7 @@
                         </div>
                     </div>
                     <div class="col-lg-4">
-                        <div class="card">
+                        <div class="card h-100">
                             <div class="card-header" style="background: #e7f1ff">
                                 <h5>Firma del Solicitante</h5>
                             </div>
@@ -502,7 +502,7 @@
                         </div>
                     </div>
                     <div class="col-lg-3">
-                        <div class="card">
+                        <div class="card h-100">
                             <div class="card-header" style="background: #e7f1ff">
                                 <h5>Firma del Proveedor</h5>
                             </div>
