@@ -673,7 +673,7 @@ class DespachotransporteController extends Controller
             "  Autorizado con Usuario y contraseña:
   Antonio Angulo Casanova
   Gerente de Operaciones
-
+_____________________________________________________
 
                             _____________________________
                                          Firma del Proveedor";
