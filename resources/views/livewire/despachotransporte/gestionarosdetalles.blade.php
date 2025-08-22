@@ -74,8 +74,8 @@
             </div>
             <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
                 <div class="row">
-                    <div class="col-lg-6">
-                        <div class="card">
+                    <div class="col-lg-6 mb-3">
+                        <div class="card h-100">
                             <div class="card-header" style="background: #e7f1ff">
                                 <h5>Datos Solicitante</h5>
                             </div>
@@ -86,8 +86,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-6">
-                        <div class="card">
+                    <div class="col-lg-6 mb-3">
+                        <div class="card h-100">
                             <div class="card-header" style="background: #e7f1ff">
                                 <h5>Datos de la OS</h5>
                             </div>
@@ -107,8 +107,8 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-lg-6">
-                        <div class="card">
+                    <div class="col-lg-6 mb-3">
+                        <div class="card h-100">
                             <div class="card-header" style="background: #e7f1ff">
                                 <h5>Datos del Proveedor</h5>
                             </div>
@@ -131,8 +131,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-6">
-                        <div class="card">
+                    <div class="col-lg-6 mb-3">
+                        <div class="card h-100">
                             <div class="card-header" style="background: #e7f1ff">
                                 <h5>Acuerdos Comerciales de la OS</h5>
                             </div>
@@ -148,7 +148,7 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-lg-9">
+                    <div class="col-lg-9 mb-3">
                         <div class="card">
                             <div class="card-header" style="background: #e7f1ff">
                                 <h5>Resumen General de la OS</h5>
@@ -243,7 +243,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-3">
+                    <div class="col-lg-3 mb-3">
                         <div class="card">
                             <div class="card-header" style="background: #e7f1ff">
                                 <h5>Datos Internos de la OS</h5>

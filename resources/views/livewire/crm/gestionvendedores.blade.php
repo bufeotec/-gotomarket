@@ -173,6 +173,7 @@
                                 <th>Departamento</th>
                                 <th>Provincia</th>
                                 <th>Distrito</th>
+                                <th>Puntos</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
@@ -212,6 +213,7 @@
                                             @endphp
                                             {{ $distrito ? $distrito->distrito_nombre : '' }}
                                         </td>
+                                        <td>{{$lv->vendedor_intranet_punto ?? 0}}</td>
                                         <td>
                                             <span class="font-bold badge {{$lv->vendedor_intranet_estado == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
                                                 {{$lv->vendedor_intranet_estado == 1 ? 'Habilitado ' : 'Desabilitado'}}

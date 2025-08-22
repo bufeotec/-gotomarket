@@ -37,4 +37,20 @@ class Premio extends Model{
             return [];
         }
     }
+
+    public function listar_premios_disponible(){
+        try {
+            $result = DB::table('premios as p')
+                ->join('campanias_premios as cp', 'p.id_premio', 'cp.id_premio')
+                ->where('p.premio_en_campania', '=', 1)
+                ->where('p.premio_estado', '=', 1)
+                ->where('cp.campania_premio_estado', '=', 1)
+                ->get();
+
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
 }

@@ -38,6 +38,12 @@
                         @error('campania_fecha_fin')<span class="message-error">{{ $message }}</span>@enderror
                     </div>
 
+                    <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
+                        <label for="campania_fecha_fin_canje" class="form-label">Fecha Final de Canje <b class="text-danger">(*)</b></label>
+                        <x-input-general type="date" id="campania_fecha_fin_canje" wire:model="campania_fecha_fin_canje"/>
+                        @error('campania_fecha_fin_canje')<span class="message-error">{{ $message }}</span>@enderror
+                    </div>
+
                     <div class="col-lg-12 col-md-12 col-sm-12 mt-3 mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <h6 class="mb-0">Adjuntos:</h6>
@@ -195,6 +201,7 @@
                                 <th>Nombre de la campaña</th>
                                 <th>Fecha de Inicio</th>
                                 <th>Fecha Fin</th>
+                                <th>Fecha Final canje</th>
                                 <th>Adjunto</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
@@ -210,6 +217,7 @@
                                         <td>{{$lc->campania_nombre}}</td>
                                         <td>{{ $lc->campania_fecha_inicio ? $me->obtenerNombreFecha($lc->campania_fecha_inicio, 'Date', 'Date') : '-' }}</td>
                                         <td>{{ $lc->campania_fecha_fin ? $me->obtenerNombreFecha($lc->campania_fecha_fin, 'Date', 'Date') : '-' }}</td>
+                                        <td>{{ $lc->campania_fecha_fin_canje ? $me->obtenerNombreFecha($lc->campania_fecha_fin_canje, 'Date', 'Date') : '-' }}</td>
                                         <td>
                                             @php
                                                 $documentos = \Illuminate\Support\Facades\DB::table('campanias_documentos')
