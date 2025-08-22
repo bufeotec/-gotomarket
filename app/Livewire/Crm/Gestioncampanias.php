@@ -37,6 +37,7 @@ class Gestioncampanias extends Component{
     public $campania_nombre = "";
     public $campania_fecha_inicio = "";
     public $campania_fecha_fin = "";
+    public $campania_fecha_fin_canje = "";
     public $campania_estado_ejecucion = "";
     public $campania_estado = "";
     public $archivos = [];
@@ -83,6 +84,7 @@ class Gestioncampanias extends Component{
         $this->campania_nombre = "";
         $this->campania_fecha_inicio = "";
         $this->campania_fecha_fin = "";
+        $this->campania_fecha_fin_canje = "";
         $this->campania_estado_ejecucion = "";
         $this->campania_estado = "";
         $this->archivos = [];
@@ -96,6 +98,7 @@ class Gestioncampanias extends Component{
             $this->campania_nombre = $campania_edit->campania_nombre;
             $this->campania_fecha_inicio = $campania_edit->campania_fecha_inicio;
             $this->campania_fecha_fin = $campania_edit->campania_fecha_fin;
+            $this->campania_fecha_fin_canje = $campania_edit->campania_fecha_fin_canje;
             $this->campania_estado_ejecucion = $campania_edit->campania_estado_ejecucion;
             $this->id_campania = $campania_edit->id_campania;
 
@@ -172,6 +175,7 @@ class Gestioncampanias extends Component{
                 'campania_estado_ejecucion' => 'required|integer',
                 'campania_fecha_inicio' => 'required|date',
                 'campania_fecha_fin' => 'required|date|after_or_equal:campania_fecha_inicio',
+                'campania_fecha_fin_canje' => 'required|date|after:campania_fecha_fin',
                 'archivos' => 'required|array|min:1',
             ], [
                 'campania_nombre.required' => 'El nombre de la campaña es obligatorio.',
@@ -186,6 +190,10 @@ class Gestioncampanias extends Component{
                 'campania_fecha_fin.required' => 'La fecha de fin es obligatoria.',
                 'campania_fecha_fin.date' => 'La fecha de fin debe ser válida.',
                 'campania_fecha_fin.after_or_equal' => 'La fecha de fin debe ser igual o posterior a la fecha de inicio.',
+
+                'campania_fecha_fin_canje.required' => 'La fecha de fin del canje es obligatoria.',
+                'campania_fecha_fin_canje.date' => 'La fecha de fin del canje debe ser válida.',
+                'campania_fecha_fin_canje.after' => 'La fecha de fin del canje debe ser posterior a la fecha de fin de la campaña.',
 
                 'archivos.required' => 'Debe adjuntar al menos un archivo.',
                 'archivos.array' => 'Los archivos deben ser enviados correctamente.',
@@ -228,6 +236,7 @@ class Gestioncampanias extends Component{
                 $save_campania->campania_nombre = $this->campania_nombre;
                 $save_campania->campania_fecha_inicio = $this->campania_fecha_inicio;
                 $save_campania->campania_fecha_fin = $this->campania_fecha_fin;
+                $save_campania->campania_fecha_fin_canje = $this->campania_fecha_fin_canje;
                 $save_campania->campania_estado_ejecucion = $this->campania_estado_ejecucion;
                 $save_campania->campania_microtime = $microtime;
                 $save_campania->campania_estado = 1;
@@ -267,6 +276,7 @@ class Gestioncampanias extends Component{
                 $update_campania->campania_nombre = $this->campania_nombre;
                 $update_campania->campania_fecha_inicio = $this->campania_fecha_inicio;
                 $update_campania->campania_fecha_fin = $this->campania_fecha_fin;
+                $update_campania->campania_fecha_fin_canje = $this->campania_fecha_fin_canje;
                 $update_campania->campania_estado_ejecucion = $this->campania_estado_ejecucion;
 
                 if ($update_campania->save()) {

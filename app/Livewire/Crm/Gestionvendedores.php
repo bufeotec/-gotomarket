@@ -11,6 +11,7 @@ use App\Models\Logs;
 use App\Models\Vendedorintranet;
 use App\Models\Departamento;
 use App\Models\Provincia;
+use App\Models\User;
 use Livewire\WithFileUploads;
 use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
@@ -24,12 +25,14 @@ class Gestionvendedores extends Component{
     private $vendedorintranet;
     private $departamento;
     private $provincia;
+    private $user;
 
     public function __construct(){
         $this->logs = new Logs();
         $this->vendedorintranet = new Vendedorintranet();
         $this->departamento = new Departamento();
         $this->provincia = new Provincia();
+        $this->user = new User();
     }
     public $search_gestion_vendedor;
     public $pagination_gestion_vendedor = 10;
@@ -218,35 +221,45 @@ class Gestionvendedores extends Component{
                     return;
                 }
 
-//                $role = Role::find($this->id_rol);
-//
-//                if (!$role) {
-//                    session()->flash('error', 'No se encontró el rol asociado.');
-//                    return;
-//                }
-
                 $microtime = microtime(true);
 
+                $role = Role::find($this->id_rol);
+
                 DB::beginTransaction();
+                // Primero crear el vendedor
                 $save_vendedor = new Vendedorintranet();
                 $save_vendedor->id_users = Auth::id();
                 $save_vendedor->id_cliente = null;
                 $save_vendedor->id_perfil = $this->id_rol;
-
-//                $save_vendedor->syncRoles($role->name);
-
                 $save_vendedor->id_departamento = $this->id_departamento;
                 $save_vendedor->id_provincia = $this->id_provincia;
                 $save_vendedor->id_distrito = $this->id_distrito;
                 $save_vendedor->vendedor_intranet_dni = $this->vendedor_intranet_dni;
                 $save_vendedor->vendedor_intranet_nombre = $this->vendedor_intranet_nombre;
                 $save_vendedor->vendedor_intranet_correo = $this->vendedor_intranet_correo;
+                $save_vendedor->vendedor_intranet_punto = 0;
                 $save_vendedor->vendedor_intranet_microtime = $microtime;
                 $save_vendedor->vendedor_intranet_estado = 1;
+
                 if ($save_vendedor->save()) {
-                    DB::commit();
-                    $this->dispatch('hide_modal_vendedor');
-                    session()->flash('success', 'Registro guardado correctamente.');
+                    // Después de guardar el vendedor, crear el usuario
+                    $user = new User();
+                    $user->id_vendedor_intranet = $save_vendedor->id_vendedor_intranet;
+                    $user->name = $this->vendedor_intranet_nombre;
+                    $user->email = $this->vendedor_intranet_correo;
+                    $user->username = $this->vendedor_intranet_correo;
+                    $user->password = bcrypt($this->vendedor_intranet_dni);
+
+                    if ($user->save()) {
+                        // Asignar rol al usuario
+                        $user->assignRole($role->name);
+                        DB::commit();
+                        $this->dispatch('hide_modal_vendedor');
+                        session()->flash('success', 'Registro guardado correctamente.');
+                    } else {
+                        DB::rollBack();
+                        session()->flash('error', 'Ocurrió un error al crear el usuario.');
+                    }
                 } else {
                     DB::rollBack();
                     session()->flash('error', 'Ocurrió un error al guardar el vendedor.');

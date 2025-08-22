@@ -425,69 +425,67 @@ class DespachotransporteController extends Controller
 
         // Dibujar el cuadro contenedor principal
         $startY = $pdf->GetY();
-        $pdf->Rect(10, $startY, 190, 24); // Ajusta la altura según necesidad
+        $pdf->Rect(10, $startY, 190, 13); // Ajusta la altura según necesidad
 
         $pdf->SetFont('helvetica', '', 7);
 
         // Primera línea horizontal (5 datos)
         $line1Y = $startY + 2;
-        $colWidth = 26; // Ancho por columna (190mm/5)
+        $colWidth = 20; // Ancho por columna (190mm/5)
 
         // Data 1: Tipo de Servicio
         $pdf->SetXY(10, $line1Y);
-        $pdf->Cell($colWidth, 2, utf8_decode('Tipo de Servicio:'), 0, 0, 'L');
-        $pdf->Cell($colWidth, 2, utf8_decode($listar_info->tipo_servicio_concepto), 0, 0, 'L');
+        $pdf->Cell(20, 2, utf8_decode('Tipo de Servicio:'), 0, 0, 'L');
+        $pdf->Cell(15, 2, utf8_decode($listar_info->tipo_servicio_concepto), 0, 0, 'L');
 
         // Data 2: Capacidad Vehículo
         $vehiculo_capacidad = $listar_info->id_vehiculo ? DB::table('vehiculos')->where('id_vehiculo', $listar_info->id_vehiculo)->first()->vehiculo_capacidad_peso : 'N/A';
-        $pdf->Cell($colWidth, 2, utf8_decode('Capac. Vehículo:'), 0, 0, 'L');
-        $pdf->Cell($colWidth, 2, utf8_decode($general->formatoDecimal($vehiculo_capacidad).' Kg'), 0, 0, 'L');
+        $pdf->Cell(20, 2, utf8_decode('Capac. Vehículo:'), 0, 0, 'L');
+        $pdf->Cell(18, 2, utf8_decode($general->formatoDecimal($vehiculo_capacidad).' Kg'), 0, 0, 'L');
 
         // Data 3: Capacidad Tarifa
-        $pdf->Cell($colWidth, 2, utf8_decode('Capac. Tarifa:'), 0, 0, 'L');
-        $pdf->Cell($colWidth, 2, utf8_decode('Min:'.$general->formatoDecimal($listar_info->despacho_cap_min).'Kg - Max:'.$general->formatoDecimal($listar_info->despacho_cap_max)), 0, 1, 'L');
+        $pdf->Cell(17, 2, utf8_decode('Capac. Tarifa:'), 0, 0, 'L');
+        $pdf->Cell(34, 2, utf8_decode('Min:'.$general->formatoDecimal($listar_info->despacho_cap_min).'Kg - Max:'.$general->formatoDecimal($listar_info->despacho_cap_max)), 0, 0, 'L');
+
+        // Data 4: Peso Despacho
+        $pdf->Cell(19, 2, utf8_decode('Peso Despacho:'), 0, 0, 'L');
+        $pdf->Cell(18, 2, utf8_decode($general->formatoDecimal($listar_info->despacho_peso).' Kg'), 0, 1, 'L');
+
+
+
 
         // Segunda línea horizontal (5 datos)
         $line2Y = $line1Y + 6;
-
-        // Data 4: Peso Despacho
         $pdf->SetXY(10, $line2Y);
-        $pdf->Cell($colWidth, 2, utf8_decode('Peso Despacho:'), 0, 0, 'L');
-        $pdf->Cell($colWidth, 2, utf8_decode($general->formatoDecimal($listar_info->despacho_peso).' Kg'), 0, 0, 'L');
+
 
         // Data 5: Volumen Despacho
-        $pdf->Cell($colWidth, 2, utf8_decode('Vol. Despacho:'), 0, 0, 'L');
-        $pdf->Cell($colWidth, 2, utf8_decode($general->formatoDecimal($listar_info->despacho_volumen).' m³'), 0, 0, 'L');
+        $pdf->Cell(17, 2, utf8_decode('Vol. Despacho:'), 0, 0, 'L');
+        $pdf->Cell(22, 2, utf8_decode($general->formatoDecimal($listar_info->despacho_volumen).' m³'), 0, 0, 'L');
 
         // Data 6: Monto Tarifa
-        $pdf->Cell($colWidth, 2, utf8_decode('Monto Tarifa:'), 0, 0, 'L');
-        $pdf->Cell($colWidth, 2, utf8_decode('S/'.$general->formatoDecimal($listar_info->despacho_flete)), 0, 1, 'L');
-
-        // Tercera línea horizontal (5 datos restantes)
-        $line3Y = $line2Y + 6;
+        $pdf->Cell(15, 2, utf8_decode('Monto Tarifa:'), 0, 0, 'L');
+        $pdf->Cell(15, 2, utf8_decode('S/'.$general->formatoDecimal($listar_info->despacho_flete)), 0, 0, 'L');
 
         // Data 7: Otros Gastos
-        $pdf->SetXY(10, $line3Y);
-        $pdf->Cell($colWidth, 2, utf8_decode('Otros Gastos:'), 0, 0, 'L');
-        $pdf->Cell($colWidth, 2, utf8_decode('S/'.$general->formatoDecimal($listar_info->despacho_gasto_otros)), 0, 0, 'L');
-
+        $pdf->Cell(16, 2, utf8_decode('Otros Gastos:'), 0, 0, 'L');
+        $pdf->Cell(15, 2, utf8_decode('S/'.$general->formatoDecimal($listar_info->despacho_gasto_otros)), 0, 0, 'L');
         // Data 8: Mano de Obra
         $mano_obra = ($listar_info->id_tipo_servicios == 1) ? 'S/'.$general->formatoDecimal($listar_info->despacho_ayudante) : 'S/0';
-        $pdf->Cell($colWidth, 2, utf8_decode('Mano de Obra:'), 0, 0, 'L');
-        $pdf->Cell($colWidth, 2, utf8_decode($mano_obra), 0, 0, 'L');
+        $pdf->Cell(17, 2, utf8_decode('Mano de Obra:'), 0, 0, 'L');
+        $pdf->Cell(15, 2, utf8_decode($mano_obra), 0, 0, 'L');
 
         // Data 9: Total sin IGV
-        $pdf->Cell($colWidth, 2, utf8_decode('Total s/IGV:'), 0, 0, 'L');
-        $pdf->Cell($colWidth, 2, utf8_decode('S/'.$general->formatoDecimal($listar_info->despacho_costo_total)), 0, 1, 'L');
+        $pdf->Cell(14, 2, utf8_decode('Total s/IGV:'), 0, 0, 'L');
+        $pdf->Cell(15, 2, utf8_decode('S/'.$general->formatoDecimal($listar_info->despacho_costo_total)), 0, 0, 'L');
 
-        // Cuarta línea horizontal
-        $line4Y = $line3Y + 6;
-        $pdf->SetXY(10, $line4Y);
         // Data 9: Total con IGV
-        $pdf->Cell($colWidth, 2, utf8_decode('Total c/IGV:'), 0, 0, 'L');
-        $pdf->Cell($colWidth, 2, utf8_decode('S/'.$general->formatoDecimal($listar_info->despacho_costo_total)), 0, 1, 'L');
+        $pdf->Cell(14, 2, utf8_decode('Total c/IGV:'), 0, 0, 'L');
+        $pdf->Cell(20, 2, utf8_decode('S/'.$general->formatoDecimal($listar_info->despacho_costo_total)), 0, 1, 'L');
 
         $pdf->Ln(3); // Espacio después del cuadro
+
+
 
 
 
@@ -524,9 +522,9 @@ class DespachotransporteController extends Controller
         $pdf->SetXY($x0, $y0 + $hRow);
 
         // ===== Contenido =====
-        $pdf->SetFont('helvetica', '', 6);
+        $pdf->SetFont('helvetica', '', 5);
         $conteo = 1;
-        $altoLinea = 5;
+        $altoLinea = 3;
 
         foreach ($listar_info->guias as $guia) {
             // Preparar textos
@@ -644,10 +642,9 @@ class DespachotransporteController extends Controller
         // Notas y firmas
         $pdf->Ln(5);
 
-        // === Config de columnas (igual que lo tuyo) ===
-        $col1_width = 80; // Notas
-        $col2_width = 50; // Firma solicitante
-        $col3_width = 60; // Firma proveedor
+        // === Config de columnas (dos cuadros) ===
+        $col1_width = 115; // Notas
+        $col2_width = 75;  // Firma solicitante
         $row_height = 5;
 
 // === MARCAR INICIO DEL CUADRO (antes de los títulos) ===
@@ -657,40 +654,29 @@ class DespachotransporteController extends Controller
 // Títulos (sin bordes)
         $pdf->SetFont('helvetica', 'B', 8);
         $pdf->Cell($col1_width, 7, utf8_decode('Notas:'), 0, 0, 'L');
-        $pdf->Cell($col2_width, 7, utf8_decode('Firma del Solicitante'), 0, 0, 'L');
-        $pdf->Cell($col3_width, 7, utf8_decode(''), 0, 1, 'L');
+        $pdf->Cell($col2_width, 7, utf8_decode('Firma del Solicitante'), 0, 1, 'L');
 
         $pdf->SetFont('helvetica', '', 7);
 
 // Guarda la posición inicial del CONTENIDO (después de los títulos)
-        $xStart = $pdf->GetX(); // normalmente margen izq.
+        $xStart = $pdf->GetX(); // margen izquierdo
         $yStart = $pdf->GetY();
-
-// Calcula X de cada columna
-        $x1 = $xStart;
-        $x2 = $xStart + $col1_width;
-        $x3 = $x2 + $col2_width;
 
 // Contenidos
         $txtNotas =
             "1. El Proveedor debe emitir su factura según lo especificado en la Orden de Servicio; donde cada ítem de la factura es una OS o, en su defecto, emitir una factura por OS
-
 2. El Proveedor debe indicar el número de OS en el detalle de su Factura y las guías de remisión o documento solicitante
-
 3. El Proveedor debe entregar los cargos de entrega en un plazo de 7 días hábiles
-
 4. El Proveedor puede enviar su Factura electrónica al correo electrónico: operaciones@gotomarket.com.pe";
 
         $txtSolicitante =
-            "Autorizado con Usuario y contraseña:
-Antonio Angulo Casanova
-Gerente de Operaciones";
+            "  Autorizado con Usuario y contraseña:
+  Antonio Angulo Casanova
+  Gerente de Operaciones
 
-        $txtProveedor =
-            "
 
-             ______________________________
-                            Firma del Proveedor";
+                            _____________________________
+                                         Firma del Proveedor";
 
 // Helper para imprimir MultiCell en posición fija y devolver la Y final
         $printCol = function($x, $y, $w, $text) use ($pdf, $row_height) {
@@ -699,25 +685,23 @@ Gerente de Operaciones";
             return $pdf->GetY();
         };
 
-// Imprime las tres columnas arrancando al mismo Y
-        $yEnd1 = $printCol($x1, $yStart, $col1_width, $txtNotas);
-        $yEnd2 = $printCol($x2, $yStart, $col2_width, $txtSolicitante);
-        $yEnd3 = $printCol($x3, $yStart, $col3_width, $txtProveedor);
+// Imprime las dos columnas arrancando al mismo Y
+        $yEnd1 = $printCol($boxX, $yStart, $col1_width, $txtNotas);
+        $yEnd2 = $printCol($boxX + $col1_width, $yStart, $col2_width, $txtSolicitante);
 
 // Altura total del cuadro (desde antes de los títulos)
-        $paddingBottom = 2; // mismo colchón que ya usabas
-        $yEndMax = max($yEnd1, $yEnd2, $yEnd3);
-        $boxW = $col1_width + $col2_width + $col3_width;
+        $paddingBottom = 2;
+        $yEndMax = max($yEnd1, $yEnd2);
+        $boxW = $col1_width + $col2_width;
         $boxH = ($yEndMax - $boxY) + $paddingBottom;
 
-// === DIBUJO DEL CUADRO Y SEPARADORES ===
+// === DIBUJO DEL CUADRO Y SEPARADOR ===
         $pdf->Rect($boxX, $boxY, $boxW, $boxH); // borde exterior
-// Separadores verticales de columnas
-        $pdf->Line($boxX + $col1_width, $boxY, $boxX + $col1_width, $boxY + $boxH);
-        $pdf->Line($boxX + $col1_width + $col2_width, $boxY, $boxX + $col1_width + $col2_width, $boxY + $boxH);
+        $pdf->Line($boxX + $col1_width, $boxY, $boxX + $col1_width, $boxY + $boxH); // separador entre las dos
 
 // Cursor al final del bloque
-        $pdf->SetXY($xStart, $yEndMax + $paddingBottom);
+        $pdf->SetXY($boxX, $yEndMax + $paddingBottom);
+
 
 
 
