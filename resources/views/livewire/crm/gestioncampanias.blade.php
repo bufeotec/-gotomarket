@@ -22,6 +22,7 @@
                        <select class="form-control" id="campania_estado_ejecucion" wire:model="campania_estado_ejecucion">
                            <option value="">Seleccionar...</option>
                            <option value="1">Activa</option>
+                           <option value="2">Cerrada</option>
                        </select>
                         @error('campania_estado_ejecucion')<span class="message-error">{{ $message }}</span>@enderror
                     </div>
@@ -163,11 +164,27 @@
 
 
     <div class="row">
-        <div class="col-lg-6 col-md-6 col-sm-12 d-flex align-items-center mb-2">
+        <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
+            <label class="form-label">Desde</label>
+            <input type="date" name="desde" id="desde" wire:model.live="desde" class="form-control" min="2025-01-01">
+        </div>
+        <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
+            <label class="form-label">Hasta</label>
+            <input type="date" name="hasta" id="hasta" wire:model.live="hasta" class="form-control" min="2025-01-01">
+        </div>
+        <div class="col-lg-2 col-md-2 col-sm-2 mb-2">
+            <label class="form-label">Estado</label>
+            <select class="form-select" id="buscar_estado" wire:model.live="buscar_estado">
+                <option value="">Seleccionar...</option>
+                <option value="1">Activa</option>
+                <option value="2">Cerrada</option>
+            </select>
+        </div>
+        <div class="col-lg-4 col-md-4 col-sm-12 mt-4 d-flex align-items-center mb-2">
             <input type="text" class="form-control w-50 me-4"  wire:model.live="search_campania" placeholder="Buscar">
             <x-select-filter wire:model.live="pagination_campania" />
         </div>
-        <div class="col-lg-6 col-md-6 col-sm-12 text-end">
+        <div class="col-lg-2 col-md-2 col-sm-12 mt-4 mb-2 text-end">
             <x-btn-export wire:click="clear_form" class="bg-success text-white" data-bs-toggle="modal" data-bs-target="#modal_campania" >
                 <x-slot name="icons">
                     fa-solid fa-plus
@@ -257,8 +274,8 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <span class="font-bold badge {{$lc->campania_estado == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
-                                                {{$lc->campania_estado == 1 ? 'Habilitado ' : 'Desabilitado'}}
+                                            <span class="font-bold badge {{$lc->campania_estado_ejecucion == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
+                                                {{$lc->campania_estado_ejecucion == 1 ? 'Activa ' : 'Cerrada'}}
                                             </span>
                                         </td>
                                         <td>

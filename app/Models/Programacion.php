@@ -89,6 +89,25 @@ class Programacion extends Model
         }
     }
 
+    public function listar_programaciones_por_codigo_guia($codigo_guia) {
+        try {
+            // Buscar programaciones que tienen despachos relacionados con la guía específica
+            $query = DB::table('programaciones as p')
+                ->join('despachos as d', 'd.id_programacion', '=', 'p.id_programacion')
+                ->join('despacho_ventas as dv', 'dv.id_despacho', '=', 'd.id_despacho')
+                ->join('guias as g', 'g.id_guia', '=', 'dv.id_guia')
+                ->where('g.guia_nro_doc', 'like', '%'.$codigo_guia.'%')
+                ->select('p.*')
+                ->distinct()
+                ->orderBy('p.id_programacion', 'desc');
+
+            return $query->get();
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            return [];
+        }
+    }
+
     public function listar_programaciones_realizadas_x_fechas_guias($desde, $hasta) {
         try {
             // Para búsqueda por guías, obtenemos las programaciones que tienen

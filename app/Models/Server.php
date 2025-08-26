@@ -446,4 +446,65 @@ class  Server extends Model
             return collect();
         }
     }
+
+
+    // CLIENTES
+    public function obtener_clientes(){
+        try {
+            $result = array();
+            $client = new \GuzzleHttp\Client();
+//            $url = "http://127.0.0.1/api_goto/public/api/v1/list_customers_detallado";
+//            $url = "http://161.132.173.106:8081/api_goto/public/api/v1/list_customers_detallado";
+            $url = "http://161.132.73.129:8081/api_goto/public/api/v1/list_customers_detallado";
+
+
+            /*$response = $client->post($url, [
+                'form_params' => [
+                    'desde' => $desde,
+                    'hasta' => $hasta,
+                ],
+            ]);*/
+            $response = $client->post($url);
+
+            $body = $response->getBody()->getContents();
+            $responseData = json_decode($body);
+
+            if ($responseData->code === 200){
+                $result = collect($responseData->data);
+            }
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+
+        return $result;
+    }
+
+    public function obtener_direccion_cliente($codigo){
+        try {
+            $result = array();
+            $client = new \GuzzleHttp\Client();
+//            $url = "http://127.0.0.1/api_goto/public/api/v1/list_customers_direcciones";
+//            $url = "http://161.132.173.106:8081/api_goto/public/api/v1/list_customers_direcciones";
+            $url = "http://161.132.73.129:8081/api_goto/public/api/v1/list_customers_direcciones";
+//            // Enviar solicitud GET sin parámetros
+
+            $response = $client->post($url, [
+                'form_params' => ['buscar' => $codigo],
+            ]);
+
+            $body = $response->getBody()->getContents();
+            $responseData = json_decode($body);
+
+            if ($responseData->code !== 200 || !is_object($responseData->data)) {
+                return collect(); // Devuelve colección vacía si no es el formato esperado
+            }
+
+            return collect([$responseData->data]);
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            return collect();
+        }
+    }
 }

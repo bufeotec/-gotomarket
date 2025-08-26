@@ -11,6 +11,45 @@
         <x-slot name="modalContent">
             <form wire:submit.prevent="save_carga_excel">
                 <div class="row">
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        <div class="loader mt-2 w-100" wire:loading
+                             wire:target="buscarClientesFiltroModal,seleccionar_cliente_modal">
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
+                        <label for="id_campania" class="form-label">Campaña</label>
+                        <select class="form-select" id="id_campania" wire:model.live="id_campania">
+                            <option>Seleccionar...</option>
+                            @foreach($listar_campania_formulario as $lc)
+                                <option value="{{ $lc->id_campania }}">{{ $lc->campania_nombre }}</option>
+                            @endforeach
+                            @error('id_campania') <span class="message-error">{{ $message }}</span> @enderror
+                        </select>
+                    </div>
+                    <div class="col-lg-6 col-md-6 col-sm-12 mb-3 position-relative">
+                        <label class="form-label">CLIENTE:</label>
+                        <input type="text"
+                               class="form-control"
+                               placeholder="Buscar"
+                               wire:model="buscar_clientes"
+                               wire:keyup="buscarClientesFiltroModal()">
+
+                        @if($abrirListasClienteModal)
+                            <div style="width: 120%; z-index: 999" class="position-absolute top-100 start-0 mt-1 z-10" id="lista_cliente_reporte">
+                                <div class="list-group bg-white shadow-sm">
+                                    @foreach($listaClientesFiltro as $l)
+                                        <a style="cursor: pointer" class="list-group-item list-group-item-action"
+                                           wire:click="seleccionar_cliente_modal('{{base64_encode($l->id_cliente)}}')">
+                                            {{ $l->cliente_codigo_cliente . ' - ' . $l->cliente_nombre_cliente }}
+                                        </a>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                        @error('id_cliente') <span class="message-error">{{ $message }}</span> @enderror
+                    </div>
+
                     {{-- Bloque Excel --}}
                     <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-2">
@@ -95,6 +134,13 @@
         <x-slot name="titleModal">Gestionar Puntos</x-slot>
         <x-slot name="tama">modal-lg</x-slot>
         <x-slot name="modalContent">
+            <div class="row">
+                <div class="col-lg-12 col-md-12 col-sm-12">
+                    <div class="loader mt-2 w-100" wire:loading
+                         wire:target="buscarClientesFiltroModal,seleccionar_cliente_modal">
+                    </div>
+                </div>
+            </div>
             <form wire:submit.prevent="save_editar_punto">
                 <h5 class="mb-3 text-end me-3">Código: <b>{{$punto_codigo}}</b></h5>
                 <div class="row">
@@ -107,11 +153,27 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
-                        <label for="id_cliente" class="form-label">Cliente <b class="text-danger">(*)</b></label>
-                        <select class="form-select" id="id_cliente" wire:model="id_cliente">
-                            <option>Seleccionar...</option>
-                        </select>
+                    <div class="col-lg-6 col-md-6 col-sm-12 mb-3 position-relative">
+                        <label class="form-label">CLIENTE <b class="text-danger">(*)</b>:</label>
+                        <input type="text"
+                               class="form-control"
+                               placeholder="Buscar cliente"
+                               wire:model="buscar_clientes"
+                               wire:keyup="buscarClientesFiltroModal">
+
+                        @if($abrirListasClienteModal)
+                            <div style="width: 100%; z-index: 999" class="position-absolute top-100 start-0 mt-1 z-10" id="lista_cliente_modal">
+                                <div class="list-group bg-white shadow-sm">
+                                    @foreach($listaClientesFiltro as $l)
+                                        <a style="cursor: pointer" class="list-group-item list-group-item-action"
+                                           wire:click="seleccionar_cliente_modal('{{base64_encode($l->id_cliente)}}')">
+                                            {{ $l->cliente_codigo_cliente . ' - ' . $l->cliente_nombre_cliente }}
+                                        </a>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                        @error('id_cliente') <span class="message-error">{{ $message }}</span> @enderror
                     </div>
 
                     @if(count($listar_detalles) > 0)
@@ -184,6 +246,13 @@
                         <p>No se han encontrado resultados.</p>
                     @endif
 
+                    <!-- boton de guardar, editar, cancelar edición y eliminar -->
+                    <div wire:loading wire:target="save_editar_punto, activar_edicion, eliminar_punto_detalle, cancelar_edicion_registro" class="overlay__eliminar">
+                        <div class="spinner__container__eliminar">
+                            <div class="spinner__eliminar"></div>
+                        </div>
+                    </div>
+
                     <div class="col-lg-12 col-md-12 col-sm-12">
                         @if (session()->has('error_moda_editar'))
                             <div class="alert alert-danger alert-dismissible show fade">
@@ -240,19 +309,36 @@
     <div class="row align-items-center mb-3">
         <div class="col-lg-3 col-md-3 col-sm-12 mb-2">
             <label for="id_campania_busqueda" class="form-label">Campaña</label>
-            <select class="form-select" id="id_campania_busqueda" wire:model="id_campania_busqueda">
+            <select class="form-select" id="id_campania_busqueda" wire:model.live="id_campania_busqueda">
                 <option>Seleccionar...</option>
+                @foreach($listar_campanias as $lc)
+                    <option value="{{ $lc->id_campania }}">{{ $lc->campania_nombre }}</option>
+                @endforeach
             </select>
         </div>
-        <div class="col-lg-3 col-md-3 col-sm-12 mb-2">
-            <label for="id_cliente_busqueda" class="form-label">Cliente</label>
-            <select class="form-select" id="id_cliente_busqueda" wire:model="id_cliente_busqueda">
-                <option>Seleccionar...</option>
-            </select>
+        <div class="col-lg-3 col-md-3 col-sm-12 mb-3 position-relative">
+            <label class="form-label">CLIENTE:</label>
+            <input type="text"
+                   class="form-control"
+                   placeholder="Buscar"
+                   wire:model="buscar_clientes_search"
+                   wire:keyup="buscarClientesFiltroVista()">
+
+            @if($abrirListasCliente)
+                <div style="width: 120%; z-index: 999" class="position-absolute top-100 start-0 mt-1 z-10" id="lista_cliente_reporte">
+                    <div class="list-group bg-white shadow-sm">
+                        @foreach($listaClientesFiltro as $l)
+                            <a style="cursor: pointer" class="list-group-item list-group-item-action"
+                               wire:click="seleccionar_cliente_vista('{{base64_encode($l->id_cliente)}}')">
+                                {{ $l->cliente_codigo_cliente . ' - ' . $l->cliente_nombre_cliente }}
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
         </div>
         <div class="col-lg-4 col-md-4 col-sm-12 d-flex align-items-center mt-4 mb-2">
             <input type="text" class="form-control w-50 me-4"  wire:model.live="search_puntos" placeholder="Buscar">
-            <x-select-filter wire:model.live="pagination_puntos" />
         </div>
         <div class="col-lg-2 col-md-2 col-sm-12 mt-4 mb-2 text-end">
             <x-btn-export wire:click="clear_form" class="bg-success text-white" data-bs-toggle="modal" data-bs-target="#modal_carga_excel" >
@@ -261,6 +347,13 @@
                 </x-slot>
                 Cargar Excel
             </x-btn-export>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-12 col-md-12 col-sm-12">
+            <div class="loader mt-2 w-100" wire:loading
+                 wire:target="buscarClientesFiltroVista,seleccionar_cliente_vista">
+            </div>
         </div>
     </div>
 
@@ -282,132 +375,148 @@
         <div class="col-lg-12 mt-2 mb-3">
             <div class="card">
                 <div class="card-body">
-                    <x-table-general>
-                        <x-slot name="thead">
-                            <tr>
-                                <th width="5%">#</th>
-                                <th width="15%">Código</th>
-                                <th width="10%">Campaña</th>
-                                <th width="15%">Archivo Excel</th>
-                                <th width="15%">Archivo PDF</th>
-                                <th width="15%">Fecha Registro</th>
-                                <th width="15%">Usuario</th>
-                                <th width="10%">Acciones</th>
-                            </tr>
-                        </x-slot>
-                        <x-slot name="tbody">
-                            @foreach($listar_puntos as $index => $punto)
-                                <tr>
-                                    <td>
-                                        <button class="btn btn-sm btn-outline-primary"
-                                                type="button"
-                                                data-bs-toggle="collapse"
-                                                data-bs-target="#collapse{{ $punto->id_punto }}"
-                                                aria-expanded="false"
-                                                aria-controls="collapse{{ $punto->id_punto }}">
-                                            <i class="fas fa-chevron-down"></i>
-                                        </button>
-                                        {{ $index + 1 }}
-                                    </td>
-                                    <td>{{ $punto->punto_codigo }}</td>
-                                    <td>
-                                        @php
-                                            $campania = \Illuminate\Support\Facades\DB::table('campanias')->where('id_campania','=',$punto->id_campania)->first();
-                                        @endphp
-                                        {{ $campania ? $campania->campania_nombre : '-' }}
-                                    </td>
-                                    <td>
-                                        @if($punto->punto_documento_excel)
-                                            <a href="{{ asset($punto->punto_documento_excel) }}"
-                                               target="_blank"
-                                               class="btn btn-sm btn-outline-success">
-                                                <i class="fas fa-file-excel"></i> Ver Excel
-                                            </a>
-                                        @else
-                                            <span class="text-muted">No disponible</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if($punto->punto_documento_pdf)
-                                            <a href="{{ asset($punto->punto_documento_pdf) }}"
-                                               target="_blank"
-                                               class="btn btn-sm btn-outline-danger">
-                                                <i class="fas fa-file-pdf"></i> Ver PDF
-                                            </a>
-                                        @else
-                                            <span class="text-muted">No disponible</span>
-                                        @endif
-                                    </td>
-                                    <td>{{ $punto->created_at ? $general->obtenerNombreFecha($punto->created_at, 'DateTime', 'Date') : '-' }}</td>
-                                    <td>
-                                        @php
-                                            $user = \App\Models\User::find($punto->id_users);
-                                        @endphp
-                                        {{ $user ? $user->name : 'Usuario no encontrado' }}
-                                    </td>
-                                    <td>
-                                        <a class="btn text-primary" wire:ignore.self wire:click="editar_punto('{{ base64_encode($punto->id_punto) }}')" data-bs-toggle="modal" data-bs-target="#modal_editar_punto">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <a class="btn text-danger" wire:ignore.self wire:click="btn_punto('{{ base64_encode($punto->id_punto) }}')" data-bs-toggle="modal" data-bs-target="#modal_delete_punto">
-                                            <i class="fas fa-trash"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                                <!-- Fila de detalles (acordeón) -->
-                                <tr class="collapse" wire:ignore.self id="collapse{{ $punto->id_punto }}">
-                                    <td colspan="8">
-                                        <div class="p-3 bg-light">
-                                            <h6 class="mb-3">Detalles del Punto: {{ $punto->punto_codigo }}</h6>
+                    @if(empty($id_campania_busqueda) && empty($id_cliente_busqueda))
+                        <h6 class="text-black">Seleccione una campaña o cliente para ver los resultados.</h6>
+                    @else
+                        @if(count($listar_puntos) > 0)
+                            <x-table-general>
+                                <x-slot name="thead">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Código</th>
+                                        <th>Campaña</th>
+                                        <th>Cliente</th>
+                                        <th>Archivo Excel</th>
+                                        <th>Archivo PDF</th>
+                                        <th>Fecha Registro</th>
+                                        <th>Usuario</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </x-slot>
+                                <x-slot name="tbody">
+                                    @foreach($listar_puntos as $index => $punto)
+                                        <tr>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-primary"
+                                                        type="button"
+                                                        data-bs-toggle="collapse"
+                                                        data-bs-target="#collapse{{ $punto->id_punto }}"
+                                                        aria-expanded="false"
+                                                        aria-controls="collapse{{ $punto->id_punto }}">
+                                                    <i class="fas fa-chevron-down"></i>
+                                                </button>
+                                                {{ $index + 1 }}
+                                            </td>
+                                            <td>{{ $punto->punto_codigo }}</td>
+                                            <td>
+                                                @php
+                                                    $campania = \Illuminate\Support\Facades\DB::table('campanias')->where('id_campania','=',$punto->id_campania)->first();
+                                                @endphp
+                                                {{ $campania ? $campania->campania_nombre : '-' }}
+                                            </td>
+                                            <td>
+                                                @php
+                                                    $cliente = \Illuminate\Support\Facades\DB::table('clientes')->where('id_cliente','=',$punto->id_cliente)->first();
+                                                @endphp
+                                                {{ $cliente ? $cliente->cliente_nombre_cliente : '-' }}
+                                            </td>
+                                            <td>
+                                                @if($punto->punto_documento_excel)
+                                                    <a href="{{ asset($punto->punto_documento_excel) }}"
+                                                       target="_blank"
+                                                       class="btn btn-sm btn-outline-success">
+                                                        <i class="fas fa-file-excel"></i> Ver Excel
+                                                    </a>
+                                                @else
+                                                    <span class="text-muted">No disponible</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                @if($punto->punto_documento_pdf)
+                                                    <a href="{{ asset($punto->punto_documento_pdf) }}"
+                                                       target="_blank"
+                                                       class="btn btn-sm btn-outline-danger">
+                                                        <i class="fas fa-file-pdf"></i> Ver PDF
+                                                    </a>
+                                                @else
+                                                    <span class="text-muted">No disponible</span>
+                                                @endif
+                                            </td>
+                                            <td>{{ $punto->created_at ? $general->obtenerNombreFecha($punto->created_at, 'DateTime', 'Date') : '-' }}</td>
+                                            <td>
+                                                @php
+                                                    $user = \App\Models\User::find($punto->id_users);
+                                                @endphp
+                                                {{ $user ? $user->name : 'Usuario no encontrado' }}
+                                            </td>
+                                            <td>
+                                                <a class="btn text-primary" wire:ignore.self wire:click="editar_punto('{{ base64_encode($punto->id_punto) }}')" data-bs-toggle="modal" data-bs-target="#modal_editar_punto">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a class="btn text-danger" wire:ignore.self wire:click="btn_punto('{{ base64_encode($punto->id_punto) }}')" data-bs-toggle="modal" data-bs-target="#modal_delete_punto">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        <!-- Fila de detalles (acordeón) -->
+                                        <tr class="collapse" wire:ignore.self id="collapse{{ $punto->id_punto }}">
+                                            <td colspan="9">
+                                                <div class="p-3 bg-light">
+                                                    <h6 class="mb-3">Detalles del Punto: {{ $punto->punto_codigo }}</h6>
 
-                                            @if($punto->puntos_detalles && count($punto->puntos_detalles) > 0)
-                                                <x-table-general>
-                                                    <x-slot name="thead">
-                                                        <tr>
-                                                            <th>N°</th>
-                                                            <th>Motivo</th>
-                                                            <th>Vendedor</th>
-                                                            <th>Puntos Ganados</th>
-                                                            <th>Fecha de Registro</th>
-                                                            <th>Fecha de Modificación</th>
-                                                        </tr>
-                                                    </x-slot>
-                                                    <x-slot name="tbody">
-                                                        @php $conteo_detalle = 1; @endphp
-                                                        @foreach($punto->puntos_detalles as $detalle)
-                                                            <tr>
-                                                                <td>{{$conteo_detalle}}</td>
-                                                                <td>{{ $detalle->punto_detalle_motivo }}</td>
-                                                                <td>{{ $detalle->punto_detalle_vendedor }}</td>
-                                                                <td>{{ $detalle->punto_detalle_punto_ganado }}</td>
-                                                                <td>{{ $detalle->punto_detalle_fecha_registro ? $general->obtenerNombreFecha($detalle->punto_detalle_fecha_registro, 'DateTime', 'Date') : '-' }}</td>
-                                                                <td>
-                                                                    @if($detalle->punto_detalle_fecha_modificacion)
-                                                                        {{ $detalle->punto_detalle_fecha_modificacion ? $general->obtenerNombreFecha($detalle->punto_detalle_fecha_modificacion, 'DateTime', 'Date') : '-' }}
-                                                                    @else
-                                                                        -
-                                                                    @endif
-                                                                </td>
-                                                            </tr>
-                                                            @php $conteo_detalle++; @endphp
-                                                        @endforeach
-                                                    </x-slot>
-                                                </x-table-general>
-                                            @else
-                                                <div class="alert alert-info mb-0">
-                                                    <i class="fas fa-info-circle"></i> No hay detalles registrados para este punto.
+                                                    @if($punto->puntos_detalles && count($punto->puntos_detalles) > 0)
+                                                        <x-table-general>
+                                                            <x-slot name="thead">
+                                                                <tr>
+                                                                    <th>N°</th>
+                                                                    <th>Motivo</th>
+                                                                    <th>Vendedor</th>
+                                                                    <th>Puntos Ganados</th>
+                                                                    <th>Fecha de Registro</th>
+                                                                    <th>Fecha de Modificación</th>
+                                                                </tr>
+                                                            </x-slot>
+                                                            <x-slot name="tbody">
+                                                                @php $conteo_detalle = 1; @endphp
+                                                                @foreach($punto->puntos_detalles as $detalle)
+                                                                    <tr>
+                                                                        <td>{{$conteo_detalle}}</td>
+                                                                        <td>{{ $detalle->punto_detalle_motivo }}</td>
+                                                                        <td>{{ $detalle->punto_detalle_vendedor }}</td>
+                                                                        <td>{{ $detalle->punto_detalle_punto_ganado }}</td>
+                                                                        <td>{{ $detalle->punto_detalle_fecha_registro ? $general->obtenerNombreFecha($detalle->punto_detalle_fecha_registro, 'DateTime', 'Date') : '-' }}</td>
+                                                                        <td>
+                                                                            @if($detalle->punto_detalle_fecha_modificacion)
+                                                                                {{ $detalle->punto_detalle_fecha_modificacion ? $general->obtenerNombreFecha($detalle->punto_detalle_fecha_modificacion, 'DateTime', 'Date') : '-' }}
+                                                                            @else
+                                                                                -
+                                                                            @endif
+                                                                        </td>
+                                                                    </tr>
+                                                                    @php $conteo_detalle++; @endphp
+                                                                @endforeach
+                                                            </x-slot>
+                                                        </x-table-general>
+                                                    @else
+                                                        <div class="alert alert-info mb-0">
+                                                            <i class="fas fa-info-circle"></i> No hay detalles registrados para este punto.
+                                                        </div>
+                                                    @endif
                                                 </div>
-                                            @endif
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </x-slot>
-                    </x-table-general>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </x-slot>
+                            </x-table-general>
+                        @else
+                            <h6 class="text-black">No se encontraron resultados para los filtros seleccionados.</h6>
+                        @endif
+                    @endif
                 </div>
             </div>
         </div>
     </div>
+
 </div>
 @script
 <script>

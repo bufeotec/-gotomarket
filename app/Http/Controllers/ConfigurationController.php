@@ -124,4 +124,15 @@ class ConfigurationController extends Controller
         }
     }
 
+    public function clientes(){
+        try {
+
+
+            return view('configuration.clientes');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
+
 }

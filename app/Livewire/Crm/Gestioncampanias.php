@@ -43,9 +43,16 @@ class Gestioncampanias extends Component{
     public $archivos = [];
     public $archivosNuevos = [];
     public $archivosAEliminar = [];
+    public $desde;
+    public $hasta;
+    public $buscar_estado;
+    public function mount(){
+        $this->desde =  date('Y-m-d');
+        $this->hasta =  date('Y-m-d');
+    }
 
     public function render(){
-        $listar_campanias = $this->campania->listar_campanias($this->search_campania, $this->pagination_campania);
+        $listar_campanias = $this->campania->listar_campanias($this->desde, $this->hasta, $this->buscar_estado, $this->search_campania, $this->pagination_campania);
         return view('livewire.crm.gestioncampanias', compact('listar_campanias'));
     }
 

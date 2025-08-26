@@ -5,12 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Campaniaprecio extends Model{
+class Canjearpuntodetalle extends Model{
     use HasFactory;
-    protected $table = "campanias_premios";
-    protected $primaryKey = "id_campaña_premio";
+    protected $table = "canjear_puntos_detalles";
+    protected $primaryKey = "id_canejar_punto_detalle";
     private $logs;
-
     public function __construct(){
         parent::__construct();
         $this->logs = new Logs();

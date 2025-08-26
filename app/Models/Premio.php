@@ -38,19 +38,26 @@ class Premio extends Model{
         }
     }
 
-    public function listar_premios_disponible(){
+    public function listar_campanias_activos($id_campania = null){
         try {
-            $result = DB::table('premios as p')
-                ->join('campanias_premios as cp', 'p.id_premio', 'cp.id_premio')
-                ->where('p.premio_en_campania', '=', 1)
-                ->where('p.premio_estado', '=', 1)
-                ->where('cp.campania_premio_estado', '=', 1)
-                ->get();
+           $result = DB::table('premios as p')
+                ->join('campanias_premios as cp', 'p.id_premio', '=', 'cp.id_premio')
+                ->select([
+                    'p.*',
+                    'cp.campania_premio_puntaje',
+                    'cp.id_campania'
+                ])
+                ->where('p.premio_estado', 1)
+                ->where('cp.campania_premio_estado', 1)
+                ->where('cp.id_campania', $id_campania)
+                ->orderBy('p.id_premio', 'desc');
 
-        }catch (\Exception $e){
+            return $result->get();
+
+        } catch (\Exception $e) {
             $this->logs->insertarLog($e);
-            $result = [];
+            return [];
         }
-        return $result;
     }
+
 }

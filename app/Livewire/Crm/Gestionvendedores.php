@@ -39,6 +39,7 @@ class Gestionvendedores extends Component{
     public $messageDelete = "";
     public $id_vendedor_intranet = "";
     public $id_cliente = "";
+    public $id_cliente_busqueda = "";
     public $id_departamento = "";
     public $id_provincia = "";
     public $id_distrito = "";
@@ -49,25 +50,126 @@ class Gestionvendedores extends Component{
     public $provincias = [];
     public $distritos = [];
     public $id_rol;
+    public $abrirListasClienteModal = false;
+    public $abrirListasCliente = false;
+    public $buscar_clientes = null;
+    public $buscar_clientes_search = null;
+    public $listaClientesFiltro = array();
+
 
     public function render(){
-        $listar_vendedores = $this->vendedorintranet->listar_gestion_vendedores($this->search_gestion_vendedor, $this->pagination_gestion_vendedor);
+        $listar_vendedores = $this->vendedorintranet->listar_gestion_vendedores($this->id_cliente_busqueda, $this->search_gestion_vendedor, $this->pagination_gestion_vendedor);
         $listar_departamento = $this->departamento->lista_departamento();
         $roles = DB::table('roles')->where('roles_status','=',1)->get();
         $roleId = auth()->user()->roles->first()->id ?? null;
         return view('livewire.crm.gestionvendedores', compact('listar_vendedores', 'listar_departamento', 'roles', 'roleId'));
     }
 
+    // MÉTODOS ESPECÍFICOS PARA EL MODAL
+    public function buscarClientesFiltroModal(){
+        try {
+            $buscar = $this->buscar_clientes ?? '';
+
+            $this->listaClientesFiltro = DB::table('clientes')
+                ->where('cliente_estado_registro','=', 1)
+                ->where(function($q) use ($buscar) {
+                    $q->where('cliente_codigo_cliente', 'like', '%' . $buscar . '%')
+                        ->orWhere('cliente_nombre_cliente', 'like', '%' . $buscar . '%');
+                })
+                ->limit(10)
+                ->get();
+
+            $this->abrirListasClienteModal = true;
+
+        } catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error. Por favor, inténtelo nuevamente.');
+            return;
+        }
+    }
+    public function seleccionar_cliente_modal($id_cliente){
+        try {
+            $this->abrirListasClienteModal = false;
+            $id_c = base64_decode($id_cliente);
+
+            if ($id_c) {
+                $data = DB::table('clientes')
+                    ->where('id_cliente', '=', $id_c)
+                    ->first();
+
+                // Asignar siempre al modal
+                $this->buscar_clientes = $data->cliente_codigo_cliente . ' - ' . $data->cliente_nombre_cliente;
+                $this->id_cliente = $id_c;
+
+            } else {
+                session()->flash('error', 'Los parámetros del cliente no son válidos.');
+                return;
+            }
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error. Por favor, inténtelo nuevamente.');
+            return;
+        }
+    }
+
+    // MÉTODOS ESPECÍFICOS PARA LA VISTA PRINCIPAL
+    public function buscarClientesFiltroVista(){
+        try {
+            $buscar = $this->buscar_clientes_search ?? '';
+
+            $this->listaClientesFiltro = DB::table('clientes')
+                ->where('cliente_estado_registro','=', 1)
+                ->where(function($q) use ($buscar) {
+                    $q->where('cliente_codigo_cliente', 'like', '%' . $buscar . '%')
+                        ->orWhere('cliente_nombre_cliente', 'like', '%' . $buscar . '%');
+                })
+                ->limit(10)
+                ->get();
+
+            $this->abrirListasCliente = true;
+
+        } catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error. Por favor, inténtelo nuevamente.');
+            return;
+        }
+    }
+    public function seleccionar_cliente_vista($id_cliente){
+        try {
+            $this->abrirListasCliente = false;
+            $id_c = base64_decode($id_cliente);
+
+            if ($id_c) {
+                $data = DB::table('clientes')
+                    ->where('id_cliente', '=', $id_c)
+                    ->first();
+
+                // Asignar siempre a la vista principal
+                $this->buscar_clientes_search = $data->cliente_codigo_cliente . ' - ' . $data->cliente_nombre_cliente;
+                $this->id_cliente_busqueda = $id_c;
+
+            } else {
+                session()->flash('error', 'Los parámetros del cliente no son válidos.');
+                return;
+            }
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error. Por favor, inténtelo nuevamente.');
+            return;
+        }
+    }
+
     public function clear_form(){
         $this->id_vendedor_intranet = "";
+        $this->buscar_clientes = "";
         $this->id_departamento = "";
         $this->id_provincia = "";
         $this->id_distrito = "";
+        $this->id_cliente = "";
         $this->vendedor_intranet_dni = "";
         $this->vendedor_intranet_nombre = "";
         $this->vendedor_intranet_correo = "";
         $this->vendedor_intranet_estado = "";
-        $this->id_cliente = "";
         $this->provincias = [];
         $this->distritos = [];
     }
@@ -109,6 +211,7 @@ class Gestionvendedores extends Component{
     public function edit_data($id){
         $vendedor_edit = Vendedorintranet::find(base64_decode($id));
         if ($vendedor_edit){
+            $this->id_vendedor_intranet = $vendedor_edit->id_vendedor_intranet; // Guardar ID para actualizar
             $this->id_rol = $vendedor_edit->id_perfil;
             $this->id_departamento = $vendedor_edit->id_departamento;
             $this->id_provincia = $vendedor_edit->id_provincia;
@@ -116,6 +219,17 @@ class Gestionvendedores extends Component{
             $this->vendedor_intranet_dni = $vendedor_edit->vendedor_intranet_dni;
             $this->vendedor_intranet_nombre = $vendedor_edit->vendedor_intranet_nombre;
             $this->vendedor_intranet_correo = $vendedor_edit->vendedor_intranet_correo;
+            // OBTENER Y MOSTRAR EL CLIENTE SELECCIONADO
+            $this->id_cliente = $vendedor_edit->id_cliente;
+            if ($this->id_cliente) {
+                $cliente = DB::table('clientes')
+                    ->where('id_cliente', $this->id_cliente)
+                    ->first();
+                if ($cliente) {
+                    $this->buscar_clientes = $cliente->cliente_codigo_cliente . ' - ' . $cliente->cliente_nombre_cliente;
+                }
+            }
+
             // Cargar las provincias y distritos
             $this->provincias = DB::table('provincias')->where('id_departamento', $this->id_departamento)->get();
             $this->distritos = DB::table('distritos')->where('id_provincia', $this->id_provincia)->get();
@@ -183,6 +297,7 @@ class Gestionvendedores extends Component{
     public function save_vendedor(){
         try {
             $this->validate([
+                'id_cliente' => 'required|integer',
                 'id_departamento' => 'required|integer',
                 'id_provincia' => 'required|integer',
                 'id_distrito' => 'required|integer',
@@ -191,6 +306,9 @@ class Gestionvendedores extends Component{
                 'vendedor_intranet_correo' => 'required|email|max:255',
                 'id_vendedor_intranet' => 'nullable|integer',
             ], [
+                'id_cliente.required' => 'El cliente es obligatorio.',
+                'id_cliente.integer' => 'El cliente seleccionado no es válido.',
+
                 'id_departamento.required' => 'El departamento es obligatorio.',
                 'id_departamento.integer' => 'El departamento seleccionado no es válido.',
 
@@ -229,7 +347,7 @@ class Gestionvendedores extends Component{
                 // Primero crear el vendedor
                 $save_vendedor = new Vendedorintranet();
                 $save_vendedor->id_users = Auth::id();
-                $save_vendedor->id_cliente = null;
+                $save_vendedor->id_cliente = $this->id_cliente;
                 $save_vendedor->id_perfil = $this->id_rol;
                 $save_vendedor->id_departamento = $this->id_departamento;
                 $save_vendedor->id_provincia = $this->id_provincia;
@@ -274,6 +392,7 @@ class Gestionvendedores extends Component{
 
                 // Actualizar los datos del menú
                 $update_vendedor = Vendedorintranet::findOrFail($this->id_vendedor_intranet);
+                $update_vendedor->id_cliente = $this->id_cliente;
                 $update_vendedor->vendedor_intranet_dni = $this->vendedor_intranet_dni;
                 $update_vendedor->vendedor_intranet_nombre = $this->vendedor_intranet_nombre;
                 $update_vendedor->vendedor_intranet_correo = $this->vendedor_intranet_correo;
@@ -295,4 +414,7 @@ class Gestionvendedores extends Component{
             session()->flash('error', 'Ocurrió un error al guardar el registro. Por favor, inténtelo nuevamente.');
         }
     }
+
+    // PARA EL BUSCADOR DE LA VISTA:
+
 }

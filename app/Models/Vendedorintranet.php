@@ -16,19 +16,28 @@ class Vendedorintranet extends Model{
         $this->logs = new Logs();
     }
 
-    public function listar_gestion_vendedores($search,$pagination,$order = 'desc'){
+    public function listar_gestion_vendedores($id_cliente = null, $search, $pagination, $order = 'desc'){
         try {
-            $query = DB::table('vendedores_intranet')
-                ->where(function($q) use ($search) {
-                    $q->where('vendedor_intranet_dni', 'like', '%' . $search . '%')
-                        ->orWhere('vendedor_intranet_nombre', 'like', '%' . $search . '%')
-                        ->orWhereNull('vendedor_intranet_dni')
-                        ->orWhereNull('vendedor_intranet_nombre');
-                })->orderBy('id_vendedor_intranet', $order);
+            $query = DB::table('vendedores_intranet as vi')
+                ->join('clientes as c', 'vi.id_cliente', 'c.id_cliente')
+                ->where(function($q) use ($id_cliente, $search) {
+                    // Si se proporciona un id_cliente, filtrar por él
+                    if ($id_cliente) {
+                        $q->where('vi.id_cliente', '=', $id_cliente);
+                    }
+
+                    $q->where(function($subq) use ($search) {
+                        $subq->where('vi.vendedor_intranet_dni', 'like', '%' . $search . '%')
+                            ->orWhere('vi.vendedor_intranet_nombre', 'like', '%' . $search . '%')
+                            ->orWhereNull('vi.vendedor_intranet_dni')
+                            ->orWhereNull('vi.vendedor_intranet_nombre');
+                    });
+                })
+                ->orderBy('vi.id_vendedor_intranet', $order);
 
             $result = $query->paginate($pagination);
 
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             $this->logs->insertarLog($e);
             $result = [];
         }
