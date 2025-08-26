@@ -14,7 +14,7 @@ use App\Models\Logs;
 use App\Models\Premio;
 use App\Models\Campania;
 use App\Models\General;
-use App\Models\Campaniaprecio;
+use App\Models\Campaniapremio;
 
 class Gestionarpremios extends Component{
     use WithPagination, WithoutUrlPagination;
@@ -23,13 +23,13 @@ class Gestionarpremios extends Component{
     private $premio;
     private $campania;
     private $general;
-    private $campañaprecio;
+    private $Campaniapremio;
     public function __construct(){
         $this->logs = new Logs();
         $this->premio = new Premio();
         $this->campania = new Campania();
         $this->general = new General();
-        $this->campañaprecio = new Campaniaprecio();
+        $this->Campaniapremio = new Campaniapremio();
     }
     // PREMIOS
     public $search_premios;
@@ -48,6 +48,8 @@ class Gestionarpremios extends Component{
     public $id_campania = "";
     public $premios_seleccionados = [];
     public $puntajes_premios = [];
+
+    public $premios_existentes_db = [];
 
     public function render(){
         $this->listar_premios = $this->premio->listar_premios_activos($this->search_premios);
@@ -236,22 +238,24 @@ class Gestionarpremios extends Component{
     //CAMPAÑAS -PREMIOS
     public function agregarPremio($id_premio){
         $id = base64_decode($id_premio);
-        // Verificar si el premio ya está agregado
         if (!in_array($id, $this->premios_seleccionados)) {
             $this->premios_seleccionados[] = $id;
-            $this->puntajes_premios[$id] = ''; // Inicializar puntaje vacío
+            // Si ya tuvo puntaje antes, conservarlo; si no, inicializar
+            if (!isset($this->puntajes_premios[$id])) {
+                $this->puntajes_premios[$id] = '';
+            }
             $this->cargarPremiosCampania();
         }
     }
 
     public function quitarPremio($id_premio){
         $id = base64_decode($id_premio);
-        // Buscar y eliminar el premio de la lista
         $key = array_search($id, $this->premios_seleccionados);
         if ($key !== false) {
             unset($this->premios_seleccionados[$key]);
-            unset($this->puntajes_premios[$id]);
             $this->premios_seleccionados = array_values($this->premios_seleccionados);
+            // Puedes mantener el puntaje en memoria por si lo vuelven a agregar,
+            // o borrarlo. Yo lo mantengo (no lo unset) por UX.
             $this->cargarPremiosCampania();
         }
     }
@@ -260,13 +264,13 @@ class Gestionarpremios extends Component{
         if (!empty($this->premios_seleccionados)) {
             $this->listar_campania_premios = DB::table('premios')
                 ->whereIn('id_premio', $this->premios_seleccionados)
-                ->where('premio_en_campania', '=', 0)
-                ->where('premio_estado', '=', 1)
+                ->where('premio_estado', 1)
                 ->get();
         } else {
             $this->listar_campania_premios = [];
         }
     }
+
 
     public function confirmar_premios_campania(){
         try {
@@ -285,34 +289,33 @@ class Gestionarpremios extends Component{
                 return;
             }
 
-            // Validar que todos los puntajes sean números
+            // Validar puntajes
             foreach ($this->premios_seleccionados as $id_premio) {
-                if (!isset($this->puntajes_premios[$id_premio]) || empty($this->puntajes_premios[$id_premio])) {
+                $val = $this->puntajes_premios[$id_premio] ?? null;
+                if ($val === null || $val === '') {
                     session()->flash('error', 'Todos los premios deben tener un puntaje asignado.');
                     return;
                 }
-
-                if (!is_numeric($this->puntajes_premios[$id_premio])) {
-                    session()->flash('error', 'El puntaje debe ser un número válido para el premio.');
+                if (!is_numeric($val)) {
+                    session()->flash('error', 'El puntaje debe ser numérico.');
                     return;
                 }
             }
 
-            $microtime = microtime(true);
             DB::beginTransaction();
+            $microtime = microtime(true);
 
-            // Actualizar el estado de los premios en la tabla premios
-            foreach ($this->premios_seleccionados as $id_premio) {
-                $premio = Premio::find($id_premio);
-                if ($premio) {
-                    $premio->premio_en_campania = 1;
-                    $premio->save();
-                }
-            }
+            // Premios actualmente en BD (snapshot al cargar la campaña)
+            $existentes = $this->premios_existentes_db;
 
-            // Agregar los premios a la tabla campaña_premio
-            foreach ($this->premios_seleccionados as $id_premio) {
-                $campaniaPremio = new Campaniaprecio();
+            // Calcular diferencias
+            $toAdd = array_values(array_diff($this->premios_seleccionados, $existentes));
+            $toRemove = array_values(array_diff($existentes, $this->premios_seleccionados));
+            $toUpdate = array_values(array_intersect($this->premios_seleccionados, $existentes));
+
+            // insertar en pivote y marcar premio_en_campania=1
+            foreach ($toAdd as $id_premio) {
+                $campaniaPremio = new Campaniapremio();
                 $campaniaPremio->id_users = Auth::id();
                 $campaniaPremio->id_campania = $this->id_campania;
                 $campaniaPremio->id_premio = $id_premio;
@@ -320,22 +323,88 @@ class Gestionarpremios extends Component{
                 $campaniaPremio->campania_premio_microtime = $microtime;
                 $campaniaPremio->campania_premio_estado = 1;
                 $campaniaPremio->save();
+
+                // Si tu regla es 1 premio = 1 campaña, márcalo:
+                DB::table('premios')
+                    ->where('id_premio', $id_premio)
+                    ->update(['premio_en_campania' => 1]);
+            }
+
+            // actualizar puntajes si cambió
+            foreach ($toUpdate as $id_premio) {
+                DB::table('campanias_premios')
+                    ->where('id_campania', $this->id_campania)
+                    ->where('id_premio', $id_premio)
+                    ->update([
+                        'campania_premio_puntaje' => $this->puntajes_premios[$id_premio],
+                    ]);
+            }
+
+            // desactivar del pivote y marcar premio_en_campania=0 (si aplica)
+            foreach ($toRemove as $id_premio) {
+                DB::table('campanias_premios')
+                    ->where('id_campania', $this->id_campania)
+                    ->where('id_premio', $id_premio)
+                    ->update(['campania_premio_estado' => 0]);
+
+                // Si tu política es exclusiva, libéralo:
+                DB::table('premios')
+                    ->where('id_premio', $id_premio)
+                    ->update(['premio_en_campania' => 0]);
             }
 
             DB::commit();
             $this->dispatch('hide_modal_confirmar_premios');
-            session()->flash('success', 'Premios asignados a la campaña correctamente.');
+            session()->flash('success', 'Premios de la campaña actualizados correctamente.');
 
-            // Limpiar selección después de guardar
-            $this->premios_seleccionados = [];
-            $this->puntajes_premios = [];
-            $this->listar_campania_premios = [];
-            $this->id_campania = "";
+            // Refrescar snapshot y data visible
+            $this->updatedIdCampania($this->id_campania);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            session()->flash('error', 'Error al guardar los premios de la campaña: ' . $e->getMessage());
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Error al guardar los premios de la campaña: '.$e->getMessage());
         }
     }
+
+
+
+    public function updatedIdCampania($value){
+        // Limpiar selección cuando cambie la campaña
+        $this->premios_seleccionados = [];
+        $this->puntajes_premios = [];
+        $this->listar_campania_premios = [];
+        $this->premios_existentes_db = [];
+
+        if (empty($value)) return;
+
+        // Trae lo que YA tiene la campaña desde la tabla pivote
+        $premiosCampania = DB::table('campanias_premios as cp')
+            ->join('premios as p', 'p.id_premio', '=', 'cp.id_premio')
+            ->where('cp.id_campania', $value)
+            ->where('cp.campania_premio_estado', 1)       // si manejas estado
+            ->select([
+                'p.id_premio',
+                'p.premio_codigo',
+                'p.premio_descripcion',
+                'p.premio_documento',
+                'cp.campania_premio_puntaje as puntaje'
+            ])
+            ->orderBy('p.id_premio', 'asc')
+            ->get();
+
+        // Popular estados en memoria para la tabla derecha
+        foreach ($premiosCampania as $row) {
+            $this->premios_seleccionados[] = $row->id_premio;
+            $this->puntajes_premios[$row->id_premio] = $row->puntaje;
+        }
+
+        // Guardar “snapshot” de lo existente en BD para diffs al guardar
+        $this->premios_existentes_db = collect($premiosCampania)->pluck('id_premio')->all();
+
+        // Renderizar el detalle usando la misma función que ya tienes
+        $this->cargarPremiosCampania();
+    }
+
 
 }

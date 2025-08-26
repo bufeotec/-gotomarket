@@ -241,7 +241,7 @@
                     <div class="row">
                         <div class="col-lg-6 col-md-6 col-sm-12">
                             <label for="id_campania" class="form-label">Seleccionar Campaña</label>
-                            <select id="id_campania" class=" form-select" wire:model="id_campania">
+                            <select id="id_campania" class=" form-select" wire:model.live="id_campania">
                                 <option value="">Seleccionar...</option>
                                 @foreach($listar_campanias as $lc)
                                     <option value="{{ $lc->id_campania }}">{{ $lc->campania_nombre }}</option>

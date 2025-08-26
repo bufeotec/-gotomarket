@@ -73,6 +73,19 @@
                 </div>
             </div>
         </div>
+
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Reportes</h4>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-end">
+                        <a href="{{route('CRM.reporte_campania')}}" class="btn btn-success">Ingresar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="{{asset('js/domain.js')}}"></script>

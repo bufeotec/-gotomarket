@@ -238,8 +238,14 @@ class Gestionarordenservicios extends Component{
                 return;
             }
 
-            // Obtener programaciones en el rango de fechas especificado
-            $this->resultados = $this->programacion->listar_programaciones_realizadas_x_fechas_guias($this->fecha_desde_guia, $this->fecha_hasta_guia);
+            // Obtener programaciones - si se busca por código de guía, ignorar fechas
+            if ($this->codigo_guia !== '' && $this->codigo_guia !== null) {
+                // Buscar por código de guía sin filtrar por fechas
+                $this->resultados = $this->programacion->listar_programaciones_por_codigo_guia($this->codigo_guia);
+            } else {
+                // Buscar por rango de fechas (comportamiento normal)
+                $this->resultados = $this->programacion->listar_programaciones_realizadas_x_fechas_guias($this->fecha_desde_guia, $this->fecha_hasta_guia);
+            }
 
             $this->programacionesContador = [];
 
@@ -271,11 +277,19 @@ class Gestionarordenservicios extends Component{
 
                 // Filtro por estado de guía
                 if ($this->estado_guia !== '' && $this->estado_guia !== null) {
-                    $queryDespacho->where('g.guia_estado_aprobacion', $this->estado_guia);
+                    if ($this->estado_guia == '7') {
+                        // Si es "Guía en tránsito", buscar tanto 7 como 20
+                        $queryDespacho->whereIn('g.guia_estado_aprobacion', [7, 20]);
+                    } else {
+                        // Para otros estados, buscar el valor exacto
+                        $queryDespacho->where('g.guia_estado_aprobacion', $this->estado_guia);
+                    }
                 }
 
                 // Filtro por rango de fechas de emisión de guía
-                if ($this->fecha_desde_guia !== '' && $this->fecha_hasta_guia !== '') {
+                // SOLO si NO se está filtrando por código de guía
+                if ($this->fecha_desde_guia !== '' && $this->fecha_hasta_guia !== '' &&
+                    ($this->codigo_guia === '' || $this->codigo_guia === null)) {
                     $queryDespacho->whereBetween('g.guia_fecha_emision', [$this->fecha_desde_guia, $this->fecha_hasta_guia]);
                 }
 
@@ -316,7 +330,13 @@ class Gestionarordenservicios extends Component{
                     }
 
                     if ($this->estado_guia !== '' && $this->estado_guia !== null) {
-                        $des->comprobantes->where('g.guia_estado_aprobacion', $this->estado_guia);
+                        if ($this->estado_guia == '7') {
+                            // Si es "Guía en tránsito", buscar tanto 7 como 20
+                            $des->comprobantes->whereIn('g.guia_estado_aprobacion', [7, 20]);
+                        } else {
+                            // Para otros estados, buscar el valor exacto
+                            $des->comprobantes->where('g.guia_estado_aprobacion', $this->estado_guia);
+                        }
                     }
 
                     $des->comprobantes = $des->comprobantes->select('dv.*', 'g.guia_importe_total_sin_igv')->get();

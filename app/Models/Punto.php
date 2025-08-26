@@ -16,13 +16,29 @@ class Punto extends Model{
         $this->logs = new Logs();
     }
 
-    public function listar_puntos_registrados(){
+    public function listar_puntos_registrados($id_campania = null, $id_cliente = null, $search = null){
         try {
-            $result = DB::table('puntos')
-                ->where('punto_estado', '=', 1)
-                ->get();
+            $query = DB::table('puntos')
+                ->where('punto_estado', '=', 1);
 
-        }catch (\Exception $e){
+            // Filtrar por campaña si se proporciona
+            if ($id_campania && $id_campania != '') {
+                $query->where('id_campania', $id_campania);
+            }
+
+            // Filtrar por cliente si se proporciona
+            if ($id_cliente && $id_cliente != '') {
+                $query->where('id_cliente', $id_cliente);
+            }
+
+            // Filtrar por búsqueda (punto_codigo) si se proporciona
+            if ($search && $search != '') {
+                $query->where('punto_codigo', 'like', '%' . $search . '%');
+            }
+
+            $result = $query->get();
+
+        } catch (\Exception $e){
             $this->logs->insertarLog($e);
             $result = [];
         }

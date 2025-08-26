@@ -8,6 +8,35 @@
         <x-slot name="modalContent">
             <form wire:submit.prevent="save_vendedor">
                 <div class="row">
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        <div class="loader mt-2 w-100" wire:loading
+                             wire:target="buscarClientesFiltroModal,seleccionar_cliente_modal">
+                        </div>
+                    </div>
+
+                    <div class="col-lg-12 col-md-12 col-sm-12 mb-3 position-relative">
+                        <label class="form-label">CLIENTE:</label>
+                        <input type="text"
+                               class="form-control"
+                               placeholder="Buscar"
+                               wire:model="buscar_clientes"
+                               wire:keyup="buscarClientesFiltroModal()">
+
+                        @if($abrirListasClienteModal)
+                            <div style="width: 120%; z-index: 999" class="position-absolute top-100 start-0 mt-1 z-10" id="lista_cliente_reporte">
+                                <div class="list-group bg-white shadow-sm">
+                                    @foreach($listaClientesFiltro as $l)
+                                        <a style="cursor: pointer" class="list-group-item list-group-item-action"
+                                           wire:click="seleccionar_cliente_modal('{{base64_encode($l->id_cliente)}}')">
+                                            {{ $l->cliente_codigo_cliente . ' - ' . $l->cliente_nombre_cliente }}
+                                        </a>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                        @error('id_cliente') <span class="message-error">{{ $message }}</span> @enderror
+                    </div>
+
                     <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
                         <label for="vendedor_intranet_dni" class="form-label">DNI <b class="text-danger">(*)</b></label>
                         <x-input-general type="text" id="vendedor_intranet_dni" wire:model="vendedor_intranet_dni" onkeyup="validar_numeros(this.id)" />
@@ -18,13 +47,6 @@
                         <label for="vendedor_intranet_nombre" class="form-label">Nombre <b class="text-danger">(*)</b></label>
                         <x-input-general type="text" id="vendedor_intranet_nombre" wire:model="vendedor_intranet_nombre"/>
                         @error('vendedor_intranet_nombre')<span class="message-error">{{ $message }}</span>@enderror
-                    </div>
-
-                    <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
-                        <label class="form-label" for="id_cliente">Cliente <b class="text-danger">(*)</b></label>
-                        <select class="form-control" wire:model="id_cliente">
-                            <option value="">Seleccionar...</option>
-                        </select>
                     </div>
 
                     <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
@@ -135,18 +157,47 @@
 {{--    FIN MODAL DESHABILITAR VENDEDOR--}}
 
 
-    <div class="row">
-        <div class="col-lg-6 col-md-6 col-sm-12 d-flex align-items-center mb-2">
+    <div class="row align-items-center">
+        <div class="col-lg-3 col-md-3 col-sm-12 mb-3 position-relative">
+            <label class="form-label">CLIENTE:</label>
+            <input type="text"
+                   class="form-control"
+                   placeholder="Buscar"
+                   wire:model="buscar_clientes_search"
+                   wire:keyup="buscarClientesFiltroVista()">
+
+            @if($abrirListasCliente)
+                <div style="width: 120%; z-index: 999" class="position-absolute top-100 start-0 mt-1 z-10" id="lista_cliente_reporte">
+                    <div class="list-group bg-white shadow-sm">
+                        @foreach($listaClientesFiltro as $l)
+                            <a style="cursor: pointer" class="list-group-item list-group-item-action"
+                               wire:click="seleccionar_cliente_vista('{{base64_encode($l->id_cliente)}}')">
+                                {{ $l->cliente_codigo_cliente . ' - ' . $l->cliente_nombre_cliente }}
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+        </div>
+        <div class="col-lg-4 col-md-4 col-sm-12 mt-4 d-flex align-items-center mb-2">
             <input type="text" class="form-control w-50 me-4"  wire:model.live="search_gestion_vendedor" placeholder="Buscar">
             <x-select-filter wire:model.live="pagination_gestion_vendedor" />
         </div>
-        <div class="col-lg-6 col-md-6 col-sm-12 text-end">
+        <div class="col-lg-5 col-md-5 col-sm-12 mt- text-end">
             <x-btn-export wire:click="clear_form" class="bg-success text-white" data-bs-toggle="modal" data-bs-target="#modal_vendedor" >
                 <x-slot name="icons">
                     fa-solid fa-plus
                 </x-slot>
                 Agregar Vendedor
             </x-btn-export>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12 col-md-12 col-sm-12">
+            <div class="loader mt-2 w-100" wire:loading
+                 wire:target="buscarClientesFiltroVista,seleccionar_cliente_vista">
+            </div>
         </div>
     </div>
 
@@ -191,7 +242,7 @@
                                             @endphp
                                             {{ $rol ? $rol->name : '' }}
                                         </td>
-                                        <td>CLIENTE</td>
+                                        <td>{{$lv->cliente_nombre_cliente}}</td>
                                         <td>{{$lv->vendedor_intranet_dni}}</td>
                                         <td>{{$lv->vendedor_intranet_nombre}}</td>
                                         <td>{{$lv->vendedor_intranet_correo}}</td>

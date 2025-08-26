@@ -49,6 +49,7 @@ Route::prefix('configuracion')->middleware(['auth', 'canMenu:configuracion'])->g
     route::get('/nuevoperfil',[ConfigurationController::class ,'nuevoperfil'])->name('configuracion.nuevoperfil')->middleware('verifyUserStatus')->middleware('can:nuevoperfil');
     route::get('/vendedores',[ConfigurationController::class ,'vendedores'])->name('configuracion.vendedores')->middleware('verifyUserStatus')->middleware('can:vendedores');
     route::get('/crear_usuario',[ConfigurationController::class ,'crear_usuario'])->name('configuracion.crear_usuario')->middleware('verifyUserStatus')->middleware('can:crear_usuario');
+    route::get('/clientes',[ConfigurationController::class ,'clientes'])->name('configuracion.clientes')->middleware('verifyUserStatus')->middleware('can:clientes');
 });
 
 /* ----------------------------- RUTAS FINALES DE CONFIGURACIÓN ---------------------------------*/
@@ -160,4 +161,5 @@ Route::prefix('CRM')->middleware(['auth', 'canMenu:CRM'])->group(function () {
     route::get('/gestion_premios',[CRMController::class ,'gestion_premios'])->name('CRM.gestion_premios')->middleware('verifyUserStatus')->middleware('can:gestion_premios');
     route::get('/gestion_puntos',[CRMController::class ,'gestion_puntos'])->name('CRM.gestion_puntos')->middleware('verifyUserStatus')->middleware('can:gestion_puntos');
     route::get('/seleccionar_premios',[CRMController::class ,'seleccionar_premios'])->name('CRM.seleccionar_premios')->middleware('verifyUserStatus')->middleware('can:seleccionar_premios');
+    route::get('/reporte_campania',[CRMController::class ,'reporte_campania'])->name('CRM.reporte_campania')->middleware('verifyUserStatus')->middleware('can:reporte_campania');
 });

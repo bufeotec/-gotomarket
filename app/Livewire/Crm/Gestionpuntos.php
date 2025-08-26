@@ -35,7 +35,6 @@ class Gestionpuntos extends Component{
     }
     public $id_punto = "";
     public $id_punto_detalle = "";
-    public $id_campania = "";
     public $archivo_excel;
     public $archivo_pdf;
     public $listar_detalles = [];
@@ -43,6 +42,16 @@ class Gestionpuntos extends Component{
     public $datos_edicion = [];
     public $listar_campanias = [];
     public $punto_codigo = "";
+    public $id_campania_busqueda = "";
+    public $id_cliente_busqueda = "";
+    public $search_puntos;
+    public $id_campania = "";
+    public $id_cliente = "";
+    public $abrirListasCliente = false;
+    public $buscar_clientes = null;
+    public $buscar_clientes_search = null;
+    public $listaClientesFiltro = array();
+    public $abrirListasClienteModal = false;
     public function mount(){
         $this->listar_campanias = DB::table('campanias')
             ->where('campania_estado', 1)
@@ -51,24 +60,134 @@ class Gestionpuntos extends Component{
     }
 
     public function render(){
-        $listar_puntos = $this->punto->listar_puntos_registrados();
+        $listar_puntos = $this->punto->listar_puntos_registrados($this->id_campania_busqueda, $this->id_cliente_busqueda, $this->search_puntos);
         foreach ($listar_puntos as $lp){
             $lp->puntos_detalles = DB::table('puntos_detalles')
                 ->where('punto_detalle_estado', '=', 1)
                 ->where('id_punto', '=', $lp->id_punto)
                 ->get();
         }
-        return view('livewire.crm.gestionpuntos', compact('listar_puntos'));
+
+        $listar_campania_formulario = $this->campania->listar_campanias_activos();
+        return view('livewire.crm.gestionpuntos', compact('listar_puntos', 'listar_campania_formulario'));
+    }
+
+    // MÉTODOS ESPECÍFICOS PARA EL MODAL
+    public function buscarClientesFiltroModal(){
+        try {
+            $buscar = $this->buscar_clientes ?? '';
+
+            $this->listaClientesFiltro = DB::table('clientes')
+                ->where('cliente_estado_registro','=', 1)
+                ->where(function($q) use ($buscar) {
+                    $q->where('cliente_codigo_cliente', 'like', '%' . $buscar . '%')
+                        ->orWhere('cliente_nombre_cliente', 'like', '%' . $buscar . '%');
+                })
+                ->limit(10)
+                ->get();
+
+            $this->abrirListasClienteModal = true;
+
+        } catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error. Por favor, inténtelo nuevamente.');
+            return;
+        }
+    }
+    public function seleccionar_cliente_modal($id_cliente){
+        try {
+            $this->abrirListasClienteModal = false;
+            $id_c = base64_decode($id_cliente);
+
+            if ($id_c) {
+                $data = DB::table('clientes')
+                    ->where('id_cliente', '=', $id_c)
+                    ->first();
+
+                // Asignar siempre al modal
+                $this->buscar_clientes = $data->cliente_codigo_cliente . ' - ' . $data->cliente_nombre_cliente;
+                $this->id_cliente = $id_c;
+
+            } else {
+                session()->flash('error', 'Los parámetros del cliente no son válidos.');
+                return;
+            }
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error. Por favor, inténtelo nuevamente.');
+            return;
+        }
+    }
+
+    // MÉTODOS ESPECÍFICOS PARA LA VISTA PRINCIPAL
+    public function buscarClientesFiltroVista(){
+        try {
+            $buscar = $this->buscar_clientes_search ?? '';
+
+            $this->listaClientesFiltro = DB::table('clientes')
+                ->where('cliente_estado_registro','=', 1)
+                ->where(function($q) use ($buscar) {
+                    $q->where('cliente_codigo_cliente', 'like', '%' . $buscar . '%')
+                        ->orWhere('cliente_nombre_cliente', 'like', '%' . $buscar . '%');
+                })
+                ->limit(10)
+                ->get();
+
+            $this->abrirListasCliente = true;
+
+        } catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error. Por favor, inténtelo nuevamente.');
+            return;
+        }
+    }
+    public function seleccionar_cliente_vista($id_cliente){
+        try {
+            $this->abrirListasCliente = false;
+            $id_c = base64_decode($id_cliente);
+
+            if ($id_c) {
+                $data = DB::table('clientes')
+                    ->where('id_cliente', '=', $id_c)
+                    ->first();
+
+                // Asignar siempre a la vista principal
+                $this->buscar_clientes_search = $data->cliente_codigo_cliente . ' - ' . $data->cliente_nombre_cliente;
+                $this->id_cliente_busqueda = $id_c;
+
+            } else {
+                session()->flash('error', 'Los parámetros del cliente no son válidos.');
+                return;
+            }
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error. Por favor, inténtelo nuevamente.');
+            return;
+        }
     }
 
     public function clear_form(){
         $this->id_punto = "";
         $this->archivo_excel = "";
         $this->archivo_pdf = "";
+        $this->buscar_clientes = "";
+        $this->id_cliente = "";
+        $this->id_campania = "";
     }
 
     public function save_carga_excel(){
         try {
+            $this->validate([
+                'id_campania' => 'required|integer',
+                'id_cliente' => 'required|integer',
+            ], [
+                'id_campania.required' => 'La campaña es un dato obligatorio.',
+                'id_campania.integer' => 'El identificador debe ser un número entero.',
+
+                'id_cliente.required' => 'El cliente es un dato obligatorio.',
+                'id_cliente.integer' => 'El identificador debe ser un número entero.',
+            ]);
+
             if (!Gate::allows('save_carga_excel')) {
                 session()->flash('error', 'No tiene permisos para crear.');
                 return;
@@ -89,27 +208,40 @@ class Gestionpuntos extends Component{
 
             $microtime = microtime(true);
             DB::beginTransaction();
-            $ultimoPremio = Punto::orderBy('id_punto', 'desc')->first();
-            $codigo_nuevo = $ultimoPremio ? $ultimoPremio->id_punto + 1 : 1;
 
-            // Insertar registro en tabla puntos
-            $punto = new Punto();
-            $punto->id_users = Auth::id();
-            $punto->id_campania = null;
-            $punto->id_cliente = null;
-            $punto->punto_codigo = 'P-000' . $codigo_nuevo;
-            if ($this->archivo_excel) {
-                $punto->punto_documento_excel = $this->general->save_files($this->archivo_excel, 'puntos/excel');
-            }
-            if ($this->archivo_pdf) {
-                $punto->punto_documento_pdf = $this->general->save_files($this->archivo_pdf, 'puntos/pdf');
-            }
-            $punto->punto_microtime = $microtime;
-            $punto->punto_estado = 1;
-            $punto->save();
+            // *** VALIDACIÓN: Verificar si ya existe un registro con el mismo id_campania e id_cliente ***
+            $puntoExistente = Punto::where('id_campania', '=', $this->id_campania)
+                ->where('id_cliente', '=', $this->id_cliente)
+                ->where('punto_estado', '=', 1)
+                ->first();
 
-            // Generar correlativo P-000{id}
-            $punto->save();
+            if ($puntoExistente) {
+                // Si ya existe, usar el registro existente
+                $punto = $puntoExistente;
+                $id_punto_a_usar = $puntoExistente->id_punto;
+            } else {
+                // Si no existe, crear un nuevo registro
+                $ultimoPremio = Punto::orderBy('id_punto', 'desc')->first();
+                $codigo_nuevo = $ultimoPremio ? $ultimoPremio->id_punto + 1 : 1;
+
+                // Insertar registro en tabla puntos
+                $punto = new Punto();
+                $punto->id_users = Auth::id();
+                $punto->id_campania = $this->id_campania;
+                $punto->id_cliente = $this->id_cliente;
+                $punto->punto_codigo = 'P-000' . $codigo_nuevo;
+                if ($this->archivo_excel) {
+                    $punto->punto_documento_excel = $this->general->save_files($this->archivo_excel, 'puntos/excel');
+                }
+                if ($this->archivo_pdf) {
+                    $punto->punto_documento_pdf = $this->general->save_files($this->archivo_pdf, 'puntos/pdf');
+                }
+                $punto->punto_microtime = $microtime;
+                $punto->punto_estado = 1;
+                $punto->save();
+
+                $id_punto_a_usar = $punto->id_punto;
+            }
 
             // Leer datos del Excel
             $spreadsheet = IOFactory::load($this->archivo_excel->getRealPath());
@@ -126,17 +258,39 @@ class Gestionpuntos extends Component{
                     continue;
                 }
 
+                // Crear nuevo detalle usando el id_punto correspondiente (existente o nuevo)
                 $detalle = new Puntodetalle();
                 $detalle->id_users = Auth::id();
-                $detalle->id_punto = $punto->id_punto;
+                $detalle->id_punto = $id_punto_a_usar; // Usar el ID del punto existente o nuevo
                 $detalle->punto_detalle_motivo = $motivo;
                 $detalle->punto_detalle_vendedor = $dni;
                 $detalle->punto_detalle_punto_ganado = $puntos;
-                $detalle->punto_detalle_fecha_registro = now('Ameriaca')->toDateString();
+                $detalle->punto_detalle_fecha_registro = now('America/Lima')->toDateString();
                 $detalle->punto_detalle_fecha_modificacion = null;
                 $detalle->punto_detalle_microtime = $microtime;
                 $detalle->punto_detalle_estado = 1;
                 $detalle->save();
+
+                // === VALIDACIÓN Y ACTUALIZACIÓN DE PUNTOS DEL VENDEDOR ===
+                // Buscar vendedor por DNI en la tabla vendedores_intranet
+                $vendedor = DB::table('vendedores_intranet')
+                    ->where('vendedor_intranet_dni', $dni)
+                    ->where('vendedor_intranet_estado', 1)
+                    ->first();
+
+                if ($vendedor) {
+                    // Si existe el vendedor, sumar los puntos ganados
+                    $nuevosPuntos = $vendedor->vendedor_intranet_punto + $puntos;
+
+                    // Actualizar el campo vendedor_intranet_punto
+                    DB::table('vendedores_intranet')
+                        ->where('vendedor_intranet_dni', $dni)
+                        ->where('vendedor_intranet_estado', 1)
+                        ->update([
+                            'vendedor_intranet_punto' => $nuevosPuntos,
+                            'updated_at' => now('America/Lima')
+                        ]);
+                }
             }
 
             DB::commit();
@@ -151,20 +305,22 @@ class Gestionpuntos extends Component{
         }
     }
 
-    public function editar_punto($id_punto){
+    public function editar_punto($id_punto)
+    {
         $this->id_punto = base64_decode($id_punto);
 
-        if ($this->id_punto){
+        if ($this->id_punto) {
             // Obtener los detalles
             $this->listar_detalles = DB::table('puntos_detalles')
                 ->where('punto_detalle_estado', '=', 1)
                 ->where('id_punto', '=', $this->id_punto)
                 ->get();
 
-            // Obtener el registro de punto para saber la campaña
+            // Obtener el registro de punto para saber la campaña y cliente
             $punto = DB::table('puntos')
                 ->where('id_punto', $this->id_punto)
                 ->first();
+
             $this->punto_codigo = $punto->punto_codigo;
 
             // Establecer la campaña seleccionada si existe
@@ -182,6 +338,27 @@ class Gestionpuntos extends Component{
                 }
             } else {
                 $this->id_campania = "";
+            }
+
+            // Establecer el cliente seleccionado si existe
+            if ($punto && $punto->id_cliente) {
+                $this->id_cliente = $punto->id_cliente;
+
+                // Obtener datos del cliente para mostrar en el buscador
+                $cliente = DB::table('clientes')
+                    ->where('id_cliente', $punto->id_cliente)
+                    ->where('cliente_estado_registro', 1)
+                    ->first();
+
+                if ($cliente) {
+                    $this->buscar_clientes = $cliente->cliente_codigo_cliente . ' - ' . $cliente->cliente_nombre_cliente;
+                } else {
+                    $this->buscar_clientes = "";
+                    $this->id_cliente = "";
+                }
+            } else {
+                $this->buscar_clientes = "";
+                $this->id_cliente = "";
             }
         }
 
@@ -238,18 +415,13 @@ class Gestionpuntos extends Component{
                 return;
             }
 
-            // Validar que hay registros en edición
-            if (empty($this->editando_registros)) {
-                session()->flash('error_moda_editar', 'No hay registros en edición para guardar.');
-                return;
-            }
-
             // Actualizar la campaña del punto principal si cambió
             if ($this->id_punto && $this->id_campania) {
                 DB::table('puntos')
                     ->where('id_punto', $this->id_punto)
                     ->update([
                         'id_campania' => $this->id_campania,
+                        'id_cliente' => $this->id_cliente,
                     ]);
             }
 
@@ -274,20 +446,57 @@ class Gestionpuntos extends Component{
 
                     $datos = $this->datos_edicion[$id_punto_detalle];
 
-                    // Actualizar el registro en la base de datos
-                    $actualizado = DB::table('puntos_detalles')
+                    // Obtener los valores antiguos antes de actualizar
+                    $registro_anterior = DB::table('puntos_detalles')
                         ->where('id_punto_detalle', $id_punto_detalle)
                         ->where('punto_detalle_estado', 1)
-                        ->update([
-                            'punto_detalle_motivo' => $datos['motivo'],
-                            'punto_detalle_vendedor' => $datos['vendedor'],
-                            'punto_detalle_punto_ganado' => $datos['puntos'],
-                            'punto_detalle_fecha_modificacion' => now('America/Lima')->toDateString(),
-                            'updated_at' => now('America/Lima')
-                        ]);
+                        ->first();
 
-                    if ($actualizado) {
-                        $registros_actualizados++;
+                    if ($registro_anterior) {
+                        $dni_vendedor = $registro_anterior->punto_detalle_vendedor;
+                        $puntos_anteriores = $registro_anterior->punto_detalle_punto_ganado;
+                        $puntos_nuevos = $datos['puntos'];
+
+                        // Actualizar el registro en la base de datos
+                        $actualizado = DB::table('puntos_detalles')
+                            ->where('id_punto_detalle', $id_punto_detalle)
+                            ->where('punto_detalle_estado', 1)
+                            ->update([
+                                'punto_detalle_motivo' => $datos['motivo'],
+                                'punto_detalle_vendedor' => $datos['vendedor'],
+                                'punto_detalle_punto_ganado' => $puntos_nuevos,
+                                'punto_detalle_fecha_modificacion' => now('America/Lima')->toDateString(),
+                                'updated_at' => now('America/Lima')
+                            ]);
+
+                        if ($actualizado) {
+                            $registros_actualizados++;
+
+                            // === ACTUALIZAR PUNTOS DEL VENDEDOR ===
+                            // Buscar vendedor por DNI
+                            $vendedor = DB::table('vendedores_intranet')
+                                ->where('vendedor_intranet_dni', $dni_vendedor)
+                                ->where('vendedor_intranet_estado', 1)
+                                ->first();
+
+                            if ($vendedor) {
+                                // Calcular la diferencia de puntos
+                                $diferencia_puntos = $puntos_nuevos - $puntos_anteriores;
+
+                                if ($diferencia_puntos != 0) {
+                                    // Actualizar los puntos del vendedor
+                                    $nuevos_puntos_vendedor = $vendedor->vendedor_intranet_punto + $diferencia_puntos;
+
+                                    DB::table('vendedores_intranet')
+                                        ->where('vendedor_intranet_dni', $dni_vendedor)
+                                        ->where('vendedor_intranet_estado', 1)
+                                        ->update([
+                                            'vendedor_intranet_punto' => $nuevos_puntos_vendedor,
+                                            'updated_at' => now('America/Lima')
+                                        ]);
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -327,11 +536,45 @@ class Gestionpuntos extends Component{
 
             DB::beginTransaction();
 
+            // Primero obtener los datos del detalle antes de eliminarlo
+            $detalle = DB::table('puntos_detalles')
+                ->where('id_punto_detalle', $id_p_de)
+                ->where('punto_detalle_estado', 1)
+                ->first();
+
+            if (!$detalle) {
+                session()->flash('error_moda_editar', 'El registro no existe o ya fue eliminado.');
+                return;
+            }
+
+            // Restar los puntos del vendedor
+            $vendedor = DB::table('vendedores_intranet')
+                ->where('vendedor_intranet_dni', $detalle->punto_detalle_vendedor)
+                ->where('vendedor_intranet_estado', 1)
+                ->first();
+
+            if ($vendedor) {
+                $nuevos_puntos = $vendedor->vendedor_intranet_punto - $detalle->punto_detalle_punto_ganado;
+
+                // Asegurarse de que no queden puntos negativos
+                $nuevos_puntos = max(0, $nuevos_puntos);
+
+                DB::table('vendedores_intranet')
+                    ->where('vendedor_intranet_dni', $detalle->punto_detalle_vendedor)
+                    ->where('vendedor_intranet_estado', 1)
+                    ->update([
+                        'vendedor_intranet_punto' => $nuevos_puntos,
+                        'updated_at' => now('America/Lima')
+                    ]);
+            }
+
+            // Ahora marcar el detalle como eliminado
             $actualizar = DB::table('puntos_detalles')
                 ->where('id_punto_detalle', $id_p_de)
-                ->where('punto_detalle_estado', 1) // Solo si está activo
+                ->where('punto_detalle_estado', 1)
                 ->update([
                     'punto_detalle_estado' => 0,
+                    'updated_at' => now('America/Lima')
                 ]);
 
             if ($actualizar) {
@@ -344,10 +587,10 @@ class Gestionpuntos extends Component{
                 }
 
                 DB::commit();
-                session()->flash('success_moda_editar', 'Registro eliminado correctamente.');
+                session()->flash('success_moda_editar', 'Registro eliminado correctamente y puntos restados del vendedor.');
             } else {
                 DB::rollBack();
-                session()->flash('error_moda_editar', 'No se pudo eliminar el registro o ya fue eliminado.');
+                session()->flash('error_moda_editar', 'No se pudo eliminar el registro.');
             }
 
         } catch (\Illuminate\Validation\ValidationException $e) {
