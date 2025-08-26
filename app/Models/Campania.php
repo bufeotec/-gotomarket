@@ -80,25 +80,40 @@ class Campania extends Model{
 
     public function obtener_resultados_por_campania($id_campania, $pagination, $order = 'desc'){
         try {
-            $query = DB::table('puntos as p')
-                ->join('campanias as c', 'p.id_campania', 'c.id_campania')
-                ->join('clientes as cl', 'p.id_cliente', 'cl.id_cliente')
-                ->join('vendedores_intranet as vi', 'cl.id_cliente', 'vi.id_cliente')
-                ->where('p.id_campania', '=', $id_campania)
+            $query = DB::table('canjear_puntos as cp')
+                ->join('users as u', 'cp.id_users', '=', 'u.id_users')
+                ->join('vendedores_intranet as vi', 'u.id_vendedor_intranet', '=', 'vi.id_vendedor_intranet')
+                ->join('clientes as cl', 'vi.id_cliente', '=', 'cl.id_cliente')
+                ->where('cp.id_campania', '=', $id_campania)
                 ->select(
                     'vi.id_vendedor_intranet',
                     'vi.vendedor_intranet_nombre',
+                    'cl.id_cliente',
                     'cl.cliente_codigo_cliente',
                     'cl.cliente_ruc_cliente',
                     'cl.cliente_nombre_cliente',
                     'vi.vendedor_intranet_punto'
-                );
+                )
+                ->distinct();
 
-            $query->orderBy('p.id_campania', $order);
+            $query->orderBy('vi.vendedor_intranet_nombre', $order);
 
             $result = $query->paginate($pagination);
 
         } catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
+
+    public function reporte_por_cliente($id_campania){
+        try {
+            $result = DB::table('campanias')
+                ->where('campania_estado', '=', 1)
+                ->get();
+
+        }catch (\Exception $e){
             $this->logs->insertarLog($e);
             $result = [];
         }
