@@ -491,17 +491,59 @@ class  Server extends Model
 //            // Enviar solicitud GET sin parámetros
 
             $response = $client->post($url, [
+                'headers' => ['Accept' => 'application/json'],
+                // Si la API espera JSON usa 'json' => ['buscar' => $codigo]
                 'form_params' => ['buscar' => $codigo],
             ]);
 
-            $body = $response->getBody()->getContents();
-            $responseData = json_decode($body);
+            $payload = json_decode((string) $response->getBody(), true);
 
-            if ($responseData->code !== 200 || !is_object($responseData->data)) {
-                return collect(); // Devuelve colección vacía si no es el formato esperado
+            if (!isset($payload['code']) || (int)$payload['code'] !== 200) {
+                return collect();
             }
 
-            return collect([$responseData->data]);
+            $data = $payload['data'] ?? [];
+
+            // Normaliza: si viene objeto -> array con un item; si viene array -> tal cual
+            $items = is_array($data) ? $data : [$data];
+
+            return collect($items);
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            return collect();
+        }
+    }
+
+
+
+
+    public function obtener_contacto_cliente($codigo){
+        try {
+            $result = array();
+            $client = new \GuzzleHttp\Client();
+//            $url = "http://127.0.0.1/api_goto/public/api/v1/list_customers_contactos";
+//            $url = "http://161.132.173.106:8081/api_goto/public/api/v1/list_customers_contactos";
+            $url = "http://161.132.73.129:8081/api_goto/public/api/v1/list_customers_contactos";
+//            // Enviar solicitud GET sin parámetros
+
+            $response = $client->post($url, [
+                'headers' => ['Accept' => 'application/json'],
+                // Si la API espera JSON usa 'json' => ['buscar' => $codigo]
+                'form_params' => ['buscar' => $codigo],
+            ]);
+
+            $payload = json_decode((string) $response->getBody(), true);
+
+            if (!isset($payload['code']) || (int)$payload['code'] !== 200) {
+                return collect();
+            }
+
+            $data = $payload['data'] ?? [];
+
+            // Normaliza: si viene objeto -> array con un item; si viene array -> tal cual
+            $items = is_array($data) ? $data : [$data];
+
+            return collect($items);
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);
             return collect();

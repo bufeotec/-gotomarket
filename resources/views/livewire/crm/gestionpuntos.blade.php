@@ -355,6 +355,12 @@
                  wire:target="buscarClientesFiltroVista,seleccionar_cliente_vista">
             </div>
         </div>
+
+        <div wire:loading wire:target="id_campania_busqueda" class="overlay__eliminar">
+            <div class="spinner__container__eliminar">
+                <div class="spinner__eliminar"></div>
+            </div>
+        </div>
     </div>
 
     @if (session()->has('success'))

@@ -54,15 +54,18 @@ class Seleccionarpremios extends Component{
     public $premios_ya_canjeados = [];
     public $documentos_campania = [];
     public $archivos_adjuntos = [];
+    public $id_cliente_vendedor = "";
+    public function mount(){
+        $this->id_users = Auth::id();
+    }
 
     public function render(){
         $this->id_users = $this->id_users ?: Auth::id();
-
         $this->listar_premios_disponibles = [];
+
         if (!empty($this->id_campania)) {
             $this->listar_premios_disponibles = $this->premio->listar_campanias_activos($this->id_campania);
             $this->campania_seleccionada = Campania::find($this->id_campania);
-
             // Obtener premios canjeados ANTES de actualizar selección
             $this->obtenerPremiosCanjeados();
             $this->actualizarPremiosSeleccionados();
@@ -72,7 +75,9 @@ class Seleccionarpremios extends Component{
         $this->obtenerPuntosVendedor();
         $this->calcularPuntos();
 
-        $listar_campania = $this->campania->listar_campanias_activos();
+        // Pasar el id_users al modelo para filtrar campañas
+        $listar_campania = $this->campania->listar_campanias_activos_new($this->id_users);
+
         return view('livewire.crm.seleccionarpremios', compact('listar_campania'));
     }
 
