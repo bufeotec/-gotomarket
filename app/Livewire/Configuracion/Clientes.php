@@ -29,6 +29,7 @@ class Clientes extends Component{
     public $pagination_cliente = 10;
     public $listar_clientes = [];
     public $obtener_direccion = [];
+    public $obtener_contacto = [];
 
     public function render(){
         $listar_cliente = $this->cliente->listar_cliente_registrados($this->search_cliente, $this->pagination_cliente);
@@ -181,5 +182,10 @@ class Clientes extends Component{
     public function obtener_direccion_entrega_cliente($codigo){
         $direccion = $this->server->obtener_direccion_cliente($codigo);
         $this->obtener_direccion = $direccion;
+    }
+
+    public function obtener_contacto_cliente($codigo){
+        $contacto = $this->server->obtener_contacto_cliente($codigo);
+        $this->obtener_contacto = $contacto;
     }
 }

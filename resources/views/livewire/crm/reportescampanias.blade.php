@@ -12,13 +12,15 @@
 
         <div class="col-lg-2"></div>
 
-        <div class="col-lg-3 col-md-3 col-sm-12 mt-4 mb-3 text-end">
-            <a class="btn btn-sm bg-success text-white">Detalle de Ganadores por Cliente</a>
-        </div>
+        @if(count($resultados) > 0)
+            <div class="col-lg-3 col-md-3 col-sm-12 mt-4 mb-3 text-end">
+                <a class="btn btn-sm bg-success text-white" wire:click="generar_excel_detalle_ganador_cliente" wire:loading.attr="disabled">Detalle de Ganadores por Cliente</a>
+            </div>
 
-        <div class="col-lg-3 col-md-3 col-sm-12 mt-4 mb-3 text-end">
-            <a class="btn btn-sm bg-success text-white">Consolidado de Premios</a>
-        </div>
+            <div class="col-lg-3 col-md-3 col-sm-12 mt-4 mb-3 text-end">
+                <a class="btn btn-sm bg-success text-white" wire:click="generar_excel_consolidado_premios" wire:loading.attr="disabled">Consolidado de Premios</a>
+            </div>
+        @endif
 
         <div wire:loading wire:target="id_campania" class="overlay__eliminar">
             <div class="spinner__container__eliminar">
@@ -26,6 +28,19 @@
             </div>
         </div>
     </div>
+
+    @if (session()->has('success'))
+        <div class="alert alert-success alert-dismissible show fade mt-2">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+    @if (session()->has('error'))
+        <div class="alert alert-danger alert-dismissible show fade mt-2">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
 
     @if(empty($id_campania))
         <p class="text-black text-center mt-4">Por favor, seleccione una campaña para ver los resultados.</p>
@@ -65,7 +80,7 @@
                                             <td>{{$r->puntos_ganados_total ?? 0}}</td>
                                             <td>{{$r->puntos_canjeados_total ?? 0}}</td>
                                             <td>
-                                                <a class="btn btn-sm bg-primary text-white" wire:click="generar_excel_detalle_cliente" wire:loading.attr="disabled">Detalle</a>
+                                                <a class="btn btn-sm bg-primary text-white" wire:click="generar_excel_detalle_cliente({{$r->id_cliente}})" wire:loading.attr="disabled">Detalle</a>
                                             </td>
                                         </tr>
                                         @php $conteo++; @endphp

@@ -28,11 +28,11 @@
                                 @php $conteOb = 1; @endphp
                                 @foreach($obtener_direccion as $od)
                                     <tr>
-                                        <td>{{$conteOb}}</td>
-                                        <td>{{$od->DIRECCION_DE_ENTREGA ?? '-'}}</td>
-                                        <td>{{$od->DEPARTAMENTO ?? '-'}}</td>
-                                        <td>{{$od->PROVINCIA ?? '-'}}</td>
-                                        <td>{{$od->DISTRITO ?? '-'}}</td>
+                                        <td>{{ $conteOb }}</td>
+                                        <td>{{ data_get($od, 'DIRECCION_DE_ENTREGA', '-') }}</td>
+                                        <td>{{ data_get($od, 'DEPARTAMENTO', '-') }}</td>
+                                        <td>{{ data_get($od, 'PROVINCIA', '-') }}</td>
+                                        <td>{{ data_get($od, 'DISTRITO', '-') }}</td>
                                     </tr>
                                     @php $conteOb++; @endphp
                                 @endforeach
@@ -54,23 +54,42 @@
         <x-slot name="tama">modal-lg</x-slot>
         <x-slot name="modalContent">
             <div class="row">
+                <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                    <div class="loader mt-2 w-100" wire:loading wire:target="obtener_contacto_cliente">
+                    </div>
+                </div>
                 <div class="col lg-12">
-                    <x-table-general>
-                        <x-slot name="thead">
-                            <tr>
-                                <th>N°</th>
-                                <th>Nombre</th>
-                                <th>Área</th>
-                                <th>Cargo</th>
-                                <th>Correo</th>
-                                <th>Número</th>
-                            </tr>
-                        </x-slot>
+                    @if($obtener_contacto && $obtener_contacto->count() > 0)
+                        <x-table-general>
+                            <x-slot name="thead">
+                                <tr>
+                                    <th>N°</th>
+                                    <th>Nombre</th>
+                                    <th>Área</th>
+                                    <th>Cargo</th>
+                                    <th>Correo</th>
+                                    <th>Número</th>
+                                </tr>
+                            </x-slot>
 
-                        <x-slot name="tbody">
-
-                        </x-slot>
-                    </x-table-general>
+                            <x-slot name="tbody">
+                                @php $conteCon= 1; @endphp
+                                @foreach($obtener_contacto as $oc)
+                                    <tr>
+                                        <td>{{ $conteCon }}</td>
+                                        <td>{{ data_get($oc, 'NOMBRE', '-') }}</td>
+                                        <td>{{ data_get($oc, 'AREA', '-') }}</td>
+                                        <td>{{ data_get($oc, 'CARGO', '-') }}</td>
+                                        <td>{{ data_get($oc, 'CORREO', '-') }}</td>
+                                        <td>{{ data_get($oc, 'CELULAR', '-') }}</td>
+                                    </tr>
+                                    @php $conteCon++; @endphp
+                                @endforeach
+                            </x-slot>
+                        </x-table-general>
+                    @else
+                        <p>No se encontraron direcciones de entrega para este cliente.</p>
+                    @endif
                 </div>
             </div>
         </x-slot>
@@ -156,9 +175,9 @@
                                         <td>
                                             <a class="btn text-primary" data-bs-toggle="modal" data-bs-target="#modal_ver_detalle"><i class="fa fa-eye"></i></a>
 
-                                            <a class="btn text-danger" wire:click="obtener_direccion_entrega_cliente({{$me->cliente_codigo_cliente}})" data-bs-toggle="modal" data-bs-target="#modal_direcciones_entrega_cliente"><i class="fa-solid fa-location-dot"></i></a>
+                                            <a class="btn text-danger" wire:click="obtener_direccion_entrega_cliente('{{$me->cliente_codigo_cliente}}')" data-bs-toggle="modal" data-bs-target="#modal_direcciones_entrega_cliente"><i class="fa-solid fa-location-dot"></i></a>
 
-                                            <a class="btn text-success" data-bs-toggle="modal" data-bs-target="#modal_contactos_cliente"><i class="fa-solid fa-address-book"></i></a>
+                                            <a class="btn text-success" wire:click="obtener_contacto_cliente('{{$me->cliente_codigo_cliente}}')" data-bs-toggle="modal" data-bs-target="#modal_contactos_cliente"><i class="fa-solid fa-address-book"></i></a>
                                         </td>
                                     </tr>
                                     @php $conteo++; @endphp
