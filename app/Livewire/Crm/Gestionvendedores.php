@@ -45,6 +45,8 @@ class Gestionvendedores extends Component{
     public $id_distrito = "";
     public $vendedor_intranet_dni= "";
     public $vendedor_intranet_nombre = "";
+    public $vendedor_intranet_apellido = "";
+    public $vendedor_intranet_celular = "";
     public $vendedor_intranet_correo = "";
     public $vendedor_intranet_estado = "";
     public $provincias = [];
@@ -61,8 +63,7 @@ class Gestionvendedores extends Component{
         $listar_vendedores = $this->vendedorintranet->listar_gestion_vendedores($this->id_cliente_busqueda, $this->search_gestion_vendedor, $this->pagination_gestion_vendedor);
         $listar_departamento = $this->departamento->lista_departamento();
         $roles = DB::table('roles')->where('roles_status','=',1)->get();
-        $roleId = auth()->user()->roles->first()->id ?? null;
-        return view('livewire.crm.gestionvendedores', compact('listar_vendedores', 'listar_departamento', 'roles', 'roleId'));
+        return view('livewire.crm.gestionvendedores', compact('listar_vendedores', 'listar_departamento', 'roles'));
     }
 
     // MÉTODOS ESPECÍFICOS PARA EL MODAL
@@ -166,8 +167,11 @@ class Gestionvendedores extends Component{
         $this->id_provincia = "";
         $this->id_distrito = "";
         $this->id_cliente = "";
+        $this->id_rol = 6;
         $this->vendedor_intranet_dni = "";
         $this->vendedor_intranet_nombre = "";
+        $this->vendedor_intranet_apellido = "";
+        $this->vendedor_intranet_celular = "";
         $this->vendedor_intranet_correo = "";
         $this->vendedor_intranet_estado = "";
         $this->provincias = [];
@@ -218,6 +222,8 @@ class Gestionvendedores extends Component{
             $this->id_distrito = $vendedor_edit->id_distrito;
             $this->vendedor_intranet_dni = $vendedor_edit->vendedor_intranet_dni;
             $this->vendedor_intranet_nombre = $vendedor_edit->vendedor_intranet_nombre;
+            $this->vendedor_intranet_apellido = $vendedor_edit->vendedor_intranet_apellido;
+            $this->vendedor_intranet_celular = $vendedor_edit->vendedor_intranet_celular;
             $this->vendedor_intranet_correo = $vendedor_edit->vendedor_intranet_correo;
             // OBTENER Y MOSTRAR EL CLIENTE SELECCIONADO
             $this->id_cliente = $vendedor_edit->id_cliente;
@@ -303,6 +309,8 @@ class Gestionvendedores extends Component{
                 'id_distrito' => 'required|integer',
                 'vendedor_intranet_dni' => 'required|numeric|digits:8',
                 'vendedor_intranet_nombre' => 'required|string|max:255',
+                'vendedor_intranet_apellido' => 'required|string|max:255',
+                'vendedor_intranet_celular' => 'required|numeric|digits:9',
                 'vendedor_intranet_correo' => 'required|email|max:255',
                 'id_vendedor_intranet' => 'nullable|integer',
             ], [
@@ -325,6 +333,14 @@ class Gestionvendedores extends Component{
                 'vendedor_intranet_nombre.required' => 'El nombre del vendedor es obligatorio.',
                 'vendedor_intranet_nombre.string' => 'El nombre del vendedor debe ser texto válido.',
                 'vendedor_intranet_nombre.max' => 'El nombre no debe exceder los 255 caracteres.',
+
+                'vendedor_intranet_apellido.required' => 'El apellido del vendedor es obligatorio.',
+                'vendedor_intranet_apellido.string' => 'El apellido del vendedor debe ser texto válido.',
+                'vendedor_intranet_apellido.max' => 'El apellido no debe exceder los 255 caracteres.',
+
+                'vendedor_intranet_celular.required' => 'El Celular del vendedor es obligatorio.',
+                'vendedor_intranet_celular.numeric' => 'El Celular debe contener solo números.',
+                'vendedor_intranet_celular.digits' => 'El Celular debe tener exactamente 9 dígitos.',
 
                 'vendedor_intranet_correo.required' => 'El correo electrónico es obligatorio.',
                 'vendedor_intranet_correo.email' => 'Debe ingresar un correo electrónico válido.',
@@ -354,7 +370,9 @@ class Gestionvendedores extends Component{
                 $save_vendedor->id_distrito = $this->id_distrito;
                 $save_vendedor->vendedor_intranet_dni = $this->vendedor_intranet_dni;
                 $save_vendedor->vendedor_intranet_nombre = $this->vendedor_intranet_nombre;
+                $save_vendedor->vendedor_intranet_apellido = $this->vendedor_intranet_apellido;
                 $save_vendedor->vendedor_intranet_correo = $this->vendedor_intranet_correo;
+                $save_vendedor->vendedor_intranet_celular = $this->vendedor_intranet_celular;
                 $save_vendedor->vendedor_intranet_punto = 0;
                 $save_vendedor->vendedor_intranet_microtime = $microtime;
                 $save_vendedor->vendedor_intranet_estado = 1;
@@ -395,7 +413,9 @@ class Gestionvendedores extends Component{
                 $update_vendedor->id_cliente = $this->id_cliente;
                 $update_vendedor->vendedor_intranet_dni = $this->vendedor_intranet_dni;
                 $update_vendedor->vendedor_intranet_nombre = $this->vendedor_intranet_nombre;
+                $update_vendedor->vendedor_intranet_apellido = $this->vendedor_intranet_apellido;
                 $update_vendedor->vendedor_intranet_correo = $this->vendedor_intranet_correo;
+                $update_vendedor->vendedor_intranet_celular = $this->vendedor_intranet_celular;
 
                 if (!$update_vendedor->save()) {
                     session()->flash('error', 'No se pudo actualizar el vendedor.');

@@ -491,31 +491,27 @@ class  Server extends Model
 //            // Enviar solicitud GET sin parámetros
 
             $response = $client->post($url, [
-                'headers' => ['Accept' => 'application/json'],
-                // Si la API espera JSON usa 'json' => ['buscar' => $codigo]
-                'form_params' => ['buscar' => $codigo],
+                'form_params' => [
+                    'buscar' => $codigo,
+                ],
             ]);
 
-            $payload = json_decode((string) $response->getBody(), true);
+            // Procesar la respuesta
+            $body = $response->getBody()->getContents();
+            $responseData = json_decode($body);
 
-            if (!isset($payload['code']) || (int)$payload['code'] !== 200) {
-                return collect();
+            if ($responseData->code === 200){
+                $result = collect($responseData->data);
+
             }
 
-            $data = $payload['data'] ?? [];
-
-            // Normaliza: si viene objeto -> array con un item; si viene array -> tal cual
-            $items = is_array($data) ? $data : [$data];
-
-            return collect($items);
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);
-            return collect();
+            $result = [];
         }
+
+        return $result;
     }
-
-
-
 
     public function obtener_contacto_cliente($codigo){
         try {
@@ -527,26 +523,92 @@ class  Server extends Model
 //            // Enviar solicitud GET sin parámetros
 
             $response = $client->post($url, [
-                'headers' => ['Accept' => 'application/json'],
-                // Si la API espera JSON usa 'json' => ['buscar' => $codigo]
-                'form_params' => ['buscar' => $codigo],
+                'form_params' => [
+                    'buscar' => $codigo,
+                ],
             ]);
 
-            $payload = json_decode((string) $response->getBody(), true);
+            // Procesar la respuesta
+            $body = $response->getBody()->getContents();
+            $responseData = json_decode($body);
 
-            if (!isset($payload['code']) || (int)$payload['code'] !== 200) {
-                return collect();
+            if ($responseData->code === 200){
+                $result = collect($responseData->data);
+
             }
 
-            $data = $payload['data'] ?? [];
-
-            // Normaliza: si viene objeto -> array con un item; si viene array -> tal cual
-            $items = is_array($data) ? $data : [$data];
-
-            return collect($items);
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);
-            return collect();
+            $result = [];
         }
+
+        return $result;
+    }
+
+
+
+    // STOCK
+    public function obtener_stock(){
+        try {
+            $result = array();
+            $client = new \GuzzleHttp\Client();
+//            $url = "http://127.0.0.1/api_goto/public/api/v1/list_customers_detallado";
+//            $url = "http://161.132.173.106:8081/api_goto/public/api/v1/list_customers_detallado";
+            $url = "http://161.132.73.129:8081/api_goto/public/api/v1/list_stock_articulos";
+
+
+            /*$response = $client->post($url, [
+                'form_params' => [
+                    'desde' => $desde,
+                    'hasta' => $hasta,
+                ],
+            ]);*/
+            $response = $client->post($url);
+
+            $body = $response->getBody()->getContents();
+            $responseData = json_decode($body);
+
+            if ($responseData->code === 200){
+                $result = collect($responseData->data);
+            }
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+
+        return $result;
+    }
+
+    public function obtener_detalle_stock_lote($codigo){
+        try {
+            $result = array();
+            $client = new \GuzzleHttp\Client();
+//            $url = "http://127.0.0.1/api_goto/public/api/v1/list_stock_lote";
+//            $url = "http://161.132.173.106:8081/api_goto/public/api/v1/list_stock_lote";
+            $url = "http://161.132.73.129:8081/api_goto/public/api/v1/list_stock_lote";
+//            // Enviar solicitud GET sin parámetros
+
+            $response = $client->post($url, [
+                'form_params' => [
+                    'buscar' => $codigo,
+                ],
+            ]);
+
+            // Procesar la respuesta
+            $body = $response->getBody()->getContents();
+            $responseData = json_decode($body);
+
+            if ($responseData->code === 200){
+                $result = collect($responseData->data);
+
+            }
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+
+        return $result;
     }
 }

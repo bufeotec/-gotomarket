@@ -25,53 +25,83 @@ class Reportescampanias extends Component{
 
     public function render(){
         $listar_campania = $this->campania->listar_campanias_ejecucion();
-        $resultados = $this->campania->obtener_resultados_por_campania($this->id_campania, $this->paginate_reporte);
 
-        // Obtener datos adicionales para cada resultado
-        if(count($resultados) > 0 && $this->id_campania) {
-            // Convertir la colección paginada a array para modificarla
-            $resultadosArray = $resultados->items();
+        // Clientes por campaña
+        $resultados = $this->campania->obtener_clientes_por_campania_desde_puntos($this->id_campania, $this->paginate_reporte);
 
-            foreach($resultadosArray as $key => $r) {
-                // Obtener el usuario relacionado al vendedor
-                $user = DB::table('users')
-                    ->where('id_vendedor_intranet', '=', $r->id_vendedor_intranet)
-                    ->first();
+        if (count($resultados) > 0 && $this->id_campania){
+            $items = $resultados->items();
 
-                $cant_premios_canjeados = 0;
-                $puntos_canjeados_total = 0;
+            foreach ($items as $i => $r){
+                // Vendedores del cliente
+                $idsVendedores = DB::table('vendedores_intranet')
+                    ->where('id_cliente', $r->id_cliente)
+                    ->pluck('id_vendedor_intranet');
 
-                if($user){
-                    // Obtener todos los canjes de puntos para este usuario en esta campaña
-                    $canjear_puntos = DB::table('canjear_puntos')
-                        ->where('id_users', '=', $user->id_users)
-                        ->where('id_campania', '=', $this->id_campania)
-                        ->get();
+                $cantVendedoresConPremio = 0;
+                $cantPremiosCanjeados = 0;
+                $puntosCanjeadosTotal = 0;
+                $puntosGanadosTotal = 0;
 
-                    // Calcular totales de premios y puntos canjeados
-                    foreach($canjear_puntos as $cp) {
-                        // Obtener detalles de cada canje
-                        $detalles = DB::table('canjear_puntos_detalles')
-                            ->where('id_canjear_punto', '=', $cp->id_canjear_punto)
-                            ->get();
+                if ($idsVendedores->isNotEmpty()){
+                    // Usuarios de esos vendedores
+                    $idsUsers = DB::table('users')
+                        ->whereIn('id_vendedor_intranet', $idsVendedores)
+                        ->pluck('id_users');
 
-                        foreach($detalles as $detalle) {
-                            $cant_premios_canjeados += (int)$detalle->canjear_punto_detalle_cantidad;
-                            $puntos_canjeados_total += (int)$detalle->canjear_punto_detalle_total_puntos;
+                    if ($idsUsers->isNotEmpty()){
+                        // Canjes por usuario y campaña (activos)
+                        $canjes = DB::table('canjear_puntos')
+                            ->whereIn('id_users', $idsUsers)
+                            ->where('id_campania', $this->id_campania)
+                            ->where('canjear_punto_estado', 1)
+                            ->get(['id_canjear_punto', 'id_users']);
+
+                        // Vendedores con premio = usuarios únicos con al menos un canje
+                        $idsUsersConCanje = $canjes->pluck('id_users')->unique();
+                        $cantVendedoresConPremio = $idsUsersConCanje->count();
+
+                        // Puntos Ganados Total: solo vendedores que CANJEARON en esta campaña
+                        if ($idsUsersConCanje->isNotEmpty()){
+                            $idsVendedoresConCanje = DB::table('users')
+                                ->whereIn('id_users', $idsUsersConCanje)
+                                ->pluck('id_vendedor_intranet')
+                                ->filter();
+
+                            if ($idsVendedoresConCanje->isNotEmpty()){
+                                $puntosGanadosTotal = (int) DB::table('vendedores_intranet')
+                                    ->whereIn('id_vendedor_intranet', $idsVendedoresConCanje)
+                                    ->sum('vendedor_intranet_punto');
+                            }
+                        }
+
+                        // Detalles para los canjes hallados
+                        $idsCanje = $canjes->pluck('id_canjear_punto');
+                        if ($idsCanje->isNotEmpty()){
+                            $detalles = DB::table('canjear_puntos_detalles')
+                                ->whereIn('id_canjear_punto', $idsCanje)
+                                ->where('canjear_punto_detalle_estado', 1)
+                                ->get(['canjear_punto_detalle_cantidad', 'canjear_punto_detalle_total_puntos']);
+
+                            foreach ($detalles as $d){
+                                $cantPremiosCanjeados += (int) $d->canjear_punto_detalle_cantidad;
+                                $puntosCanjeadosTotal += (int) $d->canjear_punto_detalle_total_puntos;
+                            }
                         }
                     }
                 }
 
-                // Agregar datos al resultado como array
-                $resultadosArray[$key] = (object) array_merge((array) $r, [
-                    'cant_premios_canjeados' => $cant_premios_canjeados,
-                    'puntos_canjeados_total' => $puntos_canjeados_total,
-                    'puntos_ganados_total' => $r->vendedor_intranet_punto
+                // Inyectar en el item
+                $items[$i] = (object) array_merge((array) $r, [
+                    'cant_vendedores_con_premio' => $cantVendedoresConPremio,
+                    'cant_premios_canjeados' => $cantPremiosCanjeados,
+                    'puntos_ganados_total' => $puntosGanadosTotal,
+                    'puntos_canjeados_total' => $puntosCanjeadosTotal,
                 ]);
             }
 
-            // Reemplazar los items de la paginación con nuestros datos modificados
-            $resultados->setCollection(collect($resultadosArray));
+            // Reemplaza la colección paginada con los items enriquecidos
+            $resultados->setCollection(collect($items));
         }
 
         return view('livewire.crm.reportescampanias', compact('listar_campania', 'resultados'));

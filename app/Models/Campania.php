@@ -114,34 +114,27 @@ class Campania extends Model{
         return $result;
     }
 
-    public function obtener_resultados_por_campania($id_campania, $pagination, $order = 'desc'){
+    public function obtener_clientes_por_campania_desde_puntos($id_campania, $pagination, $order = 'asc'){
         try {
-            $query = DB::table('canjear_puntos as cp')
-                ->join('users as u', 'cp.id_users', '=', 'u.id_users')
-                ->join('vendedores_intranet as vi', 'u.id_vendedor_intranet', '=', 'vi.id_vendedor_intranet')
-                ->join('clientes as cl', 'vi.id_cliente', '=', 'cl.id_cliente')
-                ->where('cp.id_campania', '=', $id_campania)
-                ->select(
-                    'vi.id_vendedor_intranet',
-                    'vi.vendedor_intranet_nombre',
-                    'cl.id_cliente',
+            $query = DB::table('puntos as p')
+                ->join('clientes as cl', 'cl.id_cliente', '=', 'p.id_cliente')
+                ->where('p.id_campania', '=', $id_campania)
+                ->select('cl.id_cliente',
                     'cl.cliente_codigo_cliente',
                     'cl.cliente_ruc_cliente',
-                    'cl.cliente_nombre_cliente',
-                    'vi.vendedor_intranet_punto'
+                    'cl.cliente_nombre_cliente'
                 )
-                ->distinct();
+                ->distinct()
+                ->orderBy('cl.cliente_nombre_cliente', $order);
 
-            $query->orderBy('vi.vendedor_intranet_nombre', $order);
-
-            $result = $query->paginate($pagination);
+            return $query->paginate($pagination);
 
         } catch (\Exception $e){
             $this->logs->insertarLog($e);
-            $result = [];
+            return collect([]);
         }
-        return $result;
     }
+
 
 
     // generar_excel_detalle_cliente
@@ -211,6 +204,7 @@ class Campania extends Model{
                 ->join('canjear_puntos as cp', 'u.id_users', '=', 'cp.id_users')
                 ->join('canjear_puntos_detalles as cpd', 'cp.id_canjear_punto', '=', 'cpd.id_canjear_punto')
                 ->where('vi.id_vendedor_intranet', '=', $id_vendedor_intranet)
+                ->where('cpd.canjear_punto_detalle_estado', '=', 1)
                 ->where('cp.id_campania', '=', $id_campania)
                 ->sum('cpd.canjear_punto_detalle_total_puntos');
 
@@ -228,6 +222,7 @@ class Campania extends Model{
                 ->join('canjear_puntos as cp', 'u.id_users', '=', 'cp.id_users')
                 ->join('canjear_puntos_detalles as cpd', 'cp.id_canjear_punto', '=', 'cpd.id_canjear_punto')
                 ->where('vi.id_vendedor_intranet', '=', $id_vendedor_intranet)
+                ->where('cpd.canjear_punto_detalle_estado', '=', 1)
                 ->where('cpd.id_premio', '=', $id_premio)
                 ->where('cp.id_campania', '=', $id_campania)
                 ->sum('cpd.canjear_punto_detalle_cantidad');

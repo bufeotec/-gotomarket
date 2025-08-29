@@ -10,8 +10,6 @@
             </select>
         </div>
 
-        <div class="col-lg-2"></div>
-
         @if(count($resultados) > 0)
             <div class="col-lg-3 col-md-3 col-sm-12 mt-4 mb-3 text-end">
                 <a class="btn btn-sm bg-success text-white" wire:click="generar_excel_detalle_ganador_cliente" wire:loading.attr="disabled">Detalle de Ganadores por Cliente</a>
@@ -21,6 +19,9 @@
                 <a class="btn btn-sm bg-success text-white" wire:click="generar_excel_consolidado_premios" wire:loading.attr="disabled">Consolidado de Premios</a>
             </div>
         @endif
+        <div class="col-lg-2 col-md-2 col-sm-12 mt-4 text-end mb-2">
+            <a href="{{route('CRM.sistema_puntos_vendedor_cliente')}}" class="btn bg-secondary text-white"><i class="fa-solid fa-arrow-left me-2"></i> Regresar</a>
+        </div>
 
         <div wire:loading wire:target="id_campania" class="overlay__eliminar">
             <div class="spinner__container__eliminar">
@@ -53,7 +54,6 @@
                             <x-slot name="thead">
                                 <tr>
                                     <th>N°</th>
-                                    <th>Vendedor</th>
                                     <th>Código Cliente</th>
                                     <th>RUC</th>
                                     <th>Cliente</th>
@@ -71,14 +71,13 @@
                                     @foreach($resultados as $r)
                                         <tr>
                                             <td>{{$conteo}}</td>
-                                            <td>{{$r->vendedor_intranet_nombre}}</td>
                                             <td>{{$r->cliente_codigo_cliente}}</td>
                                             <td>{{$r->cliente_ruc_cliente}}</td>
                                             <td>{{$r->cliente_nombre_cliente}}</td>
-                                            <td></td>
-                                            <td>{{$r->cant_premios_canjeados ?? 0}}</td>
-                                            <td>{{$r->puntos_ganados_total ?? 0}}</td>
-                                            <td>{{$r->puntos_canjeados_total ?? 0}}</td>
+                                            <td>{{ $r->cant_vendedores_con_premio ?? 0 }}</td>
+                                            <td>{{ $r->cant_premios_canjeados ?? 0 }}</td>
+                                            <td>{{ $r->puntos_ganados_total ?? 0 }}</td>
+                                            <td>{{ $r->puntos_canjeados_total ?? 0 }}</td>
                                             <td>
                                                 <a class="btn btn-sm bg-primary text-white" wire:click="generar_excel_detalle_cliente({{$r->id_cliente}})" wire:loading.attr="disabled">Detalle</a>
                                             </td>

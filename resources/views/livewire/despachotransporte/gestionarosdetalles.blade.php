@@ -70,7 +70,9 @@
                 <a class="btn btn-sm bg-primary text-white ms-2" wire:click="editar_gestionar_os"><i class="fa-solid fa-pen-to-square"></i> {{ $editando ? 'Cancelar' : 'Editar' }}</a>
                 <button type="submit" class="btn btn-sm bg-success text-white ms-2" {{ !$editando ? 'disabled' : '' }}><i class="fa-solid fa-check"></i> Aprobar</button>
                 <a class="btn btn-sm bg-warning text-black ms-2" wire:click="listar_guias_despachos('{{ base64_encode($listar_info->id_despacho)}}')" data-bs-toggle="modal" data-bs-target="#modal_anular_os"><i class="fa-solid fa-ban"></i> Anular</a>
-                <a class="btn btn-sm bg-danger text-white ms-2" href="{{route('Despachotransporte.generar_pdf_os',['id_despacho'=>$listar_info->id_despacho])}}" target="_blank"><i class="fa-solid fa-file-pdf"></i> Descargar OS</a>
+                @if(!empty($listar_info->despacho_numero_correlativo))
+                    <a class="btn btn-sm bg-danger text-white ms-2" href="{{route('Despachotransporte.generar_pdf_os',['id_despacho'=>$listar_info->id_despacho])}}" target="_blank"><i class="fa-solid fa-file-pdf"></i> Descargar OS</a>
+                @endif
             </div>
             <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
                 <div class="row">

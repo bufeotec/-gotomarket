@@ -3,16 +3,31 @@
 {{--    MODAL DIRECCIONES DE ENTREGA CLIENTES --}}
     <x-modal-general wire:ignore.self>
         <x-slot name="id_modal">modal_direcciones_entrega_cliente</x-slot>
-        <x-slot name="titleModal">Direcciones de Entrega del Cliente Seleccionado</x-slot>
+        <x-slot name="titleModal">Direcciones de Entrega del Cliente - {{$cliente_nombre_cliente}}</x-slot>
         <x-slot name="tama">modal-lg</x-slot>
         <x-slot name="modalContent">
             <div class="row">
+                @if (session()->has('success_modal'))
+                    <div class="alert alert-success alert-dismissible show fade mt-2">
+                        {{ session('success_modal') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+
+                @if (session()->has('error_modal'))
+                    <div class="alert alert-danger alert-dismissible show fade mt-2">
+                        {{ session('error_modal') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+
                 <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
                     <div class="loader mt-2 w-100" wire:loading wire:target="obtener_direccion_entrega_cliente">
                     </div>
                 </div>
+
                 <div class="col-lg-12">
-                    @if($obtener_direccion && $obtener_direccion->count() > 0)
+                    @if($listar_direccion_cliente && $listar_direccion_cliente->count() > 0)
                         <x-table-general>
                             <x-slot name="thead">
                                 <tr>
@@ -26,20 +41,20 @@
 
                             <x-slot name="tbody">
                                 @php $conteOb = 1; @endphp
-                                @foreach($obtener_direccion as $od)
+                                @foreach($listar_direccion_cliente as $ldc)
                                     <tr>
                                         <td>{{ $conteOb }}</td>
-                                        <td>{{ data_get($od, 'DIRECCION_DE_ENTREGA', '-') }}</td>
-                                        <td>{{ data_get($od, 'DEPARTAMENTO', '-') }}</td>
-                                        <td>{{ data_get($od, 'PROVINCIA', '-') }}</td>
-                                        <td>{{ data_get($od, 'DISTRITO', '-') }}</td>
+                                        <td>{{ $ldc->cliente_direccion_direccion_entrega ?? ' - ' }}</td>
+                                        <td>{{ $ldc->cliente_direccion_departamento ?? ' - ' }}</td>
+                                        <td>{{ $ldc->cliente_direccion_provincia ?? ' - ' }}</td>
+                                        <td>{{ $ldc->cliente_direccion_distrito ?? ' - ' }}</td>
                                     </tr>
                                     @php $conteOb++; @endphp
                                 @endforeach
                             </x-slot>
                         </x-table-general>
                     @else
-                        <p>No se encontraron direcciones de entrega para este cliente.</p>
+                        <p class="text-center">No se encontraron direcciones de entrega para este cliente.</p>
                     @endif
                 </div>
             </div>
@@ -50,7 +65,7 @@
 {{--    MODAL CONTACTOS CLIENTE--}}
     <x-modal-general  wire:ignore.self >
         <x-slot name="id_modal">modal_contactos_cliente</x-slot>
-        <x-slot name="titleModal">Contactos del Cliente Seleccionado</x-slot>
+        <x-slot name="titleModal">Contactos del Cliente - {{$cliente_nombre_cliente}}</x-slot>
         <x-slot name="tama">modal-lg</x-slot>
         <x-slot name="modalContent">
             <div class="row">
@@ -58,8 +73,23 @@
                     <div class="loader mt-2 w-100" wire:loading wire:target="obtener_contacto_cliente">
                     </div>
                 </div>
+
+                @if (session()->has('success_modal_cont'))
+                    <div class="alert alert-success alert-dismissible show fade mt-2">
+                        {{ session('success_modal_cont') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+
+                @if (session()->has('error_modal_cont'))
+                    <div class="alert alert-danger alert-dismissible show fade mt-2">
+                        {{ session('error_modal_cont') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+
                 <div class="col lg-12">
-                    @if($obtener_contacto && $obtener_contacto->count() > 0)
+                    @if($listar_contacto_cliente && $listar_contacto_cliente->count() > 0)
                         <x-table-general>
                             <x-slot name="thead">
                                 <tr>
@@ -74,21 +104,21 @@
 
                             <x-slot name="tbody">
                                 @php $conteCon= 1; @endphp
-                                @foreach($obtener_contacto as $oc)
+                                @foreach($listar_contacto_cliente as $oc)
                                     <tr>
                                         <td>{{ $conteCon }}</td>
-                                        <td>{{ data_get($oc, 'NOMBRE', '-') }}</td>
-                                        <td>{{ data_get($oc, 'AREA', '-') }}</td>
-                                        <td>{{ data_get($oc, 'CARGO', '-') }}</td>
-                                        <td>{{ data_get($oc, 'CORREO', '-') }}</td>
-                                        <td>{{ data_get($oc, 'CELULAR', '-') }}</td>
+                                        <td>{{ $oc->cliente_contacto_nombre }}</td>
+                                        <td>{{ $oc->cliente_contacto_area }}</td>
+                                        <td>{{ $oc->cliente_contacto_cargo }}</td>
+                                        <td>{{ $oc->cliente_contacto_correo }}</td>
+                                        <td>{{ $oc->cliente_contacto_celular }}</td>
                                     </tr>
                                     @php $conteCon++; @endphp
                                 @endforeach
                             </x-slot>
                         </x-table-general>
                     @else
-                        <p>No se encontraron direcciones de entrega para este cliente.</p>
+                        <p class="text-center">No se encontraron contactos para este cliente.</p>
                     @endif
                 </div>
             </div>

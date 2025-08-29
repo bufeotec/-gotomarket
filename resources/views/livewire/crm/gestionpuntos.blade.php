@@ -307,7 +307,7 @@
 {{--    FIN MODAL DELETE PUNTO--}}
 
     <div class="row align-items-center mb-3">
-        <div class="col-lg-3 col-md-3 col-sm-12 mb-2">
+        <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
             <label for="id_campania_busqueda" class="form-label">Campaña</label>
             <select class="form-select" id="id_campania_busqueda" wire:model.live="id_campania_busqueda">
                 <option>Seleccionar...</option>
@@ -316,7 +316,7 @@
                 @endforeach
             </select>
         </div>
-        <div class="col-lg-3 col-md-3 col-sm-12 mb-3 position-relative">
+        <div class="col-lg-2 col-md-2 col-sm-12 mb-3 position-relative">
             <label class="form-label">CLIENTE:</label>
             <input type="text"
                    class="form-control"
@@ -347,6 +347,10 @@
                 </x-slot>
                 Cargar Excel
             </x-btn-export>
+        </div>
+
+        <div class="col-lg-2 col-md-2 col-sm-12 mt-4 text-end mb-2">
+            <a href="{{route('CRM.sistema_puntos_vendedor_cliente')}}" class="btn bg-secondary text-white"><i class="fa-solid fa-arrow-left me-2"></i> Regresar</a>
         </div>
     </div>
     <div class="row">
