@@ -180,7 +180,7 @@
                 <option value="2">Cerrada</option>
             </select>
         </div>
-        <div class="col-lg-4 col-md-4 col-sm-12 mt-4 d-flex align-items-center mb-2">
+        <div class="col-lg-2 col-md-2 col-sm-12 mt-4 d-flex align-items-center mb-2">
             <input type="text" class="form-control w-50 me-4"  wire:model.live="search_campania" placeholder="Buscar">
             <x-select-filter wire:model.live="pagination_campania" />
         </div>
@@ -191,6 +191,9 @@
                 </x-slot>
                 Agregar Campaña
             </x-btn-export>
+        </div>
+        <div class="col-lg-2 col-md-2 col-sm-12 mt-4 text-end mb-2">
+            <a href="{{route('CRM.sistema_puntos_vendedor_cliente')}}" class="btn bg-secondary text-white"><i class="fa-solid fa-arrow-left me-2"></i> Regresar</a>
         </div>
     </div>
 

@@ -55,6 +55,8 @@ class Seleccionarpremios extends Component{
     public $documentos_campania = [];
     public $archivos_adjuntos = [];
     public $id_cliente_vendedor = "";
+    public $campania_cerrada = false;
+    public $premios_canjeados_deseleccionados = [];
     public function mount(){
         $this->id_users = Auth::id();
     }
@@ -64,9 +66,17 @@ class Seleccionarpremios extends Component{
         $this->listar_premios_disponibles = [];
 
         if (!empty($this->id_campania)) {
-            $this->listar_premios_disponibles = $this->premio->listar_campanias_activos($this->id_campania);
             $this->campania_seleccionada = Campania::find($this->id_campania);
-            // Obtener premios canjeados ANTES de actualizar selección
+
+            // ¿Campaña cerrada por fecha?
+            $this->campania_cerrada = false;
+            if ($this->campania_seleccionada && $this->campania_seleccionada->campania_fecha_fin_canje) {
+                $hoy = now('America/Lima')->startOfDay();
+                $fin = \Carbon\Carbon::parse($this->campania_seleccionada->campania_fecha_fin_canje)->endOfDay();
+                $this->campania_cerrada = $hoy->gt($fin);
+            }
+
+            $this->listar_premios_disponibles = $this->premio->listar_campanias_activos($this->id_campania);
             $this->obtenerPremiosCanjeados();
             $this->actualizarPremiosSeleccionados();
         }
@@ -79,6 +89,20 @@ class Seleccionarpremios extends Component{
         $listar_campania = $this->campania->listar_campanias_activos_new($this->id_users);
 
         return view('livewire.crm.seleccionarpremios', compact('listar_campania'));
+    }
+
+    public function updatedIdCampania($value){
+        $this->resetSeleccionLocal();
+        $this->obtenerPremiosCanjeados();
+        $this->actualizarPremiosSeleccionados();
+        $this->calcularPuntos();
+    }
+
+    public function resetSeleccionLocal(){
+        $this->select_premios = [];
+        $this->premios_seleccionados = [];
+        $this->cantidades = [];
+        $this->premios_canjeados_deseleccionados = [];
     }
 
     public function cargarDocumentosCampania(){
@@ -137,31 +161,36 @@ class Seleccionarpremios extends Component{
     }
 
     public function calcularPuntos(){
-        $this->puntos_canjeados = 0;
+        $totalSeleccion = 0;
+        $puntosNuevos   = 0;
 
         foreach ($this->premios_seleccionados as $id_premio => $premio) {
-            $unit = (float)($premio['campania_premio_puntaje'] ?? 0);
-            $cant = (float)($premio['cantidad'] ?? 0);
-            $base = (float)($this->premios_ya_canjeados[$id_premio]['cantidad'] ?? 0);
-
-            // CORRECCIÓN: Solo calcular la diferencia (delta) para premios nuevos o incrementos
-            if (isset($this->premios_ya_canjeados[$id_premio])) {
-                // Para premios ya canjeados, solo contar el incremento
-                $delta = max(0, $cant - $base);
-            } else {
-                // Para premios nuevos, contar toda la cantidad
-                $delta = $cant;
+            if (($premio['id_campania'] ?? null) !== $this->id_campania) {
+                continue;
             }
 
-            $this->puntos_canjeados += $unit * $delta;
+            $unit    = (float)($premio['campania_premio_puntaje'] ?? 0);
+            $cantSel = (int)($premio['cantidad'] ?? 0);
+
+            $totalSeleccion += $unit * $cantSel;
+
+            if (isset($this->premios_ya_canjeados[$id_premio])
+                && !in_array($id_premio, $this->premios_canjeados_deseleccionados ?? [], true)) {
+                $base = (int)($this->premios_ya_canjeados[$id_premio]['cantidad'] ?? 0);
+                $puntosNuevos += max(0, $cantSel - $base) * $unit;
+            } else {
+                $puntosNuevos += $unit * $cantSel;
+            }
         }
 
-        $this->puntos_restantes = $this->puntos_ganados - $this->puntos_canjeados;
+        $this->puntos_canjeados = $totalSeleccion;
+        $this->puntos_restantes = $this->puntos_ganados - $puntosNuevos;
 
         if ($this->puntos_restantes < 0) {
             session()->flash('error_modal', 'Los puntos canjeados no pueden superar los puntos ganados.');
         }
     }
+
 
     public function obtenerPuntosVendedor(){
         try {
@@ -193,8 +222,19 @@ class Seleccionarpremios extends Component{
     }
 
     public function seleccionar_premio($id_premio, $isChecked){
+        if ($this->campania_cerrada) return;
+
         if ($isChecked) {
-            // Agregar premio a la selección
+            // ¿venía de estar canjeado y lo quitaste antes? (debe volver como NUEVO)
+            $wasDeseleccionado = in_array($id_premio, $this->premios_canjeados_deseleccionados, true);
+
+            // Al volver a seleccionar, sácalo de la lista de deseleccionados de sesión
+            if ($wasDeseleccionado) {
+                $this->premios_canjeados_deseleccionados = array_values(array_diff(
+                    $this->premios_canjeados_deseleccionados, [$id_premio]
+                ));
+            }
+
             $premio = $this->premio->find($id_premio);
             if ($premio) {
                 $campania_premio = $this->campaniapremio
@@ -202,11 +242,17 @@ class Seleccionarpremios extends Component{
                     ->where('id_premio', $id_premio)
                     ->first();
 
-                // Si ya está canjeado, usar la cantidad canjeada, sino 1
-                $cantidad_inicial = isset($this->premios_ya_canjeados[$id_premio]) ?
-                    (int)$this->premios_ya_canjeados[$id_premio]['cantidad'] : 1;
+                // Si fue deseleccionado (era canjeado), vuelve como NUEVO => cantidad 1
+                if ($wasDeseleccionado) {
+                    $cantidad_inicial = 1;
+                } else {
+                    $cantidad_inicial = isset($this->premios_ya_canjeados[$id_premio])
+                        ? (int)$this->premios_ya_canjeados[$id_premio]['cantidad']
+                        : 1;
+                }
 
                 $this->premios_seleccionados[$id_premio] = [
+                    'id_campania' => $this->id_campania,
                     'id_premio' => $premio->id_premio,
                     'premio_codigo' => $premio->premio_codigo,
                     'premio_descripcion' => $premio->premio_descripcion,
@@ -214,72 +260,74 @@ class Seleccionarpremios extends Component{
                     'campania_premio_puntaje' => $campania_premio ? (float)$campania_premio->campania_premio_puntaje : 0,
                     'cantidad' => $cantidad_inicial
                 ];
-
                 $this->cantidades[$id_premio] = $cantidad_inicial;
 
-                // Asegurarse de que el checkbox se mantenga seleccionado
-                if (!in_array($id_premio, $this->select_premios)) {
+                if (!in_array($id_premio, $this->select_premios, true)) {
                     $this->select_premios[] = $id_premio;
                 }
             }
         } else {
-            // No permitir deseleccionar premios ya canjeados
-            if (!isset($this->premios_ya_canjeados[$id_premio])) {
-                // Remover premio de la selección solo si no está ya canjeado
-                unset($this->premios_seleccionados[$id_premio]);
-                unset($this->cantidades[$id_premio]);
-
-                // Remover de select_premios
-                $this->select_premios = array_values(array_diff($this->select_premios, [$id_premio]));
-            } else {
-                // Si es un premio ya canjeado, forzar a que se mantenga seleccionado
-                if (!in_array($id_premio, $this->select_premios)) {
-                    $this->select_premios[] = $id_premio;
+            // Si era ya canjeado → revertir en BD (devolver puntos + desactivar detalle)
+            if (isset($this->premios_ya_canjeados[$id_premio])) {
+                $ok = $this->revertirCanjeEnBD($id_premio);
+                if ($ok) {
+                    // Quitar de la “lista de canjeados” en memoria para que ya no cuente ni aparezca como canjeado
+                    unset($this->premios_ya_canjeados[$id_premio]);
+                    if (!in_array($id_premio, $this->premios_canjeados_deseleccionados, true)) {
+                        $this->premios_canjeados_deseleccionados[] = $id_premio;
+                    }
+                } else {
+                    // Si falló, re-chequear (no quitar nada local)
+                    $this->calcularPuntos();
+                    return;
                 }
             }
+
+            // Quitar de selección visual
+            unset($this->premios_seleccionados[$id_premio], $this->cantidades[$id_premio]);
+            $this->select_premios = array_values(array_diff($this->select_premios, [$id_premio]));
         }
 
-        // Recalcular puntos después de cambiar la selección
+        // refrescar puntos ganados desde BD (pueden haber cambiado por devolución)
+        $this->obtenerPuntosVendedor();
         $this->calcularPuntos();
     }
 
     public function actualizarCantidad($id_premio, $cantidad){
         if (!isset($this->premios_seleccionados[$id_premio])) return;
+        if ($this->campania_cerrada) return;
 
-        $cantidad = (int)$cantidad;
-        $yaCanjeado = isset($this->premios_ya_canjeados[$id_premio]);
-        $min = $yaCanjeado ? (int)$this->premios_ya_canjeados[$id_premio]['cantidad'] : 1;
-
-        if ($cantidad < $min) {
-            $cantidad = $min;
-            session()->flash('error_modal', 'No puedes reducir por debajo de lo ya canjeado.');
-        }
-
-        // Actualizar la cantidad
+        $cantidad = max(0, (int)$cantidad); // ahora permitimos 0
         $this->premios_seleccionados[$id_premio]['cantidad'] = $cantidad;
         $this->cantidades[$id_premio] = $cantidad;
 
-        // IMPORTANTE: Recalcular inmediatamente después de cambiar
-        $this->calcularPuntos();
+        // Si cantidad llega a 0, quitarlo y desmarcar checkbox
+        if ($cantidad === 0) {
+            $this->select_premios = array_values(array_diff($this->select_premios, [$id_premio]));
+            unset($this->premios_seleccionados[$id_premio], $this->cantidades[$id_premio]);
 
-        // Si es un premio ya canjeado y se está aumentando la cantidad
-        if ($yaCanjeado && $cantidad > $min) {
-            $incremento = $cantidad - $min;
-            $puntosUnitarios = (float)$this->premios_seleccionados[$id_premio]['campania_premio_puntaje'];
-            $puntosAdicionales = $incremento * $puntosUnitarios;
-
-            // Mensaje informativo
-//            session()->flash('success_modal', "Se agregaron {$incremento} unidades adicionales ({$puntosAdicionales} puntos).");
+            // Si era canjeado en BD, registramos que lo quitó en esta sesión
+            if (isset($this->premios_ya_canjeados[$id_premio]) && !in_array($id_premio, $this->premios_canjeados_deseleccionados, true)) {
+                $this->premios_canjeados_deseleccionados[] = $id_premio;
+            }
         }
+
+        $this->calcularPuntos();
     }
+
 
     public function actualizarPremiosSeleccionados(){
         $nuevos_premios_seleccionados = [];
         $nuevas_cantidades = [];
         $nuevos_select_premios = [];
 
-        // Agregar automáticamente los premios ya canjeados
+        // 1) Autoseleccionar los que ya estaban canjeados (salvo que el usuario los quitó en esta sesión)
         foreach ($this->premios_ya_canjeados as $id_premio => $premio_canjeado) {
+            if (in_array($id_premio, $this->premios_canjeados_deseleccionados, true)) {
+                // usuario los quitó en esta sesión => NO autoseleccionar
+                continue;
+            }
+
             $premio = $this->premio->find($id_premio);
             if ($premio) {
                 $campania_premio = $this->campaniapremio
@@ -287,39 +335,41 @@ class Seleccionarpremios extends Component{
                     ->where('id_premio', $id_premio)
                     ->first();
 
+                // Si ya estaba en selección, mantener la mayor cantidad (por si el user la subió)
                 $cantidad_actual = $premio_canjeado['cantidad'];
-
-                // Si ya existe en premios_seleccionados, mantener la cantidad actual (puede ser mayor)
                 if (isset($this->premios_seleccionados[$id_premio])) {
-                    $cantidad_actual = max($cantidad_actual, $this->premios_seleccionados[$id_premio]['cantidad']);
+                    $cantidad_actual = max($cantidad_actual, (int)$this->premios_seleccionados[$id_premio]['cantidad']);
                 }
 
                 $nuevos_premios_seleccionados[$id_premio] = [
+                    'id_campania' => $this->id_campania,
                     'id_premio' => $premio->id_premio,
                     'premio_codigo' => $premio->premio_codigo,
                     'premio_descripcion' => $premio->premio_descripcion,
                     'premio_documento' => $premio->premio_documento,
                     'campania_premio_puntaje' => $campania_premio ? (float)$campania_premio->campania_premio_puntaje : 0,
-                    'cantidad' => $cantidad_actual
+                    'cantidad' => (int)$cantidad_actual
                 ];
 
-                $nuevas_cantidades[$id_premio] = $cantidad_actual;
+                $nuevas_cantidades[$id_premio] = (int)$cantidad_actual;
                 $nuevos_select_premios[] = $id_premio;
             }
         }
 
-        // Mantener los premios seleccionados manualmente que pertenecen a esta campaña
+        // 2) Mantener los que el usuario seleccionó manualmente y que pertenecen a esta campaña
         foreach ($this->premios_seleccionados as $id_premio => $premio) {
-            // Verificar si el premio pertenece a la campaña actual y no está ya canjeado
             $existe_en_campania = $this->campaniapremio
                 ->where('id_campania', $this->id_campania)
                 ->where('id_premio', $id_premio)
                 ->exists();
 
-            if ($existe_en_campania && !isset($this->premios_ya_canjeados[$id_premio])) {
+            if ($existe_en_campania) {
+                // Si el user lo había quitado siendo canjeado, y ahora vuelve a estar, será "nuevo"
+                // (no lo agregamos a premios_ya_canjeados, solo lo tratamos como selección normal)
                 $nuevos_premios_seleccionados[$id_premio] = $premio;
-                $nuevas_cantidades[$id_premio] = $this->cantidades[$id_premio] ?? 1;
-                if (!in_array($id_premio, $nuevos_select_premios)) {
+                $nuevas_cantidades[$id_premio] = (int)($this->cantidades[$id_premio] ?? $premio['cantidad'] ?? 1);
+
+                if (!in_array($id_premio, $nuevos_select_premios, true)) {
                     $nuevos_select_premios[] = $id_premio;
                 }
             }
@@ -329,31 +379,95 @@ class Seleccionarpremios extends Component{
         $this->cantidades = $nuevas_cantidades;
         $this->select_premios = $nuevos_select_premios;
 
-        // Recalcular puntos
         $this->calcularPuntos();
+    }
+
+    public function revertirCanjeEnBD($id_premio): bool{
+        // Busca user->id_vendedor_intranet
+        $user = DB::table('users')
+            ->where('id_users', $this->id_users)
+            ->select('id_vendedor_intranet')
+            ->first();
+
+        if (!$user || empty($user->id_vendedor_intranet)) {
+            session()->flash('error_modal', 'vendedor no encontrado');
+            return false;
+        }
+
+        // Busca canje cabecera vigente
+        $canje = $this->canjearpunto
+            ->where('id_campania', $this->id_campania)
+            ->where('id_users', $this->id_users)
+            ->where('canjear_punto_estado', 1)
+            ->first();
+
+        if (!$canje) {
+            session()->flash('error_modal', 'No se encontró el registro de canje activo.');
+            return false;
+        }
+
+        // Busca el detalle canjeado (estado=1)
+        $detalle = $this->canjearpuntodetalle
+            ->where('id_canjear_punto', $canje->id_canjear_punto)
+            ->where('id_premio', $id_premio)
+            ->where('canjear_punto_detalle_estado', 1)
+            ->first();
+
+        if (!$detalle) {
+            session()->flash('error_modal', 'No se encontró el detalle canjeado para este premio.');
+            return false;
+        }
+
+        // Puntos a devolver
+        $puntosDevolver = (float)$detalle->canjear_punto_detalle_pts_unitario * (int)$detalle->canjear_punto_detalle_cantidad;
+
+        DB::beginTransaction();
+        try {
+            // 1) devolver puntos al vendedor
+            DB::table('vendedores_intranet')
+                ->where('id_vendedor_intranet', $user->id_vendedor_intranet)
+                ->update([
+                    'vendedor_intranet_punto' => DB::raw("vendedor_intranet_punto + {$puntosDevolver}")
+                ]);
+
+            // 2) desactivar detalle
+            DB::table('canjear_puntos_detalles')
+                ->where('id_canjear_punto', $canje->id_canjear_punto)
+                ->where('id_premio', $id_premio)
+                ->where('canjear_punto_detalle_estado', 1)
+                ->update([
+                    'canjear_punto_detalle_estado' => 0,
+                    'canjear_punto_detalle_microtime' => microtime(true),
+                ]);
+
+            DB::commit();
+            session()->flash('success_modal', 'Premio deseleccionado. Puntos devueltos correctamente.');
+            return true;
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            $this->logs->insertarLog($e);
+            session()->flash('error_modal', 'No se pudo revertir el canje. Inténtelo nuevamente.');
+            return false;
+        }
     }
 
     public function save_canjear_puntos(){
         try {
-            // Validar permiso
             if (!Gate::allows('save_canjear_puntos')) {
                 session()->flash('error_modal', 'No tiene permisos para canjear.');
                 return;
             }
 
-            // Validar que los puntos canjeados no superen los puntos ganados
             if ($this->puntos_restantes < 0) {
                 session()->flash('error_modal', 'No puede canjear más puntos de los que tiene disponibles.');
                 return;
             }
 
-            // Validar que se haya seleccionado al menos un premio
             if (count($this->premios_seleccionados) === 0) {
                 session()->flash('error_modal', 'Debe seleccionar al menos un premio para canjear.');
                 return;
             }
 
-            // Validar que haya una campaña seleccionada
             if (empty($this->id_campania)) {
                 session()->flash('error_modal', 'Debe seleccionar una campaña.');
                 return;
@@ -364,7 +478,6 @@ class Seleccionarpremios extends Component{
             $microtime = microtime(true);
             $id_canjear_punto = null;
 
-            // Verificar si ya existe un registro de canje para esta campaña y usuario
             $canjeExistente = $this->canjearpunto
                 ->where('id_campania', $this->id_campania)
                 ->where('id_users', $this->id_users)
@@ -372,16 +485,10 @@ class Seleccionarpremios extends Component{
                 ->first();
 
             if ($canjeExistente) {
-                // ACTUALIZAR registro existente
-//                $canjeExistente->canjear_punto_pts_ganado = $this->puntos_ganados;
-//                $canjeExistente->canjear_punto_pts_canjeado = $this->puntos_canjeados;
-//                $canjeExistente->canjear_punto_pts_restante = $this->puntos_restantes;
                 $canjeExistente->canjear_punto_microtime = $microtime;
                 $canjeExistente->save();
-
                 $id_canjear_punto = $canjeExistente->id_canjear_punto;
             } else {
-                // CREAR nuevo registro
                 $save_canjear = new Canjearpunto();
                 $save_canjear->id_users = $this->id_users;
                 $save_canjear->id_campania = $this->id_campania;
@@ -391,18 +498,16 @@ class Seleccionarpremios extends Component{
                 $save_canjear->canjear_punto_microtime = $microtime;
                 $save_canjear->canjear_punto_estado = 1;
                 $save_canjear->save();
-
                 $id_canjear_punto = $save_canjear->id_canjear_punto;
             }
 
-            // Procesar cada premio seleccionado
+            // detalles
             foreach ($this->premios_seleccionados as $premio) {
-                $id_premio = $premio['id_premio'];
-                $cantidad_nueva = (int)$premio['cantidad'];
+                $id_premio        = $premio['id_premio'];
+                $cantidad_nueva   = (int)$premio['cantidad'];
                 $puntos_unitarios = (float)$premio['campania_premio_puntaje'];
-                $total_puntos = $puntos_unitarios * $cantidad_nueva;
+                $total_puntos     = $puntos_unitarios * $cantidad_nueva;
 
-                // Verificar si ya existe un detalle para este premio
                 $detalleExistente = $this->canjearpuntodetalle
                     ->where('id_canjear_punto', $id_canjear_punto)
                     ->where('id_premio', $id_premio)
@@ -410,7 +515,6 @@ class Seleccionarpremios extends Component{
                     ->first();
 
                 if ($detalleExistente) {
-                    // ACTUALIZAR detalle existente solo si cambió la cantidad
                     if ($detalleExistente->canjear_punto_detalle_cantidad != $cantidad_nueva) {
                         $detalleExistente->canjear_punto_detalle_cantidad = $cantidad_nueva;
                         $detalleExistente->canjear_punto_detalle_total_puntos = $total_puntos;
@@ -418,21 +522,20 @@ class Seleccionarpremios extends Component{
                         $detalleExistente->save();
                     }
                 } else {
-                    // CREAR nuevo detalle para premio que no existía antes
                     $nuevoDetalle = new Canjearpuntodetalle();
                     $nuevoDetalle->id_users = $this->id_users;
                     $nuevoDetalle->id_canjear_punto = $id_canjear_punto;
                     $nuevoDetalle->id_premio = $id_premio;
-                    $nuevoDetalle->canjear_punto_detalle_pts_unitario = $puntos_unitarios;
+                    $nuevoDetalle->canjear_punto_detalle_pts_unitario= $puntos_unitarios;
                     $nuevoDetalle->canjear_punto_detalle_cantidad = $cantidad_nueva;
-                    $nuevoDetalle->canjear_punto_detalle_total_puntos = $total_puntos;
+                    $nuevoDetalle->canjear_punto_detalle_total_puntos= $total_puntos;
                     $nuevoDetalle->canjear_punto_detalle_microtime = $microtime;
                     $nuevoDetalle->canjear_punto_detalle_estado = 1;
                     $nuevoDetalle->save();
                 }
             }
 
-            // Actualizar los puntos del vendedor en vendedores_intranet
+            // Actualizar saldo del vendedor
             $user = DB::table('users')
                 ->where('id_users', $this->id_users)
                 ->select('id_vendedor_intranet')
@@ -446,18 +549,17 @@ class Seleccionarpremios extends Component{
 
             DB::commit();
 
-            // Determinar mensaje según si fue actualización o creación
             $mensaje = $canjeExistente ? 'Canje actualizado exitosamente.' : 'Puntos canjeados exitosamente.';
             session()->flash('success_modal', $mensaje);
 
-            $this->dispatch('hide_modal_ver_seleccion');
-
-            // Actualizar datos después del guardado
-            $this->obtenerPremiosCanjeados();
-            $this->actualizarPremiosSeleccionados();
             $this->obtenerPuntosVendedor();
+            $this->premios_seleccionados = [];
+            $this->select_premios = [];
+            $this->cantidades = [];
+            $this->premios_canjeados_deseleccionados = [];
             $this->calcularPuntos();
-            $this->id_campania = "";
+             $this->id_campania = "";
+            $this->dispatch('hide_modal_ver_seleccion');
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
@@ -469,5 +571,6 @@ class Seleccionarpremios extends Component{
             session()->flash('error_modal', 'Ocurrió un error al procesar el canje. Por favor, inténtelo nuevamente.');
         }
     }
+
 
 }

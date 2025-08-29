@@ -37,7 +37,7 @@ class Gestionarpremios extends Component{
     public $premio_codigo = "";
     public $premio_descripcion = "";
     public $premio_documento = "";
-    public $premio_en_campania = "";
+//    public $premio_en_campania = "";
     public $premio_estado = "";
     public $messageDelete = "";
     public $existingImage = null;
@@ -64,7 +64,7 @@ class Gestionarpremios extends Component{
         $this->premio_descripcion = "";
         $this->premio_documento = "";
         $this->existingImage = null; // Limpiar también la imagen existente
-        $this->premio_en_campania = "";
+//        $this->premio_en_campania = "";
         $this->premio_estado = "";
     }
 
@@ -176,7 +176,7 @@ class Gestionarpremios extends Component{
                 if ($this->premio_documento) {
                     $save_premio->premio_documento = $this->general->save_files($this->premio_documento, 'premios/img');
                 }
-                $save_premio->premio_en_campania = 0;
+//                $save_premio->premio_en_campania = 0;
                 $save_premio->premio_microtime = $microtime;
                 $save_premio->premio_estado = 1;
 
@@ -238,6 +238,22 @@ class Gestionarpremios extends Component{
     //CAMPAÑAS -PREMIOS
     public function agregarPremio($id_premio){
         $id = base64_decode($id_premio);
+
+        // Verificar si el premio está habilitado
+        $premio = DB::table('premios')
+            ->where('id_premio', $id)
+            ->first();
+
+        if (!$premio) {
+            session()->flash('error', 'El premio seleccionado no existe.');
+            return;
+        }
+
+        if ($premio->premio_estado != 1) {
+            session()->flash('error', 'El premio "' . $premio->premio_descripcion . '" no está habilitado para su uso.');
+            return;
+        }
+
         if (!in_array($id, $this->premios_seleccionados)) {
             $this->premios_seleccionados[] = $id;
             // Si ya tuvo puntaje antes, conservarlo; si no, inicializar
@@ -245,6 +261,9 @@ class Gestionarpremios extends Component{
                 $this->puntajes_premios[$id] = '';
             }
             $this->cargarPremiosCampania();
+            session()->flash('success', 'Premio agregado correctamente.');
+        } else {
+            session()->flash('error', 'Este premio ya fue agregado anteriormente.');
         }
     }
 
@@ -260,7 +279,7 @@ class Gestionarpremios extends Component{
         }
     }
 
-    public function cargarPremiosCampania(){
+    public function cargarPremiosCampania() {
         if (!empty($this->premios_seleccionados)) {
             $this->listar_campania_premios = DB::table('premios')
                 ->whereIn('id_premio', $this->premios_seleccionados)
@@ -325,9 +344,9 @@ class Gestionarpremios extends Component{
                 $campaniaPremio->save();
 
                 // Si tu regla es 1 premio = 1 campaña, márcalo:
-                DB::table('premios')
-                    ->where('id_premio', $id_premio)
-                    ->update(['premio_en_campania' => 1]);
+//                DB::table('premios')
+//                    ->where('id_premio', $id_premio)
+//                    ->update(['premio_en_campania' => 1]);
             }
 
             // actualizar puntajes si cambió
@@ -341,17 +360,17 @@ class Gestionarpremios extends Component{
             }
 
             // desactivar del pivote y marcar premio_en_campania=0 (si aplica)
-            foreach ($toRemove as $id_premio) {
-                DB::table('campanias_premios')
-                    ->where('id_campania', $this->id_campania)
-                    ->where('id_premio', $id_premio)
-                    ->update(['campania_premio_estado' => 0]);
-
-                // Si tu política es exclusiva, libéralo:
-                DB::table('premios')
-                    ->where('id_premio', $id_premio)
-                    ->update(['premio_en_campania' => 0]);
-            }
+//            foreach ($toRemove as $id_premio) {
+//                DB::table('campanias_premios')
+//                    ->where('id_campania', $this->id_campania)
+//                    ->where('id_premio', $id_premio)
+//                    ->update(['campania_premio_estado' => 0]);
+//
+//                // Si tu política es exclusiva, libéralo:
+//                DB::table('premios')
+//                    ->where('id_premio', $id_premio)
+//                    ->update(['premio_en_campania' => 0]);
+//            }
 
             DB::commit();
             $this->dispatch('hide_modal_confirmar_premios');

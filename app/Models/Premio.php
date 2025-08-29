@@ -20,7 +20,7 @@ class Premio extends Model{
     public function listar_premios_activos($search, $order = 'desc'){
         try {
             $query = DB::table('premios')
-                ->where('premio_en_campania', '=', 0)
+//                ->where('premio_en_campania', '=', 0)
                 ->where(function($q) use ($search) {
                     $q->where('premio_descripcion', 'like', '%' . $search . '%')
                         ->orWhere('premio_codigo', 'like', '%' . $search . '%')

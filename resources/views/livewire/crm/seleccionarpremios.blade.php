@@ -49,11 +49,9 @@
                                             $id = $premio['id_premio'];
                                             $unit = (int)$premio['campania_premio_puntaje'];
                                             $cant = (int)$premio['cantidad'];
-                                            $base = (int)($premios_ya_canjeados[$id]['cantidad'] ?? 0);
-                                            $delta = max(0, $cant - $base);
-                                            $totalDelta = $unit * $delta;
-                                            $yaCanjeado = isset($premios_ya_canjeados[$id]);
-                                            $cantidadMinima = $yaCanjeado ? $base : 1;
+                                            $yaCanjeado = isset($premios_ya_canjeados[$id])
+                                                          && !in_array($id, $premios_canjeados_deseleccionados ?? [], true);
+                                            $total = $unit * $cant;
                                         @endphp
                                         <tr class="@if($yaCanjeado) table-info @endif">
                                             <td>{{ $conteo }}</td>
@@ -62,30 +60,25 @@
                                             <td>{{ $unit }} pts</td>
                                             <td>
                                                 <input type="number"
-                                                       min="{{ $cantidadMinima }}"
+                                                       min="0"
                                                        value="{{ $cant }}"
-                                                       {{-- si quieres reacción inmediata: wire:input.debounce.300ms en lugar de wire:change --}}
+                                                       @disabled($campania_cerrada)
                                                        wire:change="actualizarCantidad('{{ $id }}', $event.target.value)"
                                                        class="form-control form-control-sm">
                                                 <small class="text-muted d-block mt-1">
-                                                    Guardado: <b>{{ $base }}</b> | Nuevo: <b>{{ $delta }}</b>
+                                                    Actual: <b>{{ $cant }}</b>
                                                 </small>
                                             </td>
+                                            <td>{{ $total }} pts</td>
                                             <td>
-                                                {{ $totalDelta }} pts
-                                                @if($delta === 0)
-                                                    <div><small class="text-muted">(Sin afectar puntos)</small></div>
-                                                @endif
-                                            </td>
-                                            <td>
-                                                @if($yaCanjeado)
-                                                    @if($delta > 0)
-                                                        <span class="badge bg-warning">Modificado (+{{ $delta }})</span>
-                                                    @else
-                                                        <span class="badge bg-info">Ya canjeado</span>
-                                                    @endif
+                                                @if($campania_cerrada)
+                                                    <span class="badge bg-secondary">Bloqueado</span>
                                                 @else
-                                                    <span class="badge bg-success">Nuevo</span>
+                                                    @if($yaCanjeado)
+                                                        <span class="badge bg-info">Ya canjeado</span>
+                                                    @else
+                                                        <span class="badge bg-success">Nuevo</span>
+                                                    @endif
                                                 @endif
                                             </td>
                                         </tr>
@@ -104,16 +97,17 @@
                     </div>
 
                     <div class="col-lg-12 col-md-12 col-sm-12 mb-2 text-end">
-                        <h6 class="me-3">Puntos Canjeados: <b class="text-danger ms-2">{{$puntos_canjeados}}</b></h6>
-                        <small class="text-muted">(Solo puntos nuevos o adicionales)</small>
+                        <h6 class="me-3">Puntos Canjeados (vigentes): <b class="text-danger ms-2">{{$puntos_canjeados}}</b></h6>
                     </div>
                     <div class="col-lg-12 col-md-12 col-sm-12 mb-2 text-end">
-                        <h6 class="me-3">Puntos Restantes: <b class="text-primary ms-2">{{$puntos_restantes}}</b></h6>
+                        <h6 class="me-3">Puntos Restantes (saldo): <b class="text-primary ms-2">{{$puntos_restantes}}</b></h6>
                     </div>
 
                     <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-end">
                         <button type="button" data-bs-dismiss="modal" class="btn btn-secondary">Cerrar</button>
-                        <button type="submit" class="btn btn-success text-white">Guardar Cambios</button>
+                        @if(!$campania_cerrada)
+                            <button type="submit" class="btn btn-success text-white">Guardar Cambios</button>
+                        @endif
                     </div>
                 </div>
             </form>
@@ -248,13 +242,19 @@
            </div>
        </div>
 
-       <div class="col-lg-2 col-md-2 col-sm-12 mt-4 mb-3">
-           <a class="btn btn-sm bg-success text-white" data-bs-toggle="modal" data-bs-target="#modal_ver_seleccion"><i class="fa-solid fa-eye"></i> Ver Selección</a>
+       @if(empty(!$id_campania))
+           <div class="col-lg-2 col-md-2 col-sm-12 mt-4 text-end mb-3">
+               <a class="btn btn-sm bg-success text-white" data-bs-toggle="modal" data-bs-target="#modal_ver_seleccion"><i class="fa-solid fa-eye"></i> Ver Selección</a>
+           </div>
+       @endif
+
+       <div class="col-lg-12 col-md-12 col-sm-12 mt-4 text-end mb-2">
+           <a href="{{route('CRM.sistema_puntos_vendedor_cliente')}}" class="btn bg-secondary text-white"><i class="fa-solid fa-arrow-left me-2"></i> Regresar</a>
        </div>
    </div>
 
     <!-- loading -->
-    <div wire:loading wire:target="id_campania" class="overlay__eliminar">
+    <div wire:loading wire:target="id_campania, seleccionar_premio" class="overlay__eliminar">
         <div class="spinner__container__eliminar">
             <div class="spinner__eliminar"></div>
         </div>
@@ -271,20 +271,28 @@
                     <div class="border p-3 h-100 text-center shadow-sm rounded">
                         <div class="text-end mb-2">
                             @php
-                                $yaCanjeado = isset($premios_ya_canjeados[$premio->id_premio]);
-                                $estaSeleccionado = in_array($premio->id_premio, $select_premios);
+                                $yaCanjeado = isset($premios_ya_canjeados[$premio->id_premio])
+                                              && !in_array($premio->id_premio, $premios_canjeados_deseleccionados ?? [], true);
+
+                                $estaSeleccionado = isset($premios_seleccionados[$premio->id_premio])
+                                                    && (($premios_seleccionados[$premio->id_premio]['id_campania'] ?? null) === $id_campania);
                             @endphp
+
 
                             <input type="checkbox" class="form-check-input"
                                    id="premio_{{ $premio->id_premio }}"
                                    value="{{ $premio->id_premio }}"
-                                   @if($yaCanjeado || $estaSeleccionado) checked @endif
-                                   @if($yaCanjeado) disabled @endif
-                                   wire:click="seleccionar_premio('{{ $premio->id_premio }}', !{{ $yaCanjeado || $estaSeleccionado ? 'true' : 'false' }})">
+                                   @checked($estaSeleccionado || $yaCanjeado)
+                                   @disabled($campania_cerrada)
+                                   wire:click="seleccionar_premio('{{ $premio->id_premio }}', $event.target.checked)">
 
                             @if($yaCanjeado)
                                 <small class="text-muted d-block">Ya canjeado</small>
                             @endif
+                            @if($campania_cerrada)
+                                <small class="text-danger d-block">Campaña finalizada</small>
+                            @endif
+
                         </div>
                         <div>
                             <img src="{{ asset($premio->premio_documento) }}"

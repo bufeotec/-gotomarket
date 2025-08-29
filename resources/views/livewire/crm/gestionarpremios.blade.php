@@ -136,6 +136,12 @@
     @endif
 
     <div class="row">
+        <div class="col-lg-12 col-md-12 col-sm-12 text-end mb-3">
+            <a href="{{route('CRM.sistema_puntos_vendedor_cliente')}}" class="btn bg-secondary text-white"><i class="fa-solid fa-arrow-left me-2"></i> Regresar</a>
+        </div>
+    </div>
+
+    <div class="row">
         <!-- PREMIOS -->
         <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
             <div class="card">
@@ -305,6 +311,12 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <div wire:loading wire:target="id_campania" class="overlay__eliminar">
+            <div class="spinner__container__eliminar">
+                <div class="spinner__eliminar"></div>
             </div>
         </div>
     </div>

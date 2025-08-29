@@ -38,21 +38,33 @@
                     </div>
 
                     <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
-                        <label for="vendedor_intranet_dni" class="form-label">DNI <b class="text-danger">(*)</b></label>
-                        <x-input-general type="text" id="vendedor_intranet_dni" wire:model="vendedor_intranet_dni" onkeyup="validar_numeros(this.id)" />
-                        @error('vendedor_intranet_dni')<span class="message-error">{{ $message }}</span>@enderror
-                    </div>
-
-                    <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
                         <label for="vendedor_intranet_nombre" class="form-label">Nombre <b class="text-danger">(*)</b></label>
                         <x-input-general type="text" id="vendedor_intranet_nombre" wire:model="vendedor_intranet_nombre"/>
                         @error('vendedor_intranet_nombre')<span class="message-error">{{ $message }}</span>@enderror
                     </div>
 
                     <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
+                        <label for="vendedor_intranet_apellido" class="form-label">Apellido <b class="text-danger">(*)</b></label>
+                        <x-input-general type="text" id="vendedor_intranet_apellido" wire:model="vendedor_intranet_apellido"/>
+                        @error('vendedor_intranet_apellido')<span class="message-error">{{ $message }}</span>@enderror
+                    </div>
+
+                    <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
+                        <label for="vendedor_intranet_dni" class="form-label">DNI <b class="text-danger">(*)</b></label>
+                        <x-input-general type="text" id="vendedor_intranet_dni" wire:model="vendedor_intranet_dni" onkeyup="validar_numeros(this.id)" />
+                        @error('vendedor_intranet_dni')<span class="message-error">{{ $message }}</span>@enderror
+                    </div>
+
+                    <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
                         <label for="vendedor_intranet_correo" class="form-label">Correo <b class="text-danger">(*)</b></label>
                         <x-input-general type="text" id="vendedor_intranet_correo" wire:model="vendedor_intranet_correo"/>
                         @error('vendedor_intranet_correo')<span class="message-error">{{ $message }}</span>@enderror
+                    </div>
+
+                    <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
+                        <label for="vendedor_intranet_celular" class="form-label">Celular <b class="text-danger">(*)</b></label>
+                        <x-input-general type="text" id="vendedor_intranet_celular" wire:model="vendedor_intranet_celular"/>
+                        @error('vendedor_intranet_celular')<span class="message-error">{{ $message }}</span>@enderror
                     </div>
 
                     <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
@@ -96,15 +108,11 @@
                         <label for="id_rol" class="form-label">Rol <b class="text-danger">(*)</b></label>
                         <select id="id_rol" class=" form-select" wire:model="id_rol">
                             <option value="">Seleccionar</option>
-                            @foreach($roles as $indexRol => $re)
-                                @if($roleId == 1 || $indexRol > 0)
-                                    <option value="{{ $re->id }}">{{ $re->name }}</option>
-                                @endif
+                            @foreach($roles as $re)
+                                <option value="{{ $re->id }}">{{ $re->name }}</option>
                             @endforeach
                         </select>
-                        @error('id_rol')
-                        <span class="message-error">{{ $message }}</span>
-                        @enderror
+                        @error('id_rol')<span class="message-error">{{ $message }}</span>@enderror
                     </div>
 
                     <div class="col-lg-12 col-md-12 col-sm-12">
@@ -158,7 +166,7 @@
 
 
     <div class="row align-items-center">
-        <div class="col-lg-3 col-md-3 col-sm-12 mb-3 position-relative">
+        <div class="col-lg-2 col-md-2 col-sm-12 mb-3 position-relative">
             <label class="form-label">CLIENTE:</label>
             <input type="text"
                    class="form-control"
@@ -179,17 +187,23 @@
                 </div>
             @endif
         </div>
+
         <div class="col-lg-4 col-md-4 col-sm-12 mt-4 d-flex align-items-center mb-2">
             <input type="text" class="form-control w-50 me-4"  wire:model.live="search_gestion_vendedor" placeholder="Buscar">
             <x-select-filter wire:model.live="pagination_gestion_vendedor" />
         </div>
-        <div class="col-lg-5 col-md-5 col-sm-12 mt- text-end">
+
+        <div class="col-lg-4 col-md-4 col-sm-12 mt-4 text-end mb-2">
             <x-btn-export wire:click="clear_form" class="bg-success text-white" data-bs-toggle="modal" data-bs-target="#modal_vendedor" >
                 <x-slot name="icons">
                     fa-solid fa-plus
                 </x-slot>
                 Agregar Vendedor
             </x-btn-export>
+        </div>
+
+        <div class="col-lg-2 col-md-2 col-sm-12 mt-4 text-end mb-2">
+            <a href="{{route('CRM.sistema_puntos_vendedor_cliente')}}" class="btn bg-secondary text-white"><i class="fa-solid fa-arrow-left me-2"></i> Regresar</a>
         </div>
     </div>
 
