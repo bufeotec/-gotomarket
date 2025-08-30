@@ -1,4 +1,7 @@
 <div>
+    @php
+        $general = new \App\Models\General();
+    @endphp
 
     {{--    MODAL VER STOCK LOTE --}}
     <x-modal-general wire:ignore.self>
@@ -46,10 +49,10 @@
                                     <tr>
                                         <td>{{ $conteoSL }}</td>
                                         <td>{{ $od->stock_lote_lote ?? ' - ' }}</td>
-                                        <td>{{ $od->stock_lote_fecha_fabricacion ?? ' - ' }}</td>
-                                        <td>{{ $od->stock_lote_fecha_vencimiento ?? ' - ' }}</td>
-                                        <td>{{ $od->stock_lote_stock_caja ?? ' 0 ' }}</td>
-                                        <td>{{ $od->stock_lote_stock_unitario ?? ' 0 ' }}</td>
+                                        <td>{{ $od->stock_lote_fecha_fabricacion ? $general->obtenerNombreFecha($od->stock_lote_fecha_fabricacion, 'DateTime', 'Date') : '-' }}</td>
+                                        <td>{{ $od->stock_lote_fecha_vencimiento ? $general->obtenerNombreFecha($od->stock_lote_fecha_vencimiento, 'DateTime', 'Date') : '-' }}</td>
+                                        <td>{{ number_format($od->stock_lote_stock_caja, 2) ?? ' 0 ' }}</td>
+                                        <td>{{ number_format($od->stock_lote_stock_unitario, 2) ?? ' 0 ' }}</td>
                                     </tr>
                                     @php $conteoSL++; @endphp
                                 @endforeach
@@ -71,10 +74,14 @@
         </div>
 
         <div class="col-lg-2 col-md-2 col-sm-12 mt-4 mb-3 text-end">
-            <a class="btn btn-sm bg-success text-white" wire:click="actualizar_stock">Actualizar</a>
+            <a class="btn btnsm bg-primary text-white" wire:click="generar_excel_stock">Descargar</a>
         </div>
 
-        <div wire:loading wire:target="actualizar_stock" class="overlay__eliminar">
+        <div class="col-lg-2 col-md-2 col-sm-12 mt-4 mb-3 text-end">
+            <a class="btn btnsm bg-success text-white" wire:click="actualizar_stock">Actualizar</a>
+        </div>
+
+        <div wire:loading wire:target="actualizar_stock, generar_excel_stock" class="overlay__eliminar">
             <div class="spinner__container__eliminar">
                 <div class="spinner__eliminar"></div>
             </div>
@@ -129,9 +136,9 @@
                                         <td>{{$me->stock_descripcion_producto ?? ' - '}}</td>
                                         <td>{{$me->stock_unidad ?? ' - '}}</td>
                                         <td>{{$me->stock_codigo_unitario ?? ' - '}}</td>
-                                        <td>{{$me->stock_factor ?? ' - '}}</td>
-                                        <td>{{$me->stock_stock_caja ?? ' - '}}</td>
-                                        <td>{{$me->stock_stock_unitario ?? ' - '}}</td>
+                                        <td>{{number_format($me->stock_factor, 0) ?? ' - '}}</td>
+                                        <td>{{number_format($me->stock_stock_caja, 2) ?? ' - '}}</td>
+                                        <td>{{number_format($me->stock_stock_unitario, 2) ?? ' - '}}</td>
                                         <td>
                                             <a class="btn text-success" wire:click="obtener_detalle_stock_lote('{{$me->stock_codigo_unitario}}')" data-bs-toggle="modal" data-bs-target="#modal_ver_stock_lote"><i class="fa fa-eye"></i></a>
                                         </td>

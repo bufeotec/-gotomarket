@@ -36,4 +36,17 @@ class Stock extends Model{
         }
         return $result;
     }
+
+    public function listar_stock_registrados_excel(){
+        try {
+            $result = DB::table('stocks')
+                ->where('stock_estado', '=', 1)
+                ->get();
+
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
 }
