@@ -84,7 +84,7 @@ class CRMController extends Controller{
     public function consultas(){
         try {
 
-            return view('crm.consultas');
+            return view('crm.stock');
         }catch (\Exception $e){
             $this->logs->insertarLog($e);
             return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');

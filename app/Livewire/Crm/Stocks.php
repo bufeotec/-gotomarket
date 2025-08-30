@@ -6,6 +6,7 @@ use App\Models\Stock;
 use App\Models\Stocklote;
 use App\Models\Logs;
 use App\Models\Server;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -13,6 +14,12 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class Stocks extends Component{
     use WithPagination, WithoutUrlPagination;
@@ -28,15 +35,155 @@ class Stocks extends Component{
         $this->stocklote = new Stocklote();
     }
     public $search_stock;
-    public $paginationstock = 10;
+    public $pagination_stock = 10;
     public $listar_stock = [];
     public $listar_stock_lote = [];
     public $obtener_stock_lote = [];
     public $codigo_unitario_actual = '';
 
     public function render(){
-        $listar_stock_registrados = $this->stock->listar_stock_registrados($this->search_stock, $this->paginationstock);
+        $listar_stock_registrados = $this->stock->listar_stock_registrados($this->search_stock, $this->pagination_stock);
         return view('livewire.crm.stocks', compact('listar_stock_registrados'));
+    }
+
+    public function generar_excel_stock(){
+        try {
+            if (!Gate::allows('generar_excel_stock')) {
+                session()->flash('error', 'No tiene permisos para descargar.');
+                return;
+            }
+
+            $resultados   = $this->stock->listar_stock_registrados_excel();
+            $fecha_actual = Carbon::now('America/Lima');
+            $fecha_cell   = $fecha_actual->format('Y-m-d');
+            $fecha_file   = $fecha_actual->format('Ymd');
+
+            $spreadsheet = new Spreadsheet();
+            $sheet1 = $spreadsheet->getActiveSheet();
+            $sheet1->setTitle('Stock');
+
+            $row = 1;
+
+            // Título
+            $sheet1->setCellValue('A'.$row, mb_strtoupper("Resultado Stock {$fecha_cell}", 'UTF-8'));
+            $sheet1->mergeCells("A{$row}:K{$row}");
+            $sheet1->getStyle('A'.$row)->getFont()->setBold(true)->setSize(14);
+            $sheet1->getStyle('A'.$row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            // Encabezados
+            $row++;
+            $row++;
+
+            $sheet1->setCellValue('A'.$row, 'N°');
+            $sheet1->setCellValue('B'.$row, 'FAMILIA');
+            $sheet1->setCellValue('C'.$row, 'LÍNEA');
+            $sheet1->setCellValue('D'.$row, 'MARCA');
+            $sheet1->setCellValue('E'.$row, 'CÓDIGO');
+            $sheet1->setCellValue('F'.$row, 'DESCRIPCIÓN');
+            $sheet1->setCellValue('G'.$row, 'UNIDAD');
+            $sheet1->setCellValue('H'.$row, 'CÓDIGO UNIDAD');
+            $sheet1->setCellValue('I'.$row, 'FACTOR');
+            $sheet1->setCellValue('J'.$row, 'STOCK CAJAS');
+            $sheet1->setCellValue('K'.$row, 'STOCK UNIDADES');
+
+            // Estilo simple encabezados - solo negrita
+            $sheet1->getStyle("A{$row}:K{$row}")->getFont()->setBold(true);
+            $sheet1->getStyle("A{$row}:K{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            // Anchos
+            $sheet1->getColumnDimension('A')->setWidth(5);
+            $sheet1->getColumnDimension('B')->setWidth(20);
+            $sheet1->getColumnDimension('C')->setWidth(20);
+            $sheet1->getColumnDimension('D')->setWidth(14);
+            $sheet1->getColumnDimension('E')->setWidth(23);
+            $sheet1->getColumnDimension('F')->setWidth(60);
+            $sheet1->getColumnDimension('G')->setWidth(12);
+            $sheet1->getColumnDimension('H')->setWidth(23);
+            $sheet1->getColumnDimension('I')->setWidth(12);
+            $sheet1->getColumnDimension('J')->setWidth(16);
+            $sheet1->getColumnDimension('K')->setWidth(18);
+
+            // Datos
+            $startDataRow = $row + 1;
+            $row = $startDataRow;
+            $contador = 1;
+
+            foreach ($resultados as $it) {
+                $sheet1->setCellValue('A'.$row, $contador);
+                $sheet1->setCellValue('B'.$row, $it->stock_familia ?? '-');
+                $sheet1->setCellValue('C'.$row, $it->stock_linea ?? '-');
+                $sheet1->setCellValue('D'.$row, $it->stock_marca ?? '-');
+                $sheet1->setCellValue('E'.$row, $it->stock_codigo_caja ?? '-');
+                $sheet1->setCellValue('F'.$row, $it->stock_descripcion_producto ?? '-');
+                $sheet1->setCellValue('G'.$row, $it->stock_unidad ?? '-');
+                $sheet1->setCellValue('H'.$row, $it->stock_codigo_unitario ?? '-');
+
+                // Campo FACTOR sin decimales (columna I)
+                $factor_value = $it->stock_factor ?? null;
+                if ($factor_value !== null && is_numeric($factor_value)) {
+                    $sheet1->setCellValue('I'.$row, (int)$factor_value);
+                } else {
+                    $sheet1->setCellValue('I'.$row, '-');
+                }
+
+                // Campos con dos decimales (columnas J y K)
+                $stock_caja_value = $it->stock_stock_caja ?? null;
+                if ($stock_caja_value !== null && is_numeric($stock_caja_value)) {
+                    $sheet1->setCellValue('J'.$row, (float)$stock_caja_value);
+                } else {
+                    $sheet1->setCellValue('J'.$row, '-');
+                }
+
+                $stock_unitario_value = $it->stock_stock_unitario ?? null;
+                if ($stock_unitario_value !== null && is_numeric($stock_unitario_value)) {
+                    $sheet1->setCellValue('K'.$row, (float)$stock_unitario_value);
+                } else {
+                    $sheet1->setCellValue('K'.$row, '-');
+                }
+
+                $contador++;
+                $row++;
+            }
+
+            $lastRow = $row - 1;
+
+            // Aplicar bordes simples a toda la tabla (encabezados + datos)
+            if ($lastRow >= $startDataRow - 2) {
+                $tableStyle = [
+                    'borders' => [
+                        'allBorders' => ['borderStyle' => Border::BORDER_THIN]
+                    ]
+                ];
+
+                // Aplicar bordes desde encabezados hasta últimos datos
+                $sheet1->getStyle("A" . ($startDataRow - 2) . ":K{$lastRow}")->applyFromArray($tableStyle);
+            }
+
+            // Formatos numéricos
+            if ($lastRow >= $startDataRow) {
+                $sheet1->getStyle("J{$startDataRow}:K{$lastRow}")
+                    ->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_NUMBER_00);
+            }
+
+            // Nombre de archivo
+            $nombre_excel = "RESULTADO_STOCK_{$fecha_file}.xlsx";
+
+            return response()->stream(
+                function () use ($spreadsheet) {
+                    $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+                    $writer->save('php://output');
+                },
+                200,
+                [
+                    'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    'Content-Disposition' => 'attachment; filename='.$nombre_excel,
+                ]
+            );
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error al generar el Excel. Por favor, inténtelo nuevamente.');
+        }
     }
 
     public function actualizar_stock(){

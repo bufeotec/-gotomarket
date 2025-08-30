@@ -15,6 +15,7 @@ class Permisos extends Component
 {
     // PERMISOS
     public $permissions_name = "";
+    public $descripcion = "";
     public $id_submenu_permisos = "";
     public $permissions_submenu = array();
     private $logs;
@@ -45,11 +46,17 @@ class Permisos extends Component
 
             $this->validate([
                 'permissions_name' => 'required|string|max:255',
+                'descripcion' => 'required|string|max:255',
                 'id_submenu_permisos' => 'required|integer',
             ], [
                 'permissions_name.required' => 'Por favor, ingrese un nombre para el permiso.',
                 'permissions_name.string' => 'El nombre del permiso debe contener solo texto.',
                 'permissions_name.max' => 'El nombre del permiso no debe exceder los 255 caracteres.',
+
+                'descripcion.required' => 'Por favor, ingrese una descripción para el permiso.',
+                'descripcion.string' => 'La descripción del permiso debe contener solo texto.',
+                'descripcion.max' => 'La descripción del permiso no debe exceder los 255 caracteres.',
+
                 'id_submenu_permisos.required' => 'Seleccione un submenú para asociar el permiso.',
                 'id_submenu_permisos.integer' => 'El ID del submenú debe ser un número válido.',
             ]);
@@ -61,6 +68,7 @@ class Permisos extends Component
 
                 $permission = new Permission();
                 $permission->name = $this->permissions_name;
+                $permission->descripcion = $this->descripcion;
                 $permission->permissions_group = 3;
                 $permission->permissions_group_id = $this->id_submenu_permisos;
                 $permission->permission_status = 1;

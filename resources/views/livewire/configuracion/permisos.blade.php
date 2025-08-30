@@ -7,19 +7,21 @@
             <div class="row">
                 <div class="col-lg-12 col-md-12 col-sm-12 mb-4">
                     <form wire:submit.prevent="form_permissions_per_view">
-                        <div class="row gap-2 align-items-center">
-                            <div class="col-lg-1 col-md-12 col-sm-12 mb-2">
-                                <b>Función: </b>
+                        <div class="row gap2 align-items-center">
+                            <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                <label for="permissions_name" class="form-label">Función:</label>
+                                <input type="text" id="permissions_name" wire:model="permissions_name" class="form-control">
+                                @error('permissions_name')<span class="message-error">{{ $message }}</span>@enderror
                             </div>
-                            <div class="col-lg-8 col-md-12 col-sm-12 mb-2 d-flex align-items-center ">
-                                <input type="text" wire:model="permissions_name"   class=" form-control form-control-sm" style="width: 65% !important;margin-right: 6%;">
+                            <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                <label for="descripcion" class="form-label">Descripción:</label>
+                                <input class="form-control" type="text" id="descripcion" wire:model="descripcion" />
+                                @error('descripcion')<span class="message-error">{{ $message }}</span>@enderror
+                            </div>
+                            <div class="col-lg-4 col-md-4 col-sm-12 mt-4 mb-3 text-center">
                                 <button class="btn btn-sm bg-success text-white" type="submit"><i class="fa fa-plus"></i> Guardar Permiso</button>
                             </div>
-                            @error('permissions_name')
-                            <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
-                                <span class="message-error">{{ $message }}</span>
-                            </div>
-                            @enderror
+
                             @if (session()->has('form_error_permissions'))
                                 <div class="col-lg-12 col-md-12 col-sm-12">
                                     <div class="alert alert-danger alert-dismissible show fade">

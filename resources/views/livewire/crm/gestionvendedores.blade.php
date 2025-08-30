@@ -189,7 +189,7 @@
         </div>
 
         <div class="col-lg-4 col-md-4 col-sm-12 mt-4 d-flex align-items-center mb-2">
-            <input type="text" class="form-control w-50 me-4"  wire:model.live="search_gestion_vendedor" placeholder="Buscar">
+            <input type="text" class="form-control w-50 me-4"  wire:model.live="search_gestion_vendedor" placeholder="Vendedor">
             <x-select-filter wire:model.live="pagination_gestion_vendedor" />
         </div>
 
