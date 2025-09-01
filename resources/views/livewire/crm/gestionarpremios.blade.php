@@ -34,7 +34,7 @@
                         <!-- Preview imagen nueva -->
                         @if($premio_documento)
                             <div class="mt-3 d-flex justify-content-center" wire:loading.remove wire:target="premio_documento">
-                                <img src="{{ $premio_documento->temporaryUrl() }}" class="img-fluid" style="max-width: 200px;" alt="Preview">
+                                <img src="{{ asset($premio_documento->temporaryUrl()) }}" class="img-fluid" style="max-width: 200px;" alt="Preview">
                             </div>
                             <!-- Mostrar imagen existente -->
                         @elseif($existingImage)
