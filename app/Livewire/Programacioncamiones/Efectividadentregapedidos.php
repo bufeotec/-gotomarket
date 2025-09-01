@@ -94,7 +94,7 @@ class Efectividadentregapedidos extends Component
 
 //            $despachos_g = DB::table('programaciones as p')
 //                ->join('despachos as d', 'd.id_programacion', '=', 'p.id_programacion')
-//                ->whereBetween('d.despacho_fecha_aprobacion', ['2025-01-01', '2027-07-31'])
+//                ->whereBetween('d.despacho_fecha_aprobacion', ['2025-01-01', '2027-08-31'])
 //                ->where('d.id_tipo_servicios', 1)
 //                ->where('d.despacho_estado_aprobacion', '<>', 4)
 //                ->get();
@@ -215,7 +215,7 @@ class Efectividadentregapedidos extends Component
 //                ->join('distritos as di', 'd.id_distrito', '=', 'di.id_distrito')
 //                ->where('d.id_tipo_servicios', 2)
 //                ->where('d.despacho_estado_aprobacion', '<>', 4)
-//                ->whereBetween('d.despacho_fecha_aprobacion', ['2025-01-01', '2027-07-31'])
+//                ->whereBetween('d.despacho_fecha_aprobacion', ['2025-01-01', '2027-08-31'])
 //
 //                ->get();
 //
