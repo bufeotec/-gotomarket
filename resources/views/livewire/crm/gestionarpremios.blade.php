@@ -2,6 +2,7 @@
 
     @php
         use Illuminate\Support\Facades\Storage;
+        $TmpClass = \Livewire\Features\SupportFileUploads\TemporaryUploadedFile::class;
     @endphp
 
 {{--    MODAL CREAR / EDITAR PREMIO--}}
@@ -36,10 +37,12 @@
                         </div>
 
                         <!-- Preview imagen nueva -->
-                        @if ($premio_documento)
+                        @if ($premio_documento instanceof $TmpClass)
                             <div class="mt-3 d-flex justify-content-center" wire:loading.remove wire:target="premio_documento">
-                                {{-- Para archivos recién seleccionados (Livewire) --}}
-                                <img src="{{ $premio_documento->temporaryUrl() }}" class="img-fluid" style="max-width: 200px;" alt="Preview">
+                                <img
+                                    wire:key="preview-{{ $premio_documento->getFilename() }}"
+                                    src="{{ $premio_documento->temporaryUrl() }}"
+                                    class="img-fluid" style="max-width: 200px;" alt="Preview">
                             </div>
 
                         @elseif ($existingImage)
