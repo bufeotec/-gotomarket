@@ -1,6 +1,6 @@
 <div>
     <ul class="menu">
-        <li class="sidebar-item  ">
+        <li class="sidebar-item">
             <a href="{{route('intranet')}}" class='sidebar-link'>
                 <i class="bi bi-grid-fill"></i>
                 <span>Inicio</span>
@@ -17,13 +17,16 @@
                     @if(count($list_men->submenu) > 0)
                         <ul class="submenu {{ ($menutab[0]==$list_men->menu_controller)? 'active' :''  }} ">
                             @foreach($list_men->submenu as $sub)
-                                @can($sub->submenu_function)
-                                    <li class="submenu-item {{ isset($menutab[1]) && $sub->submenu_function == $menutab[1] ? 'active' : '' }}" wire:key="submenu-{{ $sub->id_submenu }}">
-                                        <a href="{{ url($list_men->menu_controller . '/' . $sub->submenu_function) }}">
-                                            {{ $sub->submenu_name }}
-                                        </a>
-                                    </li>
-                                @endcan
+                                {{-- Condición para ocultar id_submenu 67 y 68 --}}
+                                @if(!in_array($sub->id_submenu, [67, 68,69, 70, 71, 73]))
+                                    @can($sub->submenu_function)
+                                        <li class="submenu-item {{ isset($menutab[1]) && $sub->submenu_function == $menutab[1] ? 'active' : '' }}" wire:key="submenu-{{ $sub->id_submenu }}">
+                                            <a href="{{ url($list_men->menu_controller . '/' . $sub->submenu_function) }}">
+                                                {{ $sub->submenu_name }}
+                                            </a>
+                                        </li>
+                                    @endcan
+                                @endif
                             @endforeach
                         </ul>
                     @endif

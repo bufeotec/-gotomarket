@@ -24,7 +24,7 @@
             <form wire:submit.prevent="save_canjear_puntos">
                 <div class="row">
                     <div class="col-lg-12 col-md-12 col-sm-12 mb-3 text-end">
-                        <h6 class="me-3">Puntos Ganados: <b class="text-success ms-2">{{$puntos_ganados}}</b></h6>
+                        <h6 class="me-3">Puntos Ganados: <b class="text-success ms-2">{{number_format($puntos_ganados, 2)}}</b></h6>
                     </div>
 
                     <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
@@ -97,10 +97,10 @@
                     </div>
 
                     <div class="col-lg-12 col-md-12 col-sm-12 mb-2 text-end">
-                        <h6 class="me-3">Puntos Canjeados (vigentes): <b class="text-danger ms-2">{{$puntos_canjeados}}</b></h6>
+                        <h6 class="me-3">Puntos Canjeados (vigentes): <b class="text-danger ms-2">{{number_format($puntos_canjeados, 2)}}</b></h6>
                     </div>
                     <div class="col-lg-12 col-md-12 col-sm-12 mb-2 text-end">
-                        <h6 class="me-3">Puntos Restantes (saldo): <b class="text-primary ms-2">{{$puntos_restantes}}</b></h6>
+                        <h6 class="me-3">Puntos Restantes (saldo): <b class="text-primary ms-2">{{number_format($puntos_restantes, 2)}}</b></h6>
                     </div>
 
                     <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-end">
@@ -223,22 +223,22 @@
 
        <div class="col-lg-2 col-md-2 col-sm-12 mb-3 d-flex flex-column align-items-center justify-content-center">
            <p class="mb-2">Pts. Ganados</p>
-           <div class="d-flex align-items-center justify-content-center rounded-circle border border-dark" style="width: 60px; height: 60px; background: white">
-               <h6 class="text-success m-0 p-0">{{$puntos_ganados}}</h6>
+           <div class="d-flex align-items-center justify-content-center rounded-circle border border-dark" style="width: 80px; height: 80px; background: white">
+               <h6 class="text-success m-0 p-0">{{number_format($puntos_ganados, 2)}}</h6>
            </div>
        </div>
 
        <div class="col-lg-2 col-md-2 col-sm-12 mb-3 d-flex flex-column align-items-center justify-content-center">
            <p class="mb-2">Pts. Canjeados</p>
-           <div class="d-flex align-items-center justify-content-center rounded-circle border border-dark" style="width: 60px; height: 60px; background: white">
-               <h6 class="text-danger m-0 p-0">{{$puntos_canjeados}}</h6>
+           <div class="d-flex align-items-center justify-content-center rounded-circle border border-dark" style="width: 80px; height: 80px; background: white">
+               <h6 class="text-danger m-0 p-0">{{number_format($puntos_canjeados, 2)}}</h6>
            </div>
        </div>
 
        <div class="col-lg-2 col-md-2 col-sm-12 mb-3 d-flex flex-column align-items-center justify-content-center">
            <p class="mb-2">Pts. Restantes</p>
-           <div class="d-flex align-items-center justify-content-center rounded-circle border border-dark" style="width: 60px; height: 60px; background: white">
-               <h6 class="text-primary m-0 p-0">{{$puntos_restantes}}</h6>
+           <div class="d-flex align-items-center justify-content-center rounded-circle border border-dark" style="width: 80px; height: 80px; background: white">
+               <h6 class="text-primary m-0 p-0">{{number_format($puntos_restantes, 2)}}</h6>
            </div>
        </div>
 

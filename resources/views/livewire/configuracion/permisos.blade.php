@@ -48,6 +48,7 @@
                                 <th>N°</th>
                                 <th>ID</th>
                                 <th>Permiso</th>
+                                <th>Descripción</th>
                                 <th>Acción</th>
                             </tr>
                         </x-slot>
@@ -60,6 +61,7 @@
                                         <td>{{$conteoPermiso}}</td>
                                         <td>{{$permi->id}}</td>
                                         <td>{{$permi->name}}</td>
+                                        <td>{{$permi->descripcion ?? '-'}}</td>
                                         <td>
                                             <button class="btn btn-sm bg-danger text-white" wire:click="delete_permissions({{$permi->id}})" >
                                                 <i class="fa-solid fa-trash"></i>

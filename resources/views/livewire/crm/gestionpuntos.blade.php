@@ -111,9 +111,9 @@
                     </div>
 
                     <div class="col-lg-12 col-md-12 col-sm-12">
-                        @if (session()->has('error'))
+                        @if (session()->has('error_modal'))
                             <div class="alert alert-danger alert-dismissible show fade">
-                                {{ session('error') }}
+                                {{ session('error_modal') }}
                                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                             </div>
                         @endif
