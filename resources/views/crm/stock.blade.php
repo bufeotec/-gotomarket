@@ -1,11 +1,11 @@
 @extends('layouts.dashboard_template')
-@section('title','STOCK')
+@section('title','Consulta de Stock')
 @section('content')
 
 
 
     <div class="page-heading">
-        <x-navegation-view text="Lista de stock registrados en el sistema." />
+        <x-navegation-view text="Listado de Stock Mercadería." />
 
         @livewire('crm.stocks')
 

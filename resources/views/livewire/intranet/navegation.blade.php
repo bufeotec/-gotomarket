@@ -18,7 +18,7 @@
                         <ul class="submenu {{ ($menutab[0]==$list_men->menu_controller)? 'active' :''  }} ">
                             @foreach($list_men->submenu as $sub)
                                 {{-- Condición para ocultar id_submenu 67 y 68 --}}
-                                @if(!in_array($sub->id_submenu, [67, 68,69, 70, 71, 73]))
+                                @if(!in_array($sub->id_submenu, [ 68,69, 70, 71,72, 73]))
                                     @can($sub->submenu_function)
                                         <li class="submenu-item {{ isset($menutab[1]) && $sub->submenu_function == $menutab[1] ? 'active' : '' }}" wire:key="submenu-{{ $sub->id_submenu }}">
                                             <a href="{{ url($list_men->menu_controller . '/' . $sub->submenu_function) }}">

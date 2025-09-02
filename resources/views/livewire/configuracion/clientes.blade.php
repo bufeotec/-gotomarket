@@ -203,7 +203,7 @@
                                         <td>{{$me->cliente_vendedor}}</td>
                                         <td>{{$me->cliente_direccion_fiscal}}</td>
                                         <td>
-                                            <a class="btn text-primary" data-bs-toggle="modal" data-bs-target="#modal_ver_detalle"><i class="fa fa-eye"></i></a>
+                                            {{--<a class="btn text-primary" data-bs-toggle="modal" data-bs-target="#modal_ver_detalle"><i class="fa fa-eye"></i></a>--}}
 
                                             <a class="btn text-danger" wire:click="obtener_direccion_entrega_cliente('{{$me->cliente_codigo_cliente}}')" data-bs-toggle="modal" data-bs-target="#modal_direcciones_entrega_cliente"><i class="fa-solid fa-location-dot"></i></a>
 

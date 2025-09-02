@@ -461,7 +461,7 @@ class DespachotransporteController extends Controller
 
         // Data 5: Volumen Despacho
         $pdf->Cell(17, 2, utf8_decode('Vol. Despacho:'), 0, 0, 'L');
-        $pdf->Cell(22, 2, utf8_decode($general->formatoDecimal($listar_info->despacho_volumen).' m³'), 0, 0, 'L');
+        $pdf->Cell(22, 2, utf8_decode($general->formatoDecimal($listar_info->despacho_volumen).' cm³'), 0, 0, 'L');
 
         // Data 6: Monto Tarifa
         $pdf->Cell(15, 2, utf8_decode('Monto Tarifa:'), 0, 0, 'L');
@@ -480,8 +480,8 @@ class DespachotransporteController extends Controller
         $pdf->Cell(15, 2, utf8_decode('S/'.$general->formatoDecimal($listar_info->despacho_costo_total)), 0, 0, 'L');
 
         // Data 9: Total con IGV
-        $pdf->Cell(14, 2, utf8_decode('Total c/IGV:'), 0, 0, 'L');
-        $pdf->Cell(20, 2, utf8_decode('S/'.$general->formatoDecimal($listar_info->despacho_costo_total)), 0, 1, 'L');
+//        $pdf->Cell(14, 2, utf8_decode('Total c/IGV:'), 0, 0, 'L');
+//        $pdf->Cell(20, 2, utf8_decode('S/'.$general->formatoDecimal($listar_info->despacho_costo_total)), 0, 1, 'L');
 
         $pdf->Ln(3); // Espacio después del cuadro
 

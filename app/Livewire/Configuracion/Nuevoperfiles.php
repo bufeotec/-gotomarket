@@ -282,7 +282,11 @@ class Nuevoperfiles extends Component
                 149 => [76, 78], //Tarifas
                 200 => 166, //Editar Programación
                 225 => 165,
-                178 => [157, 158, 159, 160] //Reporte Despacho y Transporte
+                178 => [157, 158, 159, 160], //Reporte Despacho y Transporte
+                243 => [244,245], //Gestionar OS
+                253 => 250, // Editar
+                252 => 249, // Anular
+                251 => 248 // Aprobar
             ];
 
             // Función para manejar permisos relacionados

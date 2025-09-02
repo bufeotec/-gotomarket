@@ -2,6 +2,8 @@
 @section('title','CRM')
 @section('content')
 
+
+
     <div class="page-heading">
         <x-navegation-view text="Opciones." />
     </div>
@@ -86,7 +88,7 @@
             <div class="col-lg-6">
                 <div class="card">
                     <div class="card-header">
-                        <h4>Reportes</h4>
+                        <h4>REPORTES</h4>
                     </div>
                     <div class="card-body">
                         <div class="d-flex justify-content-end">
@@ -111,5 +113,7 @@
     @endif
 
     <script src="{{asset('js/domain.js')}}"></script>
+    {{--    <script src="{{asset('js/configuration.js')}}"></script>--}}
+
 
 @endsection
