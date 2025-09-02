@@ -63,8 +63,7 @@ class Gestionarpremios extends Component{
         $this->premio_codigo = "";
         $this->premio_descripcion = "";
         $this->premio_documento = null;
-        $this->existingImage = null; // Limpiar también la imagen existente
-//        $this->premio_en_campania = "";
+        $this->existingImage = null;
         $this->premio_estado = "";
     }
 

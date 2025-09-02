@@ -1,5 +1,9 @@
 <div>
 
+    @php
+        use Illuminate\Support\Facades\Storage;
+    @endphp
+
 {{--    MODAL CREAR / EDITAR PREMIO--}}
     <x-modal-general wire:ignore.self>
         <x-slot name="id_modal">modal_premio</x-slot>
@@ -32,14 +36,16 @@
                         </div>
 
                         <!-- Preview imagen nueva -->
-                        @if($premio_documento)
+                        @if ($premio_documento)
                             <div class="mt-3 d-flex justify-content-center" wire:loading.remove wire:target="premio_documento">
-                                <img src="{{ asset($premio_documento) }}" class="img-fluid" style="max-width: 200px;" alt="Preview">
+                                {{-- Para archivos recién seleccionados (Livewire) --}}
+                                <img src="{{ $premio_documento->temporaryUrl() }}" class="img-fluid" style="max-width: 200px;" alt="Preview">
                             </div>
-                            <!-- Mostrar imagen existente -->
-                        @elseif($existingImage)
+
+                        @elseif ($existingImage)
                             <div class="mt-3 d-flex justify-content-center">
-                                <img src="{{ asset($existingImage) }}" class="img-fluid" style="max-width: 200px;" alt="Imagen existente">
+                                {{-- Para imagen ya guardada en disco "public" --}}
+                                <img src="{{ Storage::url($existingImage) }}" class="img-fluid" style="max-width: 200px;" alt="Imagen existente">
                             </div>
                         @endif
                     </div>
