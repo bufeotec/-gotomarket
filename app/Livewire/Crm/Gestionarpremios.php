@@ -36,7 +36,7 @@ class Gestionarpremios extends Component{
     public $id_premio = "";
     public $premio_codigo = "";
     public $premio_descripcion = "";
-    public $premio_documento = "";
+    public $premio_documento = null;
 //    public $premio_en_campania = "";
     public $premio_estado = "";
     public $messageDelete = "";
@@ -62,7 +62,7 @@ class Gestionarpremios extends Component{
         $this->id_premio = "";
         $this->premio_codigo = "";
         $this->premio_descripcion = "";
-        $this->premio_documento = "";
+        $this->premio_documento = null;
         $this->existingImage = null; // Limpiar también la imagen existente
 //        $this->premio_en_campania = "";
         $this->premio_estado = "";
