@@ -179,115 +179,149 @@ class Gestionpuntos extends Component{
         try {
             $this->validate([
                 'id_campania' => 'required|integer',
-                'id_cliente' => 'required|integer',
+                'id_cliente'  => 'required|integer',
             ], [
                 'id_campania.required' => 'La campaña es un dato obligatorio.',
-                'id_campania.integer' => 'El identificador debe ser un número entero.',
-
-                'id_cliente.required' => 'El cliente es un dato obligatorio.',
-                'id_cliente.integer' => 'El identificador debe ser un número entero.',
+                'id_campania.integer'  => 'El identificador debe ser un número entero.',
+                'id_cliente.required'  => 'El cliente es un dato obligatorio.',
+                'id_cliente.integer'   => 'El identificador debe ser un número entero.',
             ]);
 
             if (!Gate::allows('save_carga_excel')) {
-                session()->flash('error', 'No tiene permisos para crear.');
+                session()->flash('error_modal', 'No tiene permisos para crear.');
                 return;
             }
-            // Validar que el archivo Excel sea obligatorio
+
             if (!$this->archivo_excel) {
                 session()->flash('error', 'El archivo Excel es obligatorio.');
                 return;
             }
-            // Validar que sea un archivo Excel válido
-            $extension = strtolower($this->archivo_excel->getClientOriginalExtension());
-            $allowedExtensions = ['xlsx', 'xls'];
 
-            if (!in_array($extension, $allowedExtensions)) {
-                session()->flash('error', 'El archivo debe ser de tipo Excel (xlsx, xls).');
+            $extension = strtolower($this->archivo_excel->getClientOriginalExtension());
+            if (!in_array($extension, ['xlsx', 'xls'])) {
+                session()->flash('error_modal', 'El archivo debe ser de tipo Excel (xlsx, xls).');
                 return;
             }
 
             $microtime = microtime(true);
             DB::beginTransaction();
 
-            // *** VALIDACIÓN: Verificar si ya existe un registro con el mismo id_campania e id_cliente ***
-            $puntoExistente = Punto::where('id_campania', '=', $this->id_campania)
-                ->where('id_cliente', '=', $this->id_cliente)
-                ->where('punto_estado', '=', 1)
+            // Reusar/crear cabecera "puntos"
+            $punto = Punto::where('id_campania', $this->id_campania)
+                ->where('id_cliente',  $this->id_cliente)
+                ->where('punto_estado', 1)
                 ->first();
 
-            if ($puntoExistente) {
-                // Si ya existe, usar el registro existente
-                $punto = $puntoExistente;
-                $id_punto_a_usar = $puntoExistente->id_punto;
-            } else {
-                // Si no existe, crear un nuevo registro
-                $ultimoPremio = Punto::orderBy('id_punto', 'desc')->first();
-                $codigo_nuevo = $ultimoPremio ? $ultimoPremio->id_punto + 1 : 1;
+            if (!$punto) {
+                $ultimo = Punto::orderBy('id_punto', 'desc')->first();
+                $codigo_nuevo = $ultimo ? $ultimo->id_punto + 1 : 1;
 
-                // Insertar registro en tabla puntos
                 $punto = new Punto();
-                $punto->id_users = Auth::id();
+                $punto->id_users   = Auth::id();
                 $punto->id_campania = $this->id_campania;
-                $punto->id_cliente = $this->id_cliente;
+                $punto->id_cliente  = $this->id_cliente;
                 $punto->punto_codigo = 'P-000' . $codigo_nuevo;
+
                 if ($this->archivo_excel) {
                     $punto->punto_documento_excel = $this->general->save_files($this->archivo_excel, 'puntos/excel');
                 }
                 if ($this->archivo_pdf) {
                     $punto->punto_documento_pdf = $this->general->save_files($this->archivo_pdf, 'puntos/pdf');
                 }
-                $punto->punto_microtime = $microtime;
-                $punto->punto_estado = 1;
-                $punto->save();
 
-                $id_punto_a_usar = $punto->id_punto;
+                $punto->punto_microtime = $microtime;
+                $punto->punto_estado    = 1;
+                $punto->save();
             }
 
-            // Leer datos del Excel
+            $id_punto_a_usar = $punto->id_punto;
+
+            // Procesar Excel
             $spreadsheet = IOFactory::load($this->archivo_excel->getRealPath());
             $sheet = $spreadsheet->getActiveSheet();
             $rows = $sheet->toArray();
 
-            // Saltar cabecera (empieza en fila 2)
             foreach (array_slice($rows, 1) as $row) {
-                $dni = $row[0] ?? null;
+                $dni    = $row[0] ?? null;
                 $motivo = $row[1] ?? null;
-                $puntos = $row[2] ?? null;
+                $rawPts = $row[2] ?? null;
 
-                if (!$dni || !$motivo || !$puntos) {
+                if (!$dni || !$motivo || $rawPts === null || $rawPts === '') {
                     continue;
                 }
 
-                // Crear nuevo detalle usando el id_punto correspondiente (existente o nuevo)
+                // ==== Normalización inline de "puntos" ====
+                $s = trim((string)$rawPts);
+                if ($s === '') { continue; }
+                $s = preg_replace('/\s+/', '', $s);
+
+                $hasComma = strpos($s, ',') !== false;
+                $hasDot   = strpos($s, '.') !== false;
+
+                if ($hasComma && $hasDot) {
+                    $lastComma = strrpos($s, ',');
+                    $lastDot   = strrpos($s, '.');
+                    if ($lastComma > $lastDot) {
+                        // coma como decimal -> quitar puntos (miles) y cambiar coma por punto
+                        $s = str_replace('.', '', $s);
+                        $s = str_replace(',', '.', $s);
+                    } else {
+                        // punto como decimal -> quitar comas (miles)
+                        $s = str_replace(',', '', $s);
+                    }
+                } elseif ($hasComma) {
+                    // solo comas: decidir si miles o decimal por longitud del último tramo
+                    $parts = explode(',', $s);
+                    $lastLen = strlen(end($parts));
+                    if (count($parts) > 1 && $lastLen === 3) {
+                        $s = str_replace(',', '', $s); // miles
+                    } else {
+                        $s = str_replace(',', '.', $s); // decimal
+                    }
+                } elseif ($hasDot) {
+                    // solo puntos: decidir si miles o decimal
+                    $parts = explode('.', $s);
+                    $lastLen = strlen(end($parts));
+                    if (count($parts) > 1 && $lastLen === 3) {
+                        $s = str_replace('.', '', $s); // miles
+                    }
+                    // si es decimal ya está correcto
+                }
+
+                // Validar que quedó como número válido
+                if (!preg_match('/^-?\d+(\.\d+)?$/', $s)) {
+                    // Si no es interpretable, saltamos la fila
+                    continue;
+                }
+
+                // Convertir a float (puedes redondear si lo prefieres)
+                $puntos = (float)$s;
+                // $puntos = round((float)$s, 2); // <- si quieres limitar a 2 decimales
+
+                // Guardar detalle
                 $detalle = new Puntodetalle();
-                $detalle->id_users = Auth::id();
-                $detalle->id_punto = $id_punto_a_usar; // Usar el ID del punto existente o nuevo
-                $detalle->punto_detalle_motivo = $motivo;
-                $detalle->punto_detalle_vendedor = $dni;
-                $detalle->punto_detalle_punto_ganado = $puntos;
-                $detalle->punto_detalle_fecha_registro = now('America/Lima')->toDateString();
+                $detalle->id_users                         = Auth::id();
+                $detalle->id_punto                         = $id_punto_a_usar;
+                $detalle->punto_detalle_motivo             = $motivo;
+                $detalle->punto_detalle_vendedor           = $dni;
+                $detalle->punto_detalle_punto_ganado       = $puntos; // normalizado
+                $detalle->punto_detalle_fecha_registro     = now('America/Lima')->toDateString();
                 $detalle->punto_detalle_fecha_modificacion = null;
-                $detalle->punto_detalle_microtime = $microtime;
-                $detalle->punto_detalle_estado = 1;
+                $detalle->punto_detalle_microtime          = $microtime;
+                $detalle->punto_detalle_estado             = 1;
                 $detalle->save();
 
-                // === VALIDACIÓN Y ACTUALIZACIÓN DE PUNTOS DEL VENDEDOR ===
-                // Buscar vendedor por DNI en la tabla vendedores_intranet
-                $vendedor = DB::table('vendedores_intranet')
+                // Sumar puntos al vendedor si existe (incremento atómico)
+                $vendedorExiste = DB::table('vendedores_intranet')
                     ->where('vendedor_intranet_dni', $dni)
                     ->where('vendedor_intranet_estado', 1)
-                    ->first();
+                    ->exists();
 
-                if ($vendedor) {
-                    // Si existe el vendedor, sumar los puntos ganados
-                    $nuevosPuntos = $vendedor->vendedor_intranet_punto + $puntos;
-
-                    // Actualizar el campo vendedor_intranet_punto
+                if ($vendedorExiste) {
                     DB::table('vendedores_intranet')
                         ->where('vendedor_intranet_dni', $dni)
                         ->where('vendedor_intranet_estado', 1)
-                        ->update([
-                            'vendedor_intranet_punto' => $nuevosPuntos,
+                        ->increment('vendedor_intranet_punto', (float)$puntos, [
                             'updated_at' => now('America/Lima')
                         ]);
                 }
@@ -301,12 +335,12 @@ class Gestionpuntos extends Component{
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logs->insertarLog($e);
-            session()->flash('error', 'Ocurrió un error: ' . $e->getMessage());
+            session()->flash('error_modal', 'Ocurrió un error: ' . $e->getMessage());
         }
     }
 
-    public function editar_punto($id_punto)
-    {
+
+    public function editar_punto($id_punto){
         $this->id_punto = base64_decode($id_punto);
 
         if ($this->id_punto) {
