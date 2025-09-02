@@ -45,7 +45,7 @@
                         @elseif ($existingImage)
                             <div class="mt-3 d-flex justify-content-center">
                                 {{-- Para imagen ya guardada en disco "public" --}}
-                                <img src="{{ Storage::url($existingImage) }}" class="img-fluid" style="max-width: 200px;" alt="Imagen existente">
+                                <img src="{{ asset($existingImage) }}" class="img-fluid" style="max-width: 200px;" alt="Imagen existente">
                             </div>
                         @endif
                     </div>
