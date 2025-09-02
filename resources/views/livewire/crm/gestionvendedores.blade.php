@@ -105,7 +105,7 @@
                     </div>
 
                     <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
-                        <label for="id_rol" class="form-label">Rol <b class="text-danger">(*)</b></label>
+                        <label for="id_rol" class="form-label">Perfil Intranet <b class="text-danger">(*)</b></label>
                         <select id="id_rol" class=" form-select" wire:model="id_rol">
                             <option value="">Seleccionar</option>
                             @foreach($roles as $re)
