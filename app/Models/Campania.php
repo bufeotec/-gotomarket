@@ -135,9 +135,30 @@ class Campania extends Model{
         }
     }
 
-
-
     // generar_excel_detalle_cliente
+    public function obtener_vendedores_con_puntos($id_cliente, $id_campania){
+        try {
+            $vendedores = DB::table('puntos_detalles as pd')
+                ->join('vendedores_intranet as vi', 'pd.punto_detalle_vendedor', '=', 'vi.vendedor_intranet_dni')
+                ->join('puntos as p', 'pd.id_punto', '=', 'p.id_punto')
+                ->select(
+                    'vi.vendedor_intranet_dni as vendedor_dni',
+                    'vi.vendedor_intranet_nombre as vendedor_nombre',
+                    DB::raw('SUM(pd.punto_detalle_punto_ganado) as total_puntos_ganados')
+                )
+                ->where('p.id_cliente', '=', $id_cliente)
+                ->where('p.id_campania', '=', $id_campania)
+                ->groupBy('vi.vendedor_intranet_dni', 'vi.vendedor_intranet_nombre')
+                ->having('total_puntos_ganados', '>', 0)
+                ->get();
+
+            return $vendedores;
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            return collect();
+        }
+    }
+
     public function reporte_por_cliente($id_campania, $id_cliente){
         try {
             // Obtener datos del cliente y campaña
@@ -197,13 +218,13 @@ class Campania extends Model{
         }
     }
 
-    public function obtener_puntos_canjeados_vendedor($id_vendedor_intranet, $id_campania){
+    public function obtener_puntos_canjeados_vendedor($vendedor_dni, $id_campania){
         try {
             $puntos_canjeados = DB::table('vendedores_intranet as vi')
                 ->join('users as u', 'vi.id_vendedor_intranet', '=', 'u.id_vendedor_intranet')
                 ->join('canjear_puntos as cp', 'u.id_users', '=', 'cp.id_users')
                 ->join('canjear_puntos_detalles as cpd', 'cp.id_canjear_punto', '=', 'cpd.id_canjear_punto')
-                ->where('vi.id_vendedor_intranet', '=', $id_vendedor_intranet)
+                ->where('vi.vendedor_intranet_dni', '=', $vendedor_dni)
                 ->where('cpd.canjear_punto_detalle_estado', '=', 1)
                 ->where('cp.id_campania', '=', $id_campania)
                 ->sum('cpd.canjear_punto_detalle_total_puntos');
@@ -215,13 +236,13 @@ class Campania extends Model{
         }
     }
 
-    public function obtener_premios_canjeados_vendedor($id_vendedor_intranet, $id_premio, $id_campania){
+    public function obtener_premios_canjeados_vendedor($vendedor_dni, $id_premio, $id_campania){
         try {
             $cantidad_canjeada = DB::table('vendedores_intranet as vi')
                 ->join('users as u', 'vi.id_vendedor_intranet', '=', 'u.id_vendedor_intranet')
                 ->join('canjear_puntos as cp', 'u.id_users', '=', 'cp.id_users')
                 ->join('canjear_puntos_detalles as cpd', 'cp.id_canjear_punto', '=', 'cpd.id_canjear_punto')
-                ->where('vi.id_vendedor_intranet', '=', $id_vendedor_intranet)
+                ->where('vi.vendedor_intranet_dni', '=', $vendedor_dni)
                 ->where('cpd.canjear_punto_detalle_estado', '=', 1)
                 ->where('cpd.id_premio', '=', $id_premio)
                 ->where('cp.id_campania', '=', $id_campania)

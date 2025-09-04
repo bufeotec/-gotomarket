@@ -59,22 +59,29 @@ class Gestioncampanias extends Component{
     public function updatedArchivosNuevos(){
         // (Opcional) evitar duplicados por nombre+size
         $existentes = array_map(function($f){
-            return ($f->getClientOriginalName() ?? '') . '|' . ($f->getSize() ?? 0);
+            if (is_object($f) && method_exists($f, 'getClientOriginalName')) {
+                // Archivo nuevo (objeto UploadedFile)
+                return ($f->getClientOriginalName() ?? '') . '|' . ($f->getSize() ?? 0);
+            } else {
+                // Archivo existente (string - ruta)
+                return basename($f) . '|0'; // Para archivos existentes usamos 0 como size
+            }
         }, $this->archivos);
 
         foreach ($this->archivosNuevos as $nuevo) {
-            $clave = ($nuevo->getClientOriginalName() ?? '') . '|' . ($nuevo->getSize() ?? 0);
-            if (!in_array($clave, $existentes, true)) {
-                $this->archivos[] = $nuevo;
-                $existentes[] = $clave;
+            if (is_object($nuevo) && method_exists($nuevo, 'getClientOriginalName')) {
+                $clave = ($nuevo->getClientOriginalName() ?? '') . '|' . ($nuevo->getSize() ?? 0);
+                if (!in_array($clave, $existentes, true)) {
+                    $this->archivos[] = $nuevo;
+                    $existentes[] = $clave;
+                }
             }
         }
 
         $this->archivosNuevos = [];
     }
 
-    public function removeArchivo($index): void
-    {
+    public function removeArchivo($index): void{
         if (isset($this->archivos[$index])) {
             // Si es un archivo existente (string), agregarlo a la lista de eliminación
             if (is_string($this->archivos[$index])) {
@@ -98,8 +105,7 @@ class Gestioncampanias extends Component{
         $this->archivosNuevos = [];
     }
 
-    public function edit_data($id)
-    {
+    public function edit_data($id){
         $campania_edit = Campania::find(base64_decode($id));
         if ($campania_edit) {
             $this->campania_nombre = $campania_edit->campania_nombre;
@@ -308,7 +314,7 @@ class Gestioncampanias extends Component{
                     }
                     DB::commit();
                     $this->dispatch('hide_modal_campania');
-                    session()->flash('success', 'Campania actualizada correctamente.');
+                    session()->flash('success', 'Campaña actualizada correctamente.');
                     $this->clear_form();
                 } else {
                     DB::rollBack();

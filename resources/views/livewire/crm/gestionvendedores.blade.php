@@ -278,7 +278,7 @@
                                             @endphp
                                             {{ $distrito ? $distrito->distrito_nombre : '' }}
                                         </td>
-                                        <td>{{$lv->vendedor_intranet_punto ?? 0}}</td>
+                                        <td>{{number_format($lv->vendedor_intranet_punto, 2) ?? 0}}</td>
                                         <td>
                                             <span class="font-bold badge {{$lv->vendedor_intranet_estado == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
                                                 {{$lv->vendedor_intranet_estado == 1 ? 'Habilitado ' : 'Desabilitado'}}

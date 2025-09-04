@@ -21,7 +21,7 @@
                     <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
                         <div class="d-flex justify-content-between align-items-center">
                             <label class="form-label">Foto</label>
-                            <input type="file" class="d-none" id="premio_documento" accept="image/*" wire:model="premio_documento">
+                            <input type="file" class="d-none" id="premio_documento" wire:model="premio_documento">
                             <label for="premio_documento" class="btn btn-primary btn-sm">
                                 <i class="fa-solid fa-plus"></i>
                                 {{ $premio_documento || $existingImage ? 'Cambiar imagen' : 'Agregar imagen' }}
@@ -39,12 +39,11 @@
                         <!-- Preview imagen nueva -->
                         @if ($premio_documento instanceof $TmpClass)
                             <div class="mt-3 d-flex justify-content-center" wire:loading.remove wire:target="premio_documento">
-                                <img
+                                <img id="premio_documento"
                                     wire:key="preview-{{ $premio_documento->getFilename() }}"
                                     src="{{ $premio_documento->temporaryUrl() }}"
                                     class="img-fluid" style="max-width: 200px;" alt="Preview">
                             </div>
-
                         @elseif ($existingImage)
                             <div class="mt-3 d-flex justify-content-center">
                                 {{-- Para imagen ya guardada en disco "public" --}}
@@ -333,6 +332,16 @@
 
 @script
 <script>
+
+    $wire.on('updateUserImagePreview',function(event) {
+        const image = document.getElementById('previeImageUsers');
+        if (image) {
+            console.log(event[0].image);
+            image.src = event[0].image;
+        }
+    });
+
+
     $wire.on('hide_modal_premio', () => {
         $('#modal_premio').modal('hide');
     });

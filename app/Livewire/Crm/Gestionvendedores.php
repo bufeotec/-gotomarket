@@ -382,6 +382,7 @@ class Gestionvendedores extends Component{
                     $user = new User();
                     $user->id_vendedor_intranet = $save_vendedor->id_vendedor_intranet;
                     $user->name = $this->vendedor_intranet_nombre;
+                    $user->last_name = $this->vendedor_intranet_apellido;
                     $user->email = $this->vendedor_intranet_correo;
                     $user->username = $this->vendedor_intranet_correo;
                     $user->password = bcrypt($this->vendedor_intranet_dni);

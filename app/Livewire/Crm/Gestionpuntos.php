@@ -300,15 +300,15 @@ class Gestionpuntos extends Component{
 
                 // Guardar detalle
                 $detalle = new Puntodetalle();
-                $detalle->id_users                         = Auth::id();
-                $detalle->id_punto                         = $id_punto_a_usar;
-                $detalle->punto_detalle_motivo             = $motivo;
-                $detalle->punto_detalle_vendedor           = $dni;
-                $detalle->punto_detalle_punto_ganado       = $puntos; // normalizado
-                $detalle->punto_detalle_fecha_registro     = now('America/Lima')->toDateString();
+                $detalle->id_users = Auth::id();
+                $detalle->id_punto = $id_punto_a_usar;
+                $detalle->punto_detalle_motivo = $motivo;
+                $detalle->punto_detalle_vendedor = $dni;
+                $detalle->punto_detalle_punto_ganado = $puntos;
+                $detalle->punto_detalle_fecha_registro = now('America/Lima')->toDateString();
                 $detalle->punto_detalle_fecha_modificacion = null;
-                $detalle->punto_detalle_microtime          = $microtime;
-                $detalle->punto_detalle_estado             = 1;
+                $detalle->punto_detalle_microtime = $microtime;
+                $detalle->punto_detalle_estado  = 1;
                 $detalle->save();
 
                 // Sumar puntos al vendedor si existe (incremento atómico)
@@ -338,7 +338,6 @@ class Gestionpuntos extends Component{
             session()->flash('error_modal', 'Ocurrió un error: ' . $e->getMessage());
         }
     }
-
 
     public function editar_punto($id_punto){
         $this->id_punto = base64_decode($id_punto);
@@ -449,113 +448,216 @@ class Gestionpuntos extends Component{
                 return;
             }
 
-            // Actualizar la campaña del punto principal si cambió
+            // Actualizar cabecera si cambió
             if ($this->id_punto && $this->id_campania) {
                 DB::table('puntos')
                     ->where('id_punto', $this->id_punto)
                     ->update([
                         'id_campania' => $this->id_campania,
-                        'id_cliente' => $this->id_cliente,
+                        'id_cliente'  => $this->id_cliente,
                     ]);
             }
 
-            // Validar que todos los campos requeridos estén llenos
+            // ========= Normalizar y validar "puntos" =========
+            // Guardaremos los puntos ya normalizados (float) por id_punto_detalle
+            $puntos_normalizados = [];
+
             foreach ($this->editando_registros as $id_registro) {
-                if (empty($this->datos_edicion[$id_registro]['motivo']) ||
-                    empty($this->datos_edicion[$id_registro]['vendedor']) ||
-                    empty($this->datos_edicion[$id_registro]['puntos'])) {
+                // Campos obligatorios
+                if (
+                    empty($this->datos_edicion[$id_registro]['motivo']) ||
+                    empty(trim((string)$this->datos_edicion[$id_registro]['vendedor'])) ||
+                    !array_key_exists('puntos', $this->datos_edicion[$id_registro])
+                ) {
                     session()->flash('error_moda_editar', 'Todos los campos son obligatorios.');
                     return;
                 }
+
+                // === Normalización de comas/puntos (idéntica lógica que en save_carga_excel) ===
+                $s = (string)$this->datos_edicion[$id_registro]['puntos'];
+                $s = trim($s);
+                if ($s === '') {
+                    session()->flash('error_moda_editar', 'El campo Puntos es obligatorio.');
+                    return;
+                }
+
+                // quitar espacios internos
+                $s = preg_replace('/\s+/', '', $s);
+
+                $hasComma = strpos($s, ',') !== false;
+                $hasDot   = strpos($s, '.') !== false;
+
+                if ($hasComma && $hasDot) {
+                    $lastComma = strrpos($s, ',');
+                    $lastDot   = strrpos($s, '.');
+                    if ($lastComma > $lastDot) {
+                        // coma como decimal -> quitar puntos (miles) y cambiar coma por punto
+                        $s = str_replace('.', '', $s);
+                        $s = str_replace(',', '.', $s);
+                    } else {
+                        // punto como decimal -> quitar comas (miles)
+                        $s = str_replace(',', '', $s);
+                    }
+                } elseif ($hasComma) {
+                    // solo comas: decidir si miles o decimal por longitud del último tramo
+                    $parts = explode(',', $s);
+                    $lastLen = strlen(end($parts));
+                    if (count($parts) > 1 && $lastLen === 3) {
+                        $s = str_replace(',', '', $s); // miles
+                    } else {
+                        $s = str_replace(',', '.', $s); // decimal
+                    }
+                } elseif ($hasDot) {
+                    // solo puntos: decidir si miles o decimal
+                    $parts = explode('.', $s);
+                    $lastLen = strlen(end($parts));
+                    if (count($parts) > 1 && $lastLen === 3) {
+                        $s = str_replace('.', '', $s); // miles
+                    }
+                    // si es decimal ya está correcto
+                }
+
+                // Validar número (permite negativos y decimales)
+                if (!preg_match('/^-?\d+(\.\d+)?$/', $s)) {
+                    session()->flash('error_moda_editar', "El valor de Puntos del registro {$id_registro} no es numérico válido.");
+                    return;
+                }
+
+                // Convertir a float (si quieres limitar decimales, usa round)
+                $puntos_normalizados[$id_registro] = (float)$s;
+                // $puntos_normalizados[$id_registro] = round((float)$s, 2);
             }
 
             DB::beginTransaction();
 
             $registros_actualizados = 0;
 
-            // Iterar solo sobre los registros que están en edición
             foreach ($this->editando_registros as $id_punto_detalle) {
-                // Verificar que existen los datos de edición para este registro
-                if (isset($this->datos_edicion[$id_punto_detalle])) {
+                if (!isset($this->datos_edicion[$id_punto_detalle])) {
+                    continue;
+                }
 
-                    $datos = $this->datos_edicion[$id_punto_detalle];
+                // Estado anterior del detalle (lock a nivel fila)
+                $registro_anterior = DB::table('puntos_detalles')
+                    ->where('id_punto_detalle', $id_punto_detalle)
+                    ->where('punto_detalle_estado', 1)
+                    ->lockForUpdate()
+                    ->first();
 
-                    // Obtener los valores antiguos antes de actualizar
-                    $registro_anterior = DB::table('puntos_detalles')
-                        ->where('id_punto_detalle', $id_punto_detalle)
-                        ->where('punto_detalle_estado', 1)
-                        ->first();
+                if (!$registro_anterior) {
+                    continue;
+                }
 
-                    if ($registro_anterior) {
-                        $dni_vendedor = $registro_anterior->punto_detalle_vendedor;
-                        $puntos_anteriores = $registro_anterior->punto_detalle_punto_ganado;
-                        $puntos_nuevos = $datos['puntos'];
+                $datos = $this->datos_edicion[$id_punto_detalle];
+                $dni_anterior = trim($registro_anterior->punto_detalle_vendedor);
+                $puntos_anteriores = (float) $registro_anterior->punto_detalle_punto_ganado;
 
-                        // Actualizar el registro en la base de datos
-                        $actualizado = DB::table('puntos_detalles')
-                            ->where('id_punto_detalle', $id_punto_detalle)
-                            ->where('punto_detalle_estado', 1)
-                            ->update([
-                                'punto_detalle_motivo' => $datos['motivo'],
-                                'punto_detalle_vendedor' => $datos['vendedor'],
-                                'punto_detalle_punto_ganado' => $puntos_nuevos,
-                                'punto_detalle_fecha_modificacion' => now('America/Lima')->toDateString(),
-                                'updated_at' => now('America/Lima')
-                            ]);
+                $dni_nuevo = trim((string)$datos['vendedor']);
+                $puntos_nuevos = (float) $puntos_normalizados[$id_punto_detalle];
 
-                        if ($actualizado) {
-                            $registros_actualizados++;
+                // Actualizar el detalle
+                $actualizado = DB::table('puntos_detalles')
+                    ->where('id_punto_detalle', $id_punto_detalle)
+                    ->where('punto_detalle_estado', 1)
+                    ->update([
+                        'punto_detalle_motivo' => $datos['motivo'],
+                        'punto_detalle_vendedor' => $dni_nuevo,
+                        'punto_detalle_punto_ganado' => $puntos_nuevos,
+                        'punto_detalle_fecha_modificacion' => now('America/Lima')->toDateString(),
+                        'updated_at' => now('America/Lima'),
+                    ]);
 
-                            // === ACTUALIZAR PUNTOS DEL VENDEDOR ===
-                            // Buscar vendedor por DNI
-                            $vendedor = DB::table('vendedores_intranet')
-                                ->where('vendedor_intranet_dni', $dni_vendedor)
-                                ->where('vendedor_intranet_estado', 1)
-                                ->first();
+                if (!$actualizado) {
+                    continue;
+                }
 
-                            if ($vendedor) {
-                                // Calcular la diferencia de puntos
-                                $diferencia_puntos = $puntos_nuevos - $puntos_anteriores;
+                $registros_actualizados++;
 
-                                if ($diferencia_puntos != 0) {
-                                    // Actualizar los puntos del vendedor
-                                    $nuevos_puntos_vendedor = $vendedor->vendedor_intranet_punto + $diferencia_puntos;
+                // === AJUSTE DE PUNTAJE EN vendedores_intranet ===
+                if ($dni_nuevo === $dni_anterior) {
+                    // Mismo vendedor: ajustar diferencia
+                    $diferencia = $puntos_nuevos - $puntos_anteriores;
+                    if ($diferencia != 0) {
+                        $existeVendedor = DB::table('vendedores_intranet')
+                            ->where('vendedor_intranet_dni', $dni_anterior)
+                            ->where('vendedor_intranet_estado', 1)
+                            ->exists();
 
-                                    DB::table('vendedores_intranet')
-                                        ->where('vendedor_intranet_dni', $dni_vendedor)
-                                        ->where('vendedor_intranet_estado', 1)
-                                        ->update([
-                                            'vendedor_intranet_punto' => $nuevos_puntos_vendedor,
-                                            'updated_at' => now('America/Lima')
-                                        ]);
-                                }
+                        if ($existeVendedor) {
+                            if ($diferencia > 0) {
+                                DB::table('vendedores_intranet')
+                                    ->where('vendedor_intranet_dni', $dni_anterior)
+                                    ->where('vendedor_intranet_estado', 1)
+                                    ->increment('vendedor_intranet_punto', $diferencia, [
+                                        'updated_at' => now('America/Lima')
+                                    ]);
+                            } else {
+                                DB::table('vendedores_intranet')
+                                    ->where('vendedor_intranet_dni', $dni_anterior)
+                                    ->where('vendedor_intranet_estado', 1)
+                                    ->decrement('vendedor_intranet_punto', abs($diferencia), [
+                                        'updated_at' => now('America/Lima')
+                                    ]);
                             }
                         }
                     }
+                } else {
+                    // Cambió el DNI:
+                    // 1) Restar al vendedor anterior (si existe)
+                    $existeVendedorAnterior = DB::table('vendedores_intranet')
+                        ->where('vendedor_intranet_dni', $dni_anterior)
+                        ->where('vendedor_intranet_estado', 1)
+                        ->exists();
+
+                    if ($existeVendedorAnterior && $puntos_anteriores != 0) {
+                        DB::table('vendedores_intranet')
+                            ->where('vendedor_intranet_dni', $dni_anterior)
+                            ->where('vendedor_intranet_estado', 1)
+                            ->decrement('vendedor_intranet_punto', abs($puntos_anteriores), [
+                                'updated_at' => now('America/Lima')
+                            ]);
+                    }
+
+                    // 2) Sumar al vendedor nuevo SOLO si existe
+                    $existeVendedorNuevo = DB::table('vendedores_intranet')
+                        ->where('vendedor_intranet_dni', $dni_nuevo)
+                        ->where('vendedor_intranet_estado', 1)
+                        ->exists();
+
+                    if ($existeVendedorNuevo && $puntos_nuevos != 0) {
+                        DB::table('vendedores_intranet')
+                            ->where('vendedor_intranet_dni', $dni_nuevo)
+                            ->where('vendedor_intranet_estado', 1)
+                            ->increment('vendedor_intranet_punto', $puntos_nuevos, [
+                                'updated_at' => now('America/Lima')
+                            ]);
+                    }
+                    // Si el nuevo DNI no existe, no se crea ni se suma (se guarda igual el detalle)
                 }
             }
 
             DB::commit();
 
-            // Limpiar los estados de edición después de guardar
+            // Limpiar estado de edición
             $this->editando_registros = [];
-            $this->datos_edicion = [];
+            $this->datos_edicion      = [];
 
-            // Recargar la lista de detalles para mostrar los cambios
+            // Recargar tabla
             if ($this->id_punto) {
                 $this->listar_detalles = DB::table('puntos_detalles')
-                    ->where('punto_detalle_estado', '=', 1)
-                    ->where('id_punto', '=', $this->id_punto)
+                    ->where('punto_detalle_estado', 1)
+                    ->where('id_punto', $this->id_punto)
                     ->get();
             }
 
             $this->dispatch('hide_modal_editar_punto');
-            session()->flash('success', "Se actualizaron {$registros_actualizados} registro(s) correctamente.");
+            session()->flash('success_modal_editar', "Se actualizaron {$registros_actualizados} registro(s) correctamente.");
 
         } catch (\Illuminate\Validation\ValidationException $e) {
+            if (DB::transactionLevel() > 0) DB::rollBack();
             $this->setErrorBag($e->validator->errors());
         } catch (\Exception $e) {
-            DB::rollBack();
+            if (DB::transactionLevel() > 0) DB::rollBack();
             $this->logs->insertarLog($e);
             session()->flash('error_moda_editar', 'Ocurrió un error al guardar los registros. Por favor, inténtelo nuevamente.');
         }
@@ -657,22 +759,94 @@ class Gestionpuntos extends Component{
             ]);
 
             DB::beginTransaction();
+
+            // Actualizar el estado del punto principal a 0
             $punto_delete = Punto::find($this->id_punto);
-            $punto_delete->punto_estado = 0;
-            if ($punto_delete->save()) {
-                DB::commit();
-                $this->dispatch('hide_modal_delete_punto');
-                session()->flash('success', 'Registro eliminado correctamente.');
-            } else {
+            if (!$punto_delete) {
                 DB::rollBack();
-                session()->flash('error_delete', 'No se pudo eliminar el punto.');
+                session()->flash('error_delete', 'No se encontró el punto especificado.');
                 return;
             }
 
+            $punto_delete->punto_estado = 0;
+            if (!$punto_delete->save()) {
+                DB::rollBack();
+                session()->flash('error_delete', 'No se pudo actualizar el estado del punto.');
+                return;
+            }
+
+            // Obtener todos los registros de puntos_detalles con el mismo id_punto
+            $puntos_detalles = DB::table('puntos_detalles')
+                ->where('id_punto', $this->id_punto)
+                ->where('punto_detalle_estado', '=', 1)
+                ->lockForUpdate()
+                ->get();
+
+            if ($puntos_detalles->isEmpty()) {
+                // Si no hay detalles, solo confirmamos el cambio del punto principal
+                DB::commit();
+                $this->dispatch('hide_modal_delete_punto');
+                session()->flash('success', 'Punto eliminado correctamente.');
+                return;
+            }
+
+            $registros_procesados = 0;
+
+            // Procesar cada registro de puntos_detalles
+            foreach ($puntos_detalles as $detalle) {
+                $dni_vendedor = trim($detalle->punto_detalle_vendedor);
+                $puntos_ganados = (float) $detalle->punto_detalle_punto_ganado;
+
+                // Verificar si existe el vendedor en vendedores_intranet
+                $vendedor = DB::table('vendedores_intranet')
+                    ->where('vendedor_intranet_dni', $dni_vendedor)
+                    ->where('vendedor_intranet_estado', '=', 1)
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($vendedor && $puntos_ganados != 0) {
+                    // Restar los puntos ganados del vendedor
+                    $puntos_vendedor_actual = (float) $vendedor->vendedor_intranet_punto;
+                    $nuevos_puntos = $puntos_vendedor_actual - $puntos_ganados;
+
+                    $actualizado = DB::table('vendedores_intranet')
+                        ->where('vendedor_intranet_dni', $dni_vendedor)
+                        ->where('vendedor_intranet_estado', '=', 1)
+                        ->update([
+                            'vendedor_intranet_punto' => $nuevos_puntos,
+                            'updated_at' => now('America/Lima')
+                        ]);
+
+                    if (!$actualizado) {
+                        DB::rollBack();
+                        session()->flash('error_delete', 'Error al actualizar los puntos del vendedor con DNI: ' . $dni_vendedor);
+                        return;
+                    }
+                }
+
+                // Cambiar el estado del detalle a 0
+                $detalle_actualizado = DB::table('puntos_detalles')
+                    ->where('id_punto_detalle', $detalle->id_punto_detalle)
+                    ->where('punto_detalle_estado', '=', 1)
+                    ->update([
+                        'punto_detalle_estado' => 0,
+                        'updated_at' => now('America/Lima')
+                    ]);
+
+                if ($detalle_actualizado) {
+                    $registros_procesados++;
+                }
+            }
+
+            DB::commit();
+            $this->dispatch('hide_modal_delete_punto');
+            session()->flash('success', "Punto eliminado correctamente. Se procesaron {$registros_procesados} detalle(s) y se actualizaron los puntos de los vendedores correspondientes.");
+
         } catch (\Illuminate\Validation\ValidationException $e) {
+            if (DB::transactionLevel() > 0) DB::rollBack();
             $this->setErrorBag($e->validator->errors());
         } catch (\Exception $e) {
-            DB::rollBack();
+            if (DB::transactionLevel() > 0) DB::rollBack();
             $this->logs->insertarLog($e);
             session()->flash('error', 'Ocurrió un error al eliminar el registro. Por favor, inténtelo nuevamente.');
         }

@@ -141,6 +141,20 @@
                     </div>
                 </div>
             </div>
+            <div class="col-lg-12 col-md-12 col-sm-12">
+                @if (session()->has('error_moda_editar'))
+                    <div class="alert alert-danger alert-dismissible show fade">
+                        {{ session('error_moda_editar') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+                @if (session()->has('success_modal_editar'))
+                    <div class="alert alert-success alert-dismissible show fade">
+                        {{ session('success_modal_editar') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+            </div>
             <form wire:submit.prevent="save_editar_punto">
                 <h5 class="mb-3 text-end me-3">Código: <b>{{$punto_codigo}}</b></h5>
                 <div class="row">
@@ -217,7 +231,7 @@
                                                            wire:model="datos_edicion.{{$ld->id_punto_detalle}}.puntos"
                                                            placeholder="Puntos">
                                                 @else
-                                                    {{$ld->punto_detalle_punto_ganado}}
+                                                    {{number_format($ld->punto_detalle_punto_ganado, 2)}}
                                                 @endif
                                             </td>
                                             <td>
@@ -251,21 +265,6 @@
                         <div class="spinner__container__eliminar">
                             <div class="spinner__eliminar"></div>
                         </div>
-                    </div>
-
-                    <div class="col-lg-12 col-md-12 col-sm-12">
-                        @if (session()->has('error_moda_editar'))
-                            <div class="alert alert-danger alert-dismissible show fade">
-                                {{ session('error_moda_editar') }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        @endif
-                        @if (session()->has('success_modal_editar'))
-                            <div class="alert alert-success alert-dismissible show fade">
-                                {{ session('success_modal_editar') }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        @endif
                     </div>
                     <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-end">
                         <button type="button" data-bs-dismiss="modal" class="btn btn-secondary">Cerrar</button>
@@ -380,7 +379,6 @@
         </div>
     @endif
 
-
     <div class="row">
         <div class="col-lg-12 mt-2 mb-3">
             <div class="card">
@@ -493,7 +491,7 @@
                                                                         <td>{{$conteo_detalle}}</td>
                                                                         <td>{{ $detalle->punto_detalle_motivo }}</td>
                                                                         <td>{{ $detalle->punto_detalle_vendedor }}</td>
-                                                                        <td>{{ $detalle->punto_detalle_punto_ganado }}</td>
+                                                                        <td>{{ number_format($detalle->punto_detalle_punto_ganado, 2) }}</td>
                                                                         <td>{{ $detalle->punto_detalle_fecha_registro ? $general->obtenerNombreFecha($detalle->punto_detalle_fecha_registro, 'DateTime', 'Date') : '-' }}</td>
                                                                         <td>
                                                                             @if($detalle->punto_detalle_fecha_modificacion)

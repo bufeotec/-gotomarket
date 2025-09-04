@@ -38,6 +38,7 @@
                                     <th>Cantidad</th>
                                     <th>Total Puntos</th>
                                     <th>Estado</th>
+                                    <th>Acciones</th>
                                 </tr>
                             </x-slot>
 
@@ -72,7 +73,7 @@
                                             <td>{{ $total }} pts</td>
                                             <td>
                                                 @if($campania_cerrada)
-                                                    <span class="badge bg-secondary">Bloqueado</span>
+                                                    <span class="badge bg-secondary">Premio ya canjeado, cierre de campaña</span>
                                                 @else
                                                     @if($yaCanjeado)
                                                         <span class="badge bg-info">Ya canjeado</span>
@@ -81,6 +82,16 @@
                                                     @endif
                                                 @endif
                                             </td>
+                                            <td class="text-center">
+                                                <button type="button"
+                                                        class="btn btn-sm bg-danger text-white"
+                                                        title="Quitar"
+                                                        @disabled($campania_cerrada)
+                                                        wire:click="eliminarPremio('{{ $id }}')">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                </button>
+                                            </td>
+
                                         </tr>
                                         @php $conteo++; @endphp
                                     @endforeach
@@ -97,16 +108,16 @@
                     </div>
 
                     <div class="col-lg-12 col-md-12 col-sm-12 mb-2 text-end">
-                        <h6 class="me-3">Puntos Canjeados (vigentes): <b class="text-danger ms-2">{{number_format($puntos_canjeados, 2)}}</b></h6>
+                        <h6 class="me-3">Puntos Canjeados: <b class="text-danger ms-2">{{number_format($puntos_canjeados, 2)}}</b></h6>
                     </div>
                     <div class="col-lg-12 col-md-12 col-sm-12 mb-2 text-end">
-                        <h6 class="me-3">Puntos Restantes (saldo): <b class="text-primary ms-2">{{number_format($puntos_restantes, 2)}}</b></h6>
+                        <h6 class="me-3">Puntos Restantes: <b class="text-primary ms-2">{{number_format($puntos_restantes, 2)}}</b></h6>
                     </div>
 
                     <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-end">
                         <button type="button" data-bs-dismiss="modal" class="btn btn-secondary">Cerrar</button>
                         @if(!$campania_cerrada)
-                            <button type="submit" class="btn btn-success text-white">Guardar Cambios</button>
+                            <button type="submit" class="btn btn-success text-white">Guardar Canje</button>
                         @endif
                     </div>
                 </div>
@@ -254,7 +265,7 @@
    </div>
 
     <!-- loading -->
-    <div wire:loading wire:target="id_campania, seleccionar_premio" class="overlay__eliminar">
+    <div wire:loading wire:target="id_campania, seleccionar_premio, eliminarPremio" class="overlay__eliminar">
         <div class="spinner__container__eliminar">
             <div class="spinner__eliminar"></div>
         </div>
