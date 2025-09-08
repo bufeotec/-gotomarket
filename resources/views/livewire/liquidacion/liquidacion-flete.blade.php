@@ -401,7 +401,7 @@
             $conteoLiquida = \Illuminate\Support\Facades\DB::table('despachos as d')->where('d.despacho_liquidado', '=',0)
                 ->where('d.id_transportistas', $id_transportistas)
                 ->where('d.despacho_estado', 1)
-                ->whereIn('d.despacho_estado_aprobacion', [3, 4])->count();
+                ->where('d.despacho_estado_aprobacion', '=', 3)->count();
         @endphp
         <p class="mt-2">Existe <b class="colorgotomarket">{{$conteoLiquida}}</b> despachos que aún están pendientes de liquidación.</p>
     @endif

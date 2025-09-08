@@ -162,7 +162,7 @@ class LiquidacionFlete extends Component
                 ->where('d.id_transportistas', $value)
                 ->where('d.despacho_liquidado', '=',0)
                 ->where('d.despacho_estado', 1)
-                ->whereIn('d.despacho_estado_aprobacion',[3,4]);
+                ->where('d.despacho_estado_aprobacion', '=', 3);
             if ($this->date_desde && $this->date_hasta) {
                 $queryConsult->whereBetween('pr.programacion_fecha', [$this->date_desde, $this->date_hasta]);
             }
