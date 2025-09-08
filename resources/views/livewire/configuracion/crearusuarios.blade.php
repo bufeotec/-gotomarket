@@ -133,7 +133,7 @@
                             </div>
 
                             <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
-                                <label for="users_cargo" class="form-label">Cargo</label>
+                                <label for="users_cargo" class="form-label">Cargo (*)</label>
                                 <x-input-general   type="text" id="users_cargo" wire:model="users_cargo"/>
                                 @error('users_cargo')<span class="message-error">{{ $message }}</span>@enderror
                             </div>
@@ -237,93 +237,197 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-lg-6 col-md-6 col-sm-12 mt-3 d-flex justify-content-between">
-                                <label for="rol_vendedor" class="text-primary" style="font-size: 11pt">Perfil vendedor</label>
-                                <div class="form-check form-switch mb-2 d-flex align-items-end">
-                                    <input class="form-check-input" type="checkbox" role="switch" name="credito_check" id="rol_vendedor" wire:model.live="rol_vendedor">
-                                    <label class="form-check-label" for="rol_vendedor"></label>
-                                </div>
-                            </div>
-                            <div class="col-lg-6"></div>
-                            <div class="col-lg-6 mb-3"><hr></div>
-
-                            @if($rol_vendedor)
-                                <div class="col-lg-12 col-md-12 col-sm-12">
-                                    <div class="row align-items-center">
-                                        <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
-                                            <div class="row">
-                                                <div class="col-lg-12 col-sm-12 mb-3 d-flex justify-content-center align-content-center">
-                                                    <select class="form-select" name="id_vendedor" id="id_vendedor" wire:model="id_vendedor">
-                                                        <option value="">Seleccionar...</option>
-                                                        @foreach($listar_vendedores as $lv)
-                                                            <option value="{{ $lv->id_vendedor }}">{{$lv->vendedor_des}}</option>
-                                                        @endforeach
-                                                    </select>
-                                                    <div class="align-content-center ms-3">
-                                                        <a class="btn btn-success text-white btn-sm" wire:click="agregar_vendedor">
-                                                            <i class="fa-solid fa-plus"></i>
-                                                        </a>
-                                                    </div>
+                            <div class="col-lg-12 col-sm-12 mb-3">
+                                <div class="row">
+                                    <div class="col-lg-6 col-md-6 col-sm-12 mt-3">
+                                        <div class="row">
+                                            <div class="col-lg-12 col-sm-12 mb-3 d-flex justify-content-between">
+                                                <label for="rol_vendedor" class="text-primary" style="font-size: 11pt">Perfil vendedor</label>
+                                                <div class="form-check form-switch mb-2 d-flex align-items-end">
+                                                    <input class="form-check-input" type="checkbox" role="switch" name="credito_check" id="rol_vendedor" wire:model.live="rol_vendedor">
+                                                    <label class="form-check-label" for="rol_vendedor"></label>
                                                 </div>
+                                            </div>
 
-                                                <div class="col-lg-12 col-md-12 col-sm-12">
-                                                    <div class="loader mt-2" wire:loading wire:target="agregar_vendedor"></div>
-                                                </div>
-
-                                                <div class="col-lg-12 col-md-12 col-sm-12">
-                                                    <div class="loader mt-2" wire:loading wire:target="eliminar_vendedor"></div>
-                                                </div>
-
-                                                @if (session()->has('error_select_vendedor'))
-                                                    <div class="alert alert-danger alert-dismissible show fade mt-2">
-                                                        {{ session('error_select_vendedor') }}
-                                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                                    </div>
-                                                @endif
-
-                                                @if(count($vendedor_seleccionados) > 0)
-                                                    <div class="col-lg-12 col-sm-12 mb-5">
-                                                        <x-table-general>
-                                                            <x-slot name="thead">
-                                                                <tr>
-                                                                    <th>N°</th>
-                                                                    <th>Código INTRANET</th>
-                                                                    <th>Código Vendedor STARSOFT</th>
-                                                                    <th>Nombre vendedor</th>
-                                                                    <th>Acciones</th>
-                                                                </tr>
-                                                            </x-slot>
-                                                            <x-slot name="tbody">
-                                                                @php $a = 1 @endphp
-                                                                @foreach($vendedor_seleccionados as $index => $us)
-                                                                    <tr>
-                                                                        <td>{{ $a }}</td>
-                                                                        <td>{{ $us['vendedor_codigo_intranet'] }}</td>
-                                                                        <td>{{ $us['vendedor_codigo_vendedor_starsoft'] }}</td>
-                                                                        <td>{{ $us['vendedor_des'] }}</td>
-                                                                        <td>
-                                                                            <a class="btn btn-danger btn-sm"
-                                                                                    wire:click="eliminar_vendedor({{ $index }})">
-                                                                                <i class="fa-solid fa-trash"></i>
-                                                                            </a>
-                                                                        </td>
-                                                                    </tr>
-                                                                    @php $a++; @endphp
+                                            <div class="col-lg-12">
+                                                @if($rol_vendedor)
+                                                    <div class="row">
+                                                        <div class="col-lg-12 col-sm-12 mb-3 d-flex justify-content-center align-content-center">
+                                                            <select class="form-select" name="id_vendedor" id="id_vendedor" wire:model="id_vendedor">
+                                                                <option value="">Seleccionar...</option>
+                                                                @foreach($listar_vendedores as $lv)
+                                                                    <option value="{{ $lv->id_vendedor }}">{{$lv->vendedor_des}}</option>
                                                                 @endforeach
-                                                            </x-slot>
-                                                        </x-table-general>
+                                                            </select>
+                                                            <div class="align-content-center ms-3">
+                                                                <a class="btn btn-success text-white btn-sm" wire:click="agregar_vendedor">
+                                                                    <i class="fa-solid fa-plus"></i>
+                                                                </a>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-lg-12 col-md-12 col-sm-12">
+                                                            <div class="loader mt-2" wire:loading wire:target="agregar_vendedor"></div>
+                                                        </div>
+
+                                                        <div class="col-lg-12 col-md-12 col-sm-12">
+                                                            <div class="loader mt-2" wire:loading wire:target="eliminar_vendedor"></div>
+                                                        </div>
+
+                                                        @if (session()->has('error_select_vendedor'))
+                                                            <div class="alert alert-danger alert-dismissible show fade mt-2">
+                                                                {{ session('error_select_vendedor') }}
+                                                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                                            </div>
+                                                        @endif
+
+                                                        @if(count($vendedor_seleccionados) > 0)
+                                                            <div class="col-lg-12 col-sm-12 mb-5">
+                                                                <x-table-general>
+                                                                    <x-slot name="thead">
+                                                                        <tr>
+                                                                            <th>N°</th>
+                                                                            <th>Código INTRANET</th>
+                                                                            <th>Código Vendedor STARSOFT</th>
+                                                                            <th>Nombre vendedor</th>
+                                                                            <th>Acciones</th>
+                                                                        </tr>
+                                                                    </x-slot>
+                                                                    <x-slot name="tbody">
+                                                                        @php $a = 1 @endphp
+                                                                        @foreach($vendedor_seleccionados as $index => $us)
+                                                                            <tr>
+                                                                                <td>{{ $a }}</td>
+                                                                                <td>{{ $us['vendedor_codigo_intranet'] }}</td>
+                                                                                <td>{{ $us['vendedor_codigo_vendedor_starsoft'] }}</td>
+                                                                                <td>{{ $us['vendedor_des'] }}</td>
+                                                                                <td>
+                                                                                    <a class="btn btn-danger btn-sm"
+                                                                                       wire:click="eliminar_vendedor({{ $index }})">
+                                                                                        <i class="fa-solid fa-trash"></i>
+                                                                                    </a>
+                                                                                </td>
+                                                                            </tr>
+                                                                            @php $a++; @endphp
+                                                                        @endforeach
+                                                                    </x-slot>
+                                                                </x-table-general>
+                                                            </div>
+                                                        @else
+                                                            <h6 class="mt-3 text-danger">
+                                                                No se han seleccionado vendedores.
+                                                            </h6>
+                                                        @endif
                                                     </div>
-                                                @else
-                                                    <h6 class="mt-3 text-danger">
-                                                        No se han seleccionado vendedores.
-                                                    </h6>
                                                 @endif
                                             </div>
                                         </div>
                                     </div>
+
+                                    <div class="col-lg-6 col-md-6 col-sm-12 mt-3">
+                                        <div class="row">
+                                            <div class="col-lg-12 col-sm-12 mb-3 d-flex justify-content-between">
+                                                <label for="rol_cliente" class="text-primary" style="font-size: 11pt">Perfil Cliente</label>
+                                                <div class="form-check form-switch mb-2 d-flex align-items-end">
+                                                    <input class="form-check-input" type="checkbox" role="switch" name="credito_check" id="rol_cliente" wire:model.live="rol_cliente">
+                                                    <label class="form-check-label" for="rol_cliente"></label>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-lg-12">
+                                                <div class="row">
+                                                    @if($rol_cliente)
+                                                        <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                                                            @if (session()->has('error_cliente'))
+                                                                <div class="alert alert-danger alert-dismissible show fade">
+                                                                    {{ session('error_cliente') }}
+                                                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                                                </div>
+                                                            @endif
+
+                                                            @if (session()->has('success_cliente'))
+                                                                <div class="alert alert-success alert-dismissible show fade">
+                                                                    {{ session('success_cliente') }}
+                                                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                                                </div>
+                                                            @endif
+                                                        </div>
+
+
+                                                        <!-- Mostrar cliente seleccionado si existe -->
+                                                        @if($cliente_seleccionado)
+                                                            <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                                                                <div class="d-flex justify-content-between align-items-center">
+                                                                    <div>
+                                                                        <h6 class="mb-1 text-success">
+                                                                            <i class="fas fa-user me-2"></i>Cliente Seleccionado
+                                                                        </h6>
+                                                                        <p class="mb-0">
+                                                                            <strong>RUC:</strong> {{ $cliente_seleccionado['cliente_codigo_cliente'] }} -
+                                                                            <strong>Nombre:</strong> {{ $cliente_seleccionado['cliente_nombre_cliente'] }}
+                                                                        </p>
+                                                                    </div>
+                                                                    <a class="btn btn-sm text-danger" wire:click="eliminar_cliente_seleccionado()">
+                                                                        <i class="fas fa-trash"></i>
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        @endif
+
+                                                        <!-- Buscador de clientes (solo si no hay cliente seleccionado) -->
+                                                        @if(!$cliente_seleccionado)
+                                                            <div class="col-lg-12 col-md-12 col-sm-12 mb-3 position-relative">
+                                                                <label class="form-label">Buscar Cliente</label>
+                                                                <input type="text"
+                                                                       class="form-control"
+                                                                       placeholder="Buscar por RUC o nombre"
+                                                                       wire:model="buscar_clientes_search"
+                                                                       wire:keyup="buscarClientesFiltroVista()">
+
+                                                                @if($abrirListasCliente)
+                                                                    <div style="width: 100%; z-index: 999" class="position-absolute top-100 start-0 mt-1 z-10" id="lista_cliente_reporte">
+                                                                        <div class="list-group bg-white shadow-sm">
+                                                                            @foreach($listaClientesFiltro as $l)
+                                                                                <a style="cursor: pointer" class="list-group-item list-group-item-action"
+                                                                                   wire:click="seleccionar_cliente_vista('{{base64_encode($l->id_cliente)}}')">
+                                                                                    {{ $l->cliente_codigo_cliente . ' - ' . $l->cliente_nombre_cliente }}
+                                                                                </a>
+                                                                            @endforeach
+                                                                        </div>
+                                                                    </div>
+                                                                @endif
+                                                            </div>
+                                                        @endif
+                                                    @endif
+
+                                                    <div class="col-lg-12 col-md-12 col-sm-12">
+                                                        <div class="loader mt-2 w-100" wire:loading
+                                                             wire:target="buscarClientesFiltroVista">
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-lg-12 col-md-12 col-sm-12">
+                                                        <div wire:loading wire:target="eliminar_cliente_seleccionado, seleccionar_cliente_vista, rol_cliente" class="overlay__eliminar">
+                                                            <div class="spinner__container__eliminar">
+                                                                <div class="spinner__eliminar"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                            @endif
+                            </div>
                         </div>
+
+
+
+
+                        <div class="row">
+
+                        </div>
+
 
                         <div class="row">
                             <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-end">

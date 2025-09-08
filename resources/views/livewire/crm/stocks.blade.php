@@ -68,7 +68,26 @@
     {{--    FIN MODAL VER STOCK LOTE --}}
 
     <div class="row align-items-center">
-        <div class="col-lg-6 col-md-6 col-sm-12 mt-4 mb-3 d-flex align-items-center mb-2">
+        <div class="col-lg-2">
+            <label for="id_familia" class="form-label">Familia</label>
+            <select class="form-select" id="id_familia" wire:model.live="id_familia">
+                <option>Seleccionar...</option>
+                @foreach($listar_familia as $lf)
+                    <option value="{{ $lf->id_familia }}">{{ $lf->familia_concepto }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-lg-2">
+            <label for="id_marca" class="form-label">Marca</label>
+            <select class="form-select" id="id_marca" wire:model.live="id_marca">
+                <option>Seleccionar...</option>
+                @foreach($listar_marca as $lf)
+                    <option value="{{ $lf->id_marca }}">{{ $lf->marca_concepto }}</option>
+                @endforeach
+            </select>
+        </div>
+
+        <div class="col-lg-4 col-md-4 col-sm-12 mt-4 mb-3 d-flex align-items-center mb-2">
             <input type="text" class="form-control w-50 me-4"  wire:model.live="search_stock" placeholder="Buscar">
             <x-select-filter wire:model.live="pagination_stock" />
         </div>

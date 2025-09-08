@@ -68,12 +68,111 @@ class Crearusuarios extends Component
     public $provincias = [];
     public $distritos = [];
 
+
+    public $listaClientesFiltro = array();
+    public $rol_cliente = false;
+    public $abrirListasCliente = false;
+    public $buscar_clientes_search = null;
+    public $id_cliente = null;
+    public $cliente_seleccionado = null;
+
     public function render(){
         $listar_vendedores = $this->vendedor->listra_vendedores_activos();
         $listar_perfiles = $this->vendedor->listra_perfiles_activos();
 
         $listar_departamento = $this->departamento->lista_departamento();
         return view('livewire.configuracion.crearusuarios', compact('listar_vendedores', 'listar_perfiles', 'listar_departamento'));
+    }
+
+    public function buscarClientesFiltroVista(){
+        try {
+            $buscar = $this->buscar_clientes_search ?? '';
+
+            $this->listaClientesFiltro = DB::table('clientes')
+                ->where('cliente_estado_registro','=', 1)
+                ->where(function($q) use ($buscar) {
+                    $q->where('cliente_codigo_cliente', 'like', '%' . $buscar . '%')
+                        ->orWhere('cliente_nombre_cliente', 'like', '%' . $buscar . '%');
+                })
+                ->limit(10)
+                ->get();
+
+            $this->abrirListasCliente = true;
+
+        } catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error. Por favor, inténtelo nuevamente.');
+            return;
+        }
+    }
+
+    public function seleccionar_cliente_vista($id_cliente){
+        try {
+            $this->abrirListasCliente = false;
+            $id_c = base64_decode($id_cliente);
+
+            if (!$id_c) {
+                session()->flash('error_cliente', 'Los parámetros del cliente no son válidos.');
+                return;
+            }
+
+            // Validar si ya hay un cliente seleccionado
+            if ($this->cliente_seleccionado) {
+                // Verificar si es el mismo cliente
+                if ($this->cliente_seleccionado['id'] == $id_c) {
+                    session()->flash('error_cliente', 'Este cliente ya fue seleccionado.');
+                    return;
+                } else {
+                    // Es un cliente diferente
+                    session()->flash('error_cliente', 'Solo se puede seleccionar un cliente. Elimine el cliente actual para seleccionar otro.');
+                    return;
+                }
+            }
+
+            // Obtener datos del cliente
+            $data = DB::table('clientes')
+                ->where('id_cliente', '=', $id_c)
+                ->first();
+
+            if ($data) {
+                // Guardar cliente seleccionado
+                $this->cliente_seleccionado = [
+                    'id_cliente' => $data->id_cliente,
+                    'cliente_codigo_cliente' => $data->cliente_codigo_cliente,
+                    'cliente_nombre_cliente' => $data->cliente_nombre_cliente
+                ];
+
+                // Limpiar búsqueda
+                $this->buscar_clientes_search = null;
+                $this->id_cliente = $id_c;
+
+            } else {
+                session()->flash('error_cliente', 'Cliente no encontrado.');
+                return;
+            }
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error. Por favor, inténtelo nuevamente.');
+            return;
+        }
+    }
+
+    public function eliminar_cliente_seleccionado(){
+        try {
+            // Limpiar cliente seleccionado
+            $this->cliente_seleccionado = null;
+            $this->id_cliente = null;
+            $this->buscar_clientes_search = null;
+
+            // Mensaje de confirmación (opcional)
+            session()->flash('success_cliente', 'Cliente eliminado correctamente.');
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error al eliminar el cliente.');
+            return;
+        }
     }
 
     public function deparTari(){
@@ -289,7 +388,7 @@ class Crearusuarios extends Component
                     'email',
                     Rule::unique('users')->ignore($this->id_users,'id_users'),
                 ],
-                'users_cargo' => 'nullable|string',
+                'users_cargo' => 'required|string',
             ], [
                 'id_departamento.required' => 'El departamento es obligatorio.',
                 'id_departamento.integer' => 'El departamento seleccionado no es válido.',
@@ -323,6 +422,7 @@ class Crearusuarios extends Component
                 'email.email' => 'Debe proporcionar un correo electrónico válido.',
                 'email.unique' => 'El correo electrónico ya está registrado.',
 
+                'users_cargo.required' => 'El cargo es obligatorio.',
                 'users_cargo.string' => 'El cargo debe ser una cadena de texto.',
 
                 'profile_picture.file' => 'Debe cargar un archivo válido.',
@@ -338,6 +438,13 @@ class Crearusuarios extends Component
             if ($this->rol_vendedor && count($this->vendedor_seleccionados) === 0) {
                 session()->flash('error_select_vendedor', 'Debe seleccionar al menos un vendedor.');
                 return;
+            }
+
+            if ($this->rol_cliente) {
+                if (empty($this->id_cliente)) {
+                    session()->flash('error_cliente', 'Debe seleccionar un cliente para el perfil de cliente.');
+                    return;
+                }
             }
 
             if (!$this->id_users) { // INSERT
@@ -357,6 +464,7 @@ class Crearusuarios extends Component
                 DB::beginTransaction();
 
                 $usuario = new User();
+                $usuario->id_cliente = $this->rol_cliente ? $this->id_cliente : null;
                 $usuario->id_departamento = $this->id_departamento;
                 $usuario->id_provincia = $this->id_provincia;
                 $usuario->id_distrito = $this->id_distrito;
@@ -407,6 +515,7 @@ class Crearusuarios extends Component
                 }
 
                 $usuario = User::findOrFail($this->id_users);
+                $usuario->id_cliente = $this->rol_cliente ? $this->id_cliente : null;
                 $usuario->id_departamento = $this->id_departamento;
                 $usuario->id_provincia = $this->id_provincia;
                 $usuario->id_distrito = $this->id_distrito;

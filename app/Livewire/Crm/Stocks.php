@@ -6,6 +6,8 @@ use App\Models\Stock;
 use App\Models\Stocklote;
 use App\Models\Logs;
 use App\Models\Server;
+use App\Models\Familia;
+use App\Models\Marca;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -28,11 +30,15 @@ class Stocks extends Component{
     private $stock;
     private $server;
     private $stocklote;
+    private $familia;
+    private $marca;
     public function __construct(){
         $this->logs = new Logs();
         $this->stock = new Stock();
         $this->server = new Server();
         $this->stocklote = new Stocklote();
+        $this->familia = new Familia();
+        $this->marca = new Marca();
     }
     public $search_stock;
     public $pagination_stock = 10;
@@ -40,10 +46,158 @@ class Stocks extends Component{
     public $listar_stock_lote = [];
     public $obtener_stock_lote = [];
     public $codigo_unitario_actual = '';
+    public $id_familia = '';
+    public $id_marca = '';
 
     public function render(){
-        $listar_stock_registrados = $this->stock->listar_stock_registrados($this->search_stock, $this->pagination_stock);
-        return view('livewire.crm.stocks', compact('listar_stock_registrados'));
+        $listar_stock_registrados = $this->stock->listar_stock_registrados($this->id_familia, $this->id_marca, $this->search_stock, $this->pagination_stock);
+        $listar_familia = $this->familia->listar_familia_activos();
+        $listar_marca = $this->marca->listar_marca_activos();
+        return view('livewire.crm.stocks', compact('listar_stock_registrados', 'listar_familia', 'listar_marca'));
+    }
+
+    public function actualizar_stock(){
+        try {
+
+            if (!Gate::allows('actualizar_stock')) {
+                session()->flash('error', 'No tiene permisos para actualizar los stock.');
+                return;
+            }
+
+            DB::beginTransaction();
+
+            $datosResult = $this->server->obtener_stock();
+            $this->listar_stock = $datosResult;
+
+            // Arrays temporales para guardar familias y marcas únicas
+            $familias_temp = [];
+            $marcas_temp = [];
+
+            // Recopilar familias y marcas únicas
+            foreach ($this->listar_stock as $lc) {
+                if (!empty($lc->FAMILIA) && !in_array($lc->FAMILIA, $familias_temp)) {
+                    $familias_temp[] = $lc->FAMILIA;
+                }
+
+                if (!empty($lc->MARCA) && !in_array($lc->MARCA, $marcas_temp)) {
+                    $marcas_temp[] = $lc->MARCA;
+                }
+            }
+
+            // Guardar familias que no existen
+            foreach ($familias_temp as $familia_concepto) {
+                $familiaExistente = Familia::where('familia_concepto', $familia_concepto)->first();
+
+                if (!$familiaExistente) {
+                    $microtime = microtime(true);
+                    $familia = new Familia();
+                    $familia->familia_concepto = $familia_concepto;
+                    $familia->familia_microtime = $microtime;
+                    $familia->familia_estado = 1;
+                    $familia->save();
+                }
+            }
+
+            // Guardar marcas que no existen
+            foreach ($marcas_temp as $marca_concepto) {
+                $marcaExistente = Marca::where('marca_concepto', $marca_concepto)->first();
+
+                if (!$marcaExistente) {
+                    $microtime = microtime(true);
+                    $marca = new Marca();
+                    $marca->marca_concepto = $marca_concepto;
+                    $marca->marca_microtime = $microtime;
+                    $marca->marca_estado = 1;
+                    $marca->save();
+                }
+            }
+
+            $contadorActualizados = 0;
+            $contadorCreados = 0;
+            $contadorIgnorados = 0;
+
+            foreach ($this->listar_stock as $lc) {
+                // Obtener IDs de familia y marca
+                $id_familia = null;
+                $id_marca = null;
+
+                if (!empty($lc->FAMILIA)) {
+                    $familia = Familia::where('familia_concepto', $lc->FAMILIA)->first();
+                    $id_familia = $familia ? $familia->id_familia : null;
+                }
+
+                if (!empty($lc->MARCA)) {
+                    $marca = Marca::where('marca_concepto', $lc->MARCA)->first();
+                    $id_marca = $marca ? $marca->id_marca : null;
+                }
+
+                // Buscar si ya existe un stock con este código
+                $stockExistente = Stock::where('stock_codigo_caja', $lc->CODIGO_CAJA)->first();
+
+                if ($stockExistente) {
+                    // Si el stock existe pero tiene estado 0, lo ignoramos
+                    if ($stockExistente->stock_estado == 0) {
+                        $contadorIgnorados++;
+                        continue;
+                    }
+                    $microtime = microtime(true);
+
+                    // Actualizar registro existente
+                    $stockExistente->id_familia = $id_familia ?? null;
+                    $stockExistente->id_marca = $id_marca ?? null;
+                    $stockExistente->stock_control = $lc->CONTROL ?: null;
+                    $stockExistente->stock_familia = $lc->FAMILIA ?: null;
+                    $stockExistente->stock_linea = $lc->LINEA ?: null;
+                    $stockExistente->stock_marca = $lc->MARCA ?: null;
+                    $stockExistente->stock_codigo_caja = $lc->CODIGO_CAJA ?: null;
+                    $stockExistente->stock_descripcion_producto = $lc->DESCRIPCION_PRODUCTO ?: null;
+                    $stockExistente->stock_unidad = $lc->UNIDAD ?: null;
+                    $stockExistente->stock_codigo_unitario = $lc->CODIGO_UNITARIO ?: null;
+                    $stockExistente->stock_factor = $lc->FACTOR ?: null;
+                    $stockExistente->stock_stock_caja = $lc->STOCK_CAJA ?: null;
+                    $stockExistente->stock_stock_unitario = $lc->STOCK_UNITARIO ?: null;
+                    $stockExistente->stock_microtime = $microtime;
+
+                    $stockExistente->save();
+                    $contadorActualizados++;
+                } else {
+                    // Crear nuevo registro
+                    $microtime = microtime(true);
+                    $stock = new Stock();
+                    $stock->id_users = Auth::id();
+                    $stock->id_familia = $id_familia ?? null;
+                    $stock->id_marca = $id_marca ?? null;
+                    $stock->stock_control = $lc->CONTROL ?: null;
+                    $stock->stock_familia = $lc->FAMILIA ?: null;
+                    $stock->stock_linea = $lc->LINEA ?: null;
+                    $stock->stock_marca = $lc->MARCA ?: null;
+                    $stock->stock_codigo_caja = $lc->CODIGO_CAJA ?: null;
+                    $stock->stock_descripcion_producto = $lc->DESCRIPCION_PRODUCTO ?: null;
+                    $stock->stock_unidad = $lc->UNIDAD ?: null;
+                    $stock->stock_codigo_unitario = $lc->CODIGO_UNITARIO ?: null;
+                    $stock->stock_factor = $lc->FACTOR ?: null;
+                    $stock->stock_stock_caja = $lc->STOCK_CAJA ?: null;
+                    $stock->stock_stock_unitario = $lc->STOCK_UNITARIO ?: null;
+                    $stock->stock_microtime = $microtime;
+                    $stock->stock_estado = 1;
+
+                    $stock->save();
+                    $contadorCreados++;
+                }
+            }
+
+            DB::commit();
+            // Mostrar mensaje con todos los contadores
+            session()->flash('success', "Sincronización completada: {$contadorActualizados} registros actualizados, {$contadorCreados} nuevos registros creados.");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error al actualizar los stock: ' . $e->getMessage());
+        }
+
+        // Refrescar la vista
+        $this->render();
     }
 
     public function generar_excel_stock(){
@@ -184,89 +338,6 @@ class Stocks extends Component{
             $this->logs->insertarLog($e);
             session()->flash('error', 'Ocurrió un error al generar el Excel. Por favor, inténtelo nuevamente.');
         }
-    }
-
-    public function actualizar_stock(){
-        try {
-
-            if (!Gate::allows('actualizar_stock')) {
-                session()->flash('error', 'No tiene permisos para actualizar los stock.');
-                return;
-            }
-
-            DB::beginTransaction();
-
-            $datosResult = $this->server->obtener_stock();
-            $this->listar_stock = $datosResult;
-
-            $contadorActualizados = 0;
-            $contadorCreados = 0;
-            $contadorIgnorados = 0;
-
-            foreach ($this->listar_stock as $lc) {
-                // Buscar si ya existe un vendedor con este código
-                $stockExistente = Stock::where('stock_codigo_caja', $lc->CODIGO_CAJA)->first();
-
-                if ($stockExistente) {
-                    // Si el vendedor existe pero tiene estado 0, lo ignoramos
-                    if ($stockExistente->stock_estado == 0) {
-                        $contadorIgnorados++;
-                        continue;
-                    }
-                    $microtime = microtime(true);
-
-                    // Actualizar registro existente
-                    $stockExistente->stock_control = $lc->CONTROL ?: null;
-                    $stockExistente->stock_familia = $lc->FAMILIA ?: null;
-                    $stockExistente->stock_linea = $lc->LINEA ?: null;
-                    $stockExistente->stock_marca = $lc->MARCA ?: null;
-                    $stockExistente->stock_codigo_caja = $lc->CODIGO_CAJA ?: null;
-                    $stockExistente->stock_descripcion_producto = $lc->DESCRIPCION_PRODUCTO ?: null;
-                    $stockExistente->stock_unidad = $lc->UNIDAD ?: null;
-                    $stockExistente->stock_codigo_unitario = $lc->CODIGO_UNITARIO ?: null;
-                    $stockExistente->stock_factor = $lc->FACTOR ?: null;
-                    $stockExistente->stock_stock_caja = $lc->STOCK_CAJA ?: null;
-                    $stockExistente->stock_stock_unitario = $lc->STOCK_UNITARIO ?: null;
-                    $stockExistente->stock_microtime = $microtime;
-
-                    $stockExistente->save();
-                    $contadorActualizados++;
-                } else {
-                    // Crear nuevo registro
-                    $microtime = microtime(true);
-                    $stock = new Stock();
-                    $stock->id_users = Auth::id();
-                    $stock->stock_control = $lc->CONTROL ?: null;
-                    $stock->stock_familia = $lc->FAMILIA ?: null;
-                    $stock->stock_linea = $lc->LINEA ?: null;
-                    $stock->stock_marca = $lc->MARCA ?: null;
-                    $stock->stock_codigo_caja = $lc->CODIGO_CAJA ?: null;
-                    $stock->stock_descripcion_producto = $lc->DESCRIPCION_PRODUCTO ?: null;
-                    $stock->stock_unidad = $lc->UNIDAD ?: null;
-                    $stock->stock_codigo_unitario = $lc->CODIGO_UNITARIO ?: null;
-                    $stock->stock_factor = $lc->FACTOR ?: null;
-                    $stock->stock_stock_caja = $lc->STOCK_CAJA ?: null;
-                    $stock->stock_stock_unitario = $lc->STOCK_UNITARIO ?: null;
-                    $stock->stock_microtime = $microtime;
-                    $stock->stock_estado = 1;
-
-                    $stock->save();
-                    $contadorCreados++;
-                }
-            }
-
-            DB::commit();
-            // Mostrar mensaje con todos los contadores
-            session()->flash('success', "Sincronización completada: {$contadorActualizados} registros actualizados, {$contadorCreados} nuevos registros creados.");
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            $this->logs->insertarLog($e);
-            session()->flash('error', 'Ocurrió un error al actualizar los stock: ' . $e->getMessage());
-        }
-
-        // Refrescar la vista
-        $this->render();
     }
 
     public function obtener_detalle_stock_lote($codigo){

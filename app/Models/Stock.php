@@ -17,20 +17,36 @@ class Stock extends Model{
         $this->logs = new Logs();
     }
 
-    public function listar_stock_registrados($search,$pagination,$order = 'asc'){
+    public function listar_stock_registrados($id_familia, $id_marca, $search, $pagination, $order = 'asc'){
         try {
-            $query = DB::table('stocks')
-                ->where('stock_estado', '=', 1)
-                ->where(function($q) use ($search) {
-                    $q->where('stock_codigo_caja', 'like', '%' . $search . '%')
-                        ->orWhere('stock_descripcion_producto', 'like', '%' . $search . '%')
-                        ->orWhereNull('stock_codigo_caja')
-                        ->orWhereNull('stock_descripcion_producto');
-                })->orderBy('id_stock', $order);
+            $query = DB::table('stocks as s')
+                ->join('familias as f', 's.id_familia', 'f.id_familia')
+                ->join('marcas as m', 's.id_marca', 'm.id_marca')
+                ->where('s.stock_estado', '=', 1);
+
+            // Filtro opcional por familia
+            if (!empty($id_familia) && $id_familia !== 'Seleccionar...') {
+                $query->where('s.id_familia', '=', $id_familia);
+            }
+
+            // Filtro opcional por marca
+            if (!empty($id_marca) && $id_marca !== 'Seleccionar...') {
+                $query->where('s.id_marca', '=', $id_marca);
+            }
+
+            // Filtro de búsqueda
+            $query->where(function($q) use ($search) {
+                $q->where('s.stock_codigo_caja', 'like', '%' . $search . '%')
+                    ->orWhere('s.stock_descripcion_producto', 'like', '%' . $search . '%')
+                    ->orWhereNull('s.stock_codigo_caja')
+                    ->orWhereNull('s.stock_descripcion_producto');
+            });
+
+            $query->orderBy('s.id_stock', $order);
 
             $result = $query->paginate($pagination);
 
-        }catch (\Exception $e){
+        } catch (\Exception $e){
             $this->logs->insertarLog($e);
             $result = [];
         }
