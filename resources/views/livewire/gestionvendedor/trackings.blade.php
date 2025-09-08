@@ -137,7 +137,19 @@
                                                         Estado de facturación
                                                         @break
                                                     @case(7)
-                                                        Guía en tránsito
+                                                        @php
+                                                            $despacho_ventas = \Illuminate\Support\Facades\DB::table('despacho_ventas as dv')
+                                                                ->join('despachos as d','dv.id_despacho','=','d.id_despacho')
+                                                                ->where('dv.id_guia','=',$me->id_guia)
+                                                                ->select('dv.despacho_detalle_estado_entrega')
+                                                                ->first();
+                                                        @endphp
+
+                                                        @if($despacho_ventas && $despacho_ventas->despacho_detalle_estado_entrega == 8)
+                                                            Guía entregada
+                                                        @else
+                                                            Guía en tránsito
+                                                        @endif
                                                         @break
                                                     @case(8)
                                                         Guía entregada

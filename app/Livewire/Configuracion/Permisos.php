@@ -31,12 +31,10 @@ class Permisos extends Component
         $this->list_permissions_by_submenus($id);
     }
 
-    public function render()
-    {
+    public function render(){
         return view('livewire.configuracion.permisos');
     }
-    public function form_permissions_per_view()
-    {
+    public function form_permissions_per_view(){
         try {
 
             if (!Gate::allows('create_permissions_submenus')) {
@@ -80,6 +78,7 @@ class Permisos extends Component
                         DB::commit();
                         $this->list_permissions_by_submenus($this->id_submenu_permisos);
                         $this->permissions_name = "";
+                        $this->descripcion = "";
                         session()->flash('success_permissions', 'Permiso creado correctamente.');
                     } else {
                         DB::rollBack();

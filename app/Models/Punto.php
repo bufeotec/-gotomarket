@@ -44,4 +44,30 @@ class Punto extends Model{
         }
         return $result;
     }
+
+    public function obtener_resultado_puntos($id_campania = null, $id_cliente = null){
+        try {
+            $query = DB::table('puntos as p')
+                ->join('campanias as c', 'p.id_campania', 'c.id_campania')
+                ->join('clientes as cl', 'p.id_cliente', 'cl.id_cliente')
+                ->where('p.punto_estado', '=', 1);
+
+            // Filtrar por campaña si se proporciona
+            if ($id_campania && $id_campania != '') {
+                $query->where('p.id_campania', $id_campania);
+            }
+
+            // Filtrar por cliente si se proporciona
+            if ($id_cliente && $id_cliente != '') {
+                $query->where('p.id_cliente', $id_cliente);
+            }
+
+            $result = $query->get();
+
+        } catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
 }

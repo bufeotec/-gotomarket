@@ -12,20 +12,20 @@
         </div>
     @endif
 
-        <style>
-            .iconsPreviewImage {
-                position: relative;
-                top: -12px;
-                left: 120px;
-                background: white;
-                width: 24px;
-                border-radius: 50%;
-                color: black;
-                cursor: pointer;
-                height: 24px;
-                text-align: center;
+    <style>
+        .iconsPreviewImage {
+            position: relative;
+            top: -12px;
+            left: 120px;
+            background: white;
+            width: 24px;
+            border-radius: 50%;
+            color: black;
+            cursor: pointer;
+            height: 24px;
+            text-align: center;
 
-        </style>
+    </style>
 
     <div class="card">
         <div class="card-body">
@@ -41,19 +41,26 @@
                                 <div class="row align-items-center">
                                     <div class="col-lg-7 col-md-7 col-sm-12 ">
                                         <div class="row">
-                                            <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                                            <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
                                                 <label for="name" class="form-label">Nombre (*)</label>
                                                 <x-input-general   type="text" id="name" wire:model="name" wire:input="generateUsername" />
-                                                @error('name')
-                                                <span class="message-error">{{ $message }}</span>
-                                                @enderror
+                                                @error('name')<span class="message-error">{{ $message }}</span>@enderror
                                             </div>
-                                            <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                                            <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
                                                 <label for="last_name" class="form-label">Apellido (*)</label>
                                                 <x-input-general  type="text" id="last_name" wire:model="last_name" wire:input="generateUsername"/>
-                                                @error('last_name')
-                                                <span class="message-error">{{ $message }}</span>
-                                                @enderror
+                                                @error('last_name')<span class="message-error">{{ $message }}</span>@enderror
+                                            </div>
+
+                                            <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
+                                                <label for="users_dni" class="form-label">DNI (*)</label>
+                                                <x-input-general  type="text" id="users_dni" wire:model="users_dni" onkeyup="validar_numeros(this.id)" />
+                                                @error('users_dni')<span class="message-error">{{ $message }}</span>@enderror
+                                            </div>
+                                            <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
+                                                <label for="users_phone" class="form-label">Celular (*)</label>
+                                                <x-input-general  type="text" id="users_phone" wire:model="users_phone" onkeyup="validar_numeros(this.id)" />
+                                                @error('users_phone')<span class="message-error">{{ $message }}</span>@enderror
                                             </div>
                                         </div>
                                     </div>
@@ -78,26 +85,60 @@
                                 <small class="text-primary" style="font-size: 11pt">Datos del usuario</small>
                                 <hr>
                             </div>
-                            <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
+
+                            <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                <label class="form-label" for="">Departamento (*)</label>
+                                <select class="form-select" name="id_departamento" id="id_departamento" wire:change="deparTari" wire:model="id_departamento">
+                                    <option value="">Seleccionar...</option>
+                                    @foreach($listar_departamento as $de)
+                                        <option value="{{ $de->id_departamento }}">{{ $de->departamento_nombre }}</option>
+                                    @endforeach
+                                </select>
+                                @error('id_departamento')<span class="message-error">{{ $message }}</span>@enderror
+                            </div>
+                            <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                <label class="form-label" for="id_provincia">Provincia (*)</label>
+                                <select class="form-select" name="id_provincia" id="id_provincia" wire:model="id_provincia" wire:change="proviTari" {{ empty($provincias) ? 'disabled' : '' }}>
+                                    <option value="">Seleccionar...</option>
+                                    @foreach($provincias as $pr)
+                                        <option value="{{ $pr->id_provincia }}" {{ $pr->id_provincia == $id_provincia ? 'selected' : '' }}>
+                                            {{ $pr->provincia_nombre }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('id_provincia')<span class="message-error">{{ $message }}</span>@enderror
+                            </div>
+                            <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                <label class="form-label" for="id_distrito">Distrito (*)</label>
+                                <select class="form-select" name="id_distrito" id="id_distrito" wire:model="id_distrito" {{ empty($distritos) ? 'disabled' : '' }}>
+                                    <option value="">Seleccionar...</option>
+                                    @foreach($distritos as $di)
+                                        <option value="{{ $di->id_distrito }}" {{ $di->id_distrito == $id_distrito ? 'selected' : '' }}>
+                                            {{ $di->distrito_nombre }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('id_distrito')<span class="message-error">{{ $message }}</span>@enderror
+                            </div>
+
+                            <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
                                 <label for="username" class="form-label">Nombre de Usuario (*)</label>
                                 <x-input-general type="text" id="username" wire:model="username"/>
                                 @error('username')<span class="message-error">{{ $message }}</span>@enderror
                             </div>
-                            <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
+                            <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
                                 <label for="email" class="form-label">Correo Electronico (*)</label>
                                 <x-input-general  type="email" id="email" wire:model="email"/>
                                 @error('email')<span class="message-error">{{ $message }}</span>@enderror
                             </div>
 
-                            <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
+                            <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
                                 <label for="users_cargo" class="form-label">Cargo</label>
                                 <x-input-general   type="text" id="users_cargo" wire:model="users_cargo"/>
-                                @error('users_cargo')
-                                <span class="message-error">{{ $message }}</span>
-                                @enderror
+                                @error('users_cargo')<span class="message-error">{{ $message }}</span>@enderror
                             </div>
 
-                            <div class="col-lg-6 col-md-6 col-sm-12 mb-2">
+                            <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
                                 <label for="password" class="form-label">{{!empty($id_users) ? 'Actualizar Contraseña': 'Contraseña'}}</label>
                                 <div class="input-group input-group-merge has-validation">
                                     <x-input-general type="password" id="password" wire:model="password" />
@@ -105,9 +146,7 @@
                                     <i class="fa-solid fa-eye"></i>
                                 </span>
                                 </div>
-                                @error('password')
-                                <span class="message-error">{{ $message }}</span>
-                                @enderror
+                                @error('password')<span class="message-error">{{ $message }}</span>@enderror
                             </div>
 
                             <div class="col-lg-12 col-md-12 col-sm-12">

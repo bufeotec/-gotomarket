@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\Usersvendedor;
 use App\Models\General;
 use App\Models\Vendedor;
+use App\Models\Departamento;
 use Livewire\WithFileUploads;
 use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
@@ -25,12 +26,14 @@ class Crearusuarios extends Component
     private $vendedor;
     private $usersvendedor;
     private $general;
+    private $departamento;
     public function __construct(){
         $this->logs = new Logs();
         $this->user = new User();
         $this->vendedor = new Vendedor();
         $this->usersvendedor = new Usersvendedor();
         $this->general = new General();
+        $this->departamento = new Departamento();
     }
 
     public function mount($id_users=null){
@@ -57,11 +60,54 @@ class Crearusuarios extends Component
     public $vendedor_seleccionados = [];
     public $perfil_seleccionado = [];
     public $rol_vendedor = false;
+    public $users_dni = "";
+    public $users_phone = "";
+    public $id_departamento = "";
+    public $id_provincia = "";
+    public $id_distrito = "";
+    public $provincias = [];
+    public $distritos = [];
 
     public function render(){
         $listar_vendedores = $this->vendedor->listra_vendedores_activos();
         $listar_perfiles = $this->vendedor->listra_perfiles_activos();
-        return view('livewire.configuracion.crearusuarios', compact('listar_vendedores', 'listar_perfiles'));
+
+        $listar_departamento = $this->departamento->lista_departamento();
+        return view('livewire.configuracion.crearusuarios', compact('listar_vendedores', 'listar_perfiles', 'listar_departamento'));
+    }
+
+    public function deparTari(){
+        $this->id_provincia = "";
+        $this->id_distrito = "";
+        $this->provincias = [];
+        $this->distritos = [];
+        $this->listar_provincias();
+    }
+
+    public function proviTari(){
+        $this->listar_distritos();
+    }
+
+    public function listar_provincias(){
+        $valor = $this->id_departamento;
+        if ($valor) {
+            $this->provincias = DB::table('provincias')->where('id_departamento', '=', $valor)->get();
+        } else {
+            $this->provincias = [];
+            $this->id_provincia = "";
+            $this->distritos = [];
+            $this->id_distrito = "";
+        }
+    }
+
+    public function listar_distritos(){
+        $valor = $this->id_provincia;
+        if ($valor) {
+            $this->distritos = DB::table('distritos')->where('id_provincia', '=', $valor)->get();
+        } else {
+            $this->distritos = [];
+            $this->id_distrito = "";
+        }
     }
 
     public function resetear_vista(){
@@ -76,6 +122,13 @@ class Crearusuarios extends Component
         $this->email = '';
         $this->last_name = '';
         $this->rol_vendedor = '';
+        $this->users_dni = '';
+        $this->users_phone = '';
+        $this->id_departamento = '';
+        $this->id_provincia = '';
+        $this->id_distrito = '';
+        $this->distritos = [];
+        $this->provincias = [];
     }
     public function cargar_datos(){
         $usersEditar = User::find($this->id_users);
@@ -91,9 +144,18 @@ class Crearusuarios extends Component
             $this->last_name = $usersEditar->last_name;
             $this->username = $usersEditar->username;
             $this->email = $usersEditar->email;
+            $this->users_dni = $usersEditar->users_dni;
+            $this->users_phone = $usersEditar->users_phone;
             $this->users_cargo = $usersEditar->users_cargo;
             $this->id_rol = $rol->id;
             $this->id_users = $usersEditar->id_users;
+            $this->id_departamento = $usersEditar->id_departamento;
+            $this->id_provincia = $usersEditar->id_provincia;
+            $this->id_distrito = $usersEditar->id_distrito;
+            // Cargar las provincias y distritos
+            $this->provincias = DB::table('provincias')->where('id_departamento', $this->id_departamento)->get();
+            $this->distritos = DB::table('distritos')->where('id_provincia', $this->id_provincia)->get();
+
             // Cargar imagen de perfil
             if (file_exists($usersEditar->profile_picture)) {
                 $this->ruta_img_default = $usersEditar->profile_picture;
@@ -208,9 +270,14 @@ class Crearusuarios extends Component
     public function save_usuario(){
         try {
             $this->validate([
+                'id_departamento' => 'required|integer',
+                'id_provincia' => 'required|integer',
+                'id_distrito' => 'required|integer',
                 'profile_picture' => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
                 'name' => 'required|string|max:255',
                 'last_name' => 'required|string|max:255',
+                'users_dni' => 'required|digits:8',
+                'users_phone' => 'required|digits:9',
                 'username' => [
                     'required',
                     'string',
@@ -224,6 +291,15 @@ class Crearusuarios extends Component
                 ],
                 'users_cargo' => 'nullable|string',
             ], [
+                'id_departamento.required' => 'El departamento es obligatorio.',
+                'id_departamento.integer' => 'El departamento seleccionado no es válido.',
+
+                'id_provincia.required' => 'La provincia es obligatoria.',
+                'id_provincia.integer' => 'La provincia seleccionada no es válida.',
+
+                'id_distrito.required' => 'El distrito es obligatorio.',
+                'id_distrito.integer' => 'El distrito seleccionado no es válido.',
+
                 'name.required' => 'El nombre es obligatorio.',
                 'name.string' => 'El nombre debe ser una cadena de texto válida.',
                 'name.max' => 'El nombre no puede exceder los 255 caracteres.',
@@ -231,6 +307,12 @@ class Crearusuarios extends Component
                 'last_name.required' => 'El apellido es obligatorio.',
                 'last_name.string' => 'El apellido debe ser una cadena de texto válida.',
                 'last_name.max' => 'El apellido no puede exceder los 255 caracteres.',
+
+                'users_dni.required' => 'El DNI es obligatorio.',
+                'users_dni.digits'   => 'El DNI debe tener exactamente 8 dígitos.',
+
+                'users_phone.required'=> 'El celular es obligatorio.',
+                'users_phone.digits'  => 'El celular debe tener exactamente 9 dígitos.',
 
                 'username.required' => 'El nombre de usuario es obligatorio.',
                 'username.string' => 'El nombre de usuario debe ser una cadena de texto válida.',
@@ -275,6 +357,9 @@ class Crearusuarios extends Component
                 DB::beginTransaction();
 
                 $usuario = new User();
+                $usuario->id_departamento = $this->id_departamento;
+                $usuario->id_provincia = $this->id_provincia;
+                $usuario->id_distrito = $this->id_distrito;
                 $usuario->name = $this->name;
                 $usuario->last_name = $this->last_name;
                 $usuario->email = $this->email;
@@ -287,6 +372,8 @@ class Crearusuarios extends Component
                     $usuario->profile_picture = $this->general->save_files($this->profile_picture, 'configuration/users');
                 }
                 $usuario->users_perfil_vendedor = $this->rol_vendedor ? 1 : 0;
+                $usuario->users_dni = $this->users_dni;
+                $usuario->users_phone = $this->users_phone;
 
                 if ($usuario->save()) {
                     // Asignar el perfil seleccionado (solo uno)
@@ -320,12 +407,17 @@ class Crearusuarios extends Component
                 }
 
                 $usuario = User::findOrFail($this->id_users);
+                $usuario->id_departamento = $this->id_departamento;
+                $usuario->id_provincia = $this->id_provincia;
+                $usuario->id_distrito = $this->id_distrito;
                 $usuario->name = $this->name;
                 $usuario->last_name = $this->last_name;
                 $usuario->email = $this->email;
                 $usuario->username = $this->username;
                 $usuario->users_cargo = $this->users_cargo ?? null;
                 $usuario->users_perfil_vendedor = $this->rol_vendedor ? 1 : 0;
+                $usuario->users_dni = $this->users_dni;
+                $usuario->users_phone = $this->users_phone;
 
                 if ($this->password) {
                     $usuario->password = bcrypt($this->password);

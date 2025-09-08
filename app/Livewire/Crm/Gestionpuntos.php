@@ -16,6 +16,7 @@ use App\Models\Puntodetalle;
 use App\Models\General;
 use App\Models\Campania;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 class Gestionpuntos extends Component{
     use WithPagination, WithoutUrlPagination;
@@ -52,6 +53,18 @@ class Gestionpuntos extends Component{
     public $buscar_clientes_search = null;
     public $listaClientesFiltro = array();
     public $abrirListasClienteModal = false;
+
+    // REGISTRAR PUNTOS MANUALMENTE
+    public $punto_detalle_motivo = "";
+    public $buscar_clientes_modal_rpm = null;
+    public $abrir_modal_rpm = null;
+    public $id_campania_rpm = "";
+    public $id_cliente_rpm = "";
+    public $listar_vendedor_cliente = [];
+    public $vendedores_disponibles = [];
+    public $vendedores_seleccionados = [];
+    public $vendedor_seleccionado = "";
+
     public function mount(){
         $this->listar_campanias = DB::table('campanias')
             ->where('campania_estado', 1)
@@ -71,6 +84,192 @@ class Gestionpuntos extends Component{
         $listar_campania_formulario = $this->campania->listar_campanias_activos();
         return view('livewire.crm.gestionpuntos', compact('listar_puntos', 'listar_campania_formulario'));
     }
+
+
+
+    public function descargar_formato_excel_puntos(){
+        try {
+            $resultados_puntos = $this->punto->obtener_resultado_puntos($this->id_campania_busqueda, $this->id_cliente_busqueda);
+
+            foreach ($resultados_puntos as $rp) {
+                $rp->puntos_detalles = DB::table('puntos_detalles')
+                    ->where('punto_detalle_estado', '=', 1)
+                    ->where('id_punto', '=', $rp->id_punto)
+                    ->get();
+            }
+
+            $spreadsheet = new Spreadsheet();
+            $sheet1 = $spreadsheet->getActiveSheet();
+            $sheet1->setTitle('Detalle Cliente');
+
+            $row = 1;
+
+            // ====== Título: nombre de campaña abarcando A:J ======
+            // Si no hay campaña filtrada o no hay resultados, usamos un genérico
+            $tituloCampania = 'REPORTE DE PUNTOS';
+            if (!empty($resultados_puntos) && isset($resultados_puntos[0]->campania_nombre)) {
+                $tituloCampania = 'CAMPAÑA: ' . $resultados_puntos[0]->campania_nombre;
+            } elseif (empty($resultados_puntos) && $this->id_campania_busqueda) {
+                $tituloCampania = 'CAMPAÑA: (sin resultados)';
+            }
+
+            $sheet1->mergeCells('A1:J1');
+            $sheet1->setCellValue('A1', $tituloCampania);
+            $sheet1->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+            $sheet1->getStyle('A1')->getAlignment()
+                ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+                ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+            $sheet1->getRowDimension(1)->setRowHeight(22);
+
+            $row++;
+
+            // ====== Encabezados (SIN columna CAMPAÑA) ======
+            // Fijas (A-D)
+            $sheet1->setCellValue('A'.$row, 'N°');
+            $sheet1->setCellValue('B'.$row, 'CÓDIGO');
+            $sheet1->setCellValue('C'.$row, 'CLIENTE');
+            $sheet1->setCellValue('D'.$row, 'FECHA REGISTRO');
+
+            // Detalle (E-J) — Nota: todo se corrió una a la IZQ
+            $sheet1->setCellValue('E'.$row, 'N°');
+            $sheet1->setCellValue('F'.$row, 'MOTIVO');
+            $sheet1->setCellValue('G'.$row, 'VENDEDOR');
+            $sheet1->setCellValue('H'.$row, 'PUNTOS GANADOS');
+            $sheet1->setCellValue('I'.$row, 'FECHA REGISTRO');
+            $sheet1->setCellValue('J'.$row, 'FECHA MODIFICACIÓN');
+
+            // ====== Anchos (manteniendo proporciones, ajustados al nuevo mapeo) ======
+            $sheet1->getColumnDimension('A')->setWidth(5);   // N°
+            $sheet1->getColumnDimension('B')->setWidth(10);  // CÓDIGO
+            $sheet1->getColumnDimension('C')->setWidth(30);  // CLIENTE (antes D)
+            $sheet1->getColumnDimension('D')->setWidth(17);  // FECHA REGISTRO (antes E)
+
+            $sheet1->getColumnDimension('E')->setWidth(5);   // N° detalle (antes F)
+            $sheet1->getColumnDimension('F')->setWidth(30);  // MOTIVO (antes G)
+            $sheet1->getColumnDimension('G')->setWidth(15);  // VENDEDOR (antes H)
+            $sheet1->getColumnDimension('H')->setWidth(20);  // PUNTOS GANADOS (antes I)
+            $sheet1->getColumnDimension('I')->setWidth(17);  // FECHA REGISTRO (antes J)
+            $sheet1->getColumnDimension('J')->setWidth(22);  // FECHA MODIFICACIÓN (antes K)
+
+            // Estilo encabezados
+            $headerStyle = [
+                'font' => ['bold' => true],
+                'fill' => [
+                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                    'startColor' => ['argb' => 'FFCCCCCC']
+                ],
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    ]
+                ]
+            ];
+            $sheet1->getStyle('A2:J2')->applyFromArray($headerStyle);
+
+            $row++;
+            $numero_punto = 1;
+
+            // ====== Datos ======
+            foreach ($resultados_puntos as $rp) {
+                $row_inicial = $row;
+
+                // Datos principales del punto (A-D) — sin CAMPAÑA
+                $sheet1->setCellValue('A'.$row, $numero_punto);
+                $sheet1->setCellValue('B'.$row, $rp->punto_codigo);
+                $sheet1->setCellValue('C'.$row, $rp->cliente_nombre_cliente);
+                $sheet1->setCellValue('D'.$row, date('d/m/Y', strtotime($rp->created_at)));
+
+                $primera_fila_detalle = true;
+                $numero_detalle = 1;
+
+                if (count($rp->puntos_detalles) > 0) {
+                    foreach ($rp->puntos_detalles as $detalle) {
+                        if (!$primera_fila_detalle) {
+                            $row++;
+                        }
+                        // Detalles (E-J)
+                        $sheet1->setCellValue('E'.$row, $numero_detalle);
+                        $sheet1->setCellValue('F'.$row, $detalle->punto_detalle_motivo);
+                        $sheet1->setCellValue('G'.$row, $detalle->punto_detalle_vendedor);
+                        $sheet1->setCellValue('H'.$row, $detalle->punto_detalle_punto_ganado);
+                        $sheet1->setCellValue('I'.$row, !empty($detalle->punto_detalle_fecha_registro) ? date('d/m/Y', strtotime($detalle->punto_detalle_fecha_registro)) : '-');
+                        $sheet1->setCellValue('J'.$row, !empty($detalle->punto_detalle_fecha_modificacion) ? date('d/m/Y', strtotime($detalle->punto_detalle_fecha_modificacion)) : '-');
+
+                        $primera_fila_detalle = false;
+                        $numero_detalle++;
+                    }
+                } else {
+                    // Sin detalles
+                    $sheet1->setCellValue('E'.$row, '-');
+                    $sheet1->setCellValue('F'.$row, 'Sin detalles');
+                    $sheet1->setCellValue('G'.$row, '-');
+                    $sheet1->setCellValue('H'.$row, '-');
+                    $sheet1->setCellValue('I'.$row, '-');
+                    $sheet1->setCellValue('J'.$row, '-');
+                }
+
+                // Si hay múltiples detalles, merge de A-D (antes era A-E)
+                if (count($rp->puntos_detalles) > 1) {
+                    $row_final = $row;
+                    $sheet1->mergeCells('A'.$row_inicial.':A'.$row_final);
+                    $sheet1->mergeCells('B'.$row_inicial.':B'.$row_final);
+                    $sheet1->mergeCells('C'.$row_inicial.':C'.$row_final);
+                    $sheet1->mergeCells('D'.$row_inicial.':D'.$row_final);
+
+                    $sheet1->getStyle('A'.$row_inicial.':D'.$row_final)
+                        ->getAlignment()
+                        ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                }
+
+                // Bordes por bloque (A:J)
+                $borderStyle = [
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                        ]
+                    ]
+                ];
+                $sheet1->getStyle('A'.$row_inicial.':J'.$row)->applyFromArray($borderStyle);
+
+                $row++;
+                $numero_punto++;
+            }
+            $row++;
+
+            // ====== Descarga ======
+            $fecha_actual = date('Y-m-d_H-i-s');
+            $nombre_excel = "reporte_puntos_{$fecha_actual}.xlsx";
+
+            $response = response()->stream(
+                function () use ($spreadsheet) {
+                    $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+                    $writer->save('php://output');
+                },
+                200,
+                [
+                    'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    'Content-Disposition' => 'attachment; filename=' . $nombre_excel,
+                ]
+            );
+
+            return $response;
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error al generar el Excel. Por favor, inténtelo nuevamente.');
+            return redirect()->back();
+        }
+    }
+
+
+
+
+
+
+
+
+
+
 
     // MÉTODOS ESPECÍFICOS PARA EL MODAL
     public function buscarClientesFiltroModal(){
@@ -166,6 +365,297 @@ class Gestionpuntos extends Component{
         }
     }
 
+    // MÉTODO ESPECÍFICOS PARA LE MODAL DE REGISTRAR PUNTOS MANUALMENTE
+    public function buscar_cliente_modal_registrar_puntos_manulmente(){
+        try {
+            $buscar = $this->buscar_clientes_modal_rpm ?? '';
+
+            $this->listaClientesFiltro = DB::table('clientes')
+                ->where('cliente_estado_registro','=', 1)
+                ->where(function($q) use ($buscar) {
+                    $q->where('cliente_codigo_cliente', 'like', '%' . $buscar . '%')
+                        ->orWhere('cliente_nombre_cliente', 'like', '%' . $buscar . '%');
+                })
+                ->limit(10)
+                ->get();
+
+            $this->abrir_modal_rpm = true;
+
+        } catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error. Por favor, inténtelo nuevamente.');
+            return;
+        }
+    }
+    public function seleccionar_cliente_modal_registrar_puntos_manualmente($id_cliente){
+        try {
+            $this->abrir_modal_rpm = false;
+            $id_c = base64_decode($id_cliente);
+
+            if ($id_c) {
+                $data = DB::table('clientes')
+                    ->where('id_cliente', '=', $id_c)
+                    ->first();
+
+                // Asignar siempre al modal
+                $this->buscar_clientes_modal_rpm = $data->cliente_codigo_cliente . ' - ' . $data->cliente_nombre_cliente;
+                $this->id_cliente_rpm = $id_c;
+
+                // Limpiar vendedores seleccionados cuando se cambia de cliente
+                $this->vendedores_seleccionados = [];
+                $this->vendedor_seleccionado = "";
+
+                // Cargar vendedores del cliente seleccionado
+                $this->cargar_vendedores_cliente($id_c);
+
+            } else {
+                session()->flash('error', 'Los parámetros del cliente no son válidos.');
+                return;
+            }
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            session()->flash('error', 'Ocurrió un error. Por favor, inténtelo nuevamente.');
+            return;
+        }
+    }
+
+    public function cargar_vendedores_cliente($id_cliente){
+        try {
+            $this->vendedores_disponibles = DB::table('vendedores_intranet')
+                ->where('id_cliente', '=', $id_cliente)
+                ->where('vendedor_intranet_estado', '=', 1)
+                ->select('id_vendedor_intranet', 'vendedor_intranet_dni', 'vendedor_intranet_nombre', 'vendedor_intranet_apellido')
+                ->get();
+
+        } catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            $this->vendedores_disponibles = [];
+            session()->flash('error', 'Error al cargar los vendedores del cliente.');
+        }
+    }
+
+    public function agregar_vendedor(){
+        try {
+            if(empty($this->vendedor_seleccionado)){
+                return;
+            }
+
+            // Buscar datos del vendedor
+            $vendedor = collect($this->vendedores_disponibles)->where('id_vendedor_intranet', $this->vendedor_seleccionado)->first();
+
+            if($vendedor){
+                // Agregar vendedor a la lista de seleccionados (permitiendo duplicados)
+                $this->vendedores_seleccionados[] = [
+                    'id_vendedor_intranet' => $vendedor->id_vendedor_intranet,
+                    'vendedor_intranet_nombre' => $vendedor->vendedor_intranet_nombre,
+                    'vendedor_intranet_apellido' => $vendedor->vendedor_intranet_apellido,
+                    'vendedor_intranet_dni' => $vendedor->vendedor_intranet_dni,
+                    'puntos' => 0
+                ];
+
+                // NO remover vendedor de la lista disponible para permitir selección múltiple
+                // Limpiar selección para permitir nueva selección
+                $this->vendedor_seleccionado = "";
+            }
+
+        } catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            session()->flash('error_modal', 'Error al agregar el vendedor.');
+        }
+    }
+
+    public function eliminar_vendedor($index){
+        try {
+            // Verificar que el índice existe
+            if(isset($this->vendedores_seleccionados[$index])){
+                unset($this->vendedores_seleccionados[$index]);
+                // Reindexar el array
+                $this->vendedores_seleccionados = array_values($this->vendedores_seleccionados);
+            }
+
+        } catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            session()->flash('error_modal', 'Error al eliminar el vendedor.');
+        }
+    }
+
+    public function registrar_puntos_manualmente(){
+        try {
+            $this->validate([
+                'id_campania_rpm' => 'required|integer',
+                'id_cliente_rpm'  => 'required|integer',
+                'punto_detalle_motivo'  => 'required|string',
+            ], [
+                'id_campania_rpm.required' => 'La campaña es un dato obligatorio.',
+                'id_campania_rpm.integer'  => 'El identificador debe ser un número entero.',
+
+                'id_cliente_rpm.required'  => 'El cliente es un dato obligatorio.',
+                'id_cliente_rpm.integer'   => 'El identificador debe ser un número entero.',
+
+                'punto_detalle_motivo.required'  => 'El motivo es un dato obligatorio.',
+                'punto_detalle_motivo.string'   => 'El motivo debe ser una cadena de texto.',
+            ]);
+
+            if (!Gate::allows('registrar_puntos_manualmente')) {
+                session()->flash('error_modal', 'No tiene permisos para crear.');
+                return;
+            }
+
+            // Validar que haya al menos un vendedor seleccionado
+            if (empty($this->vendedores_seleccionados) || count($this->vendedores_seleccionados) < 1) {
+                session()->flash('error_modal', 'Debe seleccionar al menos un vendedor para registrar puntos.');
+                return;
+            }
+
+            $microtime = microtime(true);
+            DB::beginTransaction();
+
+            // Reusar/crear cabecera "puntos"
+            $punto = Punto::where('id_campania', $this->id_campania_rpm)
+                ->where('id_cliente',  $this->id_cliente_rpm)
+                ->where('punto_estado', 1)
+                ->first();
+
+            if (!$punto) {
+                $ultimo = Punto::orderBy('id_punto', 'desc')->first();
+                $codigo_nuevo = $ultimo ? $ultimo->id_punto + 1 : 1;
+
+                $punto = new Punto();
+                $punto->id_users   = Auth::id();
+                $punto->id_campania = $this->id_campania_rpm;
+                $punto->id_cliente  = $this->id_cliente_rpm;
+                $punto->punto_codigo = 'P-000' . $codigo_nuevo;
+                $punto->punto_documento_excel = null;
+                $punto->punto_documento_pdf = null;
+                $punto->punto_microtime = $microtime;
+                $punto->punto_estado    = 1;
+                $punto->save();
+            }
+
+            $id_punto_a_usar = $punto->id_punto;
+
+            // Array para acumular puntos por DNI
+            $puntosAcumulados = [];
+
+            // Procesar cada vendedor seleccionado manualmente
+            foreach ($this->vendedores_seleccionados as $index => $vendedor) {
+                $dni    = $vendedor['vendedor_intranet_dni'] ?? null;
+                $rawPts = $vendedor['puntos'] ?? null;
+
+                if (!$dni || $rawPts === null || $rawPts === '') {
+                    session()->flash('error_modal', 'Todos los vendedores deben tener puntos asignados. Registro #' . ($index + 1));
+                    DB::rollBack();
+                    return;
+                }
+
+                // ==== Normalización de puntos ingresados manualmente ====
+                $s = trim((string)$rawPts);
+                if ($s === '') {
+                    session()->flash('error_modal', 'Los puntos del vendedor ' . $dni . ' no pueden estar vacíos. Registro #' . ($index + 1));
+                    DB::rollBack();
+                    return;
+                }
+                $s = preg_replace('/\s+/', '', $s);
+
+                $hasComma = strpos($s, ',') !== false;
+                $hasDot   = strpos($s, '.') !== false;
+
+                if ($hasComma && $hasDot) {
+                    $lastComma = strrpos($s, ',');
+                    $lastDot   = strrpos($s, '.');
+                    if ($lastComma > $lastDot) {
+                        // coma como decimal -> quitar puntos (miles) y cambiar coma por punto
+                        $s = str_replace('.', '', $s);
+                        $s = str_replace(',', '.', $s);
+                    } else {
+                        // punto como decimal -> quitar comas (miles)
+                        $s = str_replace(',', '', $s);
+                    }
+                } elseif ($hasComma) {
+                    // solo comas: decidir si miles o decimal por longitud del último tramo
+                    $parts = explode(',', $s);
+                    $lastLen = strlen(end($parts));
+                    if (count($parts) > 1 && $lastLen === 3) {
+                        $s = str_replace(',', '', $s); // miles
+                    } else {
+                        $s = str_replace(',', '.', $s); // decimal
+                    }
+                } elseif ($hasDot) {
+                    // solo puntos: decidir si miles o decimal
+                    $parts = explode('.', $s);
+                    $lastLen = strlen(end($parts));
+                    if (count($parts) > 1 && $lastLen === 3) {
+                        $s = str_replace('.', '', $s); // miles
+                    }
+                    // si es decimal ya está correcto
+                }
+
+                // Validar que quedó como número válido
+                if (!preg_match('/^-?\d+(\.\d+)?$/', $s)) {
+                    session()->flash('error_modal', 'El formato de puntos del vendedor ' . $dni . ' no es válido. Registro #' . ($index + 1));
+                    DB::rollBack();
+                    return;
+                }
+
+                // Convertir a float
+                $puntos = (float)$s;
+
+                // Validar que sea mayor a 0
+                if ($puntos <= 0) {
+                    session()->flash('error_modal', 'Los puntos del vendedor ' . $dni . ' deben ser mayor a 0. Registro #' . ($index + 1));
+                    DB::rollBack();
+                    return;
+                }
+
+                // Guardar detalle individual (cada registro por separado)
+                $detalle = new Puntodetalle();
+                $detalle->id_users = Auth::id();
+                $detalle->id_punto = $id_punto_a_usar;
+                $detalle->punto_detalle_motivo = $this->punto_detalle_motivo;
+                $detalle->punto_detalle_vendedor = $dni;
+                $detalle->punto_detalle_punto_ganado = $puntos;
+                $detalle->punto_detalle_fecha_registro = now('America/Lima')->toDateString();
+                $detalle->punto_detalle_fecha_modificacion = null;
+                $detalle->punto_detalle_microtime = $microtime;
+                $detalle->punto_detalle_estado  = 1;
+                $detalle->save();
+
+                // Acumular puntos por DNI para actualizar una sola vez
+                if (!isset($puntosAcumulados[$dni])) {
+                    $puntosAcumulados[$dni] = 0;
+                }
+                $puntosAcumulados[$dni] += $puntos;
+            }
+
+            // Actualizar puntos acumulados por vendedor (una sola vez por DNI)
+            foreach ($puntosAcumulados as $dni => $totalPuntos) {
+                $vendedorExiste = DB::table('vendedores_intranet')
+                    ->where('vendedor_intranet_dni', $dni)
+                    ->where('vendedor_intranet_estado', 1)
+                    ->exists();
+
+                if ($vendedorExiste) {
+                    DB::table('vendedores_intranet')
+                        ->where('vendedor_intranet_dni', $dni)
+                        ->where('vendedor_intranet_estado', 1)
+                        ->increment('vendedor_intranet_punto', (float)$totalPuntos, [
+                            'updated_at' => now('America/Lima')
+                        ]);
+                }
+            }
+
+            DB::commit();
+            $this->dispatch('hide_modal_registrar_puntos_manualmente');
+            session()->flash('success', 'Puntos guardados correctamente. Se procesaron ' . count($this->vendedores_seleccionados) . ' registros.');
+            $this->clear_form();
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logs->insertarLog($e);
+            session()->flash('error_modal', 'Ocurrió un error: ' . $e->getMessage());
+        }
+    }
+
     public function clear_form(){
         $this->id_punto = "";
         $this->archivo_excel = "";
@@ -173,6 +663,15 @@ class Gestionpuntos extends Component{
         $this->buscar_clientes = "";
         $this->id_cliente = "";
         $this->id_campania = "";
+
+        $this->id_campania_rpm = "";
+        $this->id_cliente_rpm = "";
+        $this->punto_detalle_motivo = "";
+        $this->listar_vendedor_cliente = [];
+        $this->vendedores_disponibles = [];
+        $this->vendedores_seleccionados = [];
+        $this->vendedor_seleccionado = "";
+        $this->buscar_clientes_modal_rpm = "";
     }
 
     public function save_carga_excel(){
@@ -183,6 +682,7 @@ class Gestionpuntos extends Component{
             ], [
                 'id_campania.required' => 'La campaña es un dato obligatorio.',
                 'id_campania.integer'  => 'El identificador debe ser un número entero.',
+
                 'id_cliente.required'  => 'El cliente es un dato obligatorio.',
                 'id_cliente.integer'   => 'El identificador debe ser un número entero.',
             ]);

@@ -22,6 +22,7 @@ class Reportescampanias extends Component{
     public $paginate_reporte = 10;
     public $id_campania = "";
     public $id_cliente = "";
+    public $vendedores_modal = [];
 
     public function render(){
         $listar_campania = $this->campania->listar_campanias_ejecucion();
@@ -105,6 +106,37 @@ class Reportescampanias extends Component{
 
         return view('livewire.crm.reportescampanias', compact('listar_campania', 'resultados'));
     }
+
+    public function ver_puntos($id_cl){
+        try {
+            // Validación rápida: debe haber campaña seleccionada
+            if (empty($this->id_campania)) {
+                session()->flash('error_modal_doc', 'Primero seleccione una campaña.');
+                $this->vendedores_modal = [];
+                return;
+            }
+
+            $this->id_cliente = $id_cl;
+            $vendedores = $this->campania->obtener_vendedores_con_puntos($this->id_cliente, $this->id_campania);
+
+            // Normaliza a un arreglo simple para la vista
+            $this->vendedores_modal = collect($vendedores)->map(function ($v) {
+                return [
+                    'vendedor_nombre' => $v->vendedor_nombre,
+                    'total_puntos_ganados' => $v->total_puntos_ganados,
+                ];
+            })->toArray();
+
+            if (empty($this->vendedores_modal)) {
+                session()->flash('error_modal_doc', 'No hay vendedores con puntos asignados en esta campaña.');
+            }
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            session()->flash('error_modal_doc', 'No se pudieron cargar los puntos. Intente nuevamente.');
+            $this->vendedores_modal = [];
+        }
+    }
+
 
     public function generar_excel_detalle_cliente($id_cliente){
         try {
@@ -192,12 +224,8 @@ class Reportescampanias extends Component{
                         $primera_fila = false;
                     }
 
-                    // CAMBIO: Usar el nombre del vendedor desde la consulta con puntos
                     $sheet1->setCellValue('D'.$row, $vendedor->vendedor_nombre ?: '-');
-
-                    // CAMBIO: PUNTOS GANADOS - usar la suma de puntos desde puntos_detalles
                     $sheet1->setCellValue('E'.$row, $vendedor->total_puntos_ganados ?: 0);
-
                     // PUNTOS CANJEADOS - mantener la lógica original
                     $puntos_canjeados = $this->campania->obtener_puntos_canjeados_vendedor($vendedor->vendedor_dni, $this->id_campania);
                     $sheet1->setCellValue('F'.$row, $puntos_canjeados);

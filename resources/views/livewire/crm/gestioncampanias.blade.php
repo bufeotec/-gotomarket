@@ -264,6 +264,7 @@
                                                         <div class="d-flex align-items-center gap-2">
                                                             <a href="{{ asset($doc->campania_documento_adjunto) }}"
                                                                target="_blank"
+                                                               style="font-size: 18px;"
                                                                class="text-decoration-none"
                                                                title="{{ basename($doc->campania_documento_adjunto) }}">
                                                                 <i class="fa-solid {{ $icono }}"></i>

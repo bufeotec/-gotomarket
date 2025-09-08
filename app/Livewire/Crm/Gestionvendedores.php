@@ -215,7 +215,7 @@ class Gestionvendedores extends Component{
     public function edit_data($id){
         $vendedor_edit = Vendedorintranet::find(base64_decode($id));
         if ($vendedor_edit){
-            $this->id_vendedor_intranet = $vendedor_edit->id_vendedor_intranet; // Guardar ID para actualizar
+            $this->id_vendedor_intranet = $vendedor_edit->id_vendedor_intranet;
             $this->id_rol = $vendedor_edit->id_perfil;
             $this->id_departamento = $vendedor_edit->id_departamento;
             $this->id_provincia = $vendedor_edit->id_provincia;
@@ -381,11 +381,16 @@ class Gestionvendedores extends Component{
                     // Después de guardar el vendedor, crear el usuario
                     $user = new User();
                     $user->id_vendedor_intranet = $save_vendedor->id_vendedor_intranet;
+                    $user->id_departamento = $this->id_departamento;
+                    $user->id_provincia = $this->id_provincia;
+                    $user->id_distrito = $this->id_distrito;
                     $user->name = $this->vendedor_intranet_nombre;
                     $user->last_name = $this->vendedor_intranet_apellido;
                     $user->email = $this->vendedor_intranet_correo;
                     $user->username = $this->vendedor_intranet_correo;
                     $user->password = bcrypt($this->vendedor_intranet_dni);
+                    $user->users_dni = $this->vendedor_intranet_dni;
+                    $user->users_phone = $this->vendedor_intranet_celular;
 
                     if ($user->save()) {
                         // Asignar rol al usuario
@@ -435,7 +440,5 @@ class Gestionvendedores extends Component{
             session()->flash('error', 'Ocurrió un error al guardar el registro. Por favor, inténtelo nuevamente.');
         }
     }
-
-    // PARA EL BUSCADOR DE LA VISTA:
 
 }

@@ -166,9 +166,102 @@
                                                         <td>{{$ta->guia_nro_doc_ref}}</td>
                                                         <td>S/ {{$general->formatoDecimal($ta->guia_importe_total_sin_igv)}}</td>
                                                         <td>{{date('d-m-Y',strtotime($listar_detalle_despacho->programacion_fecha))}}</td>
-                                                        <td>{{$general->formatoDecimal($ta->peso_total_kilos)}} Kg</td>                                                        <td>
-                                                            <span class="font-bold badge  {{$ta->guia_estado_aprobacion == 8 ? 'bg-label-success' : 'bg-label-danger'}}">
-                                                                {{$ta->guia_estado_aprobacion == 8 ? 'ENTREGADO ' : 'NO ENTREGADO'}}
+                                                        <td>{{$general->formatoDecimal($ta->peso_total_kilos)}} Kg</td>
+                                                        <td>
+                                                            <span class="d-block tamanhoTablaComproantes">
+                                                                @switch($ta->guia_estado_aprobacion)
+                                                                    @case(1)
+                                                                        Enviado a Créditos
+                                                                        @break
+                                                                    @case(2)
+                                                                        Enviado a Despacho
+                                                                        @break
+                                                                    @case(3)
+                                                                        Listo para despacho
+                                                                        @break
+                                                                    @case(4)
+                                                                        Pendiente de aprobación de despacho
+                                                                        @break
+                                                                    @case(5)
+                                                                        Aceptado por Créditos
+                                                                        @break
+                                                                    @case(6)
+                                                                        Estado de facturación
+                                                                        @break
+                                                                    @case(7)
+                                                                        @php
+                                                                            $despacho_ventas = \Illuminate\Support\Facades\DB::table('despacho_ventas as dv')
+                                                                                ->join('despachos as d','dv.id_despacho','=','d.id_despacho')
+                                                                                ->where('dv.id_guia','=',$ta->id_guia)
+                                                                                ->select('dv.despacho_detalle_estado_entrega')
+                                                                                ->first();
+                                                                        @endphp
+
+                                                                        @if($despacho_ventas && $despacho_ventas->despacho_detalle_estado_entrega == 8)
+                                                                            Guía entregada
+                                                                        @else
+                                                                            Guía en tránsito
+                                                                        @endif
+                                                                        @break
+                                                                    @case(8)
+                                                                        Guía entregada
+                                                                        @break
+                                                                    @case(9)
+                                                                        Despacho aprobado
+                                                                        @break
+                                                                    @case(10)
+                                                                        Despacho rechazado
+                                                                        @break
+                                                                    @case(11)
+                                                                        Guía no entregada
+                                                                        @break
+                                                                    @case(12)
+                                                                        Guía anulada
+                                                                        @break
+                                                                    @case(13)
+                                                                        Registrada en Intranet
+                                                                        @break
+                                                                    @case(14)
+                                                                        Guía anulada por NC
+                                                                        @break
+                                                                    @case(15)
+                                                                        Pendiente de NC
+                                                                        @break
+                                                                    @case(20)
+                                                                        @php
+                                                                            $despacho_ventas_l = \Illuminate\Support\Facades\DB::table('despacho_ventas as dv')
+                                                                            ->join('despachos as d','dv.id_despacho','=','d.id_despacho')
+                                                                            ->where('dv.id_guia','=',$ta->id_guia)
+                                                                            ->where('d.id_tipo_servicios','=',1)
+                                                                            ->first();
+
+                                                                            $despacho_ventas_p = \Illuminate\Support\Facades\DB::table('despacho_ventas as dv')
+                                                                            ->join('despachos as d','dv.id_despacho','=','d.id_despacho')
+                                                                            ->where('dv.id_guia','=',$ta->id_guia)
+                                                                            ->where('d.id_tipo_servicios','=',2)
+                                                                            ->first();
+
+                                                                            if($despacho_ventas_l->despacho_detalle_estado_entrega == 0 && $despacho_ventas_p->despacho_detalle_estado_entrega == 0
+                                                                            && $despacho_ventas_l->despacho_estado_aprobacion == 1 && $despacho_ventas_p->despacho_estado_aprobacion == 1
+                                                                            ){
+                                                                                echo 'Despacho aprobado';
+                                                                            } else if ($despacho_ventas_l->despacho_detalle_estado_entrega == 0 && $despacho_ventas_p->despacho_detalle_estado_entrega == 0
+                                                                             && $despacho_ventas_l->despacho_estado_aprobacion == 2 && $despacho_ventas_p->despacho_estado_aprobacion == 1
+                                                                            ){
+                                                                                echo 'Guía en tránsito asd';
+                                                                            } else if ($despacho_ventas_l->despacho_detalle_estado_entrega == 8 && $despacho_ventas_p->despacho_detalle_estado_entrega == 0
+                                                                            && $despacho_ventas_l->despacho_estado_aprobacion == 3 && $despacho_ventas_p->despacho_estado_aprobacion == 2
+                                                                            ){
+                                                                                echo 'Guía en tránsito a';
+                                                                            } else if ($despacho_ventas_l->despacho_detalle_estado_entrega == 8 && $despacho_ventas_p->despacho_detalle_estado_entrega == 8
+                                                                             && $despacho_ventas_l->despacho_estado_aprobacion == 3 && $despacho_ventas_p->despacho_estado_aprobacion == 3){
+                                                                                echo 'Guía entregada';
+                                                                            }
+                                                                        @endphp
+                                                                        @break
+                                                                    @default
+                                                                        Estado desconocido
+                                                                @endswitch
                                                             </span>
                                                         </td>
                                                     </tr>
@@ -278,6 +371,7 @@
             <span class="message-error">{{ $message }}</span>
             @enderror
         </div>
+
         <div class="col-lg-2 col-md-3 col-sm-12 mb-1">
             <label for="selectTipoSerivicio" class="form-label">Tipo</label>
             <select name="selectTipoSerivicio" id="selectTipoSerivicio" class="form-select" wire:model="selectTipoSerivicio" wire:change="{{$id_liquidacion_edit ? 'seleccion_trans_edit' : 'seleccion_trans'}}">
@@ -287,21 +381,27 @@
                 @endforeach
             </select>
         </div>
+
         <div class="col-lg-2 col-md-3 col-sm-12 mb-1">
             <label for="date_desde" class="form-label">Desde</label>
             <x-input-general  type="date" name="date_desde" id="date_desde" wire:model="date_desde" wire:change="{{$id_liquidacion_edit ? 'seleccion_trans_edit' : 'seleccion_trans'}}"/>
         </div>
+
         <div class="col-lg-2 col-md-3 col-sm-12 mb-1">
             <label for="date_hasta" class="form-label">Hasta</label>
             <x-input-general  type="date" name="date_hasta" id="date_hasta" wire:model="date_hasta" wire:change="{{$id_liquidacion_edit ? 'seleccion_trans_edit' : 'seleccion_trans'}}"/>
         </div>
+
+{{--        <div class="col-lg-2 col-md-3 col-sm-12 mt-4 mb-1 text-end">--}}
+{{--            <a class="btn btn-sm bg-primary text-white" wire:click="buscar_liquidacion"><i class="fa-solid fa-magnifying-glass"></i> Buscar</a>--}}
+{{--        </div>--}}
     </div>
     @if($id_transportistas)
         @php
             $conteoLiquida = \Illuminate\Support\Facades\DB::table('despachos as d')->where('d.despacho_liquidado', '=',0)
                 ->where('d.id_transportistas', $id_transportistas)
                 ->where('d.despacho_estado', 1)
-                ->where('d.despacho_estado_aprobacion','=',3)->count();
+                ->whereIn('d.despacho_estado_aprobacion', [3, 4])->count();
         @endphp
         <p class="mt-2">Existe <b class="colorgotomarket">{{$conteoLiquida}}</b> despachos que aún están pendientes de liquidación.</p>
     @endif
