@@ -30,11 +30,14 @@
         <div id="main" class='layout-navbar'>
             @include('layouts.parts.topnavbar')
 
-            <div id="main-content">
+            <div id="maincontent">
                 @yield('content')
-
-                @include('layouts.parts.footer')
             </div>
+            <div style="padding: 0 2rem">
+                @include('layouts.parts.footer')
+
+            </div>
+
         </div>
     </div>
     @livewireScripts
