@@ -525,6 +525,10 @@
                                                     </div>
                                                 @endif
                                             </td>
+                                        @elseif($ta->id_tipo_servicios == 1)
+                                            <td>
+                                                -
+                                            </td>
                                         @endif
                                         <td>
                                             <span class="font-bold badge {{$ta->tarifa_estado_aprobacion == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">

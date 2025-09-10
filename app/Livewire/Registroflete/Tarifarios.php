@@ -262,10 +262,12 @@ class Tarifarios extends Component
                     ->where('id_transportistas', '=', $this->id_transportistas)
                     ->where('id_tipo_servicio', '=', $this->id_tipo_servicio);
                 if ($this->id_tipo_servicio == 2){
-                    $validar->where('id_departamento','=',$this->id_departamento)->where('id_provincia','=',$this->id_provincia);
+                    $validar->where('id_departamento','=',$this->id_departamento)
+                        ->where('id_provincia','=',$this->id_provincia);
                 }
                 $validar->where('tarifa_cap_max', '<=', $this->tarifa_cap_max)
-                    ->where('tarifa_cap_min', '>=', $this->tarifa_cap_min);
+                    ->where('tarifa_cap_min', '>=', $this->tarifa_cap_min)
+                    ->where('tarifa_estado', '=', 1);
 
                 $validar =  $validar->first();
 
@@ -366,10 +368,12 @@ class Tarifarios extends Component
                     ->where('id_transportistas', '=', $this->id_transportistas)
                     ->where('id_tipo_servicio', '=', $this->id_tipo_servicio);
                      if ($this->id_tipo_servicio == 2){
-                         $validar->where('id_departamento','=',$this->id_departamento)->where('id_provincia','=',$this->id_provincia);
+                         $validar->where('id_departamento','=',$this->id_departamento)
+                             ->where('id_provincia','=',$this->id_provincia);
                      }
                 $validar->where('tarifa_cap_max', '<=', $this->tarifa_cap_max)
-                    ->where('tarifa_cap_min', '>=', $this->tarifa_cap_min);
+                    ->where('tarifa_cap_min', '>=', $this->tarifa_cap_min)
+                    ->where('tarifa_estado', '=', 1);
 
                 $validar = $validar->first();
 
