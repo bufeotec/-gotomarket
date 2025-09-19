@@ -357,4 +357,41 @@ class Campania extends Model{
             return null;
         }
     }
+
+
+    // APIS
+    public function listar_campanias_por_usuario($id_users = null){
+        try {
+            if (is_null($id_users)) {
+                return [];
+            }
+
+            // Obtener el id_cliente del vendedor a través de las relaciones
+            $id_cliente = DB::table('users as u')
+                ->join('vendedores_intranet as vt', 'u.id_vendedor_intranet', '=', 'vt.id_vendedor_intranet')
+                ->where('u.id_users', $id_users)
+                ->whereNotNull('u.id_vendedor_intranet')
+                ->value('vt.id_cliente');
+
+            // Solo aplicar el filtro si se encontró un id_cliente válido
+            if (is_null($id_cliente)) {
+                return [];
+            }
+
+            // Consulta para obtener las campañas filtradas por usuario
+            $result = DB::table('campanias as c')
+                ->join('puntos as p', 'c.id_campania', '=', 'p.id_campania')
+                ->where('c.campania_estado', '=', 1)
+                ->where('p.id_cliente', $id_cliente)
+                ->select('c.id_campania', 'c.campania_nombre')
+                ->distinct()
+                ->get();
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+
+        return $result;
+    }
 }

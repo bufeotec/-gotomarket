@@ -129,4 +129,18 @@ class User extends Authenticatable
         return $result;
     }
 
+
+
+    // APIS
+    public function obtener_usuario_api($email){
+        try {
+            return DB::table('users')
+                ->select('id_users', 'name', 'last_name', 'email', 'username', 'profile_picture', 'users_phone', 'users_status')
+                ->where('email', $email)
+                ->first();
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
 }
