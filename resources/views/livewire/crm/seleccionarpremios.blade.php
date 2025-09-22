@@ -1,5 +1,9 @@
 <div>
 
+    @php
+        $general = new \App\Models\General();
+    @endphp
+
 {{--    MODAL VER SELECCIÓN--}}
     <x-modal-general wire:ignore.self>
         <x-slot name="id_modal">modal_ver_seleccion</x-slot>
@@ -24,7 +28,7 @@
             <form wire:submit.prevent="save_canjear_puntos">
                 <div class="row">
                     <div class="col-lg-12 col-md-12 col-sm-12 mb-3 text-end">
-                        <h6 class="me-3">Puntos Ganados: <b class="text-success ms-2">{{number_format($puntos_ganados, 2)}}</b></h6>
+                        <h6 class="me-3">Puntos Ganados: <b class="text-success ms-2">{{number_format($puntos_ganados, 0)}}</b></h6>
                     </div>
 
                     <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
@@ -58,27 +62,28 @@
                                             <td>{{ $conteo }}</td>
                                             <td>{{ $premio['premio_codigo'] }}</td>
                                             <td>{{ $premio['premio_descripcion'] }}</td>
-                                            <td>{{ $unit }} pts</td>
+                                            <td>{{ number_format($unit, 0) }} pts</td>
                                             <td>
-                                                <input type="number"
-                                                       min="0"
+                                                <input type="text"
                                                        value="{{ $cant }}"
                                                        @disabled($campania_cerrada)
+                                                       onkeyup="validar_numeros(this.id)"
+                                                       id="actualizarCantidad('{{ $id }}', $event.target.value)"
                                                        wire:change="actualizarCantidad('{{ $id }}', $event.target.value)"
                                                        class="form-control form-control-sm">
                                                 <small class="text-muted d-block mt-1">
                                                     Actual: <b>{{ $cant }}</b>
                                                 </small>
                                             </td>
-                                            <td>{{ $total }} pts</td>
+                                            <td>{{ number_format($total, 0) }} pts</td>
                                             <td>
                                                 @if($campania_cerrada)
-                                                    <span class="badge bg-secondary">Premio ya canjeado, cierre de campaña</span>
+                                                    <span class="badge bg-secondary">Canjeado</span>
                                                 @else
                                                     @if($yaCanjeado)
-                                                        <span class="badge bg-info">Ya canjeado</span>
+                                                        <span class="badge bg-info">Seleccionado</span>
                                                     @else
-                                                        <span class="badge bg-success">Nuevo</span>
+                                                        <span class="badge bg-success">Pre-Seleccionado</span>
                                                     @endif
                                                 @endif
                                             </td>
@@ -108,10 +113,10 @@
                     </div>
 
                     <div class="col-lg-12 col-md-12 col-sm-12 mb-2 text-end">
-                        <h6 class="me-3">Puntos Canjeados: <b class="text-danger ms-2">{{number_format($puntos_canjeados, 2)}}</b></h6>
+                        <h6 class="me-3">Puntos Canjeados: <b class="text-danger ms-2">{{number_format($puntos_canjeados, 0)}}</b></h6>
                     </div>
                     <div class="col-lg-12 col-md-12 col-sm-12 mb-2 text-end">
-                        <h6 class="me-3">Puntos Restantes: <b class="text-primary ms-2">{{number_format($puntos_restantes, 2)}}</b></h6>
+                        <h6 class="me-3">Puntos Restantes: <b class="text-primary ms-2">{{number_format($puntos_restantes, 0)}}</b></h6>
                     </div>
 
                     <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-end">
@@ -229,27 +234,27 @@
        </div>
 
        <div class="col-lg-2 col-md-2 col-sm-12 mt-4 mb-3">
-           <a class="btn btn-sm bg-success text-white" data-bs-toggle="modal" data-bs-target="#modal_descargar_campania"><i class="fa-solid fa-download"></i> Descargar Archivos</a>
+           <a class="btn btn-sm bg-success text-white" data-bs-toggle="modal" data-bs-target="#modal_descargar_campania"><i class="fa-solid fa-download"></i> Archivos de Campaña</a>
        </div>
 
        <div class="col-lg-2 col-md-2 col-sm-12 mb-3 d-flex flex-column align-items-center justify-content-center">
            <p class="mb-2">Pts. Ganados</p>
            <div class="d-flex align-items-center justify-content-center rounded-circle border border-dark" style="width: 80px; height: 80px; background: white">
-               <h6 class="text-success m-0 p-0">{{number_format($puntos_ganados, 2)}}</h6>
+               <h6 class="text-success m-0 p-0">{{number_format($puntos_ganados, 0)}}</h6>
            </div>
        </div>
 
        <div class="col-lg-2 col-md-2 col-sm-12 mb-3 d-flex flex-column align-items-center justify-content-center">
            <p class="mb-2">Pts. Canjeados</p>
            <div class="d-flex align-items-center justify-content-center rounded-circle border border-dark" style="width: 80px; height: 80px; background: white">
-               <h6 class="text-danger m-0 p-0">{{number_format($puntos_canjeados, 2)}}</h6>
+               <h6 class="text-danger m-0 p-0">{{number_format($puntos_canjeados, 0)}}</h6>
            </div>
        </div>
 
        <div class="col-lg-2 col-md-2 col-sm-12 mb-3 d-flex flex-column align-items-center justify-content-center">
            <p class="mb-2">Pts. Restantes</p>
            <div class="d-flex align-items-center justify-content-center rounded-circle border border-dark" style="width: 80px; height: 80px; background: white">
-               <h6 class="text-primary m-0 p-0">{{number_format($puntos_restantes, 2)}}</h6>
+               <h6 class="text-primary m-0 p-0">{{number_format($puntos_restantes, 0)}}</h6>
            </div>
        </div>
 
@@ -259,10 +264,20 @@
            </div>
        @endif
 
-       <div class="col-lg-12 col-md-12 col-sm-12 mt-4 text-end mb-2">
+       <div class="col-lg-12 col-md-12 col-sm-12 mt-4 text-end mb-3">
            <a href="{{route('CRM.sistema_puntos_vendedor_cliente')}}" class="btn bg-secondary text-white"><i class="fa-solid fa-arrow-left me-2"></i> Regresar</a>
        </div>
    </div>
+
+    @if(empty(!$id_campania))
+        <div class="row">
+            <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                <h6>Fecha Final de Canje: <b>{{ $campania_fecha_fin ? $general->obtenerNombreFecha($campania_fecha_fin, 'Date', 'Date') : '-' }}</b></h6>
+            </div>
+        </div>
+    @endif
+
+
 
     <!-- loading -->
     <div wire:loading wire:target="id_campania, seleccionar_premio, eliminarPremio" class="overlay__eliminar">
@@ -284,11 +299,16 @@
                             @php
                                 $yaCanjeado = isset($premios_ya_canjeados[$premio->id_premio])
                                               && !in_array($premio->id_premio, $premios_canjeados_deseleccionados ?? [], true);
-
+                                // Checkbox marcado (seleccionado en esta campaña)
                                 $estaSeleccionado = isset($premios_seleccionados[$premio->id_premio])
                                                     && (($premios_seleccionados[$premio->id_premio]['id_campania'] ?? null) === $id_campania);
-                            @endphp
 
+                                $finCanjePorFecha = isset($premio->fecha_fin_canje)
+                                                    ? \Carbon\Carbon::parse($premio->fecha_fin_canje)->isPast()
+                                                    : false;
+
+                                $finCanje = $campania_cerrada || $finCanjePorFecha;
+                            @endphp
 
                             <input type="checkbox" class="form-check-input"
                                    id="premio_{{ $premio->id_premio }}"
@@ -297,20 +317,27 @@
                                    @disabled($campania_cerrada)
                                    wire:click="seleccionar_premio('{{ $premio->id_premio }}', $event.target.checked)">
 
-                            @if($yaCanjeado)
-                                <small class="text-muted d-block">Ya canjeado</small>
+                            @if($finCanje)
+                                @if($yaCanjeado)
+                                    <span class="d-block">Canjeado</span>
+                                    <span class="d-block">Fin campaña</span>
+                                @else
+                                    <span class="d-block">Fin campaña</span>
+                                @endif
+                            @else
+                                @if($yaCanjeado)
+                                    <span class="d-block">Seleccionado</span>
+                                @elseif($estaSeleccionado)
+                                    <span class="d-block">Pre-Seleccionado</span>
+                                @endif
                             @endif
-                            @if($campania_cerrada)
-                                <small class="text-danger d-block">Campaña finalizada</small>
-                            @endif
-
                         </div>
                         <div>
                             <img src="{{ asset($premio->premio_documento) }}"
                                  alt="{{ $premio->premio_descripcion }}"
                                  class="img-fluid mb-3" style="max-height: 150px; object-fit: cover;">
                             <h5 class="card-title">{{ $premio->premio_descripcion }}</h5>
-                            <p class="text-success fw-bold">{{ $premio->campania_premio_puntaje }} pts</p>
+                            <p class="text-success fw-bold">{{ number_format($premio->campania_premio_puntaje, 0) }} pts</p>
                         </div>
                     </div>
                 </div>

@@ -230,6 +230,34 @@ class General extends Model
         }
     }
 
+    public function save_files_campanha($archivo, $rutaImg){
+        try {
+            if ($archivo) {
+                // Obtén el nombre original del archivo
+                $originalName = $archivo->getClientOriginalName();
+                // Reemplaza los espacios por guiones bajos
+                $newFileName = str_replace(' ', '_', $originalName);
+                // Especifica la subcarpeta dentro de 'uploads' (por ejemplo, 'uploads/documentos')
+                $subcarpeta = $rutaImg;
+                // Verifica si la subcarpeta existe, si no, la crea
+                if (!Storage::disk('public_uploads')->exists($subcarpeta)) {
+                    Storage::disk('public_uploads')->makeDirectory($subcarpeta);
+                }
+                // Guarda el archivo directamente en la subcarpeta con el nuevo nombre
+                $path = $archivo->storeAs($subcarpeta, $newFileName, 'public_uploads');
+                // Guarda la ruta en la base de datos
+                return 'uploads/'.$path;
+
+            } else {
+                return [];
+            }
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            return [];
+        }
+    }
+
+
     public function obtenerNombreFecha($fecha, $formatoDado, $formatoRetorno, $idioma = 'es', $incluirAnio = true)
     {
         try {
@@ -332,6 +360,158 @@ class General extends Model
         } else {
             // Si la longitud es menor a 4, agregar el guion al final
             return $codigo . '-';
+        }
+    }
+
+    public function obtener_estado($estado_aprobacion, $id_guia = null, $tipo = null, $id_despacho = null){
+        try {
+            switch($estado_aprobacion) {
+                case 1:
+                    return 'Enviado a Créditos';
+                    break;
+                case 2:
+                    return 'Enviado a Despacho';
+                    break;
+                case 3:
+                    return 'Listo para despacho';
+                    break;
+                case 4:
+                    return 'Pendiente de aprobación de despacho';
+                    break;
+                case 5:
+                    return 'Aceptado por Créditos';
+                    break;
+                case 6:
+                    return 'Estado de facturación';
+                    break;
+                case 7:
+                    $despacho_ventas = DB::table('despacho_ventas as dv')
+                        ->join('despachos as d','dv.id_despacho','=','d.id_despacho')
+                        ->where('dv.id_guia','=', $id_guia)
+                        ->select('dv.despacho_detalle_estado_entrega')
+                        ->first();
+
+                    if ($despacho_ventas && $despacho_ventas->despacho_detalle_estado_entrega == 8){
+                        return 'Guía entregada';
+                    } else {
+                        return 'Guía en tránsito';
+                    }
+                    break;
+                case 8:
+                    return 'Guía entregada';
+                    break;
+                case 9:
+                    return 'Despacho aprobado';
+                    break;
+                case 10:
+                    return 'Despacho rechazado';
+                    break;
+                case 11:
+                    return 'Guía no entregada';
+                    break;
+                case 12:
+                    return 'Guía anulada';
+                    break;
+                case 13:
+                    return 'Registrada en Intranet';
+                    break;
+                case 14:
+                    return 'Guía anulada por NC';
+                    break;
+                case 15:
+                    return 'Pendiente de NC';
+                    break;
+                case 20:
+                    // Para el caso especial 20, necesitamos el id_guia
+                    if ($id_guia === null) {
+                        return 'ID de guía requerido para este estado';
+                    }
+
+                    $despacho_ventas_l = DB::table('despacho_ventas as dv')
+                        ->join('despachos as d','dv.id_despacho','=','d.id_despacho')
+                        ->where('dv.id_guia','=',$id_guia)
+                        ->where('d.id_tipo_servicios','=',1)
+                        ->first();
+
+                    $despacho_ventas_p = DB::table('despacho_ventas as dv')
+                        ->join('despachos as d','dv.id_despacho','=','d.id_despacho')
+                        ->where('dv.id_guia','=',$id_guia)
+                        ->where('d.id_tipo_servicios','=',2)
+                        ->first();
+
+                    // Verificar que existan ambos registros
+                    if (!$despacho_ventas_l || !$despacho_ventas_p) {
+                        return 'Información de despacho no encontrada';
+                    }
+
+                    // Evaluar según el tipo enviado
+                    if ($tipo == 1) {
+                        // Condición para tipo 1: Solo evaluar local entregado
+                        if ($despacho_ventas_l->despacho_detalle_estado_entrega == 8 &&
+                            $despacho_ventas_l->despacho_estado_aprobacion == 3) {
+                            return 'Guía entregada';
+                        }
+                    } elseif ($tipo == 2) {
+                        // Condición para tipo 2: Evaluar condición específica
+                        if ($despacho_ventas_l->despacho_detalle_estado_entrega == 8 &&
+                            $despacho_ventas_p->despacho_detalle_estado_entrega == 0 &&
+                            $despacho_ventas_l->despacho_estado_aprobacion == 3 &&
+                            $despacho_ventas_p->despacho_estado_aprobacion == 2) {
+                            return 'Guía en tránsito';
+                        }
+                    } elseif ($tipo == 3) {
+                        // Nuevo tipo 3: Verificar por id_despacho si se proporciona
+                        if ($id_despacho !== null) {
+                            $despacho = DB::table('despachos')
+                                ->where('id_despacho', $id_despacho)
+                                ->select('despacho_estado_aprobacion')
+                                ->first();
+
+                            if ($despacho) {
+                                if ($despacho->despacho_estado_aprobacion == 3) {
+                                    return 'Guía entregada';
+                                } elseif ($despacho->despacho_estado_aprobacion == 2) {
+                                    return 'Guía en tránsito';
+                                }
+                            }
+                        }
+                        // Si id_despacho es null o no se encuentra el despacho, continuar con lógica original
+                    }
+
+                    // Si tipo es null o no coincide con las condiciones anteriores, usar la lógica original
+                    switch(true) {
+                        case ($despacho_ventas_l->despacho_detalle_estado_entrega == 0 &&
+                            $despacho_ventas_p->despacho_detalle_estado_entrega == 0 &&
+                            $despacho_ventas_l->despacho_estado_aprobacion == 1 &&
+                            $despacho_ventas_p->despacho_estado_aprobacion == 1):
+                            return 'Despacho aprobado';
+                            break;
+
+                        case ($despacho_ventas_l->despacho_detalle_estado_entrega == 0 &&
+                            $despacho_ventas_p->despacho_detalle_estado_entrega == 0 &&
+                            $despacho_ventas_l->despacho_estado_aprobacion == 2 &&
+                            $despacho_ventas_p->despacho_estado_aprobacion == 1):
+                            return 'Guía en tránsito';
+                            break;
+
+                        case ($despacho_ventas_l->despacho_detalle_estado_entrega == 8 &&
+                            $despacho_ventas_p->despacho_detalle_estado_entrega == 8 &&
+                            $despacho_ventas_l->despacho_estado_aprobacion == 3 &&
+                            $despacho_ventas_p->despacho_estado_aprobacion == 3):
+                            return 'Guía entregada';
+                            break;
+
+                        default:
+                            return 'Estado de despacho no definido';
+                    }
+                    break;
+                default:
+                    return 'Estado desconocido';
+            }
+        } catch (\Exception $e) {
+            // Asumiendo que tienes el sistema de logs como en tu función de ejemplo
+            $this->logs->insertarLog($e);
+            return 'Error al obtener estado';
         }
     }
 }

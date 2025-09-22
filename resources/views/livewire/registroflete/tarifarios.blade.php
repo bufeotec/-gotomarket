@@ -26,9 +26,7 @@
                                     <option value="{{$li->id_tipo_servicios}}">{{$li->tipo_servicio_concepto}}</option>
                                 @endforeach
                             </select>
-                            @error('id_tipo_servicio')
-                            <span class="message-error">{{ $message }}</span>
-                            @enderror
+                            @error('id_tipo_servicio')<span class="message-error">{{ $message }}</span>@enderror
                         </div>
 
                         @if($id_tipo_servicio == 1)
@@ -59,9 +57,7 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                @error('id_ubigeo_salida')
-                                <span class="message-error">{{ $message }}</span>
-                                @enderror
+                                @error('id_ubigeo_salida')<span class="message-error">{{ $message }}</span>@enderror
                             </div>
 
                             <div class="col-lg-6 col-md-12 col-sm-12 mb-4">
@@ -71,9 +67,7 @@
                                     <option value="23"> Peso </option>
                                     <option value="9"> Volumen </option>
                                 </select>
-                                @error('id_medida')
-                                <span class="message-error">{{ $message }}</span>
-                                @enderror
+                                @error('id_medida')<span class="message-error">{{ $message }}</span>@enderror
                             </div>
                         </div>
 
@@ -125,17 +119,13 @@
                         <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
                             <label for="tarifa_cap_min" class="form-label">Capacidad mínima (*) {{ $capacidadTexto }}</label>
                             <x-input-general type="text" id="tarifa_cap_min" wire:model="tarifa_cap_min" onkeyup="validar_numeros(this.id)" />
-                            @error('tarifa_cap_min')
-                            <span class="message-error">{{ $message }}</span>
-                            @enderror
+                            @error('tarifa_cap_min')<span class="message-error">{{ $message }}</span>@enderror
                         </div>
 
                         <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
                             <label for="tarifa_cap_max" class="form-label">Capacidad máxima (*) {{ $capacidadTexto }}</label>
                             <x-input-general type="text" id="tarifa_cap_max" wire:model="tarifa_cap_max" onkeyup="validar_numeros(this.id)" />
-                            @error('tarifa_cap_max')
-                            <span class="message-error">{{ $message }}</span>
-                            @enderror
+                            @error('tarifa_cap_max')<span class="message-error">{{ $message }}</span>@enderror
                         </div>
 
                         @php
@@ -145,16 +135,20 @@
                         <div class="col-lg-4 col-md-12 col-sm-12 mb-4">
                             <label for="tarifa_monto" class="form-label">Monto de la tarifa sin IGV (*) {{ $cobroViaje }}</label>
                             <x-input-general type="text" id="tarifa_monto" wire:model="tarifa_monto" onkeyup="validar_numeros(this.id)" />
-                            @error('tarifa_monto')
-                            <span class="message-error">{{ $message }}</span>
-                            @enderror
+                            @error('tarifa_monto')<span class="message-error">{{ $message }}</span>@enderror
+                        </div>
+
+                        <div class="col-lg-4 col-md-12 col-sm-12 mb-4">
+                            <label for="tarifa_tiempo_transporte" class="form-label">Tiempo de Transporte (*)</label>
+                            <x-input-general type="text" id="tarifa_tiempo_transporte" wire:model="tarifa_tiempo_transporte" onkeyup="validar_numeros(this.id)" />
+                            @error('tarifa_tiempo_transporte')<span class="message-error">{{ $message }}</span>@enderror
                         </div>
                     </div>
 
                     <div class="col-lg-12 col-md-12 col-sm-12">
-                        @if (session()->has('error'))
+                        @if (session()->has('error_modal'))
                             <div class="alert alert-danger alert-dismissible show fade">
-                                {{ session('error') }}
+                                {{ session('error_modal') }}
                                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                             </div>
                         @endif
@@ -293,6 +287,10 @@
                                         </div>
                                     </div>
                                 @endif
+                                <div class="col-lg-4 mb-3">
+                                    <strong style="color: #8c1017">Tiempo de Transporte:</strong>
+                                    <p>{{ $detalles->tarifa_tiempo_transporte ?? '-' }}</p>
+                                </div>
                             </div>
                         </div>
 
@@ -439,6 +437,7 @@
             <input type="text" class="form-control w-50 me-4"  wire:model.live="search_tarifario" placeholder="Buscar">
             <x-select-filter wire:model.live="pagination_tarifario" />
         </div>
+
         <div class="col-lg-6 col-md-6 col-sm-12 text-end">
             <a class="btn bg-white text-dark create-new ms-3" href="{{route('Tarifario.fletes')}}" >
                 <span>
@@ -462,6 +461,12 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
+    @if (session()->has('error'))
+        <div class="alert alert-danger alert-dismissible show fade mt-2">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
 
     <x-card-general-view>
         <x-slot name="content">
@@ -473,6 +478,7 @@
                                 <th>N°</th>
                                 <th>Tipo de servicio</th>
                                 <th>Unidad de medida</th>
+                                <th>Tiempo de Transporte</th>
                                 <th>Capacidad mínima</th>
                                 <th>Capacidad máxima</th>
                                 <th>Monto de la tarifa sin IGV</th>
@@ -493,6 +499,7 @@
                                         <td>{{$conteo}}</td>
                                         <td>{{ $ta->tipo_servicio_concepto }}</td>
                                         <td>{{ is_null($ta->id_medida) ? '-' : ($ta->id_medida == 23 ? 'PESO' : 'VOLUMEN') }}</td>
+                                        <td>{{ $ta->tarifa_tiempo_transporte ?? '-' }}</td>
                                         <td>
                                             {{ $general->formatoDecimal($ta->tarifa_cap_min) }}
                                             <small class="text-dark">

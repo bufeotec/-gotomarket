@@ -173,7 +173,7 @@ class Gestionarpremios extends Component{
                 $save_premio->premio_codigo = 'PR-0' . $nuevoId;
                 $save_premio->premio_descripcion = $this->premio_descripcion;
                 if ($this->premio_documento) {
-                    $save_premio->premio_documento = $this->general->save_files($this->premio_documento, 'premios/img');
+                    $save_premio->premio_documento = $this->general->save_files_campanha($this->premio_documento, 'premios/img');
                 }
 //                $save_premio->premio_en_campania = 0;
                 $save_premio->premio_microtime = $microtime;
@@ -212,7 +212,7 @@ class Gestionarpremios extends Component{
                     }
 
                     // Guardar la nueva imagen
-                    $update_premio->premio_documento = $this->general->save_files($this->premio_documento, 'premios/img');
+                    $update_premio->premio_documento = $this->general->save_files_campanha($this->premio_documento, 'premios/img');
                 }
 
                 if (!$update_premio->save()) {

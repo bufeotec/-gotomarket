@@ -43,22 +43,14 @@ class Transportista extends Model
 
     public function listar_transportistas_new($search,$pagination,$order = 'asc'){
         try {
-
             $query = DB::table('transportistas as t')
                 ->where(function($q) use ($search) {
                     $q->where('t.transportista_ruc', 'like', '%' . $search . '%')
                         ->orWhere('t.transportista_razon_social', 'like', '%' . $search . '%')
                         ->orWhere('t.transportista_nom_comercial', 'like', '%' . $search . '%')
-                        ->orWhere('t.transportista_contacto', 'like', '%' . $search . '%')
-                        ->orWhere('t.transportista_correo', 'like', '%' . $search . '%')
-                        ->orWhere('t.transportista_telefono', 'like', '%' . $search . '%')
-                        ->orWhere('t.transportista_cargo', 'like', '%' . $search . '%')
-
                         ->orWhereNull('t.transportista_ruc')
                         ->orWhereNull('t.transportista_razon_social')
-                        ->orWhereNull('t.transportista_nom_comercial')
-                        ->orWhereNull('t.transportista_contacto')
-                        ->orWhereNull('t.transportista_cargo');
+                        ->orWhereNull('t.transportista_nom_comercial');
                 })->orderBy('t.id_transportistas', $order);
 
             $result = $query->paginate($pagination);
@@ -85,6 +77,19 @@ class Transportista extends Model
         try {
             $result = DB::table('transportistas')
                 ->where('transportista_estado','=',1)
+                ->get();
+
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
+
+    public function obtener_transportistas_excel(){
+        try {
+            $result = DB::table('transportistas')
+                ->where('transportista_estado','=', 1)
                 ->get();
 
         }catch (\Exception $e){

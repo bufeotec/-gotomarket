@@ -31,6 +31,15 @@
             </div>
         </div>
     </div>
+
+    <div class="row">
+        <div wire:loading wire:target="estadoTabs" class="overlay__eliminar">
+            <div class="spinner__container__eliminar">
+                <div class="spinner__eliminar"></div>
+            </div>
+        </div>
+    </div>
+
     <div class="tab-content" id="pills-tabContent">
         @if($estadoTabs == 1)
             @livewire('programacioncamiones.local')

@@ -38,6 +38,8 @@ class Gestioncampanias extends Component{
     public $campania_fecha_inicio = "";
     public $campania_fecha_fin = "";
     public $campania_fecha_fin_canje = "";
+    public $campania_nombre_admin = "";
+    public $campania_celular = "";
     public $campania_estado_ejecucion = "";
     public $campania_estado = "";
     public $archivos = [];
@@ -99,6 +101,8 @@ class Gestioncampanias extends Component{
         $this->campania_fecha_inicio = "";
         $this->campania_fecha_fin = "";
         $this->campania_fecha_fin_canje = "";
+        $this->campania_nombre_admin = "";
+        $this->campania_celular = "";
         $this->campania_estado_ejecucion = "";
         $this->campania_estado = "";
         $this->archivos = [];
@@ -112,6 +116,8 @@ class Gestioncampanias extends Component{
             $this->campania_fecha_inicio = $campania_edit->campania_fecha_inicio;
             $this->campania_fecha_fin = $campania_edit->campania_fecha_fin;
             $this->campania_fecha_fin_canje = $campania_edit->campania_fecha_fin_canje;
+            $this->campania_nombre_admin = $campania_edit->campania_nombre_admin;
+            $this->campania_celular = $campania_edit->campania_celular;
             $this->campania_estado_ejecucion = $campania_edit->campania_estado_ejecucion;
             $this->id_campania = $campania_edit->id_campania;
 
@@ -189,6 +195,8 @@ class Gestioncampanias extends Component{
                 'campania_fecha_inicio' => 'required|date',
                 'campania_fecha_fin' => 'required|date|after_or_equal:campania_fecha_inicio',
                 'campania_fecha_fin_canje' => 'required|date|after:campania_fecha_fin',
+                'campania_nombre_admin' => 'required|string',
+                'campania_celular' => 'required|numeric|digits:9',
                 'archivos' => 'required|array|min:1',
             ], [
                 'campania_nombre.required' => 'El nombre de la campaña es obligatorio.',
@@ -207,6 +215,13 @@ class Gestioncampanias extends Component{
                 'campania_fecha_fin_canje.required' => 'La fecha de fin del canje es obligatoria.',
                 'campania_fecha_fin_canje.date' => 'La fecha de fin del canje debe ser válida.',
                 'campania_fecha_fin_canje.after' => 'La fecha de fin del canje debe ser posterior a la fecha de fin de la campaña.',
+
+                'campania_nombre_admin.required' => 'El nombre del administrador es obligatorio.',
+                'campania_nombre_admin.string' => 'El nombre del administrador debe ser texto válido.',
+
+                'campania_celular.required' => 'El celular del administrador es obligatorio.',
+                'campania_celular.numeric' => 'El Celular del administrador debe contener solo números.',
+                'campania_celular.digits' => 'El Celular del administrador debe tener exactamente 9 dígitos.',
 
                 'archivos.required' => 'Debe adjuntar al menos un archivo.',
                 'archivos.array' => 'Los archivos deben ser enviados correctamente.',
@@ -250,6 +265,8 @@ class Gestioncampanias extends Component{
                 $save_campania->campania_fecha_inicio = $this->campania_fecha_inicio;
                 $save_campania->campania_fecha_fin = $this->campania_fecha_fin;
                 $save_campania->campania_fecha_fin_canje = $this->campania_fecha_fin_canje;
+                $save_campania->campania_nombre_admin = $this->campania_nombre_admin;
+                $save_campania->campania_celular = $this->campania_celular;
                 $save_campania->campania_estado_ejecucion = $this->campania_estado_ejecucion;
                 $save_campania->campania_microtime = $microtime;
                 $save_campania->campania_estado = 1;
@@ -261,7 +278,7 @@ class Gestioncampanias extends Component{
                         $documento->id_users = Auth::id();
                         $documento->id_campania = $save_campania->id_campania;
                         // Guardar el archivo usando la función del helper
-                        $documento->campania_documento_adjunto = $this->general->save_files($archivo, 'campanias/documentos');
+                        $documento->campania_documento_adjunto = $this->general->save_files_campanha($archivo, 'campanias/documentos');
                         $documento->campania_documento_microtime = $microtime;
                         $documento->campania_documento_estado = 1;
 
@@ -290,6 +307,8 @@ class Gestioncampanias extends Component{
                 $update_campania->campania_fecha_inicio = $this->campania_fecha_inicio;
                 $update_campania->campania_fecha_fin = $this->campania_fecha_fin;
                 $update_campania->campania_fecha_fin_canje = $this->campania_fecha_fin_canje;
+                $update_campania->campania_nombre_admin = $this->campania_nombre_admin;
+                $update_campania->campania_celular = $this->campania_celular;
                 $update_campania->campania_estado_ejecucion = $this->campania_estado_ejecucion;
 
                 if ($update_campania->save()) {
@@ -306,7 +325,7 @@ class Gestioncampanias extends Component{
                             $documento = new Campaniadocumento();
                             $documento->id_users = Auth::id();
                             $documento->id_campania = $this->id_campania;
-                            $documento->campania_documento_adjunto = $this->general->save_files($archivo, 'campanias/documentos');
+                            $documento->campania_documento_adjunto = $this->general->save_files_campanha($archivo, 'campanias/documentos');
                             $documento->campania_documento_microtime = microtime(true);
                             $documento->campania_documento_estado = 1;
                             $documento->save();

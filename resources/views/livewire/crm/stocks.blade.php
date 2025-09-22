@@ -68,7 +68,7 @@
     {{--    FIN MODAL VER STOCK LOTE --}}
 
     <div class="row align-items-center">
-        <div class="col-lg-2">
+        <div class="col-lg-2 col-md-2 col-sm-12 mb-3">
             <label for="id_familia" class="form-label">Familia</label>
             <select class="form-select" id="id_familia" wire:model.live="id_familia">
                 <option>Seleccionar...</option>
@@ -77,7 +77,7 @@
                 @endforeach
             </select>
         </div>
-        <div class="col-lg-2">
+        <div class="col-lg-2 col-md-2 col-sm-12 mb-3">
             <label for="id_marca" class="form-label">Marca</label>
             <select class="form-select" id="id_marca" wire:model.live="id_marca">
                 <option>Seleccionar...</option>
@@ -88,8 +88,8 @@
         </div>
 
         <div class="col-lg-4 col-md-4 col-sm-12 mt-4 mb-3 d-flex align-items-center mb-2">
-            <input type="text" class="form-control w-50 me-4"  wire:model.live="search_stock" placeholder="Buscar">
-            <x-select-filter wire:model.live="pagination_stock" />
+            <input type="text" class="form-control mt-2 w-50 me-4"  wire:model.live="search_stock" placeholder="Buscar">
+            <x-select-filter class="mt-2" wire:model.live="pagination_stock" />
         </div>
 
         <div class="col-lg-2 col-md-2 col-sm-12 mt-4 mb-3 text-end">

@@ -275,165 +275,165 @@
                                             </span>
                                         </p>
                                     </div>
-                                @endif
-                            </div>
-                            @if($showCambiarPrecio)
-                                <div class="row mb-3">
-                                    <div class="col-lg-4 col-md-4 col-sm-12 mb-1">
-                                        <label for="montoSelect" class="form-label">Cambiar Monto S/</label>
-                                        <input type="text" class="form-control" id="montoSelect" name="montoSelect" wire:model.live="montoSelect" wire:change="save_cliente_data({{$clienteindex}})" onkeyup="validar_numeros(this.id)" />
-                                    </div>
+
                                     <div class="col-lg-8 col-md-8 col-sm-12 mb-1">
                                         <label for="montoSelectDescripcion" class="form-label">Comentario</label>
-                                        <textarea class="form-control" id="montoSelectDescripcion" rows="1" name="montoSelectDescripcion" wire:model="montoSelectDescripcion" wire:change="save_cliente_data({{$clienteindex}})"></textarea>
+                                        <textarea class="form-control" id="montoSelectDescripcion" rows="2" name="montoSelectDescripcion" wire:model="montoSelectDescripcion" wire:change="save_cliente_data({{$clienteindex}})"></textarea>
                                         @error('montoSelectDescripcion')
-                                            <span class="message-error">{{ $message }}</span>
+                                        <span class="message-error">{{ $message }}</span>
                                         @enderror
                                     </div>
-                                </div>
-                            @endif
-                                <div class="row">
-                                    <div class="col-lg-12">
-                                        <div class="vehiculos-scroll-container-horizontal">
-                                            @php $conteoGen = 1; @endphp
-                                            @foreach($tarifariosSugeridos as $index => $tari)
-                                                <div class="position-relative mx-2">
-                                                    @if($tari->tarifa_estado_aprobacion == 1)
-                                                        <input type="radio" name="sugerencia_tarifa" id="id_check_vehiculo_{{ $tari->id_tarifario}}_{{$conteoGen}}" class="inputCheckRadio" value="{{ $tari->id_tarifario }}"  wire:model.live="id_tari" wire:change="save_cliente_data({{$clienteindex}})" />
-                                                        <label for="id_check_vehiculo_{{ $tari->id_tarifario}}_{{$conteoGen}}" class="labelCheckRadios">
-                                                            <div class="container_check_radios" >
-                                                                <div class="cRadioBtn">
-                                                                    <div class="overlay"></div>
-                                                                    <div class="drops xsDrop"></div>
-                                                                    <div class="drops mdDrop"></div>
-                                                                    <div class="drops lgDrop"></div>
-                                                                </div>
-                                                            </div>
-                                                        </label>
-                                                    @else
-                                                        <label class="labelCheckRadios">
-                                                            <div class="container_check_radios" >
-                                                                <div class="cRadioBtnNo">
-                                                                    <i class="fa-solid fa-exclamation"></i>
-                                                                </div>
-                                                            </div>
-                                                        </label>
-                                                    @endif
 
-                                                    <label class="circulo-vehiculo-container m-2 {{ $tari->tarifa_estado_aprobacion == 0 ? 'no-aprobado' : '' }}" for="id_check_vehiculo_{{ $tari->id_tarifario}}_{{$conteoGen}}">
-                                                        <!-- Progreso Circular usando SVG -->
-                                                        @php
-                                                            $colorCapacidadPro = $me->obtenerColorPorPorcentaje($tari->capacidad_usada);
-                                                        @endphp
-                                                        <svg class="progreso-circular" viewBox="0 0 36 36">
-                                                            <path class="progreso-circular-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                                            <path class="progreso-circular-fg"
-                                                                  stroke-dasharray="{{ $tari->capacidad_usada }}, 100"
-                                                                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                                                  style="stroke: {{ $colorCapacidadPro }};" />
-                                                        </svg>
-                                                        <div class="circulo-vehiculo">
-                                                            <span class="tarifa-monto d-block" style="margin-top: 20px">
-                                                                @php
-                                                                    $tarifa = "0";
-                                                                    if ($tari->tarifa_monto){
-                                                                        $tarifa = $me->formatoDecimal($tari->tarifa_monto);
-                                                                    }
-                                                                @endphp
-                                                                S/ {{ $tarifa }}
-                                                            </span>
-                                                            <span class="capacidad-peso d-block">
-                                                                @php
-                                                                    $pesovehiculoMin = "0";
-                                                                    if ($tari->tarifa_cap_min){
-                                                                        $pesovehiculoMin = $me->formatoDecimal($tari->tarifa_cap_min);
-                                                                    }
-                                                                @endphp
-                                                                @php
-                                                                    $pesovehiculoMax = "0";
-                                                                    if ($tari->tarifa_cap_max){
-                                                                        $pesovehiculoMax = $me->formatoDecimal($tari->tarifa_cap_max);
-                                                                    }
-                                                                @endphp
-                                                                {{$pesovehiculoMin}} {{$tari->id_medida == 9 ? 'cm³' : 'kg' }} - {{ $pesovehiculoMax }} {{$tari->id_medida == 9 ? 'cm³' : 'kg' }}
-                                                            </span>
+                                    @if($showCambiarPrecio)
+                                        <div class="col-lg-4 col-md-4 col-sm-12 mb-1">
+                                            <label for="montoSelect" class="form-label">Cambiar Monto S/</label>
+                                            <input type="text" class="form-control" id="montoSelect" name="montoSelect" wire:model.live="montoSelect" wire:change="save_cliente_data({{$clienteindex}})" onkeyup="validar_numeros(this.id)" />
+                                        </div>
+                                    @endif
+                                @endif
+                            </div>
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <div class="vehiculos-scroll-container-horizontal">
+                                        @php $conteoGen = 1; @endphp
+                                        @foreach($tarifariosSugeridos as $index => $tari)
+                                            <div class="position-relative mx-2">
+                                                @if($tari->tarifa_estado_aprobacion == 1)
+                                                    <input type="radio" name="sugerencia_tarifa" id="id_check_vehiculo_{{ $tari->id_tarifario}}_{{$conteoGen}}" class="inputCheckRadio" value="{{ $tari->id_tarifario }}"  wire:model.live="id_tari" wire:change="save_cliente_data({{$clienteindex}})" />
+                                                    <label for="id_check_vehiculo_{{ $tari->id_tarifario}}_{{$conteoGen}}" class="labelCheckRadios">
+                                                        <div class="container_check_radios" >
+                                                            <div class="cRadioBtn">
+                                                                <div class="overlay"></div>
+                                                                <div class="drops xsDrop"></div>
+                                                                <div class="drops mdDrop"></div>
+                                                                <div class="drops lgDrop"></div>
+                                                            </div>
                                                         </div>
                                                     </label>
-                                                    <div class="boton-container text-center">
-                                                        <a  class="btn-ver curso-pointer" wire:click="modal_detalle_tarifario({{ $tari->id_tarifario }})" wire:loading.attr="disabled" >
-                                                            <i class="fas fa-eye"></i>
-                                                        </a>
-                                                    </div>
-                                                        @php
-                                                            $capacidadPorcentaje = "0";
-                                                            if ($tari->capacidad_usada){
-                                                                $capacidadPorcentaje = $me->formatoDecimal($tari->capacidad_usada);
-                                                            }
-                                                            $colorPorcentaje = $me->obtenerColorPorPorcentaje($capacidadPorcentaje);
-                                                        @endphp
-                                                    <div class="row">
-                                                        <div class="col-lg-12 text-center">
-                                                            <span class="d-block text-black"><b>Peso:</b></span>
-                                                            <div style="color: {{ $colorPorcentaje }};">
-                                                                <span>{{ $capacidadPorcentaje }}%</span>
+                                                @else
+                                                    <label class="labelCheckRadios">
+                                                        <div class="container_check_radios" >
+                                                            <div class="cRadioBtnNo">
+                                                                <i class="fa-solid fa-exclamation"></i>
                                                             </div>
+                                                        </div>
+                                                    </label>
+                                                @endif
+
+                                                <label class="circulo-vehiculo-container m-2 {{ $tari->tarifa_estado_aprobacion == 0 ? 'no-aprobado' : '' }}" for="id_check_vehiculo_{{ $tari->id_tarifario}}_{{$conteoGen}}">
+                                                    <!-- Progreso Circular usando SVG -->
+                                                    @php
+                                                        $colorCapacidadPro = $me->obtenerColorPorPorcentaje($tari->capacidad_usada);
+                                                    @endphp
+                                                    <svg class="progreso-circular" viewBox="0 0 36 36">
+                                                        <path class="progreso-circular-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                                        <path class="progreso-circular-fg"
+                                                              stroke-dasharray="{{ $tari->capacidad_usada }}, 100"
+                                                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                                              style="stroke: {{ $colorCapacidadPro }};" />
+                                                    </svg>
+                                                    <div class="circulo-vehiculo">
+                                                        <span class="tarifa-monto d-block" style="margin-top: 20px">
+                                                            @php
+                                                                $tarifa = "0";
+                                                                if ($tari->tarifa_monto){
+                                                                    $tarifa = $me->formatoDecimal($tari->tarifa_monto);
+                                                                }
+                                                            @endphp
+                                                            S/ {{ $tarifa }}
+                                                        </span>
+                                                        <span class="capacidad-peso d-block">
+                                                            @php
+                                                                $pesovehiculoMin = "0";
+                                                                if ($tari->tarifa_cap_min){
+                                                                    $pesovehiculoMin = $me->formatoDecimal($tari->tarifa_cap_min);
+                                                                }
+                                                            @endphp
+                                                            @php
+                                                                $pesovehiculoMax = "0";
+                                                                if ($tari->tarifa_cap_max){
+                                                                    $pesovehiculoMax = $me->formatoDecimal($tari->tarifa_cap_max);
+                                                                }
+                                                            @endphp
+                                                            {{$pesovehiculoMin}} {{$tari->id_medida == 9 ? 'cm³' : 'kg' }} - {{ $pesovehiculoMax }} {{$tari->id_medida == 9 ? 'cm³' : 'kg' }}
+                                                        </span>
+                                                    </div>
+                                                </label>
+                                                <div class="boton-container text-center">
+                                                    <a  class="btn-ver curso-pointer" wire:click="modal_detalle_tarifario({{ $tari->id_tarifario }})" wire:loading.attr="disabled" >
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                </div>
+                                                    @php
+                                                        $capacidadPorcentaje = "0";
+                                                        if ($tari->capacidad_usada){
+                                                            $capacidadPorcentaje = $me->formatoDecimal($tari->capacidad_usada);
+                                                        }
+                                                        $colorPorcentaje = $me->obtenerColorPorPorcentaje($capacidadPorcentaje);
+                                                    @endphp
+                                                <div class="row">
+                                                    <div class="col-lg-12 text-center">
+                                                        <span class="d-block text-black"><b>Peso:</b></span>
+                                                        <div style="color: {{ $colorPorcentaje }};">
+                                                            <span>{{ $capacidadPorcentaje }}%</span>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                @php $conteoGen++; @endphp
-                                            @endforeach
-                                        </div>
-                                        @if($opcionDetalle)
-                                            <div class="row mt-4 mb-2">
-                                                <div class="col-lg-12 col-md-12 col-sm-12">
-                                                    <h6>Información de la tarifa</h6>
-                                                    <hr>
-                                                </div>
-                                                <div class="col-lg-6 col-md-4 col-sm-12">
-                                                    <strong style="color: #8c1017">Nombre comercial:</strong>
-                                                    <p>{{ $detalle_tarifario->transportista_nom_comercial }}</p>
-                                                </div>
-                                                <div class="col-lg-6 col-md-4 col-sm-12">
-                                                    <strong style="color: #8c1017">RUC:</strong>
-                                                    <p>{{ $detalle_tarifario->transportista_ruc }}</p>
-                                                </div>
-                                                <div class="col-lg-4 col-md-4 col-sm-12">
-                                                    <strong style="color: #8c1017">Departamento de llegada:</strong>
-                                                    @php
-                                                        $deparDetakke = "";
-                                                        if ($detalle_tarifario->id_departamento){
-                                                            $deparDetakke = \Illuminate\Support\Facades\DB::table('departamentos')->where('id_departamento','=',$detalle_tarifario->id_departamento)->first();
-                                                        }
-                                                    @endphp
-                                                    <p>{{ $deparDetakke ? $deparDetakke->departamento_nombre : '-' }} </p>
-                                                </div>
-                                                <div class="col-lg-4 col-md-4 col-sm-12">
-                                                    <strong style="color: #8c1017">Provincia de llegada:</strong>
-                                                    @php
-                                                        $proviDetalle = "";
-                                                        if ($detalle_tarifario->id_provincia){
-                                                            $proviDetalle = \Illuminate\Support\Facades\DB::table('provincias')->where('id_provincia','=',$detalle_tarifario->id_provincia)->first();
-                                                        }
-                                                    @endphp
-                                                    <p>{{ $proviDetalle ? $proviDetalle->provincia_nombre : '-' }} </p>
-                                                </div>
-                                                <div class="col-lg-4 col-md-4 col-sm-12">
-                                                    <strong style="color: #8c1017">Distrito de llegada:</strong>
-                                                    @php
-                                                        $distriDetalle = "";
-                                                        if ($detalle_tarifario->id_distrito){
-                                                            $distriDetalle = \Illuminate\Support\Facades\DB::table('distritos')->where('id_distrito','=',$detalle_tarifario->id_distrito)->first();
-                                                        }
-                                                    @endphp
-                                                    <p>{{ $distriDetalle ? $distriDetalle->distrito_nombre : 'TODOS LOS DISTRITOS' }} </p>
-                                                </div>
                                             </div>
-                                        @endif
+                                            @php $conteoGen++; @endphp
+                                        @endforeach
                                     </div>
-                                    @error('selectedTarifario')
-                                    <span class="message-error">{{ $message }}</span>
-                                    @enderror
+                                    @if($opcionDetalle)
+                                        <div class="row mt-4 mb-2">
+                                            <div class="col-lg-12 col-md-12 col-sm-12">
+                                                <h6>Información de la tarifa</h6>
+                                                <hr>
+                                            </div>
+                                            <div class="col-lg-6 col-md-4 col-sm-12">
+                                                <strong style="color: #8c1017">Nombre comercial:</strong>
+                                                <p>{{ $detalle_tarifario->transportista_nom_comercial }}</p>
+                                            </div>
+                                            <div class="col-lg-6 col-md-4 col-sm-12">
+                                                <strong style="color: #8c1017">RUC:</strong>
+                                                <p>{{ $detalle_tarifario->transportista_ruc }}</p>
+                                            </div>
+                                            <div class="col-lg-4 col-md-4 col-sm-12">
+                                                <strong style="color: #8c1017">Departamento de llegada:</strong>
+                                                @php
+                                                    $deparDetakke = "";
+                                                    if ($detalle_tarifario->id_departamento){
+                                                        $deparDetakke = \Illuminate\Support\Facades\DB::table('departamentos')->where('id_departamento','=',$detalle_tarifario->id_departamento)->first();
+                                                    }
+                                                @endphp
+                                                <p>{{ $deparDetakke ? $deparDetakke->departamento_nombre : '-' }} </p>
+                                            </div>
+                                            <div class="col-lg-4 col-md-4 col-sm-12">
+                                                <strong style="color: #8c1017">Provincia de llegada:</strong>
+                                                @php
+                                                    $proviDetalle = "";
+                                                    if ($detalle_tarifario->id_provincia){
+                                                        $proviDetalle = \Illuminate\Support\Facades\DB::table('provincias')->where('id_provincia','=',$detalle_tarifario->id_provincia)->first();
+                                                    }
+                                                @endphp
+                                                <p>{{ $proviDetalle ? $proviDetalle->provincia_nombre : '-' }} </p>
+                                            </div>
+                                            <div class="col-lg-4 col-md-4 col-sm-12">
+                                                <strong style="color: #8c1017">Distrito de llegada:</strong>
+                                                @php
+                                                    $distriDetalle = "";
+                                                    if ($detalle_tarifario->id_distrito){
+                                                        $distriDetalle = \Illuminate\Support\Facades\DB::table('distritos')->where('id_distrito','=',$detalle_tarifario->id_distrito)->first();
+                                                    }
+                                                @endphp
+                                                <p>{{ $distriDetalle ? $distriDetalle->distrito_nombre : 'TODOS LOS DISTRITOS' }} </p>
+                                            </div>
+                                        </div>
+                                    @endif
                                 </div>
+                                @error('selectedTarifario')
+                                <span class="message-error">{{ $message }}</span>
+                                @enderror
+                            </div>
                         </div>
                     </div>
 
@@ -967,7 +967,7 @@
                                         <h6>Fecha de despacho</h6>
                                     </div>
                                     <div class="col-lg-12">
-                                        <input type="date" class="form-control" id="programacion_fecha" name="programacion_fecha" wire:model="programacion_fecha" />
+                                        <input type="date" class="form-control" id="programacion_fecha" name="programacion_fecha" wire:model.live="programacion_fecha" wire:change="validar_fecha" />
                                     </div>
                                 </div>
                             </div>

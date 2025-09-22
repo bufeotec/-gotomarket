@@ -100,4 +100,14 @@ class CRMController extends Controller{
             return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
         }
     }
+
+    public function historial_puntos(){
+        try {
+
+            return view('crm.historial_puntos');
+        }catch (\Exception $e){
+            $this->logs->insertarLog($e);
+            return redirect()->route('intranet')->with('error', 'Ocurrió un error al intentar mostrar el contenido.');
+        }
+    }
 }

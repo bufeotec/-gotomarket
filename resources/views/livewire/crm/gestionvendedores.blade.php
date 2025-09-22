@@ -235,10 +235,10 @@
                                 <th>DNI del Vendedor</th>
                                 <th>Nombre del Vendedor</th>
                                 <th>Correo</th>
+                                <th>Teléfono</th>
                                 <th>Departamento</th>
                                 <th>Provincia</th>
                                 <th>Distrito</th>
-                                <th>Puntos</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
@@ -260,6 +260,7 @@
                                         <td>{{$lv->vendedor_intranet_dni}}</td>
                                         <td>{{$lv->vendedor_intranet_nombre}}</td>
                                         <td>{{$lv->vendedor_intranet_correo}}</td>
+                                        <td>{{$lv->vendedor_telefono ?? '-'}}</td>
                                         <td>
                                             @php
                                                 $departamento = \Illuminate\Support\Facades\DB::table('departamentos')->where('id_departamento','=',$lv->id_departamento)->first();
@@ -278,7 +279,6 @@
                                             @endphp
                                             {{ $distrito ? $distrito->distrito_nombre : '' }}
                                         </td>
-                                        <td>{{number_format($lv->vendedor_intranet_punto, 2) ?? 0}}</td>
                                         <td>
                                             <span class="font-bold badge {{$lv->vendedor_intranet_estado == 1 ? 'bg-label-success ' : 'bg-label-danger'}}">
                                                 {{$lv->vendedor_intranet_estado == 1 ? 'Habilitado ' : 'Desabilitado'}}

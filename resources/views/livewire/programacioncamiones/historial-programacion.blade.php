@@ -151,7 +151,7 @@
                                                     <th>Dirección de Entrega</th>
                                                     <th>UBIGEO</th>
                                                     @if($listar_detalle_despacho->despacho_estado_aprobacion == 2 || $listar_detalle_despacho->despacho_estado_aprobacion == 3)
-                                                        <th>Estado del comprobante</th>
+                                                        <th>Estado de Entrega</th>
                                                     @endif
                                                     @if($listar_detalle_despacho->despacho_estado_aprobacion == 3)
                                                         <th>Cambio de estado</th>
@@ -255,7 +255,7 @@
                                                                 <th>Ubigeo</th>
                                                                 <th>Documento</th>
                                                                 @if($listar_detalle_despacho->despacho_estado_aprobacion == 2 || $listar_detalle_despacho->despacho_estado_aprobacion == 3)
-                                                                    <th>Estado del comprobante</th>
+                                                                    <th>Estado de Entrega</th>
                                                                 @endif
                                                             </tr>
                                                         </x-slot>

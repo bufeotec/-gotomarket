@@ -137,7 +137,6 @@ class Reportescampanias extends Component{
         }
     }
 
-
     public function generar_excel_detalle_cliente($id_cliente){
         try {
             $id_clientes = $id_cliente;
@@ -225,10 +224,10 @@ class Reportescampanias extends Component{
                     }
 
                     $sheet1->setCellValue('D'.$row, $vendedor->vendedor_nombre ?: '-');
-                    $sheet1->setCellValue('E'.$row, $vendedor->total_puntos_ganados ?: 0);
+                    $sheet1->setCellValue('E'.$row, number_format($vendedor->total_puntos_ganados, 0) ?: 0);
                     // PUNTOS CANJEADOS - mantener la lógica original
                     $puntos_canjeados = $this->campania->obtener_puntos_canjeados_vendedor($vendedor->vendedor_dni, $this->id_campania);
-                    $sheet1->setCellValue('F'.$row, $puntos_canjeados);
+                    $sheet1->setCellValue('F'.$row, number_format($puntos_canjeados, 0));
 
                     // Cantidad de premios canjeados por cada premio
                     $columna_premio = 7;
@@ -305,8 +304,8 @@ class Reportescampanias extends Component{
                 }
             }
 
-            $sheet1->setCellValue('E'.$row, $total_puntos_ganados);
-            $sheet1->setCellValue('F'.$row, $total_puntos_canjeados);
+            $sheet1->setCellValue('E'.$row, number_format($total_puntos_ganados, 0));
+            $sheet1->setCellValue('F'.$row, number_format($total_puntos_canjeados, 0));
             $sheet1->getStyle('E'.$row.':F'.$row)->getFont()->setBold(true);
 
             // Totales de premios
@@ -446,12 +445,12 @@ class Reportescampanias extends Component{
 
                         // CAMBIO: PUNTOS GANADOS - usar la suma de puntos desde puntos_detalles
                         $puntos_ganados = $vendedor->total_puntos_ganados ?: 0;
-                        $sheet1->setCellValue('E'.$row, $puntos_ganados);
+                        $sheet1->setCellValue('E'.$row, number_format($puntos_ganados, 0));
                         $total_cliente_puntos_ganados += $puntos_ganados;
 
                         // CAMBIO: PUNTOS CANJEADOS - usar DNI del vendedor
                         $puntos_canjeados = $this->campania->obtener_puntos_canjeados_vendedor($vendedor->vendedor_dni, $this->id_campania);
-                        $sheet1->setCellValue('F'.$row, $puntos_canjeados);
+                        $sheet1->setCellValue('F'.$row, number_format($puntos_canjeados, 0));
                         $total_cliente_puntos_canjeados += $puntos_canjeados;
 
                         // Cantidad de premios canjeados por cada premio
@@ -513,8 +512,8 @@ class Reportescampanias extends Component{
                     $sheet1->setCellValue('B'.$row, '');
                     $sheet1->setCellValue('C'.$row, '');
                     $sheet1->setCellValue('D'.$row, 'TOTALES');
-                    $sheet1->setCellValue('E'.$row, $total_cliente_puntos_ganados);
-                    $sheet1->setCellValue('F'.$row, $total_cliente_puntos_canjeados);
+                    $sheet1->setCellValue('E'.$row, number_format($total_cliente_puntos_ganados, 0));
+                    $sheet1->setCellValue('F'.$row, number_format($total_cliente_puntos_canjeados, 0));
 
                     // Estilo para totales del cliente
                     $sheet1->getStyle('D'.$row.':F'.$row)->getFont()->setBold(true);
@@ -553,8 +552,8 @@ class Reportescampanias extends Component{
             $sheet1->setCellValue('B'.$row, '');
             $sheet1->setCellValue('C'.$row, '');
             $sheet1->setCellValue('D'.$row, 'TOTALES GENERALES');
-            $sheet1->setCellValue('E'.$row, $total_general_puntos_ganados);
-            $sheet1->setCellValue('F'.$row, $total_general_puntos_canjeados);
+            $sheet1->setCellValue('E'.$row, number_format($total_general_puntos_ganados, 0));
+            $sheet1->setCellValue('F'.$row, number_format($total_general_puntos_canjeados, 0));
 
             // Estilo para totales generales
             $sheet1->getStyle('D'.$row.':F'.$row)->getFont()->setBold(true)->setSize(12);

@@ -138,14 +138,14 @@
                                             <td>{{$r->cliente_nombre_cliente}}</td>
                                             <td>{{ $r->cant_vendedores_con_premio ?? 0 }}</td>
                                             <td>{{ $r->cant_premios_canjeados ?? 0 }}</td>
-                                            <td>{{ $r->puntos_ganados_total ?? 0 }}</td>
-                                            <td>{{ $r->puntos_canjeados_total ?? 0 }}</td>
+                                            <td>{{ number_format($r->puntos_ganados_total, 0) ?? 0 }}</td>
+                                            <td>{{ number_format($r->puntos_canjeados_total, 0) ?? 0 }}</td>
                                             <td>
-                                                <a class="btn btn-sm bg-info text-white" wire:click="ver_puntos({{$r->id_cliente}})" data-bs-toggle="modal" data-bs-target="#modal_ver_puntos">
+                                                <a class="btn btn-sm bg-info text-white my-1 ms-2" wire:click="ver_puntos({{$r->id_cliente}})" data-bs-toggle="modal" data-bs-target="#modal_ver_puntos">
                                                     <i class="fa fa-eye"></i>
                                                 </a>
 
-                                                <a class="btn btn-sm bg-primary text-white" wire:click="generar_excel_detalle_cliente({{$r->id_cliente}})" wire:loading.attr="disabled">Detalle</a>
+                                                <a class="btn btn-sm bg-primary text-white my-1 ms-2" wire:click="generar_excel_detalle_cliente({{$r->id_cliente}})" wire:loading.attr="disabled">Detalle</a>
                                             </td>
                                         </tr>
                                         @php $conteo++; @endphp

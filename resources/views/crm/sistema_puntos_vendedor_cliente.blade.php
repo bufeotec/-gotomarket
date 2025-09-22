@@ -88,7 +88,7 @@
             <div class="col-lg-6">
                 <div class="card">
                     <div class="card-header">
-                        <h4>REPORTES</h4>
+                        <h4>REPORTES DE SISTEMA DE PUNTOS</h4>
                     </div>
                     <div class="card-body">
                         <div class="d-flex justify-content-end">
@@ -98,10 +98,25 @@
                 </div>
             </div>
         @endif
+
+        @if (Gate::allows('historial_puntos'))
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>HISTORIAL DE PUNTOS</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-end">
+                            <a href="{{route('CRM.historial_puntos')}}" class="btn btn-success">Ingresar</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
 
     {{-- Mensaje si no tiene ningún permiso --}}
-    @if (!Gate::any(['gestion_vendedores', 'gestion_campanias', 'gestion_premios', 'gestion_puntos', 'seleccionar_premios', 'reporte_campania']))
+    @if (!Gate::any(['gestion_vendedores', 'gestion_campanias', 'gestion_premios', 'gestion_puntos', 'seleccionar_premios', 'reporte_campania', 'historial_puntos']))
         <div class="row">
             <div class="col-12">
                 <div class="alert alert-warning text-center">

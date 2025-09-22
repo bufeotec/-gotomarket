@@ -164,4 +164,6 @@ Route::prefix('CRM')->middleware(['auth', 'canMenu:CRM'])->group(function () {
     route::get('/reporte_campania',[CRMController::class ,'reporte_campania'])->name('CRM.reporte_campania')->middleware('verifyUserStatus')->middleware('can:reporte_campania');
     route::get('/consultas',[CRMController::class ,'consultas'])->name('CRM.consultas')->middleware('verifyUserStatus')->middleware('can:consultas');
     route::get('/stock',[CRMController::class ,'stock'])->name('CRM.stock')->middleware('verifyUserStatus')->middleware('can:stock');
+    route::get('/historial_puntos',[CRMController::class ,'historial_puntos'])->name('CRM.historial_puntos')->middleware('verifyUserStatus')->middleware('can:historial_puntos');
+
 });

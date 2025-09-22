@@ -129,9 +129,9 @@
 {{--    FIN MODAL CARGAR EXCEL--}}
 
 {{--    MODAL REGISTRAR PUNTOS MANUALMENTE--}}
-    <x-modal-general wire:ignore.self >
+    <x-modal-general wire:ignore.self>
         <x-slot name="id_modal">modal_registrar_puntos_manualmente</x-slot>
-        <x-slot name="titleModal">Gestionar Puntos</x-slot>
+        <x-slot name="titleModal">Registrar Puntos Manualmente</x-slot>
         <x-slot name="tama">modal-lg</x-slot>
         <x-slot name="modalContent">
             <form wire:submit.prevent="registrar_puntos_manualmente">
@@ -205,6 +205,11 @@
                         </select>
                     </div>
 
+                    <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
+                        <label for="" class="form-label">Archivo PDF</label>
+                        <input class="form-control" type="file" id="manual_archivo_pdf" wire:model="manual_archivo_pdf" />
+                    </div>
+
                     <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
                         <x-table-general>
                             <x-slot name="thead">
@@ -219,24 +224,22 @@
 
                             <x-slot name="tbody">
                                 @if(count($vendedores_seleccionados) > 0)
+                                    @php $conteoRP = 1; @endphp
                                     @foreach($vendedores_seleccionados as $index => $vendedor)
                                         <tr>
-                                            <td>{{ $index + 1 }}</td>
+                                            <td>{{$conteoRP}}</td>
                                             <td>{{ $vendedor['vendedor_intranet_nombre'] }} {{ $vendedor['vendedor_intranet_apellido'] }}</td>
                                             <td>{{ $vendedor['vendedor_intranet_dni'] }}</td>
                                             <td>
-                                                <input type="text" class="form-control"
-                                                       id="vendedores_seleccionados.{{ $index }}.puntos"
-                                                       wire:model="vendedores_seleccionados.{{ $index }}.puntos"
-                                                       onkeyup="validar_numeros(this.id)"
-                                                       placeholder="Ingrese puntos" />
+                                                <input type="text" class="form-control" id="vendedores_seleccionados.{{ $index }}.puntos" wire:model="vendedores_seleccionados.{{ $index }}.puntos" onkeyup="validar_numeros(this.id)" placeholder="Ingrese puntos" />
                                             </td>
                                             <td class="text-center">
-                                                <a class="btn btn-sm text-danger" wire:click="eliminar_vendedor('{{ $index }}')">
+                                                <a class="btn btn-sm text-danger" wire:click="eliminar_vendedor('{{ $vendedor['id_vendedor_intranet'] }}')">
                                                     <i class="fa-solid fa-trash"></i>
                                                 </a>
                                             </td>
                                         </tr>
+                                        @php $conteoRP++; @endphp
                                     @endforeach
                                 @else
                                     <tr class="odd">
@@ -362,7 +365,7 @@
                                                            wire:model="datos_edicion.{{$ld->id_punto_detalle}}.puntos"
                                                            placeholder="Puntos">
                                                 @else
-                                                    {{number_format($ld->punto_detalle_punto_ganado, 2)}}
+                                                    {{number_format($ld->punto_detalle_punto_ganado, 0)}}
                                                 @endif
                                             </td>
                                             <td>
@@ -537,8 +540,7 @@
                                         <th>Código</th>
                                         <th>Campaña</th>
                                         <th>Cliente</th>
-                                        <th>Archivo Excel</th>
-                                        <th>Archivo PDF</th>
+                                        <th>Historial Registro Puntos</th>
                                         <th>Fecha Registro</th>
                                         <th>Usuario</th>
                                         <th>Acciones</th>
@@ -572,26 +574,9 @@
                                                 {{ $cliente ? $cliente->cliente_nombre_cliente : '-' }}
                                             </td>
                                             <td>
-                                                @if($punto->punto_documento_excel)
-                                                    <a href="{{ asset($punto->punto_documento_excel) }}"
-                                                       target="_blank"
-                                                       class="btn btn-sm btn-outline-success">
-                                                        <i class="fas fa-file-excel"></i> Ver Excel
-                                                    </a>
-                                                @else
-                                                    <span class="text-muted">No disponible</span>
-                                                @endif
-                                            </td>
-                                            <td>
-                                                @if($punto->punto_documento_pdf)
-                                                    <a href="{{ asset($punto->punto_documento_pdf) }}"
-                                                       target="_blank"
-                                                       class="btn btn-sm btn-outline-danger">
-                                                        <i class="fas fa-file-pdf"></i> Ver PDF
-                                                    </a>
-                                                @else
-                                                    <span class="text-muted">No disponible</span>
-                                                @endif
+                                                <a class="btn btn-sm bg-success text-white" wire:click="generar_historial_puntos({{$punto->id_cliente}})">
+                                                    HISTORIAL
+                                                </a>
                                             </td>
                                             <td>{{ $punto->created_at ? $general->obtenerNombreFecha($punto->created_at, 'DateTime', 'Date') : '-' }}</td>
                                             <td>
@@ -621,7 +606,8 @@
                                                                 <tr>
                                                                     <th>N°</th>
                                                                     <th>Motivo</th>
-                                                                    <th>Vendedor</th>
+                                                                    <th>Vendedor Nombre</th>
+                                                                    <th>Vendedor DNI</th>
                                                                     <th>Puntos Ganados</th>
                                                                     <th>Fecha de Registro</th>
                                                                     <th>Fecha de Modificación</th>
@@ -633,8 +619,9 @@
                                                                     <tr>
                                                                         <td>{{$conteo_detalle}}</td>
                                                                         <td>{{ $detalle->punto_detalle_motivo }}</td>
+                                                                        <td>{{ $detalle->vendedor_nombre ?? '-' }}</td>
                                                                         <td>{{ $detalle->punto_detalle_vendedor }}</td>
-                                                                        <td>{{ number_format($detalle->punto_detalle_punto_ganado, 2) }}</td>
+                                                                        <td>{{ number_format($detalle->punto_detalle_punto_ganado, 0) }}</td>
                                                                         <td>{{ $detalle->punto_detalle_fecha_registro ? $general->obtenerNombreFecha($detalle->punto_detalle_fecha_registro, 'DateTime', 'Date') : '-' }}</td>
                                                                         <td>
                                                                             @if($detalle->punto_detalle_fecha_modificacion)

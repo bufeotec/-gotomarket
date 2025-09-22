@@ -1,5 +1,6 @@
 <div>
     @php
+        use Illuminate\Support\Facades\Gate;
         $general = new \App\Models\General();
     @endphp
 
@@ -280,10 +281,10 @@
                                                 <th>F. Emision</th>
                                                 <th>Cliente</th>
                                                 <th>Comprobante</th>
-                                                <th>Importe Venta</th>
+                                                <th>Valor Transportado</th>
                                                 <th>F. Despacho</th>
                                                 <th>Peso Kilos</th>
-                                                <th>Estado del comprobante</th>
+                                                <th>Estado de Entrega</th>
                                             </tr>
                                         </x-slot>
 
@@ -302,99 +303,10 @@
                                                         <td>{{$general->formatoDecimal($ta->peso_total_kilos)}} Kg</td>
                                                         <td>
                                                             <span class="d-block tamanhoTablaComproantes">
-                                                                @switch($ta->guia_estado_aprobacion)
-                                                                    @case(1)
-                                                                        Enviado a Créditos
-                                                                        @break
-                                                                    @case(2)
-                                                                        Enviado a Despacho
-                                                                        @break
-                                                                    @case(3)
-                                                                        Listo para despacho
-                                                                        @break
-                                                                    @case(4)
-                                                                        Pendiente de aprobación de despacho
-                                                                        @break
-                                                                    @case(5)
-                                                                        Aceptado por Créditos
-                                                                        @break
-                                                                    @case(6)
-                                                                        Estado de facturación
-                                                                        @break
-                                                                    @case(7)
-                                                                        @php
-                                                                            $despacho_ventas = \Illuminate\Support\Facades\DB::table('despacho_ventas as dv')
-                                                                                ->join('despachos as d','dv.id_despacho','=','d.id_despacho')
-                                                                                ->where('dv.id_guia','=',$ta->id_guia)
-                                                                                ->select('dv.despacho_detalle_estado_entrega')
-                                                                                ->first();
-                                                                        @endphp
-
-                                                                        @if($despacho_ventas && $despacho_ventas->despacho_detalle_estado_entrega == 8)
-                                                                            Guía entregada
-                                                                        @else
-                                                                            Guía en tránsito
-                                                                        @endif
-                                                                        @break
-                                                                    @case(8)
-                                                                        Guía entregada
-                                                                        @break
-                                                                    @case(9)
-                                                                        Despacho aprobado
-                                                                        @break
-                                                                    @case(10)
-                                                                        Despacho rechazado
-                                                                        @break
-                                                                    @case(11)
-                                                                        Guía no entregada
-                                                                        @break
-                                                                    @case(12)
-                                                                        Guía anulada
-                                                                        @break
-                                                                    @case(13)
-                                                                        Registrada en Intranet
-                                                                        @break
-                                                                    @case(14)
-                                                                        Guía anulada por NC
-                                                                        @break
-                                                                    @case(15)
-                                                                        Pendiente de NC
-                                                                        @break
-                                                                    @case(20)
-                                                                        @php
-                                                                            $despacho_ventas_l = \Illuminate\Support\Facades\DB::table('despacho_ventas as dv')
-                                                                            ->join('despachos as d','dv.id_despacho','=','d.id_despacho')
-                                                                            ->where('dv.id_guia','=',$ta->id_guia)
-                                                                            ->where('d.id_tipo_servicios','=',1)
-                                                                            ->first();
-
-                                                                            $despacho_ventas_p = \Illuminate\Support\Facades\DB::table('despacho_ventas as dv')
-                                                                            ->join('despachos as d','dv.id_despacho','=','d.id_despacho')
-                                                                            ->where('dv.id_guia','=',$ta->id_guia)
-                                                                            ->where('d.id_tipo_servicios','=',2)
-                                                                            ->first();
-
-                                                                            if($despacho_ventas_l->despacho_detalle_estado_entrega == 0 && $despacho_ventas_p->despacho_detalle_estado_entrega == 0
-                                                                            && $despacho_ventas_l->despacho_estado_aprobacion == 1 && $despacho_ventas_p->despacho_estado_aprobacion == 1
-                                                                            ){
-                                                                                echo 'Despacho aprobado';
-                                                                            } else if ($despacho_ventas_l->despacho_detalle_estado_entrega == 0 && $despacho_ventas_p->despacho_detalle_estado_entrega == 0
-                                                                             && $despacho_ventas_l->despacho_estado_aprobacion == 2 && $despacho_ventas_p->despacho_estado_aprobacion == 1
-                                                                            ){
-                                                                                echo 'Guía en tránsito';
-                                                                            } else if ($despacho_ventas_l->despacho_detalle_estado_entrega == 8 && $despacho_ventas_p->despacho_detalle_estado_entrega == 0
-                                                                            && $despacho_ventas_l->despacho_estado_aprobacion == 3 && $despacho_ventas_p->despacho_estado_aprobacion == 2
-                                                                            ){
-                                                                                echo 'Guía en tránsito';
-                                                                            } else if ($despacho_ventas_l->despacho_detalle_estado_entrega == 8 && $despacho_ventas_p->despacho_detalle_estado_entrega == 8
-                                                                             && $despacho_ventas_l->despacho_estado_aprobacion == 3 && $despacho_ventas_p->despacho_estado_aprobacion == 3){
-                                                                                echo 'Guía entregada';
-                                                                            }
-                                                                        @endphp
-                                                                        @break
-                                                                    @default
-                                                                        Estado desconocido
-                                                                @endswitch
+                                                                @php
+                                                                    $estado = $general->obtener_estado($ta->guia_estado_aprobacion, $ta->id_guia, 1)
+                                                                @endphp
+                                                                {{$estado}}
                                                             </span>
                                                         </td>
                                                     </tr>

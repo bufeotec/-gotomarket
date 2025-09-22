@@ -13,6 +13,8 @@ use App\Models\DespachoVenta;
 use App\Models\General;
 use Illuminate\Support\Facades\DB;
 use Codedge\Fpdf\Fpdf\Fpdf;
+use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 
 class DespachotransporteController extends Controller
 {
@@ -335,16 +337,33 @@ class DespachotransporteController extends Controller
         $fechaAprobacion = $listar_info->despacho_fecha_aprobacion ? $general->obtenerNombreFecha($listar_info->despacho_fecha_aprobacion, 'Date', 'Date') : '-';
         $fechaInicio = $listar_info->despacho_fecha_aprobacion ? $general->obtenerNombreFecha($listar_info->despacho_fecha_aprobacion, 'Date', 'Date') : '-';
 
-        $pdf->SetXY(112, $dataStartY + 2); // Pequeño margen interno
+        $fecha_inicio = \Carbon\Carbon::parse($listar_info->programacion_fecha);
+        // Sumar los días del tiempo de transporte
+        $plazo_entrega = $fecha_inicio->addDays($listar_info->tarifa_tiempo_transporte);
+        // Asignar el resultado formateado
+        $fecah = $plazo_entrega->format('Y-m-d');
+
+        $tiempo = DB::table('despachos as d')
+            ->join('tarifarios as t', 'd.id_tarifario', 't.id_tarifario')
+            ->where('d.id_despacho', '=', $id_despacho)
+            ->first();
+
+        // Verificar si se encontró el registro antes de acceder a sus propiedades
+        if ($tiempo) {
+            $plazoEntrega = $tiempo->tarifa_tiempo_transporte . ' días hábiles';
+        } else {
+            $plazoEntrega = 'No disponible';
+        }
+
+        $pdf->SetXY(112, $dataStartY + 2);
         $pdf->MultiCell(86, 5, utf8_decode('Fecha de Aprobación: ' . $fechaAprobacion), 0, 'L');
         $pdf->SetX(112);
         $pdf->MultiCell(86, 5, utf8_decode('Fecha de Inicio: ' . $fechaInicio), 0, 'L');
         $pdf->SetX(112);
-        $pdf->MultiCell(86, 5, utf8_decode('Plazo de Entrega: - '), 0, 'L');
+        $pdf->MultiCell(86, 5, utf8_decode('Plazo de Entrega: ' . $plazoEntrega), 0, 'L');
         $pdf->SetX(112);
-        $pdf->MultiCell(86, 5, utf8_decode('Fecha Entrega Esperada: - '), 0, 'L');
-
-        $pdf->Ln(3); // Espacio después de los cuadros
+        $pdf->MultiCell(86, 5, utf8_decode('Fecha Entrega Esperada: ' .  ($fecah ? $general->obtenerNombreFecha($fecah, 'Date', 'Date') : '-')), 0, 'L');
+        $pdf->Ln(3);
         // FIN Datos Solicitante - Datos de la OS
 
 
@@ -385,21 +404,39 @@ class DespachotransporteController extends Controller
         $pdf->SetX(12);
         $pdf->MultiCell(86, 5, utf8_decode($listar_info->transportista_direccion), 0, 'L');
 
-        // --- SEGUNDO CUADRO: Acuerdos Comerciales (derecha) ---
-        $pdf->Rect(110, $dataStartY, 90, 18); // Misma altura que el primero
 
-//        $pdf->SetXY(112, $dataStartY + 2); // Margen interno
-//        $pdf->MultiCell(86, 5, utf8_decode('Referencia: Cotización N° 123456'), 0, 'L');
-//        $pdf->SetX(112);
-//        $pdf->MultiCell(86, 5, utf8_decode('Presentado: Por Correo Electrónico e-mail absa@gmail.com'), 0, 'L');
-//        $pdf->SetX(112);
-//        $pdf->MultiCell(86, 5, utf8_decode('Contacto Comercial: Josue Pomachua'), 0, 'L');
-//        $pdf->SetX(112);
-//        $pdf->MultiCell(86, 5, utf8_decode('Conformidad de Factura: Después de Entrega'), 0, 'L');
-//        $pdf->SetX(112);
-//        $pdf->MultiCell(86, 5, utf8_decode('Modo de Pago: Crédito a 15 días de presentación de factura'), 0, 'L');
-//        $pdf->SetX(112);
-//        $pdf->MultiCell(86, 5, utf8_decode('Garantías del Servicio: 100% de pérdida. Retorno gratuito por deterioro'), 0, 'L');
+        $conformidad_factura = "";
+        if ($listar_info->despacho_conformidad_factura == 1){
+            $conformidad_factura = "Anticipado";
+        } elseif ($listar_info->despacho_conformidad_factura == 2) {
+            $conformidad_factura = "Después de Entrega";
+        } else {
+            $conformidad_factura = "-";
+        }
+
+        $modo_pago = "";
+        if ($listar_info->despacho_modo_pago_factura == 1){
+            $modo_pago = "Contado";
+        } elseif ($listar_info->despacho_modo_pago_factura == 2) {
+            $modo_pago = "Crédito";
+        } else {
+            $modo_pago = "-";
+        }
+
+
+        // --- SEGUNDO CUADRO: Acuerdos Comerciales (derecha) ---
+        $pdf->Rect(110, $dataStartY, 90, 27); // Misma altura que el primero
+
+        $pdf->SetXY(112, $dataStartY + 2); // Margen interno
+        $pdf->MultiCell(86, 5, utf8_decode('Referencia: ' . $listar_info->despacho_referencia_acuerdo_comercial), 0, 'L');
+        $pdf->SetX(112);
+        $pdf->MultiCell(86, 5, utf8_decode('Contacto Comercial: ' . $listar_info->transportista_contacto_uno_comercial_operativo), 0, 'L');
+        $pdf->SetX(112);
+        $pdf->MultiCell(86, 5, utf8_decode('Conformidad de Factura: ' . $conformidad_factura), 0, 'L');
+        $pdf->SetX(112);
+        $pdf->MultiCell(86, 5, utf8_decode('Modo de Pago: ' . $modo_pago), 0, 'L');
+        $pdf->SetX(112);
+        $pdf->MultiCell(86, 5, utf8_decode('Garantías del Servicio: ' . $listar_info->despacho_garantias_servicio), 0, 'L');
 
         $pdf->Ln(3); // Espacio después de los cuadros
 

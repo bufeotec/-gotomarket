@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Canjearpuntodetalle extends Model{
     use HasFactory;
     protected $table = "canjear_puntos_detalles";
-    protected $primaryKey = "id_canejar_punto_detalle";
+    protected $primaryKey = "id_canjear_punto_detalle";
     private $logs;
     public function __construct(){
         parent::__construct();

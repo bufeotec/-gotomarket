@@ -106,7 +106,7 @@ class Mixto extends Component
         $this->id_transportistas = null;
         $this->selectedVehiculo = null;
         $this->showBotonListo = null;
-        $this->programacion_fecha = now()->format('Y-m-d');
+        $this->programacion_fecha = now('America/Lima')->format('Y-m-d');
         $this->desde = null;
         $this->hasta = null;
         if ($id){
@@ -192,6 +192,48 @@ class Mixto extends Component
 
         return view('livewire.programacioncamiones.mixto', compact('tipo_servicio_local_provincial', 'listar_transportistas', 'listar_transportistas', 'listar_departamento','listar_transportistasProvinciales'));
     }
+
+    public function validar_fecha(){
+        try {
+            // Validar que la fecha no esté vacía
+            if (empty($this->programacion_fecha)) {
+                session()->flash('error', 'La fecha de despacho es requerida.');
+                return;
+            }
+
+            // Validación de rango de fechas (3 días antes y 3 días después)
+            $fechaDespacho = Carbon::parse($this->programacion_fecha);
+            $fechaActual = Carbon::now('America/Lima')->startOfDay();
+
+            // Calculamos los límites de fecha
+            $fechaLimiteInferior = $fechaActual->copy()->subDays(3);
+            $fechaLimiteSuperior = $fechaActual->copy()->addDays(3);
+
+            // Verificamos si la fecha está fuera del rango permitido
+            if ($fechaDespacho->lt($fechaLimiteInferior) || $fechaDespacho->gt($fechaLimiteSuperior)) {
+                session()->flash('error', 'Fecha no válida. Solo se permiten fechas entre ' .
+                    $fechaLimiteInferior->format('d-m-Y') . ' y ' .
+                    $fechaLimiteSuperior->format('d-m-Y') . '.');
+
+                // Opcional: resetear la fecha a la fecha actual
+//                $this->guia_fecha_despacho = $fechaActual->format('Y-m-d');
+//                $this->actualizarFechaModal();
+                return;
+            }
+
+            // Si la fecha es válida, limpiar cualquier mensaje de error previo
+            session()->forget('error');
+
+            // Actualizar la fecha para el modal
+//            $this->actualizarFechaModal();
+
+        } catch (\Exception $e) {
+            session()->flash('error', 'Error al validar la fecha: ' . $e->getMessage());
+            $this->programacion_fecha = Carbon::now('America/Lima')->format('Y-m-d');
+//            $this->actualizarFechaModal();
+        }
+    }
+
 //    PARA EL MODAL DE PROVINCIA
     public $clienteSeleccionado;
     public $clienteindex;
@@ -1194,6 +1236,16 @@ class Mixto extends Component
             $despachoLocal->despacho_cap_min = $existecap->tarifa_cap_min;
             $despachoLocal->despacho_cap_max = $existecap->tarifa_cap_max;
 
+            // OBTENER ACUERDOS COMERCIALES
+            $obtener_acl = DB::table('transportistas')
+                ->where('id_transportistas', '', $this->id_transportistas)
+                ->where('transportista_estado', '=', 1)
+                ->first();
+            $despachoLocal->despacho_conformidad_factura = $obtener_acl->transportista_conformidad_factura;
+            $despachoLocal->despacho_modo_pago_factura = $obtener_acl->transportista_modo_pago_factura;
+            $despachoLocal->despacho_referencia_acuerdo_comercial = $obtener_acl->transportista_referencia_acuerdo_comercial;
+            $despachoLocal->despacho_garantias_servicio = $obtener_acl->transportista_garantias_servicio;
+
             if (!$despachoLocal->save()) {
                 DB::rollBack();
                 session()->flash('error', 'Error al guardar el despacho local.');
@@ -1288,6 +1340,16 @@ class Mixto extends Component
                     ->first();
                 $despacho->despacho_cap_min = $existecap->tarifa_cap_min;
                 $despacho->despacho_cap_max = $existecap->tarifa_cap_max;
+
+                // OBTENER ACUERDOS COMERCIALES
+                $obtener_acp = DB::table('transportistas')
+                    ->where('id_transportistas', '',  $cliente['id_transportista'])
+                    ->where('transportista_estado', '=', 1)
+                    ->first();
+                $despacho->despacho_conformidad_factura = $obtener_acp->transportista_conformidad_factura;
+                $despacho->despacho_modo_pago_factura = $obtener_acp->transportista_modo_pago_factura;
+                $despacho->despacho_referencia_acuerdo_comercial = $obtener_acp->transportista_referencia_acuerdo_comercial;
+                $despacho->despacho_garantias_servicio = $obtener_acp->transportista_garantias_servicio;
 
                 if (!$despacho->save()) {
                     DB::rollBack();

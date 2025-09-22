@@ -84,6 +84,47 @@ class Entregada extends Component{
         return view('livewire.programacioncamiones.entregada');
     }
 
+    public function validar_fecha(){
+        try {
+            // Validar que la fecha no esté vacía
+            if (empty($this->guia_fecha_despacho)) {
+                session()->flash('error', 'La fecha de despacho es requerida.');
+                return;
+            }
+
+            // Validación de rango de fechas (3 días antes y 3 días después)
+            $fechaDespacho = Carbon::parse($this->guia_fecha_despacho);
+            $fechaActual = Carbon::now('America/Lima')->startOfDay();
+
+            // Calculamos los límites de fecha
+            $fechaLimiteInferior = $fechaActual->copy()->subDays(3);
+            $fechaLimiteSuperior = $fechaActual->copy()->addDays(3);
+
+            // Verificamos si la fecha está fuera del rango permitido
+            if ($fechaDespacho->lt($fechaLimiteInferior) || $fechaDespacho->gt($fechaLimiteSuperior)) {
+                session()->flash('error', 'Fecha no válida. Solo se permiten fechas entre ' .
+                    $fechaLimiteInferior->format('d-m-Y') . ' y ' .
+                    $fechaLimiteSuperior->format('d-m-Y') . '.');
+
+                // Opcional: resetear la fecha a la fecha actual
+//                $this->guia_fecha_despacho = $fechaActual->format('Y-m-d');
+                $this->actualizarFechaModal();
+                return;
+            }
+
+            // Si la fecha es válida, limpiar cualquier mensaje de error previo
+            session()->forget('error');
+
+            // Actualizar la fecha para el modal
+            $this->actualizarFechaModal();
+
+        } catch (\Exception $e) {
+            session()->flash('error', 'Error al validar la fecha: ' . $e->getMessage());
+            $this->guia_fecha_despacho = Carbon::now('America/Lima')->format('Y-m-d');
+            $this->actualizarFechaModal();
+        }
+    }
+
     public function seleccionarFactura($id_guia){
         // Buscar la factura por su ID
         $factura = Guia::find($id_guia);

@@ -16,6 +16,14 @@
         </div>
     @endif
 
+    <div class="row">
+        <div wire:loading wire:target="editar_gestionar_os, actualizar_despacho_os" class="overlay__eliminar">
+            <div class="spinner__container__eliminar">
+                <div class="spinner__eliminar"></div>
+            </div>
+        </div>
+    </div>
+
 {{--    MODAL ANULAR OS--}}
     <x-modal-delete  wire:ignore.self >
         <x-slot name="id_modal">modal_anular_os</x-slot>
@@ -44,6 +52,41 @@
         </x-slot>
     </x-modal-delete>
 {{--    FIN MODAL ANULAR OS--}}
+
+{{--    MODAL FECHA ENTREGA--}}
+    <x-modal-delete  wire:ignore.self >
+        <x-slot name="id_modal">modal_fecha_entrega</x-slot>
+        <x-slot name="modalContentDelete">
+            <form wire:submit.prevent="fecha_entrega">
+                <div class="row">
+                    <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                        <h2 class="deleteTitle">Programar Entrega</h2>
+                    </div>
+
+                    <div class="col-lg-2"></div>
+                    <div class="col-lg-8 col-md-8 col-sm-12 mb-3">
+                        <input type="date" class="form-control" id="despacho_fecha_entrega" wire:model.live="despacho_fecha_entrega" wire:change="validar_fecha" />
+                    </div>
+
+                    <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
+                        @error('id_despacho') <span class="message-error">{{ $message }}</span> @enderror
+
+                        @if (session()->has('error_fecha_entrega'))
+                            <div class="alert alert-danger alert-dismissible show fade">
+                                {{ session('error_fecha_entrega') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        @endif
+                    </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12 mt-3 text-center">
+                        <button type="button" data-bs-dismiss="modal" class="btn btn-danger btnDelete">No</button>
+                        <button type="submit" class="btn btn-primary text-white btnDelete">SI</button>
+                    </div>
+                </div>
+            </form>
+        </x-slot>
+    </x-modal-delete>
+{{--    FIN MODAL FECHA ENTREGA--}}
 
     <div class="row">
         <div class="col-lg-12 col-md-12 col-sm-12 mb-3">
@@ -95,13 +138,28 @@
                             </div>
                             <div class="card-body mt-3">
                                 <div class="mt-2">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <p class="ms-2">Fecha de Aprobación: <b>{{ $listar_info->despacho_fecha_aprobacion ? $general->obtenerNombreFecha($listar_info->despacho_fecha_aprobacion, 'Date', 'Date') : '-' }}</b></p>
-                                        <p class="ms-2">Fecha de Inicio de Servicio: <b>{{ $listar_info->despacho_fecha_aprobacion ? $general->obtenerNombreFecha($listar_info->despacho_fecha_aprobacion, 'Date', 'Date') : '-' }}</b></p>
+                                    <div class="row align-items-center">
+                                        <div class="col-lg-6 mb-3">
+                                            <p class="ms-2">Fecha de Aprobación: <b>{{ $listar_info->despacho_fecha_aprobacion ? $general->obtenerNombreFecha($listar_info->despacho_fecha_aprobacion, 'Date', 'Date') : '-' }}</b></p>
+                                        </div>
+                                        <div class="col-lg-6 mb-3">
+                                            @if($editando)
+                                                <label for="programacion_fecha_edit" class="form-label">Fecha Inicio</label>
+                                                <input type="date" class="form-control" id="programacion_fecha_edit" wire:model.live="programacion_fecha_edit" />
+                                            @else
+                                                <p class="ms-2">Fecha de Inicio de Servicio: <b>{{ $listar_info->programacion_fecha ? $general->obtenerNombreFecha($listar_info->programacion_fecha, 'Date', 'Date') : '-' }}</b></p>
+                                            @endif
+                                        </div>
                                     </div>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <p class="ms-2">Plazo de Entrega: - </p>
-                                        <p class="ms-2">Fecha de Entrega Esperada: - </p>
+                                    <div class="row align-items-center">
+                                        <div class="col-lg-6 mb-3">
+                                            <p class="ms-2">Plazo de Entrega: <b>{{ $tarifa_tiempo_transporte ? $tarifa_tiempo_transporte . ' días hábiles' : '-' }}</b></p>
+                                        </div>
+                                        <div class="col-lg-6 mb-3">
+                                            <p class="ms-2">Fecha de Entrega Esperada:
+                                                <b>{{ $fecha_entrega_espera !== '-' ? $general->obtenerNombreFecha($fecha_entrega_espera, 'Date', 'Date') : '-' }}</b>
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -119,7 +177,7 @@
                                     <select wire:model="transportista_seleccionado" id="transportista_seleccionado" name="transportista_seleccionado" wire:change="actualizar_transportista" class="form-select mb-3">
                                         <option value="">Seleccione un transportista</option>
                                         @foreach($transportistas as $transportista)
-                                            <option value="{{$transportista->id_transportistas}}">
+                                            <option value="{{$transportista->id_transportistas}}" {{ $transportista_seleccionado == $transportista->id_transportistas ? 'selected' : '' }}>
                                                 {{ $transportista->transportista_razon_social }}
                                             </option>
                                         @endforeach
@@ -139,18 +197,81 @@
                                 <h5>Acuerdos Comerciales de la OS</h5>
                             </div>
                             <div class="card-body mt-3">
-{{--                                <p>Referencia: <b>Cotización N° 123456</b></p>--}}
-{{--                                <p>Presentado: <b>Por Correo Electrónico e-mail absa@gmail.com</b></p>--}}
-{{--                                <p>Contacto Comercial: <b>Josue Pomachua</b></p>--}}
-{{--                                <p>Conformidad de Factura: <b>Después de Entrega</b></p>--}}
-{{--                                <p>Modo de Pago: <b>Crédito a 15 días de presentación de factura</b></p>--}}
-{{--                                <p>Garantías del Servicio: <b>100% de pérdida. Retorno gratuito por deterioro</b></p>--}}
+                                <div class="row">
+                                    <div class="col-lg-6 mb-3">
+                                        @if($editando)
+                                            <label for="despacho_referencia_acuerdo_comercial" class="form-label">Referencia:</label>
+                                            <textarea class="form-control" rows="2" id="despacho_referencia_acuerdo_comercial" wire:model.live="despacho_referencia_acuerdo_comercial"></textarea>
+                                        @else
+                                            <p>Referencia: <b>{{$listar_info->despacho_referencia_acuerdo_comercial}}</b></p>
+                                        @endif
+                                    </div>
+                                    <div class="col-lg-6 mb-3">
+                                        <p>Contacto Comercial: <b>{{$transportista_actual->transportista_contacto_uno_comercial_operativo}}</b></p>
+                                    </div>
+                                    <div class="col-lg-6 mb-3">
+                                        @php
+                                            $conformidad_factura = "";
+                                            if ($listar_info->despacho_conformidad_factura == 1){
+                                                $conformidad_factura = "Anticipado";
+                                            } elseif ($listar_info->despacho_conformidad_factura == 2) {
+                                                $conformidad_factura = "Después de Entrega";
+                                            } else {
+                                                $conformidad_factura = "-";
+                                            }
+                                        @endphp
+
+                                        @if($editando)
+                                            <label for="despacho_conformidad_factura" class="form-label">Conformidad de Factura:</label>
+                                            <select class="form-control" id="despacho_conformidad_factura" wire:model.live="despacho_conformidad_factura">
+                                                <option value="">Seleccionar...</option>
+                                                <option value="1">Anticipado</option>
+                                                <option value="2">Después de Entrega</option>
+                                            </select>
+                                        @else
+                                            <p>Conformidad de Factura: <b>{{$conformidad_factura}}</b></p>
+                                        @endif
+                                    </div>
+                                    <div class="col-lg-6 mb-3"></div>
+                                    <div class="col-lg-6 mb-3">
+                                        @php
+                                            $modo_pago = "";
+                                            if ($listar_info->despacho_modo_pago_factura == 1){
+                                                $modo_pago = "Contado";
+                                            } elseif ($listar_info->despacho_modo_pago_factura == 2) {
+                                                $modo_pago = "Crédito";
+                                            } else {
+                                                $modo_pago = "-";
+                                            }
+                                        @endphp
+
+                                        @if($editando)
+                                            <label for="despacho_modo_pago_factura" class="form-label">Modo de Pago:</label>
+                                            <select class="form-control" id="despacho_modo_pago_factura" wire:model.live="despacho_modo_pago_factura">
+                                                <option value="">Seleccionar...</option>
+                                                <option value="1">Contado</option>
+                                                <option value="2">Crédito</option>
+                                            </select>
+                                        @else
+                                            <p>Modo de Pago: <b>{{$modo_pago}}</b></p>
+                                        @endif
+                                    </div>
+                                    <div class="col-lg-6 mb-3"></div>
+                                    <div class="col-lg-6 mb3">
+                                        @if($editando)
+                                            <label for="despacho_garantias_servicio" class="form-label">Garantías del Servicio:</label>
+                                            <textarea class="form-control" rows="2" id="despacho_garantias_servicio" wire:model.live="despacho_garantias_servicio"></textarea>
+                                        @else
+                                            <p>Garantías del Servicio: <b>{{$listar_info->despacho_garantias_servicio}}</b></p>
+                                        @endif
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-lg-9 mb-3">
+                    <div class="col-lg-8 mb-3">
                         <div class="card">
                             <div class="card-header" style="background: #e7f1ff">
                                 <h5>Resumen General de la OS</h5>
@@ -245,7 +366,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-3 mb-3">
+                    <div class="col-lg-4 mb-3">
                         <div class="card">
                             <div class="card-header" style="background: #e7f1ff">
                                 <h5>Datos Internos de la OS</h5>
@@ -294,12 +415,23 @@
                                                 else
                                                     $mensaje_estado = "Estado desconocido";
                                         @endphp
-                                        <strong class="colorgotomarket mb-2">Estado de la OS</strong>
-                                        <p>{{ $mensaje_estado }}</p>
+                                        @if($editando)
+                                            <p>Estado actual: <b>{{$mensaje_estado}}</b></p>
+                                            <select class="form-control" id="despacho_estado_aprobacion_edit" wire:model.live="despacho_estado_aprobacion_edit">
+                                                <option value="">Seleccionar...</option>
+                                                <option value="2">En Ejecución</option>
+                                                <option value="3">Terminado</option>
+                                                <option value="4">Anulado</option>
+                                            </select>
+                                        @else
+                                            <strong class="colorgotomarket mb-2">Estado de la OS</strong>
+                                            <p>{{ $mensaje_estado }}</p>
+                                        @endif
+
                                     </div>
                                     <div class="col-lg-4 col-md-4 col-sm-12 mb-2">
                                         <strong class="colorgotomarket mb-2">OS Editada</strong>
-                                        <p>SI</p>
+                                        <p>{{ $listar_info->id_users_programacion ? 'SI' : 'NO' }}</p>
                                     </div>
                                     <div class="col-lg-4 col-md-4 col-sm-12 mb-2">
                                         <strong class="colorgotomarket mb-2">Comentario</strong>
@@ -317,7 +449,7 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-lg-9">
+                            <div class="col-lg-8">
                                 <h6>Detalle del Servicio</h6>
                                 <hr>
                                 <x-table-general>
@@ -359,12 +491,13 @@
                                     </x-slot>
                                 </x-table-general>
                             </div>
-                            <div class="col-lg-3">
+                            <div class="col-lg-4">
                                 <h6>Gestión de Entrega</h6>
                                 <hr>
                                 <x-table-general>
                                     <x-slot name="thead">
                                         <tr>
+                                            <th>N°</th>
                                             <th>Estado de la Guía</th>
                                             <th>Fecha de Entrega</th>
                                             <th>Adjuntar Cargo</th>
@@ -375,91 +508,75 @@
                                             @php $conteoEst = 1; @endphp
                                             @foreach($listar_info->guias as $index => $guia)
                                                 <tr>
+                                                    <td>{{$conteoEst}}</td>
                                                     <td>
-                                                        @switch($guia->guia_estado_aprobacion)
-                                                            @case(1)
-                                                                Enviado a Créditos
-                                                                @break
-                                                            @case(2)
-                                                                Enviado a Despacho
-                                                                @break
-                                                            @case(3)
-                                                                Listo para despacho
-                                                                @break
-                                                            @case(4)
-                                                                Pendiente de aprobación de despacho
-                                                                @break
-                                                            @case(5)
-                                                                Aceptado por Créditos
-                                                                @break
-                                                            @case(6)
-                                                                Estado de facturación
-                                                                @break
-                                                            @case(7)
-                                                                Guía en tránsito
-                                                                @break
-                                                            @case(8)
-                                                                Guía entregada
-                                                                @break
-                                                            @case(9)
-                                                                Despacho aprobado
-                                                                @break
-                                                            @case(10)
-                                                                Despacho rechazado
-                                                                @break
-                                                            @case(11)
-                                                                Guía no entregada
-                                                                @break
-                                                            @case(12)
-                                                                Guía anulada
-                                                                @break
-                                                            @case(13)
-                                                                Registrada en Intranet
-                                                                @break
-                                                            @case(14)
-                                                                Guía anulada por NC
-                                                                @break
-                                                            @case(15)
-                                                                Pendiente de NC
-                                                                @break
-                                                            @case(20)
-                                                                @php
-                                                                    $despacho_ventas_l = DB::table('despacho_ventas as dv')
-                                                                    ->join('despachos as d','dv.id_despacho','=','d.id_despacho')
-                                                                    ->where('dv.id_guia','=',$guia->id_guia)
-                                                                    ->where('d.id_tipo_servicios','=',1)
-                                                                    ->first();
+                                                        @if($editando)
+                                                            @php
+                                                                $estado = $general->obtener_estado($guia->guia_estado_aprobacion, $guia->id_guia, 3, $listar_info->id_despacho);
+                                                            @endphp
+                                                            <p>Estado actual: <b>{{$estado}}</b></p>
 
-                                                                    $despacho_ventas_p = DB::table('despacho_ventas as dv')
-                                                                    ->join('despachos as d','dv.id_despacho','=','d.id_despacho')
-                                                                    ->where('dv.id_guia','=',$guia->id_guia)
-                                                                    ->where('d.id_tipo_servicios','=',2)
-                                                                    ->first();
-
-                                                                    if($despacho_ventas_l->despacho_detalle_estado_entrega == 0 && $despacho_ventas_p->despacho_detalle_estado_entrega == 0
-                                                                    && $despacho_ventas_l->despacho_estado_aprobacion == 1 && $despacho_ventas_p->despacho_estado_aprobacion == 1
-                                                                    ){
-                                                                        echo 'Despacho aprobado';
-                                                                    } else if ($despacho_ventas_l->despacho_detalle_estado_entrega == 0 && $despacho_ventas_p->despacho_detalle_estado_entrega == 0
-                                                                     && $despacho_ventas_l->despacho_estado_aprobacion == 2 && $despacho_ventas_p->despacho_estado_aprobacion == 1
-                                                                    ){
-                                                                        echo 'Guía en tránsito';
-                                                                    } else if ($despacho_ventas_l->despacho_detalle_estado_entrega == 8 && $despacho_ventas_p->despacho_detalle_estado_entrega == 0
-                                                                    && $despacho_ventas_l->despacho_estado_aprobacion == 3 && $despacho_ventas_p->despacho_estado_aprobacion == 2
-                                                                    ){
-                                                                        echo 'Guía en tránsito';
-                                                                    } else if ($despacho_ventas_l->despacho_detalle_estado_entrega == 8 && $despacho_ventas_p->despacho_detalle_estado_entrega == 8
-                                                                     && $despacho_ventas_l->despacho_estado_aprobacion == 3 && $despacho_ventas_p->despacho_estado_aprobacion == 3){
-                                                                        echo 'Guía entregada';
-                                                                    }
-                                                                @endphp
-                                                                @break
-                                                            @default
-                                                                Estado desconocido
-                                                        @endswitch
+                                                            <select class="form-control" wire:model.live="guias_estados.{{$guia->id_guia}}">
+                                                                <option value="">Seleccionar...</option>
+                                                                <option value="7">Transito</option>
+                                                                <option value="3">Por Programar</option>
+                                                                <option value="8">Entregado</option>
+                                                                <option value="15">Enviar a NC</option>
+                                                            </select>
+                                                        @else
+                                                            @php
+                                                                $estado = $general->obtener_estado($guia->guia_estado_aprobacion, $guia->id_guia, 3, $listar_info->id_despacho);
+                                                            @endphp
+                                                            <p>{{$estado}}</p>
+                                                        @endif
                                                     </td>
-                                                    <td></td>
-                                                    <td></td>
+
+                                                    <td>
+                                                        @if($editando)
+                                                            <input type="date"
+                                                                   class="form-control"
+                                                                   wire:model.live="guias_fechas.{{$guia->id_guia}}">
+                                                            @error('guias_fechas.'.$guia->id_guia)
+                                                            <small class="text-danger">{{ $message }}</small>
+                                                            @enderror
+                                                        @else
+                                                            @php
+                                                                $f = $guias_fechas[$guia->id_guia] ?? null;
+                                                            @endphp
+                                                            <span>{{ $f ? $general->obtenerNombreFecha($f, 'Date', 'Date') : '-' }}</span>
+                                                        @endif
+                                                    </td>
+
+                                                    <td>
+                                                        @if($editando)
+                                                            <input type="file"
+                                                                   id="file-input-{{ $guia->id_guia }}"
+                                                                   class="d-none"
+                                                                   wire:model="guias_cargos.{{ $guia->id_guia }}" />
+
+                                                            <a class="btn btn-sm bg-success text-white"
+                                                               onclick="document.getElementById('file-input-{{ $guia->id_guia }}').click()">
+                                                                <i class="fa-solid fa-file"></i> Adjuntar
+                                                            </a>
+
+                                                            <div wire:loading wire:target="guias_cargos.{{ $guia->id_guia }}" class="mt-1 ms-4">
+                                                                <div class="spinner-border spinner-border-sm text-success" role="status">
+                                                                    <span class="visually-hidden">Cargando...</span>
+                                                                </div>
+                                                            </div>
+                                                        @else
+                                                            @php
+                                                                $doc = $guias_cargos[$guia->id_guia] ?? null;
+                                                            @endphp
+                                                            @if($doc)
+                                                                <a href="{{ asset($doc) }}" target="_blank">
+                                                                    <i class="fa-solid fa-file"></i> Ver archivo
+                                                                </a>
+                                                            @else
+                                                                -
+                                                            @endif
+                                                        @endif
+                                                    </td>
                                                 </tr>
                                                 @php $conteoEst++; @endphp
                                             @endforeach
@@ -523,6 +640,10 @@
 <script>
     $wire.on('hide_anular_os', () => {
         $('#modal_anular_os').modal('hide');
+    });
+
+    $wire.on('hide_modal_fecha_entrega', () => {
+        $('#modal_fecha_entrega').modal('hide');
     });
 </script>
 @endscript

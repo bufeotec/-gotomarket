@@ -30,10 +30,8 @@
         <div id="main" class='layout-navbar'>
             @include('layouts.parts.topnavbar')
 
-            <div id="maincontent">
+            <div id="main-content">
                 @yield('content')
-            </div>
-            <div style="padding: 0 2rem">
                 @include('layouts.parts.footer')
 
             </div>

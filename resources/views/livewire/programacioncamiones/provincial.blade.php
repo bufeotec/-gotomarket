@@ -569,7 +569,7 @@
                                     <h6>Fecha de despacho</h6>
                                 </div>
                                 <div class="col-lg-12">
-                                    <input type="date" class="form-control" id="programacion_fecha" name="programacion_fecha" wire:model="programacion_fecha" />
+                                    <input type="date" class="form-control" id="programacion_fecha" name="programacion_fecha" wire:model.live="programacion_fecha" wire:change="validar_fecha" />
                                 </div>
                             </div>
                         </div>

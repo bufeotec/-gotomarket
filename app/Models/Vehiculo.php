@@ -208,6 +208,56 @@ class Vehiculo extends Model
     public function obtener_vehiculos_con_tarifarios_provincial($pesot,$type, $idt = null,$iddepartamento = null,$idprovincia = null,$iddistrito = null){
         try {
             $query = DB::table('tarifarios as t')
+                ->join('transportistas as tr', 't.id_transportistas', 'tr.id_transportistas')
+                ->where('t.tarifa_estado','=', 1)
+                ->where('t.id_tipo_servicio','=', $type)
+//                ->where('t.tarifa_cap_min', '<=', $pesot)
+//                ->where('t.tarifa_cap_max', '>=', $pesot)
+            ;
+            if ($idt) {
+                $query->where('t.id_transportistas', '=', $idt);
+            }
+            if ($iddepartamento) {
+                $query->where('t.id_departamento', $iddepartamento);
+            }
+            if ($idprovincia) {
+                $query->where('t.id_provincia', $idprovincia);
+            }
+//            if ($iddistrito) {
+//                $query->where('t.id_distrito', $iddistrito);
+//            }
+
+            $result = $query->get();
+
+            foreach ($result as $r){
+                $r->capacidad_usada =  ($pesot / $r->tarifa_cap_max) * 100;
+            }
+            // Ordenar los resultados por vehiculo_capacidad_usada de mayor a menor
+            $result = $result->sortByDesc(function($item) {
+                return [$item->tarifa_estado_aprobacion, $item->capacidad_usada];
+            });
+
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            $result = [];
+        }
+        return $result;
+    }
+
+    public function obtener_vehiculos_con_tarifarios_provincial_os_detalle($pesot,$type, $idt = null,$iddepartamento = null,$idprovincia = null,$iddistrito = null){
+        try {
+            $query = DB::table('tarifarios as t')
+                ->select(
+                    'tr.transportista_razon_social',
+                    'tr.id_transportistas',
+                    't.id_tarifario',
+                    'tr.id_ubigeo',
+                    't.tarifa_cap_min',
+                    't.tarifa_cap_max',
+                    't.tarifa_monto',
+                    't.tarifa_estado_aprobacion'
+                )
+                ->join('transportistas as tr', 't.id_transportistas', 'tr.id_transportistas')
                 ->where('t.tarifa_estado','=', 1)
                 ->where('t.id_tipo_servicio','=', $type)
 //                ->where('t.tarifa_cap_min', '<=', $pesot)

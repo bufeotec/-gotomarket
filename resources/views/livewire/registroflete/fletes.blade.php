@@ -4,11 +4,30 @@
             <input type="text" class="form-control w-50 me-4"  wire:model.live="search_transportistas" placeholder="Buscar">
             <x-select-filter wire:model.live="pagination_transportistas" />
         </div>
+
+        <div class="col-lg-2 col-md-2 col-sm-12 text-end">
+            <a class="btn btn-success text-white" wire:click="generar_excel_comparativo_provincia">Comparativo Tarifa Provincia</a>
+        </div>
+
+        <div class="col-lg-2 col-md-2 col-sm-12 text-end">
+            <a class="btn btn-success text-white" wire:click="generar_excel_comparativo_local">Comparativo Tarifa Local</a>
+        </div>
+
+        <div class="col-lg-2 col-md-2 col-sm-12 text-end">
+            <a class="btn btn-success text-white" wire:click="generar_excel_tiempo_transporte">Tiempos de Transporte</a>
+        </div>
+
     </div>
 
     @if (session()->has('success'))
         <div class="alert alert-success alert-dismissible show fade mt-2">
             {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+    @if (session()->has('error'))
+        <div class="alert alert-danger alert-dismissible show fade mt-2">
+            {{ session('error') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif

@@ -48,8 +48,12 @@ class ProgramacionesPendientes extends Component
     private $serviciotransporte;
     private $guia;
     private $historialdespachoventa;
-    public function __construct()
-    {
+    public $estadoComprobante = [];
+    public $currentDespachoId;
+    public $estadoServicio = [];
+//    public $fecha_entrega_guia = "";
+    public $fecha_entrega_guia = [];
+    public function __construct(){
         $this->logs = new Logs();
         $this->programacion = new Programacion();
         $this->despacho = new Despacho();
@@ -59,10 +63,10 @@ class ProgramacionesPendientes extends Component
         $this->guia = new Guia();
         $this->historialdespachoventa = new Historialdespachoventa();
     }
-    public function mount()
-    {
-        $this->desde = Carbon::today()->toDateString(); // Fecha actual
-        $this->hasta = Carbon::tomorrow()->toDateString(); // Un día después de la fecha actual
+    public function mount(){
+        $this->fecha_entrega_guia = [];
+        $this->desde = Carbon::today('America/Lima')->toDateString();
+        $this->hasta = Carbon::tomorrow('America/Lima')->toDateString();
     }
 
     public function render(){
@@ -108,6 +112,59 @@ class ProgramacionesPendientes extends Component
         $conteoProgramacionesPend = DB::table('programaciones')->where('programacion_estado_aprobacion', '=', 0)->count();
 
         return view('livewire.programacioncamiones.programaciones-pendientes', compact('conteoProgramacionesPend'));
+    }
+
+    public function validar_fecha($id_despacho, $id_despacho_venta){
+        try {
+            $key = $id_despacho . '_' . $id_despacho_venta;
+
+            // Validar que la fecha no esté vacía
+            if (empty($this->fecha_entrega_guia[$key])) {
+                session()->flash('error_fecha', 'La fecha de entrega es requerida para esta guía.');
+                return;
+            }
+
+            // Validación de rango de fechas (3 días antes y 3 días después)
+            $fechaDespacho = Carbon::parse($this->fecha_entrega_guia[$key]);
+            $fechaActual = Carbon::now('America/Lima')->startOfDay();
+
+            // Calculamos los límites de fecha - INCLUIR LOS LÍMITES
+            $fechaLimiteInferior = $fechaActual->copy()->subDays(3);
+            $fechaLimiteSuperior = $fechaActual->copy()->addDays(3);
+
+            // CORREGIR: usar lte y gte para incluir los límites
+            if ($fechaDespacho->lt($fechaLimiteInferior) || $fechaDespacho->gt($fechaLimiteSuperior)) {
+                session()->flash('error_fecha', 'Fecha no válida para esta guía. Solo se permiten fechas entre ' .
+                    $fechaLimiteInferior->format('d-m-Y') . ' y ' .
+                    $fechaLimiteSuperior->format('d-m-Y') . '.');
+
+                // Limpiar la fecha inválida
+//                unset($this->fecha_entrega_guia[$key]);
+                return;
+            }
+
+            // Si la fecha es válida, limpiar cualquier mensaje de error previo
+            session()->forget('error_fecha');
+
+        } catch (\Exception $e) {
+            session()->flash('error_fecha', 'Error al validar la fecha: ' . $e->getMessage());
+            unset($this->fecha_entrega_guia[$key]);
+        }
+    }
+
+    public function inicializarFechasActuales($detalleDespacho){
+        $fechaActual = Carbon::now('America/Lima')->format('Y-m-d');
+
+        if (isset($detalleDespacho->comprobantes)) {
+            foreach ($detalleDespacho->comprobantes as $comprobante) {
+                $clave = $detalleDespacho->id_despacho . '_' . $comprobante->id_despacho_venta;
+
+                // Solo inicializar con fecha actual si NO hay fecha guardada
+                if (empty($comprobante->despacho_detalle_fecha_entrega)) {
+                    $this->fecha_entrega_guia[$clave] = $fechaActual;
+                }
+            }
+        }
     }
 
     public function buscar_programacion() {
@@ -381,8 +438,6 @@ class ProgramacionesPendientes extends Component
         }
     }
 
-    // PARA EL CAMBIO DE ESTADO 'EN CAMINO' O EN 'TRANSITO' COMO CHUCHA LO QUIERAS LLAMARLE
-
     // Función para preparar la acción "En Camino"
 
     public function confirmar_encamino() {
@@ -545,10 +600,6 @@ class ProgramacionesPendientes extends Component
     }
 
     // DATELLES DEL DESPACHO
-
-    public $estadoComprobante = [];
-    public $currentDespachoId;
-    public $estadoServicio = [];
     public function listar_informacion_despacho($id_despacho) {
         try {
             // Limpiar estados anteriores
@@ -610,15 +661,60 @@ class ProgramacionesPendientes extends Component
                         : 5;
                 }
             }
+
+            // INICIALIZAR FECHAS ACTUALES para inputs sin fecha guardada
+            if ($this->listar_detalle_despacho) {
+                $this->inicializarFechasActuales($this->listar_detalle_despacho);
+            }
         } catch (\Exception $e) {
             $this->logs->insertarLog($e);
         }
     }
 
-    public function cambiarEstadoComprobante() {
+    public function cambiarEstadoComprobante(){
         try {
             DB::beginTransaction();
             $id_despacho = $this->currentDespachoId;
+
+            // VALIDACIÓN CORREGIDA: Validar que todas las guías tengan fecha de entrega
+            foreach ($this->estadoComprobante as $key => $estado) {
+                $parts = explode('_', $key);
+                if ($parts[0] != $id_despacho) continue;
+
+                // CORREGIR: El key debe coincidir exactamente
+                if (!isset($this->fecha_entrega_guia[$key]) || empty($this->fecha_entrega_guia[$key])) {
+                    DB::rollBack();
+                    session()->flash('error_fecha', "Debe ingresar la fecha de entrega para la guía con clave: $key");
+                    \Log::error("Falta fecha para key: $key", [
+                        'fechas_disponibles' => array_keys($this->fecha_entrega_guia),
+                        'estados_disponibles' => array_keys($this->estadoComprobante)
+                    ]);
+                    return;
+                }
+
+                // VALIDAR FECHA DENTRO DEL RANGO PERMITIDO
+                try {
+                    $fechaValidacion = Carbon::parse($this->fecha_entrega_guia[$key]);
+                    $fechaActual = Carbon::now('America/Lima')->startOfDay();
+
+                    // FECHAS VÁLIDAS: desde 3 días antes hasta 3 días después (INCLUSIVO)
+                    $fechaLimiteInferior = $fechaActual->copy()->subDays(3);
+                    $fechaLimiteSuperior = $fechaActual->copy()->addDays(3);
+
+                    if ($fechaValidacion->lt($fechaLimiteInferior) || $fechaValidacion->gt($fechaLimiteSuperior)) {
+                        DB::rollBack();
+                        session()->flash('error_fecha', 'Fecha ' . $fechaValidacion->format('d-m-Y') .
+                            ' fuera del rango permitido (' .
+                            $fechaLimiteInferior->format('d-m-Y') . ' a ' .
+                            $fechaLimiteSuperior->format('d-m-Y') . ').');
+                        return;
+                    }
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    session()->flash('error_fecha', 'Formato de fecha inválido para la guía.');
+                    return;
+                }
+            }
 
             // Obtener información del despacho actual
             $despachoActual = DB::table('despachos')
@@ -715,13 +811,31 @@ class ProgramacionesPendientes extends Component
                     }
                 }
 
-                // Actualizar despacho_ventas
-                DB::table('despacho_ventas')
+                // OBTENER FECHA DE ENTREGA PARA ESTA GUÍA ESPECÍFICA
+                $fechaEntrega = $this->fecha_entrega_guia[$key] ?? null;
+
+                if (!$fechaEntrega) {
+                    DB::rollBack();
+                    session()->flash('error_fecha', "No se encontró fecha para la guía $key");
+                    return;
+                }
+
+                // ACTUALIZAR CON VALIDACIÓN TRIPLE
+                $updated = DB::table('despacho_ventas')
                     ->where('id_despacho_venta', $id_despacho_venta)
+                    ->where('id_despacho', $id_despacho)
+                    ->where('id_guia', $despachoVenta->id_guia)
                     ->update([
                         'despacho_detalle_estado_entrega' => $es,
+                        'despacho_detalle_fecha_entrega' => $fechaEntrega,
                         'updated_at' => now('America/Lima')
                     ]);
+
+                if (!$updated) {
+                    DB::rollBack();
+                    session()->flash('errorComprobante', 'Error al actualizar la guía con fecha.');
+                    return;
+                }
 
                 // Lógica para actualizar estado de guías en programaciones mixtas
                 if ($esProgramacionMixta && $esDespachoLocal) {
@@ -812,13 +926,21 @@ class ProgramacionesPendientes extends Component
             }
 
             DB::commit();
-            session()->flash('successComprobante', 'Estados actualizados correctamente.');
+
+            // LIMPIAR LAS FECHAS DESPUÉS DEL ÉXITO
+            $this->fecha_entrega_guia = [];
+
+            session()->flash('successComprobante', 'Estados y fechas de entrega actualizados correctamente.');
             $this->listar_informacion_despacho($id_despacho);
             $this->buscar_programacion();
 
         } catch (\Exception $e) {
             DB::rollBack();
             session()->flash('errorComprobante', 'Error: ' . $e->getMessage());
+            \Log::error('Error en cambiarEstadoComprobante: ' . $e->getMessage(), [
+                'estados' => $this->estadoComprobante,
+                'fechas' => $this->fecha_entrega_guia
+            ]);
         }
     }
 

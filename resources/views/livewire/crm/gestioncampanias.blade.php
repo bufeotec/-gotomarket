@@ -7,8 +7,17 @@
     <x-modal-general  wire:ignore.self >
         <x-slot name="id_modal">modal_campania</x-slot>
         <x-slot name="titleModal">Gestionar Campaña</x-slot>
-        <x-slot name="tama">modal-lg</x-slot>
+        <x-slot name="tama">modal-xl</x-slot>
         <x-slot name="modalContent">
+            <div class="row">
+                <div class="col-lg-12 mb-3">
+                    <div wire:loading wire:target="removeArchivo" class="overlay__eliminar">
+                        <div class="spinner__container__eliminar">
+                            <div class="spinner__eliminar"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <form wire:submit.prevent="save_campania">
                 <div class="row">
                     <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
@@ -39,10 +48,22 @@
                         @error('campania_fecha_fin')<span class="message-error">{{ $message }}</span>@enderror
                     </div>
 
-                    <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
+                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
                         <label for="campania_fecha_fin_canje" class="form-label">Fecha Final de Canje <b class="text-danger">(*)</b></label>
                         <x-input-general type="date" id="campania_fecha_fin_canje" wire:model="campania_fecha_fin_canje"/>
                         @error('campania_fecha_fin_canje')<span class="message-error">{{ $message }}</span>@enderror
+                    </div>
+
+                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                        <label for="campania_nombre_admin" class="form-label">Nombre de Administrador de Campaña <b class="text-danger">(*)</b></label>
+                        <x-input-general type="text" id="campania_nombre_admin" wire:model="campania_nombre_admin"/>
+                        @error('campania_nombre_admin')<span class="message-error">{{ $message }}</span>@enderror
+                    </div>
+
+                    <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                        <label for="campania_celular" class="form-label">Celular <b class="text-danger">(*)</b></label>
+                        <x-input-general type="text" id="campania_celular" wire:model="campania_celular" onkeyup="validar_numeros(this.id)" />
+                        @error('campania_celular')<span class="message-error">{{ $message }}</span>@enderror
                     </div>
 
                     <div class="col-lg-12 col-md-12 col-sm-12 mt-3 mb-3">
@@ -165,11 +186,11 @@
 
     <div class="row">
         <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-            <label class="form-label">Desde</label>
+            <label class="form-label">Vigencia Desde</label>
             <input type="date" name="desde" id="desde" wire:model.live="desde" class="form-control" min="2025-01-01">
         </div>
         <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-            <label class="form-label">Hasta</label>
+            <label class="form-label">Vigencia Hasta</label>
             <input type="date" name="hasta" id="hasta" wire:model.live="hasta" class="form-control" min="2025-01-01">
         </div>
         <div class="col-lg-2 col-md-2 col-sm-2 mb-2">
@@ -222,6 +243,8 @@
                                 <th>Fecha de Inicio</th>
                                 <th>Fecha Fin</th>
                                 <th>Fecha Final canje</th>
+                                <th>Nombre del Administrado</th>
+                                <th>Celular</th>
                                 <th>Adjunto</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
@@ -238,6 +261,8 @@
                                         <td>{{ $lc->campania_fecha_inicio ? $me->obtenerNombreFecha($lc->campania_fecha_inicio, 'Date', 'Date') : '-' }}</td>
                                         <td>{{ $lc->campania_fecha_fin ? $me->obtenerNombreFecha($lc->campania_fecha_fin, 'Date', 'Date') : '-' }}</td>
                                         <td>{{ $lc->campania_fecha_fin_canje ? $me->obtenerNombreFecha($lc->campania_fecha_fin_canje, 'Date', 'Date') : '-' }}</td>
+                                        <td>{{ $lc->campania_nombre_admin ?? '-' }}</td>
+                                        <td>{{ $lc->campania_celular ?? '-' }}</td>
                                         <td>
                                             @php
                                                 $documentos = \Illuminate\Support\Facades\DB::table('campanias_documentos')
@@ -261,15 +286,15 @@
                                                             $nombre = \Illuminate\Support\Str::limit(basename($doc->campania_documento_adjunto), 15);
                                                         @endphp
 
-                                                        <div class="d-flex align-items-center gap-2">
+                                                        <div class="d-flex align-items-center my-2 gap-2">
                                                             <a href="{{ asset($doc->campania_documento_adjunto) }}"
                                                                target="_blank"
                                                                style="font-size: 18px;"
                                                                class="text-decoration-none"
                                                                title="{{ basename($doc->campania_documento_adjunto) }}">
                                                                 <i class="fa-solid {{ $icono }}"></i>
+                                                                <span class="small">{{ $nombre }}</span>
                                                             </a>
-                                                            <span class="small">{{ $nombre }}</span>
                                                         </div>
                                                     @endforeach
                                                 </div>
@@ -308,7 +333,7 @@
                                 @endforeach
                             @else
                                 <tr class="odd">
-                                    <td valign="top" colspan="9" class="dataTables_empty text-center">
+                                    <td valign="top" colspan="10" class="dataTables_empty text-center">
                                         No se han encontrado resultados.
                                     </td>
                                 </tr>

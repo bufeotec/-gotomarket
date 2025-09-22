@@ -477,7 +477,7 @@ class Crearusuarios extends Component
                 $usuario->users_cargo = !empty($this->users_cargo) ? $this->users_cargo : null;
 
                 if ($this->profile_picture) {
-                    $usuario->profile_picture = $this->general->save_files($this->profile_picture, 'configuration/users');
+                    $usuario->profile_picture = $this->general->save_files_campanha($this->profile_picture, 'configuration/users');
                 }
                 $usuario->users_perfil_vendedor = $this->rol_vendedor ? 1 : 0;
                 $usuario->users_dni = $this->users_dni;
@@ -538,7 +538,7 @@ class Crearusuarios extends Component
                             unlink($usuario->profile_picture);
                         }
                     } catch (\Exception $e) {}
-                    $usuario->profile_picture = $this->general->save_files($this->profile_picture, 'configuration/users');
+                    $usuario->profile_picture = $this->general->save_files_campanha($this->profile_picture, 'configuration/users');
                 }
 
                 if ($usuario->save()) {

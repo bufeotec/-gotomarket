@@ -148,7 +148,8 @@ class Despacho extends Model
 
     public function listar_info_por_id($id){
         try {
-            $result = DB::table('despachos as d')
+            $result = DB::table('programaciones as p')
+                ->join('despachos as d', 'p.id_programacion', 'd.id_programacion')
                 ->join('transportistas as t', 'd.id_transportistas', 't.id_transportistas')
                 ->join('tipo_servicios as ts', 'd.id_tipo_servicios', 'ts.id_tipo_servicios')
                 ->join('tarifarios as tar', 'd.id_tarifario', 'tar.id_tarifario')

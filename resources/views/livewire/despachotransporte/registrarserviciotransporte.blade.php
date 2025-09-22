@@ -234,7 +234,7 @@
                         <x-slot name="thead">
                             <tr>
                                 <th>N°</th>
-                                <th>Codigo</th>
+                                <th>Código</th>
                                 <th>Motivo</th>
                                 <th>Detalle Motivo</th>
                                 <th>Remitente</th>

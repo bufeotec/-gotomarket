@@ -97,7 +97,7 @@ class Local extends Component
     public function mount($id = null){
         $this->id_transportistas = null;
         $this->selectedVehiculo = null;
-        $this->programacion_fecha = now()->format('Y-m-d');
+        $this->programacion_fecha = now('America/Lima')->format('Y-m-d');
         $this->desde = null;
         $this->hasta = null;
         /**/
@@ -169,6 +169,47 @@ class Local extends Component
         $this->serv_transp = $servicio;
 
         return view('livewire.programacioncamiones.local', compact('listar_transportistas', 'listar_vehiculos', 'facturas_pre_prog_estado_dos'));
+    }
+
+    public function validar_fecha(){
+        try {
+            // Validar que la fecha no esté vacía
+            if (empty($this->programacion_fecha)) {
+                session()->flash('error', 'La fecha de despacho es requerida.');
+                return;
+            }
+
+            // Validación de rango de fechas (3 días antes y 3 días después)
+            $fechaDespacho = Carbon::parse($this->programacion_fecha);
+            $fechaActual = Carbon::now('America/Lima')->startOfDay();
+
+            // Calculamos los límites de fecha
+            $fechaLimiteInferior = $fechaActual->copy()->subDays(3);
+            $fechaLimiteSuperior = $fechaActual->copy()->addDays(3);
+
+            // Verificamos si la fecha está fuera del rango permitido
+            if ($fechaDespacho->lt($fechaLimiteInferior) || $fechaDespacho->gt($fechaLimiteSuperior)) {
+                session()->flash('error', 'Fecha no válida. Solo se permiten fechas entre ' .
+                    $fechaLimiteInferior->format('d-m-Y') . ' y ' .
+                    $fechaLimiteSuperior->format('d-m-Y') . '.');
+
+                // Opcional: resetear la fecha a la fecha actual
+//                $this->guia_fecha_despacho = $fechaActual->format('Y-m-d');
+//                $this->actualizarFechaModal();
+                return;
+            }
+
+            // Si la fecha es válida, limpiar cualquier mensaje de error previo
+            session()->forget('error');
+
+            // Actualizar la fecha para el modal
+//            $this->actualizarFechaModal();
+
+        } catch (\Exception $e) {
+            session()->flash('error', 'Error al validar la fecha: ' . $e->getMessage());
+            $this->programacion_fecha = Carbon::now('America/Lima')->format('Y-m-d');
+//            $this->actualizarFechaModal();
+        }
     }
 
     public function listar_informacion_programacion_edit() {
@@ -693,9 +734,9 @@ class Local extends Component
 
             $contadorError = 0;
             DB::beginTransaction();
-            if ($this->id_programacion_edit && $this->id_despacho_edit){
+            if ($this->id_programacion_edit && $this->id_despacho_edit) {
                 // se va a eliminar los comprobantes del anterior registro
-                DB::table('despacho_ventas')->where('id_despacho','=',$this->id_despacho_edit)->delete();
+                DB::table('despacho_ventas')->where('id_despacho', '=', $this->id_despacho_edit)->delete();
             }
             $microtimeCread = microtime(true);
             // Validar duplicidad para las facturas seleccionadas (selectedFacturas)
@@ -743,10 +784,10 @@ class Local extends Component
             }
 
             // Guardar en la tabla Programaciones
-            if ($this->id_programacion_edit && $this->id_despacho_edit){
+            if ($this->id_programacion_edit && $this->id_despacho_edit) {
                 // se va a eliminar los comprobantes del anterior registro
                 $programacion = Programacion::find($this->id_programacion_edit);
-            }else{
+            } else {
                 $programacion = new Programacion();
                 $programacion->id_users = Auth::id();
             }
@@ -759,12 +800,12 @@ class Local extends Component
                 session()->flash('error', 'Ocurrió un error al guardar la programación.');
                 return;
             }
-            $programacionCreada =  DB::table('programaciones')->where('programacion_microtime','=',$microtimeCread)->first();
+            $programacionCreada = DB::table('programaciones')->where('programacion_microtime', '=', $microtimeCread)->first();
             // Guardar el despacho
-            if ($this->id_programacion_edit && $this->id_despacho_edit){
+            if ($this->id_programacion_edit && $this->id_despacho_edit) {
                 // se va a eliminar los comprobantes del anterior registro
                 $despacho = Despacho::find($this->id_despacho_edit);
-            }else{
+            } else {
                 $despacho = new Despacho();
                 $despacho->id_users = Auth::id();
             }
@@ -782,7 +823,7 @@ class Local extends Component
                 ($this->despacho_ayudante ?: 0) + ($this->despacho_gasto_otros ?: 0);
             $despacho->despacho_estado_aprobacion = 0;
             $despacho->despacho_descripcion_otros = $this->despacho_gasto_otros > 0 ? $this->despacho_descripcion_otros : null;
-            $despacho->despacho_monto_modificado =  $this->tarifaMontoSeleccionado;
+            $despacho->despacho_monto_modificado = $this->tarifaMontoSeleccionado;
             $despacho->despacho_estado_modificado = $this->tarifaMontoSeleccionado != $this->montoOriginal ? 1 : 0;
             $despacho->despacho_descripcion_modificado = !empty($this->despacho_descripcion_modificado) ? $this->despacho_descripcion_modificado : null;
             $despacho->despacho_estado = 1;
@@ -793,6 +834,17 @@ class Local extends Component
                 ->first();
             $despacho->despacho_cap_min = $existecap->tarifa_cap_min;
             $despacho->despacho_cap_max = $existecap->tarifa_cap_max;
+
+            // OBTENER ACUERDOS COMERCIALES
+            $obtener_ac = DB::table('transportistas')
+                ->where('id_transportistas', '', $this->id_transportistas)
+                ->where('transportista_estado', '=', 1)
+                ->first();
+            $despacho->despacho_conformidad_factura = $obtener_ac->transportista_conformidad_factura;
+            $despacho->despacho_modo_pago_factura = $obtener_ac->transportista_modo_pago_factura;
+            $despacho->despacho_referencia_acuerdo_comercial = $obtener_ac->transportista_referencia_acuerdo_comercial;
+            $despacho->despacho_garantias_servicio = $obtener_ac->transportista_garantias_servicio;
+
             if (!$despacho->save()) {
                 DB::rollBack();
                 session()->flash('error', 'Ocurrió un error al guardar el despacho.');

@@ -158,7 +158,7 @@
                     <div class="card">
                         <div class="card-body">
                             <h6>Fecha de despacho</h6>
-                            <input type="date" class="form-control" id="guia_fecha_despacho" name="guia_fecha_despacho" wire:model.live="guia_fecha_despacho"/>
+                            <input type="date" class="form-control" id="guia_fecha_despacho" name="guia_fecha_despacho" wire:model.live="guia_fecha_despacho" wire:change="validar_fecha" />
                         </div>
                     </div>
                 </div>

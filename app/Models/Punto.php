@@ -70,4 +70,27 @@ class Punto extends Model{
         }
         return $result;
     }
+
+    public function obtener_historial_puntos($id_cliente, $id_campania){
+        try {
+            $vendedores = DB::table('puntos_detalles as pd')
+                ->join('vendedores_intranet as vi', 'pd.punto_detalle_vendedor', '=', 'vi.vendedor_intranet_dni')
+                ->join('puntos as p', 'pd.id_punto', '=', 'p.id_punto')
+                ->select(
+                    'vi.vendedor_intranet_dni as vendedor_dni',
+                    'vi.vendedor_intranet_nombre as vendedor_nombre',
+                    DB::raw('SUM(pd.punto_detalle_punto_ganado) as total_puntos_ganados')
+                )
+                ->where('p.id_cliente', '=', $id_cliente)
+                ->where('p.id_campania', '=', $id_campania)
+                ->groupBy('vi.vendedor_intranet_dni', 'vi.vendedor_intranet_nombre')
+                ->having('total_puntos_ganados', '>', 0)
+                ->get();
+
+            return $vendedores;
+        } catch (\Exception $e) {
+            $this->logs->insertarLog($e);
+            return collect();
+        }
+    }
 }

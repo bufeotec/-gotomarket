@@ -446,65 +446,12 @@
 {{--                                                </td>--}}
                                                 <td>
                                                     <span class="d-block tamanhoTablaComprobantes text-primary">
-                                                        @php
-                                                            // Obtener el estado de entrega desde la tabla despacho_ventas
-                                                            $estadoEntrega = \App\Models\DespachoVenta::where('id_guia', $factura->id_guia)
-                                                                ->value('despacho_detalle_estado_entrega');
-                                                        @endphp
 
-                                                        @if($factura->guia_estado_aprobacion == 7 && $estadoEntrega == 8)
-                                                            Guía entregada
-                                                        @else
-                                                            @switch($factura->guia_estado_aprobacion)
-                                                                @case(1)
-                                                                    Enviado a Créditos
-                                                                    @break
-                                                                @case(2)
-                                                                    Enviado a Despacho
-                                                                    @break
-                                                                @case(3)
-                                                                    Listo para despacho
-                                                                    @break
-                                                                @case(4)
-                                                                    Pendiente de aprobación de despacho
-                                                                    @break
-                                                                @case(5)
-                                                                    Aceptado por Créditos
-                                                                    @break
-                                                                @case(6)
-                                                                    Estado de facturación
-                                                                    @break
-                                                                @case(7)
-                                                                    Guía en tránsito
-                                                                    @break
-                                                                @case(8)
-                                                                    Guía entregada
-                                                                    @break
-                                                                @case(9)
-                                                                    Despacho aprobado
-                                                                    @break
-                                                                @case(10)
-                                                                    Despacho rechazado
-                                                                    @break
-                                                                @case(11)
-                                                                    Guía no entregada
-                                                                    @break
-                                                                @case(12)
-                                                                    Guía anulada
-                                                                    @break
-                                                                @case(13)
-                                                                    Registrada en Intranet
-                                                                    @break
-                                                                @case(14)
-                                                                    Guía anulada por NC
-                                                                    @break
-                                                                @case(15)
-                                                                    Pendiente de NC
-                                                                    @break
-                                                                @default
-                                                                    Estado desconocido
-                                                            @endswitch
-                                                        @endif
+                                                        @php
+                                                            $estado = $me->obtener_estado($factura->guia_estado_aprobacion, $factura->id_guia, 2)
+                                                        @endphp
+                                                        {{$estado}}
+
                                                     </span>
                                                 </td>
                                                 <td>

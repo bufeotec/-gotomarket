@@ -20,6 +20,8 @@ use App\Models\Departamento;
 use App\Models\Provincia;
 use App\Models\Distrito;
 use App\Models\Medida;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 class Tarifarios extends Component
 {
@@ -52,6 +54,7 @@ class Tarifarios extends Component
     public $tarifa_monto = "";
     public $tarifa_estado = "";
     public $id_users = "";
+    public $tarifa_tiempo_transporte = "";
     public $listar_servicios = array();
     public $messageDeleteTarifario = "";
     public $historial_registros = [];
@@ -146,6 +149,7 @@ class Tarifarios extends Component
         $this->tarifa_cap_max = "";
         $this->tarifa_monto = "";
         $this->tarifa_estado = "";
+        $this->tarifa_tiempo_transporte = "";
         $this->provincias = [];
         $this->distritos = [];
         $this->dispatch('select_ubigeo_salida',['text' => null]);
@@ -176,6 +180,7 @@ class Tarifarios extends Component
             $this->tarifa_cap_min = $tarifario_Edit->tarifa_cap_min;
             $this->tarifa_cap_max = $tarifario_Edit->tarifa_cap_max;
             $this->tarifa_monto = $tarifario_Edit->tarifa_monto;
+            $this->tarifa_tiempo_transporte = $tarifario_Edit->tarifa_tiempo_transporte;
             $this->id_tarifario = $tarifario_Edit->id_tarifario;
 
             $this->provincias = DB::table('provincias')->where('id_departamento', $this->id_departamento)->get();
@@ -212,6 +217,7 @@ class Tarifarios extends Component
                 'tarifa_cap_min' => 'required|numeric',
                 'tarifa_cap_max' => 'required|numeric',
                 'tarifa_monto' => 'required|numeric',
+                'tarifa_tiempo_transporte' => 'required|numeric',
                 'tarifa_estado' => 'nullable|integer',
                 'id_tarifario' => 'nullable|integer',
             ], [
@@ -247,6 +253,9 @@ class Tarifarios extends Component
                 'tarifa_monto.required' => 'El monto de la tarifa es obligatorio.',
                 'tarifa_monto.numeric' => 'El monto de la tarifa debe ser un valor numérico.',
 
+                'tarifa_tiempo_transporte.required' => 'El tiempo de transporte es obligatorio.',
+                'tarifa_tiempo_transporte.numeric' => 'El tiempo de transporte debe ser un valor numérico.',
+
                 'tarifa_estado.integer' => 'El estado debe ser un número entero.',
 
                 'id_tarifario.integer' => 'El identificador debe ser un número entero.',
@@ -254,7 +263,7 @@ class Tarifarios extends Component
 
             if (!$this->id_tarifario) { // INSERTAR
                 if (!Gate::allows('create_tarifario')) {
-                    session()->flash('error', 'No tiene permisos para crear.');
+                    session()->flash('error_modal', 'No tiene permisos para crear.');
                     return;
                 }
 
@@ -288,6 +297,7 @@ class Tarifarios extends Component
                     $tarifario_save->tarifa_cap_min = $this->tarifa_cap_min;
                     $tarifario_save->tarifa_cap_max = $this->tarifa_cap_max;
                     $tarifario_save->tarifa_monto = $this->tarifa_monto;
+                    $tarifario_save->tarifa_tiempo_transporte = $this->tarifa_tiempo_transporte;
                     $tarifario_save->tarifa_estado = 1;
                     $tarifario_save->tarifa_microtime = $microtime;
                     $tarifario_save->tarifa_estado_aprobacion = 0;
@@ -298,16 +308,16 @@ class Tarifarios extends Component
                         session()->flash('success', 'Registro guardado correctamente.');
                     } else {
                         DB::rollBack();
-                        session()->flash('error', 'Ocurrió un error al guardar el registro.');
+                        session()->flash('error_modal', 'Ocurrió un error al guardar el registro.');
                     }
                 } else{
-                    session()->flash('error', 'El rango de capacidad se cruza con un registro existente.');
+                    session()->flash('error_modal', 'El rango de capacidad se cruza con un registro existente.');
                     return;
                 }
             }
             else {
                 if (!Gate::allows('update_tarifario')) {
-                    session()->flash('error', 'No tiene permisos para actualizar este registro.');
+                    session()->flash('error_modal', 'No tiene permisos para actualizar este registro.');
                     return;
                 }
 
@@ -323,6 +333,7 @@ class Tarifarios extends Component
                     'tarifa_cap_min' => 'required|numeric',
                     'tarifa_cap_max' => 'required|numeric',
                     'tarifa_monto' => 'required|numeric',
+                    'tarifa_tiempo_transporte' => 'required|numeric',
                     'tarifa_estado' => 'nullable|integer',
                     'id_tarifario' => 'nullable|integer',
                 ], [
@@ -357,6 +368,9 @@ class Tarifarios extends Component
 
                     'tarifa_monto.required' => 'El monto de la tarifa es obligatorio.',
                     'tarifa_monto.numeric' => 'El monto de la tarifa debe ser un valor numérico.',
+
+                    'tarifa_tiempo_transporte.required' => 'El tiempo de transporte es obligatorio.',
+                    'tarifa_tiempo_transporte.numeric' => 'El tiempo de transporte debe ser un valor numérico.',
 
                     'tarifa_estado.integer' => 'El estado debe ser un número entero.',
 
@@ -393,6 +407,7 @@ class Tarifarios extends Component
                     $tarifario_update->tarifa_cap_min = $this->tarifa_cap_min;
                     $tarifario_update->tarifa_cap_max = $this->tarifa_cap_max;
                     $tarifario_update->tarifa_monto = $this->tarifa_monto;
+                    $tarifario_update->tarifa_tiempo_transporte = $this->tarifa_tiempo_transporte;
 
                     // Inicializar el mensaje de registro
                     $registro_concepto = [];
@@ -410,7 +425,8 @@ class Tarifarios extends Component
                         $originalValues['id_medida'] !== ($this->id_tipo_servicio == 2 ? $this->id_medida : null) ||
                         $originalValues['tarifa_cap_min'] !== $this->tarifa_cap_min ||
                         $originalValues['tarifa_cap_max'] !== $this->tarifa_cap_max ||
-                        $originalValues['tarifa_monto'] !== $this->tarifa_monto
+                        $originalValues['tarifa_monto'] !== $this->tarifa_monto ||
+                        $originalValues['tarifa_tiempo_transporte'] !== $this->tarifa_tiempo_transporte
                     ) {
                         // Cambiar tarifa_estado_aprobacion a 0 solo si hubo cambios en los campos
                         $tarifario_update->tarifa_estado_aprobacion = 0;
@@ -475,13 +491,17 @@ class Tarifarios extends Component
                         if ($originalValues['tarifa_monto'] !== $this->tarifa_monto) {
                             $registro_concepto[] = "Monto de '{$originalValues['tarifa_monto']}' hasta '{$this->tarifa_monto}'";
                         }
+
+                        if ($originalValues['tarifa_tiempo_transporte'] !== $this->tarifa_tiempo_transporte) {
+                            $registro_concepto[] = "Tiempo de transporte cambio de '{$originalValues['tarifa_tiempo_transporte']}' a '{$this->tarifa_tiempo_transporte}'";
+                        }
                     }
 
                     // Guardar los cambios solo si se realizaron cambios
                     if (!empty($registro_concepto)) {
                         // Guardar el tarifario actualizado
                         if (!$tarifario_update->save()) {
-                            session()->flash('error', 'No se pudo actualizar el registro.');
+                            session()->flash('error_modal', 'No se pudo actualizar el registro.');
                             return;
                         }
 
@@ -504,7 +524,7 @@ class Tarifarios extends Component
                         session()->flash('success', 'No se realizaron cambios en los registros.');
                     }
                 } else {
-                    session()->flash('error', 'El rango de capacidad se cruza con un registro existente.');
+                    session()->flash('error_modal', 'El rango de capacidad se cruza con un registro existente.');
                     return;
                 }
             }
@@ -514,7 +534,7 @@ class Tarifarios extends Component
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logs->insertarLog($e);
-            session()->flash('error', 'Ocurrió un error al guardar el registro. Por favor, inténtelo nuevamente.');
+            session()->flash('error_modal', 'Ocurrió un error al guardar el registro. Por favor, inténtelo nuevamente.');
         }
     }
 
@@ -578,4 +598,5 @@ class Tarifarios extends Component
             session()->flash('error', 'Ocurrió un error al guardar el registro. Por favor, inténtelo nuevamente.');
         }
     }
+
 }

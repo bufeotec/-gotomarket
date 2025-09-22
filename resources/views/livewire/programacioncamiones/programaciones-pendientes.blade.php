@@ -23,7 +23,9 @@
                                     @endif
                                 </div>
                                 <div class="col-lg-2 col-md-2 col-sm-12 mb-2">
-                                    <a class="btn btn-sm bg-success text-white">Gestionar OS</a>
+                                    <a class="btn btn-sm bg-success text-white" target="_blank" href="{{route('Despachotransporte.gestionar_os_detalle',['id_despacho'=>base64_encode($listar_detalle_despacho->id_despacho)])}}">
+                                        Gestionar OS
+                                    </a>
                                 </div>
                                 <hr>
                                 <div class="col-lg-2 col-md-3 col-sm-4 mb-3">
@@ -114,6 +116,14 @@
                                         <h6>Información de la guía</h6>
                                         <hr>
                                     </div>
+                                    <div class="col-lg-12 mb-3">
+                                        @if (session()->has('error_fecha'))
+                                            <div class="alert alert-danger alert-dismissible show fade mt-2">
+                                                {{ session('error_fecha') }}
+                                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                            </div>
+                                        @endif
+                                    </div>
                                     <div class="col-lg-12 col-md-12 col-sm-12">
                                         <x-table-general>
                                             <x-slot name="thead">
@@ -124,13 +134,15 @@
                                                     <th>Fecha Emisión</th>
                                                     <th>Factura</th>
                                                     <th>Venta Despachada (sin IGV)</th>
-                                                    <th>Dirección de Entrega</th>
                                                     <th>UBIGEO</th>
                                                     @if($listar_detalle_despacho->despacho_estado_aprobacion == 2 || $listar_detalle_despacho->despacho_estado_aprobacion == 3)
                                                         <th>Estado del comprobante</th>
                                                     @endif
                                                     @if($listar_detalle_despacho->despacho_estado_aprobacion == 3)
                                                         <th>Cambio de estado</th>
+                                                    @endif
+                                                    @if($listar_detalle_despacho->despacho_estado_aprobacion == 2 || $listar_detalle_despacho->despacho_estado_aprobacion == 3)
+                                                        <th>Fecha de Entrega</th>
                                                     @endif
                                                 </tr>
                                             </x-slot>
@@ -145,7 +157,6 @@
                                                             <td>{{ $ta->guia_fecha_emision ? $general->obtenerNombreFecha($ta->guia_fecha_emision, 'DateTime', 'Date') : '-' }}</td>
                                                             <td>{{ $ta->guia_nro_doc_ref }}</td>
                                                             <td>S/ {{ $general->formatoDecimal($ta->guia_importe_total_sin_igv ?? 0) }}</td>
-                                                            <td>{{ $ta->guia_direc_entrega }}</td>
                                                             <td>{{ $ta->guia_departamento }} - {{ $ta->guia_provincia }} - {{ $ta->guia_destrito }}</td>
                                                             @if($listar_detalle_despacho->despacho_estado_aprobacion == 2 || $listar_detalle_despacho->despacho_estado_aprobacion == 3)
                                                                 <td>
@@ -189,6 +200,19 @@
                                                                         <option value="8">Entregado</option>
                                                                         <option value="11">No entregado</option>
                                                                     </select>
+                                                                </td>
+                                                            @endif
+                                                            @if($listar_detalle_despacho->despacho_estado_aprobacion == 2 || $listar_detalle_despacho->despacho_estado_aprobacion == 3)
+                                                                <td>
+                                                                    @if(empty($ta->despacho_detalle_fecha_entrega))
+                                                                        <input type="date"
+                                                                               class="form-control"
+                                                                               id="fecha_entrega_guia_{{ $ta->id_despacho_venta }}"
+                                                                               wire:model.live="fecha_entrega_guia.{{ $listar_detalle_despacho->id_despacho }}_{{ $ta->id_despacho_venta }}"
+                                                                               wire:change="validar_fecha({{ $listar_detalle_despacho->id_despacho }}, {{ $ta->id_despacho_venta }})" />
+                                                                    @else
+                                                                        <strong>{{ $ta->despacho_detalle_fecha_entrega ? $general->obtenerNombreFecha($ta->despacho_detalle_fecha_entrega, 'Date', 'Date') : ' ' }}</strong>
+                                                                    @endif
                                                                 </td>
                                                             @endif
                                                         </tr>
